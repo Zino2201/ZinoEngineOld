@@ -1,0 +1,50 @@
+#include "VulkanCommandBuffer.h"
+#include "VulkanDevice.h"
+#include "VulkanCommandPool.h"
+#include "VulkanSwapChain.h"
+#include "VulkanRenderSystem.h"
+
+CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanDevice* InDevice,
+	CVulkanCommandPool* InCommandPool)
+	: CVulkanDeviceResource(InDevice), CommandPool(InCommandPool)
+{
+	vk::CommandBufferAllocateInfo AllocateInfo(
+		CommandPool->GetCommandPool(),
+		vk::CommandBufferLevel::ePrimary,
+		1);
+
+	CommandBuffer = std::move(Device->GetDevice().allocateCommandBuffersUnique(AllocateInfo).front());
+}
+
+CVulkanCommandBuffer::~CVulkanCommandBuffer() {}
+
+void CVulkanCommandBuffer::Begin()
+{
+	vk::CommandBufferBeginInfo BeginInfo(
+		vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+
+	CommandBuffer->begin(BeginInfo);
+}
+
+void CVulkanCommandBuffer::BeginRenderPass(const vk::RenderPass& InRenderPass,
+	const vk::Framebuffer& InFramebuffer, const std::array<vk::ClearValue, 4>& InClearColor)
+{
+	vk::RenderPassBeginInfo BeginInfo(
+		InRenderPass,
+		InFramebuffer,
+		vk::Rect2D(vk::Offset2D(), g_VulkanRenderSystem->GetSwapChain()->GetExtent()),
+		1,
+		InClearColor.data());
+
+	CommandBuffer->beginRenderPass(BeginInfo, vk::SubpassContents::eInline);
+}
+
+void CVulkanCommandBuffer::EndRenderPass()
+{
+	CommandBuffer->endRenderPass();
+}
+
+void CVulkanCommandBuffer::End()
+{
+	CommandBuffer->end();
+}
