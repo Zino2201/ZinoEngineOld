@@ -25,6 +25,7 @@ public:
 
 	CWindow* GetWindow() const { return Window.get(); }
 	IRenderSystem* GetRenderSystem() const { return RenderSystem.get(); }
+	CRenderer* GetRenderer() const { return Renderer.get(); }
 private:
 	void Loop();
 public:

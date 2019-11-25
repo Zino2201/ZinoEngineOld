@@ -10,4 +10,6 @@ namespace VulkanUtil
 
 	SVulkanQueueFamilyIndices GetQueueFamilyIndices(const vk::PhysicalDevice& InDevice,
 		const vk::SurfaceKHR& InSurface);
+
+	vk::ShaderStageFlagBits ShaderStageToVkShaderStage(const EShaderStage& InShaderStage);
 }

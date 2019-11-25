@@ -16,13 +16,22 @@ public:
 	CVulkanRenderSystem();
 	virtual ~CVulkanRenderSystem();
 
+	/** IRenderSystem */
 	virtual void Initialize() override;
+	void AcquireImage();
+	virtual void Present() override;
 	virtual IRenderCommandContext* CreateCommandContext() override;
+	virtual std::shared_ptr<IShader> CreateShader(const std::vector<uint8_t>& InData,
+		const EShaderStage& InShaderStage) override;
+	virtual std::shared_ptr<IGraphicsPipeline> CreateGraphicsPipeline(IShader* InVertexShader,
+		IShader* InFragmentShader) override;
 
 	/** Getters */
 	const vk::Instance& GetInstance() const { return *Instance; }
 	const vk::SurfaceKHR& GetSurface() const { return *Surface; }
 	const vk::RenderPass& GetRenderPass() const { return *RenderPass; }
+	const std::vector<vk::UniqueFramebuffer>& GetFramebuffers() { return Framebuffers; }
+	const vk::Framebuffer& GetCurrentFramebuffer() { return *Framebuffers[CurrentFramebuffer]; }
 	CVulkanDevice* GetDevice() const { return Device.get(); }
 	CVulkanSwapChain* GetSwapChain() const { return SwapChain.get(); }
 private:
@@ -58,6 +67,9 @@ private:
 
 	/** Render pass */
 	vk::UniqueRenderPass RenderPass;
+
+	/** Current framebuffer */
+	uint32_t CurrentFramebuffer;
 
 	/** Swap chain framebuffers */
 	std::vector<vk::UniqueFramebuffer> Framebuffers;

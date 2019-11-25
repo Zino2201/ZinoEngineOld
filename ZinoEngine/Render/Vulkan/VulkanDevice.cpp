@@ -4,6 +4,7 @@
 #include "VulkanRenderSystem.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
+#include "VulkanQueue.h"
 
 CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysDevice)
 	: PhysicalDevice(InPhysDevice)
@@ -48,10 +49,10 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysDevice)
 		Device = PhysicalDevice.createDeviceUnique(CreateInfos);
 		if (!Device)
 			LOG(ELogSeverity::Fatal, "Failed to create logical device")
-		
+
 		/** Get queues */
-		GraphicsQueue = Device->getQueue(QueueFamilyIndices.Graphics.value(), 0);
-		PresentQueue = Device->getQueue(QueueFamilyIndices.Present.value(), 0);
+		GraphicsQueue = std::make_unique<CVulkanQueue>(this, QueueFamilyIndices.Graphics.value());
+		PresentQueue = std::make_unique<CVulkanQueue>(this, QueueFamilyIndices.Present.value());
 	}
 }
 

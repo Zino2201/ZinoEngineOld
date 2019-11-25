@@ -10,19 +10,26 @@ CVulkanPipeline::CVulkanPipeline(CVulkanDevice* InDevice) : CVulkanDeviceResourc
 CVulkanPipeline::~CVulkanPipeline() {}
 /** --- CVulkanPipeline --- */
 
-CVulkanRenderPipeline::CVulkanRenderPipeline(CVulkanDevice* InDevice, 
-	const std::vector<CVulkanShader*>& InShaders)
-	: CVulkanPipeline(InDevice)
+CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice, 
+	IShader* InVertexShader,
+	IShader* InFragmentShader)
+	: IGraphicsPipeline(InVertexShader, InFragmentShader), CVulkanPipeline(InDevice)
 {
 	/** Create pipeline layout */
 	PipelineLayout = std::make_unique<CVulkanPipelineLayout>(Device);
 
 	/** Create stages */
-	std::vector<vk::PipelineShaderStageCreateInfo> Stages(InShaders.size());
-
-	for (int i = 0; i < InShaders.size(); ++i)
+	std::vector<CVulkanShader*> Shaders =
 	{
-		CVulkanShader* Shader = InShaders[i];
+		static_cast<CVulkanShader*>(InVertexShader),
+		static_cast<CVulkanShader*>(InFragmentShader)
+	};
+
+	std::vector<vk::PipelineShaderStageCreateInfo> Stages(Shaders.size());
+
+	for (int i = 0; i < Shaders.size(); ++i)
+	{
+		CVulkanShader* Shader = Shaders[i];
 
 		Stages[i] = vk::PipelineShaderStageCreateInfo(
 			vk::PipelineShaderStageCreateFlags(),
@@ -129,4 +136,4 @@ CVulkanRenderPipeline::CVulkanRenderPipeline(CVulkanDevice* InDevice,
 		LOG(ELogSeverity::Fatal, "Failed to create pipeline")
 }
 
-CVulkanRenderPipeline::~CVulkanRenderPipeline() {}
+CVulkanGraphicsPipeline::~CVulkanGraphicsPipeline() {}

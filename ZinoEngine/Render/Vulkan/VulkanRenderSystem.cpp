@@ -6,6 +6,12 @@
 #include "Render/Window.h"
 #include "VulkanDevice.h"
 #include "VulkanSwapChain.h"
+#include "VulkanRenderCommandContext.h"
+#include "VulkanShader.h"
+#include "VulkanPipeline.h"
+#include "Render/Renderer.h"
+#include "VulkanCommandBuffer.h"
+#include "VulkanQueue.h"
 
 CVulkanRenderSystem* g_VulkanRenderSystem = nullptr;
 
@@ -29,7 +35,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
 		LOG(ELogSeverity::Error, InCallbackData->pMessage)
-		__debugbreak();
+²		__debugbreak();
 		break;
 	}
 
@@ -72,7 +78,7 @@ void DestroyDebugUtilsMessengerEXT(
 	}
 }
 
-CVulkanRenderSystem::CVulkanRenderSystem() {}
+CVulkanRenderSystem::CVulkanRenderSystem() : CurrentFramebuffer(0) {}
 
 CVulkanRenderSystem::~CVulkanRenderSystem() 
 {
@@ -225,12 +231,22 @@ void CVulkanRenderSystem::Initialize()
 			1,
 			&ColorAttachmentRef);
 
+		vk::SubpassDependency SubpassDependency(
+			VK_SUBPASS_EXTERNAL,
+			0,
+			vk::PipelineStageFlagBits::eColorAttachmentOutput,
+			vk::PipelineStageFlagBits::eColorAttachmentOutput,
+			vk::AccessFlags(),
+			vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+
 		vk::RenderPassCreateInfo CreateInfos(
 			vk::RenderPassCreateFlags(),
 			1,
 			&ColorAttachment,
 			1,
-			&Subpass);
+			&Subpass,
+			1,
+			&SubpassDependency);
 
 		RenderPass = Device->GetDevice().createRenderPassUnique(CreateInfos);
 		if(!RenderPass)
@@ -260,6 +276,56 @@ void CVulkanRenderSystem::Initialize()
 			Framebuffers[i] = Device->GetDevice().createFramebufferUnique(CreateInfo);
 		}
 	}
+}
+
+void CVulkanRenderSystem::AcquireImage()
+{
+	SwapChain->AcquireImage();
+
+	CVulkanRenderCommandContext* RenderCommandContext = static_cast<CVulkanRenderCommandContext*>(
+		CEngine::Get().GetRenderer()->GetMainCommandList()->GetCommandContext());
+
+	CVulkanCommandBuffer* CmdBuffer = RenderCommandContext->GetCommandBuffer();
+	CmdBuffer->AddWaitSemaphore(vk::PipelineStageFlagBits::eColorAttachmentOutput,
+		SwapChain->GetImageAvailableSemaphore());
+}
+
+void CVulkanRenderSystem::Present()
+{
+	AcquireImage();
+
+	// TODO: Rework present
+
+	CVulkanRenderCommandContext* RenderCommandContext = static_cast<CVulkanRenderCommandContext*>(
+		CEngine::Get().GetRenderer()->GetMainCommandList()->GetCommandContext());
+	CVulkanCommandBuffer* CmdBuffer = RenderCommandContext->GetCommandBuffer();
+
+	Device->GetGraphicsQueue()->Submit(CmdBuffer, 
+		{ SwapChain->GetRenderFinishedSemaphore() });
+
+	SwapChain->Present(
+		Device->GetPresentQueue(),
+		SwapChain->GetRenderFinishedSemaphore());
+
+	// TODO: Remove!
+	Device->GetPresentQueue()->GetQueue().waitIdle();
+}
+
+IRenderCommandContext* CVulkanRenderSystem::CreateCommandContext()
+{
+	return new CVulkanRenderCommandContext();
+}
+
+std::shared_ptr<IShader> CVulkanRenderSystem::CreateShader(const std::vector<uint8_t>& InData,
+	const EShaderStage& InShaderStage)
+{
+	return std::make_shared<CVulkanShader>(Device.get(), InData, InShaderStage);
+}
+
+std::shared_ptr<IGraphicsPipeline> CVulkanRenderSystem::CreateGraphicsPipeline(IShader* InVertexShader,
+	IShader* InFragmentShader)
+{
+	return std::make_shared<CVulkanGraphicsPipeline>(Device.get(), InVertexShader, InFragmentShader);
 }
 
 std::vector<const char*> CVulkanRenderSystem::GetRequiredExtensions(SDL_Window* InWindow) const

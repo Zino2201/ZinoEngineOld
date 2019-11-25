@@ -2,6 +2,8 @@
 
 #include "VulkanCore.h"
 
+class CVulkanQueue;
+
 /**
  * Vulkan device
  */
@@ -14,6 +16,8 @@ public:
 	const vk::PhysicalDevice& GetPhysicalDevice() const { return PhysicalDevice; }
 	const vk::Device& GetDevice() const { return *Device; }
 	const SVulkanQueueFamilyIndices& GetQueueFamilyIndices() const { return QueueFamilyIndices; }
+	CVulkanQueue* GetGraphicsQueue() const { return GraphicsQueue.get(); }
+	CVulkanQueue* GetPresentQueue() const { return PresentQueue.get(); }
 private:
 	/** Physical device */
 	vk::PhysicalDevice PhysicalDevice;
@@ -22,10 +26,10 @@ private:
 	SVulkanQueueFamilyIndices QueueFamilyIndices;
 
 	/** Graphics queue */
-	vk::Queue GraphicsQueue;
+	std::unique_ptr<CVulkanQueue> GraphicsQueue;
 
 	/** Present queue */
-	vk::Queue PresentQueue;
+	std::unique_ptr<CVulkanQueue> PresentQueue;
 
 	/** Logical device */
 	vk::UniqueDevice Device;

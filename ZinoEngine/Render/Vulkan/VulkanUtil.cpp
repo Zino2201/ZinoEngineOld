@@ -36,3 +36,15 @@ SVulkanQueueFamilyIndices VulkanUtil::GetQueueFamilyIndices(const vk::PhysicalDe
 
 	return Indices;
 }
+
+vk::ShaderStageFlagBits VulkanUtil::ShaderStageToVkShaderStage(const EShaderStage& InShaderStage)
+{
+	switch (InShaderStage)
+	{
+	default:
+	case EShaderStage::Vertex:
+		return vk::ShaderStageFlagBits::eVertex;
+	case EShaderStage::Fragment:
+		return vk::ShaderStageFlagBits::eFragment;
+	}
+}

@@ -3,6 +3,8 @@
 #include "RenderCore.h"
 
 class IRenderCommandContext;
+class IShader;
+class IGraphicsPipeline;
 
 /**
  * Render system interface
@@ -12,6 +14,30 @@ class IRenderSystem
 public:
 	virtual ~IRenderSystem() = default;
 
+	/**
+	 * Initialize render system
+	 */
 	virtual void Initialize() = 0;
+
+	/**
+	 * Present
+	 */
+	virtual void Present() = 0;
+
+	/**
+	 * Create command context
+	 */
 	virtual IRenderCommandContext* CreateCommandContext() = 0;
+
+	/**
+	 * Create a shader
+	 */
+	virtual std::shared_ptr<IShader> CreateShader(const std::vector<uint8_t>& InData,
+		const EShaderStage& InShaderStage) = 0;
+
+	/**
+	 * Create a graphics pipeline
+	 */
+	virtual std::shared_ptr<IGraphicsPipeline> CreateGraphicsPipeline(IShader* InVertexShader,
+		IShader* InFragmentShader) = 0;
 };

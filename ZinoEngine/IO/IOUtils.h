@@ -5,7 +5,7 @@
 
 namespace IOUtils
 {
-	static std::vector<uint8_t> ReadFile(const std::string& InFilename)
+	static std::vector<uint8_t> ReadBinaryFile(const std::string& InFilename)
 	{
 		std::ifstream File(InFilename, std::ios::ate | std::ios::binary);
 

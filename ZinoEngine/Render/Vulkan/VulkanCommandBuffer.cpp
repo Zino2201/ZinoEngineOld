@@ -18,6 +18,19 @@ CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanDevice* InDevice,
 
 CVulkanCommandBuffer::~CVulkanCommandBuffer() {}
 
+void CVulkanCommandBuffer::AddWaitSemaphore(const vk::PipelineStageFlagBits& InStageFlag,
+	const vk::Semaphore& InSemaphore)
+{
+	WaitFlags |= InStageFlag;
+	WaitSemaphores.emplace_back(InSemaphore);
+}
+
+void CVulkanCommandBuffer::SubmitSemaphores()
+{
+	WaitFlags = vk::PipelineStageFlags();
+	WaitSemaphores.clear();
+}
+
 void CVulkanCommandBuffer::Begin()
 {
 	vk::CommandBufferBeginInfo BeginInfo(
@@ -27,14 +40,16 @@ void CVulkanCommandBuffer::Begin()
 }
 
 void CVulkanCommandBuffer::BeginRenderPass(const vk::RenderPass& InRenderPass,
-	const vk::Framebuffer& InFramebuffer, const std::array<vk::ClearValue, 4>& InClearColor)
+	const vk::Framebuffer& InFramebuffer, const std::array<float, 4>& InClearColor)
 {
+	const vk::ClearValue ClearValue = vk::ClearColorValue(InClearColor);
+
 	vk::RenderPassBeginInfo BeginInfo(
 		InRenderPass,
 		InFramebuffer,
 		vk::Rect2D(vk::Offset2D(), g_VulkanRenderSystem->GetSwapChain()->GetExtent()),
 		1,
-		InClearColor.data());
+		&ClearValue);
 
 	CommandBuffer->beginRenderPass(BeginInfo, vk::SubpassContents::eInline);
 }

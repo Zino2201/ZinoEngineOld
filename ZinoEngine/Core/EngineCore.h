@@ -15,6 +15,7 @@
 #include <functional>
 #include <optional>
 #include <set>
+#include <array>
 
 /** Utilities */
 #include "Core/Logger.h"

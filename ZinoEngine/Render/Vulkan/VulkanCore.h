@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Core/EngineCore.h"
+#include "Render/RenderCore.h"
+
+/** Includes */
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -8,6 +11,10 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <Windows.h>
 #endif
+
+#include <vulkan/vulkan.hpp>
+
+/** Constants */
 
 const std::vector<const char*> g_VulkanValidationLayers =
 {
@@ -20,13 +27,16 @@ constexpr bool g_VulkanEnableValidationLayers = false;
 constexpr bool g_VulkanEnableValidationLayers = true;
 #endif
 
-#include <vulkan/vulkan.hpp>
-
 /** Required device extensions */
 const std::vector<const char*> g_VulkanRequiredDeviceExtensions =
 {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
+
+/** Globals */
+extern class CVulkanRenderSystem* g_VulkanRenderSystem;
+
+/** Structures */
 
 /** Queue family indices */
 struct SVulkanQueueFamilyIndices
@@ -48,17 +58,5 @@ struct SVulkanSwapChainSupportDetails
 	std::vector<vk::PresentModeKHR> PresentModes;
 };
 
-extern class CVulkanRenderSystem* g_VulkanRenderSystem;
-
-/** Shader stages */
-namespace ShaderStage
-{
-	enum EStage
-	{
-		Vertex = 0,
-		Fragment = 1,
-		NumStages = 2
-	};
-}
 
 #include "VulkanUtil.h"

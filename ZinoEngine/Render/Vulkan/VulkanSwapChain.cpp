@@ -3,6 +3,10 @@
 #include "Render/Window.h"
 #include "VulkanRenderSystem.h"
 #include "VulkanDevice.h"
+#include "Render/Renderer.h"
+#include "VulkanCommandBuffer.h"
+#include "VulkanRenderCommandContext.h"
+#include "VulkanQueue.h"
 
 CVulkanSwapChain::CVulkanSwapChain()
 {
@@ -66,9 +70,48 @@ CVulkanSwapChain::CVulkanSwapChain()
 
 		ImageViews[i] = g_VulkanRenderSystem->GetDevice()->GetDevice().createImageViewUnique(ImageView);
 	}
+
+	/** Create semaphores */
+	{
+		vk::SemaphoreCreateInfo CreateInfos;
+
+		ImageAvailableSemaphore = g_VulkanRenderSystem->GetDevice()->GetDevice()
+			.createSemaphoreUnique(CreateInfos);
+		if(!ImageAvailableSemaphore)
+			LOG(ELogSeverity::Fatal, "Failed to create image available semaphore")
+
+		RenderFinishedSemaphore = g_VulkanRenderSystem->GetDevice()->GetDevice()
+			.createSemaphoreUnique(CreateInfos);
+		if (!RenderFinishedSemaphore)
+			LOG(ELogSeverity::Fatal, "Failed to create render finished semaphore")
+	}
 }
 
 CVulkanSwapChain::~CVulkanSwapChain() {}
+
+uint32_t CVulkanSwapChain::AcquireImage()
+{
+	CurrentImageIndex = g_VulkanRenderSystem->GetDevice()->GetDevice().acquireNextImageKHR(
+		*SwapChain,
+		std::numeric_limits<uint64_t>::max(),
+		*ImageAvailableSemaphore,
+		vk::Fence()).value;
+
+	return CurrentImageIndex;
+}
+
+void CVulkanSwapChain::Present(CVulkanQueue* InPresentQueue,
+	const vk::Semaphore& InPresentFinishedSemaphore)
+{
+	vk::PresentInfoKHR PresentInfo(
+		1,
+		&InPresentFinishedSemaphore,
+		1,
+		&*SwapChain,
+		&CurrentImageIndex);
+
+	InPresentQueue->GetQueue().presentKHR(PresentInfo);
+}
 
 vk::SurfaceFormatKHR CVulkanSwapChain::ChooseSwapChainFormat(const 
 	std::vector<vk::SurfaceFormatKHR>& InFormats) const

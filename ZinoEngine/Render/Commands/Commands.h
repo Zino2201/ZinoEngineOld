@@ -9,6 +9,7 @@
 
 class CRenderCommandList;
 class IRenderCommandContext;
+class IGraphicsPipeline;
 
 /**
  * Base render command
@@ -46,6 +47,8 @@ public:
 	 * Execute all commands and flush the queue
 	 */
 	void ExecuteAndFlush();
+
+	IRenderCommandContext* GetCommandContext() const { return CommandContext.get(); }
 private:
 	std::vector<std::unique_ptr<IRenderCommand>> Commands;
 	std::unique_ptr<IRenderCommandContext> CommandContext;
@@ -53,6 +56,8 @@ private:
 
 /**
  * Render command context
+ *
+ * Used for rendering
  */
 class IRenderCommandContext
 {
@@ -60,7 +65,33 @@ public:
 	virtual ~IRenderCommandContext() = default;
 
 	/**
+	 * Begin command recording 
+	 */
+	virtual void Begin() = 0;
+
+	/** 
+	 * End command recording 
+	 */
+	virtual void End() = 0;
+
+	/**
 	 * Begin render pass
 	 */
 	virtual void BeginRenderPass(const std::array<float, 4>& InClearColor) = 0;
+
+	/**
+	 * End render pass
+	 */
+	virtual void EndRenderPass() = 0;
+
+	/**
+	 * Bind graphics pipeline
+	 */
+	virtual void BindGraphicsPipeline(IGraphicsPipeline* InGraphicsPipeline) = 0;
+
+	/**
+	 * Draw
+	 */
+	virtual void Draw(const uint32_t& InVertexCount, const uint32_t& InInstanceCount,
+		const uint32_t& InFirstVertex, const uint32_t& InFirstInstance) = 0;
 };
