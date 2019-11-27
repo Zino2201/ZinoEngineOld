@@ -13,7 +13,8 @@ CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanDevice* InDevice,
 		vk::CommandBufferLevel::ePrimary,
 		1);
 
-	CommandBuffer = std::move(Device->GetDevice().allocateCommandBuffersUnique(AllocateInfo).front());
+	CommandBuffer = std::move(Device->GetDevice().allocateCommandBuffersUnique(AllocateInfo)
+		.value.front());
 }
 
 CVulkanCommandBuffer::~CVulkanCommandBuffer() {}

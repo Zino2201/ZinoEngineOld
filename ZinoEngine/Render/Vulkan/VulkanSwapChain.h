@@ -13,7 +13,7 @@ public:
 	CVulkanSwapChain();
 	~CVulkanSwapChain();
 
-	uint32_t AcquireImage();
+	void AcquireImage();
 	void Present(CVulkanQueue* InPresentQueue);
 
 	const std::vector<vk::UniqueImageView>& GetImageViews() const { return ImageViews; }
@@ -25,6 +25,9 @@ public:
 	const uint32_t GetImageCount() const { return static_cast<uint32_t>(Images.size()); }
 	const vk::Fence& GetFenceForCurrentFrame() const { return *InFlightFences[CurrentFrame]; }
 private:
+	void Create();
+	void OnSwapChainOutOfDate();
+	void OnWindowResized();
 	vk::SurfaceFormatKHR ChooseSwapChainFormat(const std::vector<vk::SurfaceFormatKHR>& InFormats) const;
 	vk::PresentModeKHR ChooseSwapChainPresentMode(const std::vector<vk::PresentModeKHR>& InModes) const;
 	vk::Extent2D ChooseSwapChainExtent(const vk::SurfaceCapabilitiesKHR& InCapabilities) const;
@@ -61,4 +64,9 @@ private:
 
 	/** Current frame */
 	uint32_t CurrentFrame;
+
+	/** Should recreate swap chain */
+	bool bShouldRecreate;
+public: /* Delegates*/
+	CMulticastDelegate<> OnSwapChainRecreated;
 };

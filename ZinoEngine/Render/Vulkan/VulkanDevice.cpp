@@ -46,7 +46,7 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysDevice)
 			static_cast<uint32_t>(g_VulkanRequiredDeviceExtensions.size()),
 			g_VulkanRequiredDeviceExtensions.data());
 
-		Device = PhysicalDevice.createDeviceUnique(CreateInfos);
+		Device = PhysicalDevice.createDeviceUnique(CreateInfos).value;
 		if (!Device)
 			LOG(ELogSeverity::Fatal, "Failed to create logical device")
 

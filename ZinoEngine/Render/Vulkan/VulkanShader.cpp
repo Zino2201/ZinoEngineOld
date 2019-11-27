@@ -14,7 +14,7 @@ CVulkanShader::CVulkanShader(CVulkanDevice* InDevice,
 		InData.size(),
 		reinterpret_cast<const uint32_t*>(InData.data()));
 
-	ShaderModule = InDevice->GetDevice().createShaderModuleUnique(CreateInfos);
+	ShaderModule = InDevice->GetDevice().createShaderModuleUnique(CreateInfos).value;
 	if(!ShaderModule)
 		LOG(ELogSeverity::Fatal, "Failed to create shader module")
 }

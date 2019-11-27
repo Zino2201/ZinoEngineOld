@@ -5,9 +5,9 @@ SVulkanSwapChainSupportDetails VulkanUtil::QuerySwapChainSupport(const vk::Physi
 {
 	SVulkanSwapChainSupportDetails Details;
 
-	Details.Capabilities = InDevice.getSurfaceCapabilitiesKHR(InSurface);
-	Details.Formats = InDevice.getSurfaceFormatsKHR(InSurface);
-	Details.PresentModes = InDevice.getSurfacePresentModesKHR(InSurface);
+	Details.Capabilities = InDevice.getSurfaceCapabilitiesKHR(InSurface).value;
+	Details.Formats = InDevice.getSurfaceFormatsKHR(InSurface).value;
+	Details.PresentModes = InDevice.getSurfacePresentModesKHR(InSurface).value;
 
 	return Details;
 }
@@ -25,7 +25,7 @@ SVulkanQueueFamilyIndices VulkanUtil::GetQueueFamilyIndices(const vk::PhysicalDe
 		if (QueueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
 			Indices.Graphics = i;
 
-		if (InDevice.getSurfaceSupportKHR(i, InSurface))
+		if (InDevice.getSurfaceSupportKHR(i, InSurface).value)
 			Indices.Present = i;
 
 		if (Indices.IsComplete())

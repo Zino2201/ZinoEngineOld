@@ -12,6 +12,7 @@
 #include <Windows.h>
 #endif
 
+#define VULKAN_HPP_NO_EXCEPTIONS
 #include <vulkan/vulkan.hpp>
 
 /** Constants */

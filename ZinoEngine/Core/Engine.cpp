@@ -43,17 +43,38 @@ void CEngine::Loop()
 		Vertex.get(),
 		Fragment.get());
 
+	std::array<float, 4> ClearColor = { 0.f, 0.f, 0.f, 1.0f };
+
 	while (true)
 	{
 		/** Event handling */
-
 		SDL_Event Event;
 		while (SDL_PollEvent(&Event))
 		{
 			switch (Event.type)
 			{
+			case SDL_WINDOWEVENT:
+				if (Event.window.event == SDL_WINDOWEVENT_RESIZED)
+				{
+					int NewWidth = 0;
+					int NewHeight = 0;
+					SDL_GetWindowSize(Window->GetSDLWindow(), &NewWidth, &NewHeight);
+					Window->SetWidth(NewWidth);
+					Window->SetHeight(NewHeight);
+					Window->OnWindowResized.Broadcast();
+				}
+				else if (Event.window.event == SDL_WINDOWEVENT_MINIMIZED)
+				{
+					Uint32 Flags = SDL_GetWindowFlags(Window->GetSDLWindow());
+					while (Flags & SDL_WINDOW_MINIMIZED)
+					{
+						Flags = SDL_GetWindowFlags(Window->GetSDLWindow());
+						SDL_WaitEvent(nullptr);
+					}
+				}
+				break;
 			case SDL_QUIT:
-				RenderSystem->PrepareDestroy();
+				RenderSystem->WaitGPU();
 				return;
 			}
 		}
@@ -61,7 +82,6 @@ void CEngine::Loop()
 		/** Tick */
 
 		/** Render */
-		std::array<float, 4> ClearColor = { 0.f, 0.f, 0.f, 1.0f };
 		
 		RenderSystem->Prepare();
 		

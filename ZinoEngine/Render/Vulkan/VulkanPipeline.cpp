@@ -131,7 +131,7 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 		-1);
 
 	Pipeline = Device->GetDevice().createGraphicsPipelineUnique(vk::PipelineCache(),
-		CreateInfos);
+		CreateInfos).value;
 	if(!Pipeline)
 		LOG(ELogSeverity::Fatal, "Failed to create pipeline")
 }

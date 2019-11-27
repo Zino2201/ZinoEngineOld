@@ -107,7 +107,7 @@ void CVulkanRenderSystem::Initialize()
 
 		/** Get supported extensions */
 		std::vector<vk::ExtensionProperties> SupportedExtensions =
-			vk::enumerateInstanceExtensionProperties();
+			vk::enumerateInstanceExtensionProperties().value;
 
 		/** Check if required extensions are supported */
 		LOG(ELogSeverity::Debug, "--- Extensions ---")
@@ -149,7 +149,7 @@ void CVulkanRenderSystem::Initialize()
 				g_VulkanEnableValidationLayers ? g_VulkanValidationLayers.data() : 0,
 				static_cast<uint32_t>(RequiredExtensions.size()),
 				RequiredExtensions.data());
-		Instance = vk::createInstanceUnique(CreateInfos);
+		Instance = vk::createInstanceUnique(CreateInfos).value;
 		if (!Instance)
 			LOG(ELogSeverity::Fatal, "Failed to create Vulkan instance")
 	}
@@ -186,7 +186,7 @@ void CVulkanRenderSystem::Initialize()
 
 	/** Select a physical device and create a logical device */
 	{
-		std::vector<vk::PhysicalDevice> PhysicalDevices = Instance->enumeratePhysicalDevices();
+		std::vector<vk::PhysicalDevice> PhysicalDevices = Instance->enumeratePhysicalDevices().value;
 		vk::PhysicalDevice PhysicalDevice;
 
 		for (const vk::PhysicalDevice& PhysDevice : PhysicalDevices)
@@ -206,8 +206,28 @@ void CVulkanRenderSystem::Initialize()
 
 	/** Create swap chain */
 	SwapChain = std::make_unique<CVulkanSwapChain>();
+	SwapChain->OnSwapChainRecreated.Bind(
+		std::bind(&CVulkanRenderSystem::OnSwapchainRecreated, this));
 
+	CreateSwapchainObjects();
 
+	/** Command context */
+	RenderCommandContext = std::make_unique<CVulkanRenderCommandContext>(Device.get(),
+		Device->GetGraphicsQueue());
+}
+
+void CVulkanRenderSystem::OnSwapchainRecreated()
+{
+	/** Free swapchain objects */
+	Framebuffers.clear();
+	RenderPass.reset();
+
+	/** Recreate it */
+	CreateSwapchainObjects();
+}
+
+void CVulkanRenderSystem::CreateSwapchainObjects()
+{
 	/** Create render pass */
 	{
 		vk::AttachmentDescription ColorAttachment(
@@ -250,7 +270,7 @@ void CVulkanRenderSystem::Initialize()
 			1,
 			&SubpassDependency);
 
-		RenderPass = Device->GetDevice().createRenderPassUnique(CreateInfos);
+		RenderPass = Device->GetDevice().createRenderPassUnique(CreateInfos).value;
 		if(!RenderPass)
 			LOG(ELogSeverity::Fatal, "Failed to create render pass")
 	}
@@ -270,13 +290,9 @@ void CVulkanRenderSystem::Initialize()
 				SwapChain->GetExtent().height,
 				1);
 			
-			Framebuffers[i] = Device->GetDevice().createFramebufferUnique(CreateInfo);
+			Framebuffers[i] = Device->GetDevice().createFramebufferUnique(CreateInfo).value;
 		}
 	}
-
-	/** Command context */
-	RenderCommandContext = std::make_unique<CVulkanRenderCommandContext>(Device.get(),
-		Device->GetGraphicsQueue());
 }
 
 void CVulkanRenderSystem::Prepare()
@@ -298,7 +314,7 @@ void CVulkanRenderSystem::Present()
 		Device->GetPresentQueue());
 }
 
-void CVulkanRenderSystem::PrepareDestroy()
+void CVulkanRenderSystem::WaitGPU()
 {
 	/** Just wait for GPU to be done before destroying resources */
 	Device->GetDevice().waitIdle();
@@ -334,7 +350,7 @@ std::vector<const char*> CVulkanRenderSystem::GetRequiredExtensions(SDL_Window* 
 
 bool CVulkanRenderSystem::IsRequiredLayersSupported() const
 {
-	std::vector<vk::LayerProperties> Layers = vk::enumerateInstanceLayerProperties();
+	std::vector<vk::LayerProperties> Layers = vk::enumerateInstanceLayerProperties().value;
 
 	for (const char* RequiredLayer : g_VulkanValidationLayers)
 	{
@@ -360,7 +376,7 @@ bool CVulkanRenderSystem::IsDeviceUseable(const vk::PhysicalDevice& InDevice) co
 {
 	/** Check required extensions */
 	std::vector<vk::ExtensionProperties> AvailableExtensions =
-		InDevice.enumerateDeviceExtensionProperties();
+		InDevice.enumerateDeviceExtensionProperties().value;
 
 	std::set<std::string> RequiredExtensions(g_VulkanRequiredDeviceExtensions.begin(),
 		g_VulkanRequiredDeviceExtensions.end());

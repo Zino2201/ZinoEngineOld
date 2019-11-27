@@ -9,7 +9,7 @@ CVulkanCommandPool::CVulkanCommandPool(CVulkanDevice* InDevice,
 		vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
 		InFamilyIndex);
 
-	CommandPool = Device->GetDevice().createCommandPoolUnique(PoolInfo);
+	CommandPool = Device->GetDevice().createCommandPoolUnique(PoolInfo).value;
 	if(!CommandPool)
 		LOG(ELogSeverity::Fatal, "Failed to create command pool")
 }

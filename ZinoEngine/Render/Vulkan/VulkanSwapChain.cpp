@@ -7,8 +7,19 @@
 #include "VulkanCommandBuffer.h"
 #include "VulkanRenderCommandContext.h"
 #include "VulkanQueue.h"
+#include <SDL2/SDL.h>
 
 CVulkanSwapChain::CVulkanSwapChain()
+{
+	CEngine::Get().GetWindow()->OnWindowResized.Bind(
+		std::bind(&CVulkanSwapChain::OnWindowResized, this));
+
+	Create();
+}
+
+CVulkanSwapChain::~CVulkanSwapChain() {}
+
+void CVulkanSwapChain::Create()
 {
 	SVulkanSwapChainSupportDetails Details = VulkanUtil::QuerySwapChainSupport(
 		g_VulkanRenderSystem->GetDevice()->GetPhysicalDevice(),
@@ -47,12 +58,12 @@ CVulkanSwapChain::CVulkanSwapChain()
 		PresentMode,
 		VK_TRUE,
 		vk::SwapchainKHR() /* Old swapchain */);
-	SwapChain = g_VulkanRenderSystem->GetDevice()->GetDevice().createSwapchainKHRUnique(CreateInfos);
+	SwapChain = g_VulkanRenderSystem->GetDevice()->GetDevice().createSwapchainKHRUnique(CreateInfos).value;
 	if (!SwapChain)
 		LOG(ELogSeverity::Fatal, "Failed to create swap chain");
 	
 	/** Acquire images */
-	Images = g_VulkanRenderSystem->GetDevice()->GetDevice().getSwapchainImagesKHR(*SwapChain);
+	Images = g_VulkanRenderSystem->GetDevice()->GetDevice().getSwapchainImagesKHR(*SwapChain).value;
 
 	/** Create image views */
 	ImageViews.resize(Images.size());
@@ -68,7 +79,8 @@ CVulkanSwapChain::CVulkanSwapChain()
 			vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor,
 				0, 1, 0, 1));
 
-		ImageViews[i] = g_VulkanRenderSystem->GetDevice()->GetDevice().createImageViewUnique(ImageView);
+		ImageViews[i] = g_VulkanRenderSystem->GetDevice()->GetDevice()
+			.createImageViewUnique(ImageView).value;
 	}
 
 	/** Create semaphores and fences */
@@ -79,39 +91,74 @@ CVulkanSwapChain::CVulkanSwapChain()
 		for (uint32_t i = 0; i < g_MaxFramesInFlight; ++i)
 		{
 			ImageAvailableSemaphores.emplace_back(g_VulkanRenderSystem->GetDevice()->GetDevice()
-				.createSemaphoreUnique(CreateInfos));
+				.createSemaphoreUnique(CreateInfos).value);
 			if (!ImageAvailableSemaphores[i])
 				LOG(ELogSeverity::Fatal, "Failed to create image available semaphore")
 
 			RenderFinishedSemaphores.emplace_back(g_VulkanRenderSystem->GetDevice()->GetDevice()
-				.createSemaphoreUnique(CreateInfos));
+				.createSemaphoreUnique(CreateInfos).value);
 			if (!RenderFinishedSemaphores[i])
 				LOG(ELogSeverity::Fatal, "Failed to create render finished semaphore")
 
 			InFlightFences.emplace_back(g_VulkanRenderSystem->GetDevice()->GetDevice()
-				.createFenceUnique(FenceCreateInfos));
+				.createFenceUnique(FenceCreateInfos).value);
 			if (!InFlightFences[i])
 				LOG(ELogSeverity::Fatal, "Failed to create in flight fence")
 		}
 	}
 }
 
-CVulkanSwapChain::~CVulkanSwapChain() {}
+void CVulkanSwapChain::OnSwapChainOutOfDate()
+{
+	bShouldRecreate = false;
 
-uint32_t CVulkanSwapChain::AcquireImage()
+	/** Wait GPU */
+	g_VulkanRenderSystem->WaitGPU();
+
+	/** First free all existing objects */
+	InFlightFences.clear();
+	ImageAvailableSemaphores.clear();
+	RenderFinishedSemaphores.clear();
+	ImageViews.clear();
+	Images.clear();
+	SwapChain.reset();
+
+	/** Recreate all */
+	Create();
+
+	/** After all of that done, reacquire the image */
+	AcquireImage();
+
+	/** Broadcast the event */
+	OnSwapChainRecreated.Broadcast();
+}
+
+void CVulkanSwapChain::OnWindowResized()
+{
+	bShouldRecreate = true;
+}
+
+void CVulkanSwapChain::AcquireImage()
 {
 	/** Wait for last frame render before acquriring new image */
 	g_VulkanRenderSystem->GetDevice()->GetDevice().waitForFences(
 		{ GetFenceForCurrentFrame() }, VK_TRUE, std::numeric_limits<uint64_t>::max());
 	g_VulkanRenderSystem->GetDevice()->GetDevice().resetFences({ GetFenceForCurrentFrame() });
 
-	CurrentImageIndex = g_VulkanRenderSystem->GetDevice()->GetDevice().acquireNextImageKHR(
-		*SwapChain,
-		std::numeric_limits<uint64_t>::max(),
-		*ImageAvailableSemaphores[CurrentFrame],
-		vk::Fence()).value;
+	vk::ResultValue<uint32_t> Result = 
+		g_VulkanRenderSystem->GetDevice()->GetDevice().acquireNextImageKHR(
+			*SwapChain,
+			std::numeric_limits<uint64_t>::max(),
+			*ImageAvailableSemaphores[CurrentFrame],
+			vk::Fence());
 
-	return CurrentImageIndex;
+	CurrentImageIndex = Result.value;
+
+	if (Result.result == vk::Result::eErrorOutOfDateKHR || bShouldRecreate)
+	{
+		/** Swap chain is out of date, recreate it and broadcast the message */
+		OnSwapChainOutOfDate();
+	}
 }
 
 void CVulkanSwapChain::Present(CVulkanQueue* InPresentQueue)
@@ -123,7 +170,15 @@ void CVulkanSwapChain::Present(CVulkanQueue* InPresentQueue)
 		&*SwapChain,
 		&CurrentImageIndex);
 
-	InPresentQueue->GetQueue().presentKHR(PresentInfo);
+	vk::Result Result = InPresentQueue->GetQueue().presentKHR(PresentInfo);
+
+	if (Result == vk::Result::eErrorOutOfDateKHR ||
+		Result == vk::Result::eSuboptimalKHR || 
+		bShouldRecreate)
+	{
+		/** Swap chain is out of date, recreate it and broadcast the message */
+		OnSwapChainOutOfDate();
+	}
 
 	CurrentFrame = (CurrentFrame + 1) % g_MaxFramesInFlight;
 }
@@ -161,7 +216,8 @@ vk::Extent2D CVulkanSwapChain::ChooseSwapChainExtent(const
 	else
 	{
 		/** Default set current window width & height */
-		vk::Extent2D Extent(CEngine::Get().GetWindow()->GetWidth(),
+		vk::Extent2D Extent(
+			CEngine::Get().GetWindow()->GetWidth(),
 			CEngine::Get().GetWindow()->GetHeight());
 
 		/** Clamp to swap chain capabilities */

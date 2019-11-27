@@ -22,7 +22,7 @@ public:
 	virtual void Initialize() override;
 	void AcquireImage();
 	virtual void Present() override;
-	virtual void PrepareDestroy() override;
+	virtual void WaitGPU() override;
 	virtual std::shared_ptr<IShader> CreateShader(const std::vector<uint8_t>& InData,
 		const EShaderStage& InShaderStage) override;
 	virtual std::shared_ptr<IGraphicsPipeline> CreateGraphicsPipeline(IShader* InVertexShader,
@@ -40,6 +40,9 @@ public:
 		return reinterpret_cast<IRenderCommandContext*>(RenderCommandContext.get()); 
 	}
 private:
+	void OnSwapchainRecreated();
+	void CreateSwapchainObjects();
+
 	/**
 	 * Get required Vulkan extensions
 	 */

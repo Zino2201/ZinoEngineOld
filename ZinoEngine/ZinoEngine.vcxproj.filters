@@ -161,6 +161,9 @@
     <ClInclude Include="Render\Vulkan\VulkanCommandBufferManager.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Delegate.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Shaders\main.frag" />

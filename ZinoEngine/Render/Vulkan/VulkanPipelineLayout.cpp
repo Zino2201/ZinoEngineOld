@@ -11,7 +11,7 @@ CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* InDevice) :
 		0,
 		nullptr);
 
-	PipelineLayout = Device->GetDevice().createPipelineLayoutUnique(CreateInfos);
+	PipelineLayout = Device->GetDevice().createPipelineLayoutUnique(CreateInfos).value;
 	if (!PipelineLayout)
 		LOG(ELogSeverity::Fatal, "Failed to create pipeline layout")
 }

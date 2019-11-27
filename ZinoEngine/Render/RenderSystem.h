@@ -32,7 +32,7 @@ public:
 	/**
 	 * Prepare destroy (wait until GPU complete all operations before deleting objects)
 	 */
-	virtual void PrepareDestroy() = 0;
+	virtual void WaitGPU() = 0;
 
 	/**
 	 * Get command context
