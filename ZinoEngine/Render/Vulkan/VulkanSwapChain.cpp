@@ -71,19 +71,28 @@ CVulkanSwapChain::CVulkanSwapChain()
 		ImageViews[i] = g_VulkanRenderSystem->GetDevice()->GetDevice().createImageViewUnique(ImageView);
 	}
 
-	/** Create semaphores */
+	/** Create semaphores and fences */
 	{
 		vk::SemaphoreCreateInfo CreateInfos;
+		vk::FenceCreateInfo FenceCreateInfos(vk::FenceCreateFlagBits::eSignaled);
 
-		ImageAvailableSemaphore = g_VulkanRenderSystem->GetDevice()->GetDevice()
-			.createSemaphoreUnique(CreateInfos);
-		if(!ImageAvailableSemaphore)
-			LOG(ELogSeverity::Fatal, "Failed to create image available semaphore")
+		for (uint32_t i = 0; i < g_MaxFramesInFlight; ++i)
+		{
+			ImageAvailableSemaphores.emplace_back(g_VulkanRenderSystem->GetDevice()->GetDevice()
+				.createSemaphoreUnique(CreateInfos));
+			if (!ImageAvailableSemaphores[i])
+				LOG(ELogSeverity::Fatal, "Failed to create image available semaphore")
 
-		RenderFinishedSemaphore = g_VulkanRenderSystem->GetDevice()->GetDevice()
-			.createSemaphoreUnique(CreateInfos);
-		if (!RenderFinishedSemaphore)
-			LOG(ELogSeverity::Fatal, "Failed to create render finished semaphore")
+			RenderFinishedSemaphores.emplace_back(g_VulkanRenderSystem->GetDevice()->GetDevice()
+				.createSemaphoreUnique(CreateInfos));
+			if (!RenderFinishedSemaphores[i])
+				LOG(ELogSeverity::Fatal, "Failed to create render finished semaphore")
+
+			InFlightFences.emplace_back(g_VulkanRenderSystem->GetDevice()->GetDevice()
+				.createFenceUnique(FenceCreateInfos));
+			if (!InFlightFences[i])
+				LOG(ELogSeverity::Fatal, "Failed to create in flight fence")
+		}
 	}
 }
 
@@ -91,26 +100,32 @@ CVulkanSwapChain::~CVulkanSwapChain() {}
 
 uint32_t CVulkanSwapChain::AcquireImage()
 {
+	/** Wait for last frame render before acquriring new image */
+	g_VulkanRenderSystem->GetDevice()->GetDevice().waitForFences(
+		{ GetFenceForCurrentFrame() }, VK_TRUE, std::numeric_limits<uint64_t>::max());
+	g_VulkanRenderSystem->GetDevice()->GetDevice().resetFences({ GetFenceForCurrentFrame() });
+
 	CurrentImageIndex = g_VulkanRenderSystem->GetDevice()->GetDevice().acquireNextImageKHR(
 		*SwapChain,
 		std::numeric_limits<uint64_t>::max(),
-		*ImageAvailableSemaphore,
+		*ImageAvailableSemaphores[CurrentFrame],
 		vk::Fence()).value;
 
 	return CurrentImageIndex;
 }
 
-void CVulkanSwapChain::Present(CVulkanQueue* InPresentQueue,
-	const vk::Semaphore& InPresentFinishedSemaphore)
+void CVulkanSwapChain::Present(CVulkanQueue* InPresentQueue)
 {
 	vk::PresentInfoKHR PresentInfo(
 		1,
-		&InPresentFinishedSemaphore,
+		&*RenderFinishedSemaphores[CurrentFrame],
 		1,
 		&*SwapChain,
 		&CurrentImageIndex);
 
 	InPresentQueue->GetQueue().presentKHR(PresentInfo);
+
+	CurrentFrame = (CurrentFrame + 1) % g_MaxFramesInFlight;
 }
 
 vk::SurfaceFormatKHR CVulkanSwapChain::ChooseSwapChainFormat(const 

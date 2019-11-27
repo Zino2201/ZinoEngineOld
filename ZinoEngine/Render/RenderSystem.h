@@ -30,6 +30,11 @@ public:
 	virtual void Present() = 0;
 
 	/**
+	 * Prepare destroy (wait until GPU complete all operations before deleting objects)
+	 */
+	virtual void PrepareDestroy() = 0;
+
+	/**
 	 * Get command context
 	 */
 	virtual IRenderCommandContext* GetRenderCommandContext() const = 0;

@@ -53,6 +53,7 @@ void CEngine::Loop()
 			switch (Event.type)
 			{
 			case SDL_QUIT:
+				RenderSystem->PrepareDestroy();
 				return;
 			}
 		}

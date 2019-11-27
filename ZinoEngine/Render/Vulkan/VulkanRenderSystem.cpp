@@ -111,7 +111,7 @@ void CVulkanRenderSystem::Initialize()
 
 		/** Check if required extensions are supported */
 		LOG(ELogSeverity::Debug, "--- Extensions ---")
-			int FoundExtensionCount = 0;
+		int FoundExtensionCount = 0;
 		for (const char* RequiredExtension : RequiredExtensions)
 		{
 			bool Found = false;
@@ -204,12 +204,9 @@ void CVulkanRenderSystem::Initialize()
 		Device = std::make_unique<CVulkanDevice>(PhysicalDevice);
 	}
 
-	/** Command context */
-	RenderCommandContext = std::make_unique<CVulkanRenderCommandContext>(Device.get(),
-		Device->GetGraphicsQueue());
-
 	/** Create swap chain */
 	SwapChain = std::make_unique<CVulkanSwapChain>();
+
 
 	/** Create render pass */
 	{
@@ -276,6 +273,10 @@ void CVulkanRenderSystem::Initialize()
 			Framebuffers[i] = Device->GetDevice().createFramebufferUnique(CreateInfo);
 		}
 	}
+
+	/** Command context */
+	RenderCommandContext = std::make_unique<CVulkanRenderCommandContext>(Device.get(),
+		Device->GetGraphicsQueue());
 }
 
 void CVulkanRenderSystem::Prepare()
@@ -294,11 +295,13 @@ void CVulkanRenderSystem::Present()
 		->SubmitMainCommandBuffer(SwapChain->GetRenderFinishedSemaphore());
 
 	SwapChain->Present(
-		Device->GetPresentQueue(),
-		SwapChain->GetRenderFinishedSemaphore());
+		Device->GetPresentQueue());
+}
 
-	// TODO: Remove!
-	Device->GetPresentQueue()->GetQueue().waitIdle();
+void CVulkanRenderSystem::PrepareDestroy()
+{
+	/** Just wait for GPU to be done before destroying resources */
+	Device->GetDevice().waitIdle();
 }
 
 std::shared_ptr<IShader> CVulkanRenderSystem::CreateShader(const std::vector<uint8_t>& InData,

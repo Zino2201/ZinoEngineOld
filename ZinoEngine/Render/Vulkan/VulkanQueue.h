@@ -15,7 +15,8 @@ public:
 	 * Submit a command buffer
 	 */
 	void Submit(CVulkanCommandBuffer* InCommandBuffer,
-		const std::vector<vk::Semaphore>& InSignalSemaphores);
+		const std::vector<vk::Semaphore>& InSignalSemaphores,
+		const vk::Fence& InFence);
 
 	const vk::Queue& GetQueue() const { return Queue; }
 	const uint32_t& GetFamilyIndex() const { return FamilyIndex; }

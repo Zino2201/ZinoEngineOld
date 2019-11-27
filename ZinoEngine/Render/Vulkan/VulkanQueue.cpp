@@ -11,7 +11,8 @@ CVulkanQueue::CVulkanQueue(CVulkanDevice* InDevice, uint32_t InFamilyIndex)
 CVulkanQueue::~CVulkanQueue() {}
 
 void CVulkanQueue::Submit(CVulkanCommandBuffer* InCommandBuffer,
-	const std::vector<vk::Semaphore>& InSignalSemaphores)
+	const std::vector<vk::Semaphore>& InSignalSemaphores,
+	const vk::Fence& InFence)
 {
 	vk::SubmitInfo SubmitInfo(
 		static_cast<uint32_t>(InCommandBuffer->GetWaitSemaphores().size()),
@@ -22,7 +23,7 @@ void CVulkanQueue::Submit(CVulkanCommandBuffer* InCommandBuffer,
 		static_cast<uint32_t>(InSignalSemaphores.size()),
 		InSignalSemaphores.data());
 	
-	Queue.submit(1, &SubmitInfo, vk::Fence());
+	Queue.submit(1, &SubmitInfo, InFence);
 
 	InCommandBuffer->SubmitSemaphores();
 }
