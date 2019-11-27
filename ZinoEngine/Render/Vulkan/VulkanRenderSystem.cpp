@@ -12,6 +12,7 @@
 #include "Render/Renderer.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanQueue.h"
+#include "VulkanCommandBufferManager.h"
 
 CVulkanRenderSystem* g_VulkanRenderSystem = nullptr;
 
@@ -35,7 +36,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
 		LOG(ELogSeverity::Error, InCallbackData->pMessage)
-²		__debugbreak();
+		__debugbreak();
 		break;
 	}
 
@@ -78,7 +79,7 @@ void DestroyDebugUtilsMessengerEXT(
 	}
 }
 
-CVulkanRenderSystem::CVulkanRenderSystem() : CurrentFramebuffer(0) {}
+CVulkanRenderSystem::CVulkanRenderSystem() {}
 
 CVulkanRenderSystem::~CVulkanRenderSystem() 
 {
@@ -203,6 +204,10 @@ void CVulkanRenderSystem::Initialize()
 		Device = std::make_unique<CVulkanDevice>(PhysicalDevice);
 	}
 
+	/** Command context */
+	RenderCommandContext = std::make_unique<CVulkanRenderCommandContext>(Device.get(),
+		Device->GetGraphicsQueue());
+
 	/** Create swap chain */
 	SwapChain = std::make_unique<CVulkanSwapChain>();
 
@@ -259,16 +264,11 @@ void CVulkanRenderSystem::Initialize()
 
 		for (int i = 0; i < SwapChain->GetImageViews().size(); ++i)
 		{
-			vk::ImageView Attachments[] = 
-			{
-				*SwapChain->GetImageViews()[i]
-			};
-
 			vk::FramebufferCreateInfo CreateInfo(
 				vk::FramebufferCreateFlags(),
 				*RenderPass,
 				1,
-				Attachments,
+				&*SwapChain->GetImageViews()[i],
 				SwapChain->GetExtent().width,
 				SwapChain->GetExtent().height,
 				1);
@@ -278,30 +278,20 @@ void CVulkanRenderSystem::Initialize()
 	}
 }
 
-void CVulkanRenderSystem::AcquireImage()
+void CVulkanRenderSystem::Prepare()
 {
 	SwapChain->AcquireImage();
 
-	CVulkanRenderCommandContext* RenderCommandContext = static_cast<CVulkanRenderCommandContext*>(
-		CEngine::Get().GetRenderer()->GetMainCommandList()->GetCommandContext());
-
-	CVulkanCommandBuffer* CmdBuffer = RenderCommandContext->GetCommandBuffer();
+	CVulkanCommandBuffer* CmdBuffer = RenderCommandContext->GetCommandBufferManager()
+		->GetMainCommandBuffer();
 	CmdBuffer->AddWaitSemaphore(vk::PipelineStageFlagBits::eColorAttachmentOutput,
 		SwapChain->GetImageAvailableSemaphore());
 }
 
 void CVulkanRenderSystem::Present()
 {
-	AcquireImage();
-
-	// TODO: Rework present
-
-	CVulkanRenderCommandContext* RenderCommandContext = static_cast<CVulkanRenderCommandContext*>(
-		CEngine::Get().GetRenderer()->GetMainCommandList()->GetCommandContext());
-	CVulkanCommandBuffer* CmdBuffer = RenderCommandContext->GetCommandBuffer();
-
-	Device->GetGraphicsQueue()->Submit(CmdBuffer, 
-		{ SwapChain->GetRenderFinishedSemaphore() });
+	RenderCommandContext->GetCommandBufferManager()
+		->SubmitMainCommandBuffer(SwapChain->GetRenderFinishedSemaphore());
 
 	SwapChain->Present(
 		Device->GetPresentQueue(),
@@ -309,11 +299,6 @@ void CVulkanRenderSystem::Present()
 
 	// TODO: Remove!
 	Device->GetPresentQueue()->GetQueue().waitIdle();
-}
-
-IRenderCommandContext* CVulkanRenderSystem::CreateCommandContext()
-{
-	return new CVulkanRenderCommandContext();
 }
 
 std::shared_ptr<IShader> CVulkanRenderSystem::CreateShader(const std::vector<uint8_t>& InData,

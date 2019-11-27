@@ -4,9 +4,7 @@
 
 CRenderCommandList::CRenderCommandList() 
 {
-	/** Ask the render system to create a command context */
-	CommandContext = std::unique_ptr<IRenderCommandContext>(
-		CEngine::Get().GetRenderSystem()->CreateCommandContext());
+	CommandContext = CEngine::Get().GetRenderSystem()->GetRenderCommandContext();
 }
 
 CRenderCommandList::~CRenderCommandList() {}

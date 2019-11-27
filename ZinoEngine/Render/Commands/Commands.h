@@ -48,10 +48,10 @@ public:
 	 */
 	void ExecuteAndFlush();
 
-	IRenderCommandContext* GetCommandContext() const { return CommandContext.get(); }
+	IRenderCommandContext* GetCommandContext() const { return CommandContext; }
 private:
 	std::vector<std::unique_ptr<IRenderCommand>> Commands;
-	std::unique_ptr<IRenderCommandContext> CommandContext;
+	IRenderCommandContext* CommandContext;
 };
 
 /**

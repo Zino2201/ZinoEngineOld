@@ -1,12 +1,13 @@
 #include "VulkanCommandPool.h"
 #include "VulkanDevice.h"
 
-CVulkanCommandPool::CVulkanCommandPool(CVulkanDevice* InDevice) : 
+CVulkanCommandPool::CVulkanCommandPool(CVulkanDevice* InDevice,
+	const uint32_t& InFamilyIndex) : 
 	CVulkanDeviceResource(InDevice)
 {
 	vk::CommandPoolCreateInfo PoolInfo(
 		vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-		Device->GetQueueFamilyIndices().Graphics.value());
+		InFamilyIndex);
 
 	CommandPool = Device->GetDevice().createCommandPoolUnique(PoolInfo);
 	if(!CommandPool)

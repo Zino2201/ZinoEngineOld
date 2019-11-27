@@ -4,13 +4,18 @@
 
 class CVulkanCommandPool;
 class CVulkanCommandBuffer;
+class CVulkanDevice;
+class CVulkanQueue;
+class CVulkanCommandBufferManager;
+
 /**
  * Vulkan render command context
  */
 class CVulkanRenderCommandContext : public IRenderCommandContext
 {
 public:
-	CVulkanRenderCommandContext();
+	CVulkanRenderCommandContext(CVulkanDevice* InDevice,
+		CVulkanQueue* InQueue);
 
 	virtual void Begin() override;
 	virtual void End() override;
@@ -20,8 +25,10 @@ public:
 	virtual void Draw(const uint32_t& InVertexCount, const uint32_t& InInstanceCount,
 		const uint32_t& InFirstVertex, const uint32_t& InFirstInstance) override;
 
-	CVulkanCommandBuffer* GetCommandBuffer() const { return CommandBuffer.get(); }
+	CVulkanCommandBufferManager* GetCommandBufferManager() const { return CommandBufferManager.get(); }
+	CVulkanQueue* GetQueue() const { return Queue; }
 private:
-	std::unique_ptr<CVulkanCommandPool> CommandPool;
-	std::unique_ptr<CVulkanCommandBuffer> CommandBuffer;
+	CVulkanDevice* Device;
+	CVulkanQueue* Queue;
+	std::unique_ptr<CVulkanCommandBufferManager> CommandBufferManager;
 };

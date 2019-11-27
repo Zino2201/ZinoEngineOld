@@ -62,6 +62,8 @@ void CEngine::Loop()
 		/** Render */
 		std::array<float, 4> ClearColor = { 0.f, 0.f, 0.f, 1.0f };
 		
+		RenderSystem->Prepare();
+		
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBeginRecording>();
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBeginRenderPass>(ClearColor);
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindGraphicsPipeline>(Pipeline);

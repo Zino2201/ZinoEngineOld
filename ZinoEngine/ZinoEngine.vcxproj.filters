@@ -69,6 +69,9 @@
     <ClCompile Include="Render\Vulkan\VulkanQueue.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="Render\Vulkan\VulkanCommandBufferManager.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\EngineCore.h">

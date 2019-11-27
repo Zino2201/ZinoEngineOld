@@ -3,9 +3,9 @@
 #include "VulkanCommandBuffer.h"
 
 CVulkanQueue::CVulkanQueue(CVulkanDevice* InDevice, uint32_t InFamilyIndex)
-	: CVulkanDeviceResource(InDevice)
+	: CVulkanDeviceResource(InDevice), FamilyIndex(InFamilyIndex)
 {
-	Queue = Device->GetDevice().getQueue(InFamilyIndex, 0);
+	Queue = Device->GetDevice().getQueue(FamilyIndex, 0);
 }
 
 CVulkanQueue::~CVulkanQueue() {}

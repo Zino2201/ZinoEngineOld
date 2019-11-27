@@ -22,6 +22,7 @@ public:
 	const vk::SurfaceFormatKHR& GetSurfaceFormat() const { return SurfaceFormat; }
 	const vk::Semaphore& GetImageAvailableSemaphore() const { return *ImageAvailableSemaphore; }
 	const vk::Semaphore& GetRenderFinishedSemaphore() const { return *RenderFinishedSemaphore; }
+	const uint32_t& GetCurrentImageIndex() const { return CurrentImageIndex; }
 private:
 	vk::SurfaceFormatKHR ChooseSwapChainFormat(const std::vector<vk::SurfaceFormatKHR>& InFormats) const;
 	vk::PresentModeKHR ChooseSwapChainPresentMode(const std::vector<vk::PresentModeKHR>& InModes) const;

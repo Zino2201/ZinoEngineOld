@@ -166,6 +166,7 @@
     <ClCompile Include="Render\Commands\RenderCommands.cpp" />
     <ClCompile Include="Render\Renderer.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanCommandBuffer.cpp" />
+    <ClCompile Include="Render\Vulkan\VulkanCommandBufferManager.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanCommandPool.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanDevice.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanPipeline.cpp" />

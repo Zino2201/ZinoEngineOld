@@ -6,7 +6,8 @@
 class CVulkanCommandPool : public CVulkanDeviceResource
 {
 public:
-	CVulkanCommandPool(CVulkanDevice* InDevice);
+	CVulkanCommandPool(CVulkanDevice* InDevice,
+		const uint32_t& InFamilyIndex);
 	~CVulkanCommandPool();
 
 	const vk::CommandPool& GetCommandPool() const { return *CommandPool; }

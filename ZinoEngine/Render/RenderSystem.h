@@ -20,14 +20,19 @@ public:
 	virtual void Initialize() = 0;
 
 	/**
-	 * Present
+	 * Prepare frame
+	 */
+	virtual void Prepare() = 0;
+
+	/**
+	 * Present image
 	 */
 	virtual void Present() = 0;
 
 	/**
-	 * Create command context
+	 * Get command context
 	 */
-	virtual IRenderCommandContext* CreateCommandContext() = 0;
+	virtual IRenderCommandContext* GetRenderCommandContext() const = 0;
 
 	/**
 	 * Create a shader

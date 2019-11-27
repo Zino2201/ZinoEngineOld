@@ -18,6 +18,8 @@ public:
 		const std::vector<vk::Semaphore>& InSignalSemaphores);
 
 	const vk::Queue& GetQueue() const { return Queue; }
+	const uint32_t& GetFamilyIndex() const { return FamilyIndex; }
 private:
 	vk::Queue Queue;
+	uint32_t FamilyIndex;
 };
