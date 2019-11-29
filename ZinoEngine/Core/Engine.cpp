@@ -149,6 +149,7 @@ void CEngine::Loop()
 				break;
 			case SDL_QUIT:
 				Run = false;
+				RenderThread.join();
 				RenderSystem->WaitGPU();
 				return;
 			}
