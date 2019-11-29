@@ -12,8 +12,11 @@ CVulkanPipeline::~CVulkanPipeline() {}
 
 CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice, 
 	IShader* InVertexShader,
-	IShader* InFragmentShader)
-	: IGraphicsPipeline(InVertexShader, InFragmentShader), CVulkanPipeline(InDevice)
+	IShader* InFragmentShader,
+	const SVertexInputBindingDescription& InBindingDescription,
+	const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions)
+	: IGraphicsPipeline(InVertexShader, InFragmentShader, InBindingDescription, 
+		InAttributeDescriptions), CVulkanPipeline(InDevice)
 {
 	/** Create pipeline layout */
 	PipelineLayout = std::make_unique<CVulkanPipelineLayout>(Device);
@@ -38,8 +41,30 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 			Shader->GetMain());
 	}
 
+	/** Input attributes */
+	vk::VertexInputBindingDescription InputAttribute(
+		InBindingDescription.Binding,
+		InBindingDescription.Stride,
+		VulkanUtil::VertexInputRateToVkVertexInputRate(InBindingDescription.InputRate));
+
+	/** Attributes */
+	std::vector<vk::VertexInputAttributeDescription> Attributes;
+	for(const SVertexInputAttributeDescription& Attribute : InAttributeDescriptions)
+	{
+		Attributes.emplace_back(
+			Attribute.Location,
+			Attribute.Binding,
+			VulkanUtil::FormatToVkFormat(Attribute.Format),
+			Attribute.Offset);
+	}
+
 	/** Vertex input infos */
-	vk::PipelineVertexInputStateCreateInfo VertexInputInfos;
+	vk::PipelineVertexInputStateCreateInfo VertexInputInfos(
+		vk::PipelineVertexInputStateCreateFlags(),
+		1,
+		&InputAttribute,
+		static_cast<uint32_t>(Attributes.size()),
+		Attributes.data());
 
 	/** Input assembly */
 	vk::PipelineInputAssemblyStateCreateInfo InputAssembly(

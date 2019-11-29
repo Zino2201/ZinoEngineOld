@@ -22,6 +22,7 @@ public:
 	virtual void BeginRenderPass(const std::array<float, 4>& InClearColor) override;
 	virtual void EndRenderPass() override;
 	virtual void BindGraphicsPipeline(IGraphicsPipeline* InGraphicsPipeline) override;
+	virtual void BindVertexBuffers(const std::vector<std::shared_ptr<IBuffer>>& InVertexBuffers) override;
 	virtual void Draw(const uint32_t& InVertexCount, const uint32_t& InInstanceCount,
 		const uint32_t& InFirstVertex, const uint32_t& InFirstInstance) override;
 

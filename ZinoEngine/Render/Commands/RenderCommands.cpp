@@ -30,3 +30,8 @@ void CRenderCommandDraw::Execute(CRenderCommandList* InCmdList)
 	InCmdList->GetCommandContext()->Draw(VertexCount,
 		InstanceCount, FirstVertex, FirstInstance);
 }
+
+void CRenderCommandBindVertexBuffers::Execute(CRenderCommandList* InCmdList) 
+{
+	InCmdList->GetCommandContext()->BindVertexBuffers(VertexBuffers);
+}

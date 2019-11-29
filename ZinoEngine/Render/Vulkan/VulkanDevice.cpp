@@ -54,9 +54,16 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysDevice)
 		GraphicsQueue = std::make_unique<CVulkanQueue>(this, QueueFamilyIndices.Graphics.value());
 		PresentQueue = std::make_unique<CVulkanQueue>(this, QueueFamilyIndices.Present.value());
 	}
+
+	/** Allocator */
+	VmaAllocatorCreateInfo allocatorInfo = {};
+	allocatorInfo.physicalDevice = static_cast<VkPhysicalDevice>(PhysicalDevice);
+	allocatorInfo.device = static_cast<VkDevice>(*Device);
+
+	vmaCreateAllocator(&allocatorInfo, &Allocator);
 }
 
 CVulkanDevice::~CVulkanDevice() 
 {
-	
+	vmaDestroyAllocator(Allocator);
 }

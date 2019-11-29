@@ -16,6 +16,7 @@ public:
 	const vk::PhysicalDevice& GetPhysicalDevice() const { return PhysicalDevice; }
 	const vk::Device& GetDevice() const { return *Device; }
 	const SVulkanQueueFamilyIndices& GetQueueFamilyIndices() const { return QueueFamilyIndices; }
+	const VmaAllocator& GetAllocator() const { return Allocator; }
 	CVulkanQueue* GetGraphicsQueue() const { return GraphicsQueue.get(); }
 	CVulkanQueue* GetPresentQueue() const { return PresentQueue.get(); }
 private:
@@ -33,4 +34,7 @@ private:
 
 	/** Logical device */
 	vk::UniqueDevice Device;
+
+	/** Vma Allocator */
+	VmaAllocator Allocator;
 };

@@ -107,7 +107,7 @@
       <PreprocessorDefinitions>_HAS_EXCEPTIONS=0;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Projects\ZinoEngine\Libs\VulkanMemoryAllocator;D:\Projects\ZinoEngine\Libs\enum-flags\include;D:\Projects\ZinoEngine\Libs\magic_enum;D:\Projects\ZinoEngine\Libs\glm;D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
@@ -150,7 +150,7 @@
       <ConformanceMode>true</ConformanceMode>
       <MinimalRebuild>false</MinimalRebuild>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Projects\ZinoEngine\Libs\VulkanMemoryAllocator;D:\Projects\ZinoEngine\Libs\enum-flags\include;D:\Projects\ZinoEngine\Libs\magic_enum;D:\Projects\ZinoEngine\Libs\glm;D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
     <Link>
@@ -169,10 +169,12 @@
     <ClCompile Include="Render\Commands\Commands.cpp" />
     <ClCompile Include="Render\Commands\RenderCommands.cpp" />
     <ClCompile Include="Render\Renderer.cpp" />
+    <ClCompile Include="Render\Vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanCommandBuffer.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanCommandBufferManager.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanCommandPool.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="Render\Vulkan\VulkanMemoryAllocator.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanPipelineLayout.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanQueue.cpp" />
@@ -187,14 +189,19 @@
     <ClInclude Include="Core\Delegate.h" />
     <ClInclude Include="Core\Engine.h" />
     <ClInclude Include="Core\EngineCore.h" />
+    <ClInclude Include="Core\Flags.h" />
+    <ClInclude Include="Core\GameState.h" />
     <ClInclude Include="Core\Logger.h" />
+    <ClInclude Include="Core\Threading.h" />
     <ClInclude Include="IO\IOUtils.h" />
+    <ClInclude Include="Render\Buffer.h" />
     <ClInclude Include="Render\Commands\Commands.h" />
     <ClInclude Include="Render\Commands\RenderCommands.h" />
     <ClInclude Include="Render\DeviceResource.h" />
     <ClInclude Include="Render\Pipeline.h" />
     <ClInclude Include="Render\Renderer.h" />
     <ClInclude Include="Render\Shader.h" />
+    <ClInclude Include="Render\Vulkan\VulkanBuffer.h" />
     <ClInclude Include="Render\Vulkan\VulkanCommandBuffer.h" />
     <ClInclude Include="Render\Vulkan\VulkanCommandBufferManager.h" />
     <ClInclude Include="Render\Vulkan\VulkanCommandPool.h" />
@@ -214,6 +221,7 @@
     <ClInclude Include="Render\Vulkan\VulkanSwapChain.h" />
     <ClInclude Include="Render\Vulkan\VulkanUtil.h" />
     <ClInclude Include="Render\Window.h" />
+    <ClInclude Include="World\World.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Shaders\main.frag" />

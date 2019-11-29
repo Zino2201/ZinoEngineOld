@@ -13,7 +13,9 @@
 #endif
 
 #define VULKAN_HPP_NO_EXCEPTIONS
+#define VULKAN_HPP_ASSERT
 #include <vulkan/vulkan.hpp>
+#include <vk_mem_alloc.h>
 
 /** Constants */
 

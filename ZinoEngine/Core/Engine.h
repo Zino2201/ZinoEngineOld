@@ -39,4 +39,6 @@ private:
 	std::unique_ptr<CWindow> Window;
 	std::unique_ptr<IRenderSystem> RenderSystem;
 	std::unique_ptr<CRenderer> Renderer;
+	std::thread RenderThread;
+	std::atomic_bool Run;
 };

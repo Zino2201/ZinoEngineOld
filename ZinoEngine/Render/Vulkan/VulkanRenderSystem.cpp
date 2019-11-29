@@ -13,6 +13,7 @@
 #include "VulkanCommandBuffer.h"
 #include "VulkanQueue.h"
 #include "VulkanCommandBufferManager.h"
+#include "VulkanBuffer.h"
 
 CVulkanRenderSystem* g_VulkanRenderSystem = nullptr;
 
@@ -327,9 +328,21 @@ std::shared_ptr<IShader> CVulkanRenderSystem::CreateShader(const std::vector<uin
 }
 
 std::shared_ptr<IGraphicsPipeline> CVulkanRenderSystem::CreateGraphicsPipeline(IShader* InVertexShader,
-	IShader* InFragmentShader)
+	IShader* InFragmentShader,
+	const SVertexInputBindingDescription& InBindingDescription,
+	const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions)
 {
-	return std::make_shared<CVulkanGraphicsPipeline>(Device.get(), InVertexShader, InFragmentShader);
+	return std::make_shared<CVulkanGraphicsPipeline>(Device.get(), 
+		InVertexShader, 
+		InFragmentShader,
+		InBindingDescription,
+		InAttributeDescriptions);
+}
+
+std::shared_ptr<IBuffer> CVulkanRenderSystem::CreateBuffer(const SBufferInfos& InInfos)
+{
+	return std::make_shared<CVulkanBuffer>(Device.get(),
+		InInfos);
 }
 
 std::vector<const char*> CVulkanRenderSystem::GetRequiredExtensions(SDL_Window* InWindow) const

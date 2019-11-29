@@ -9,12 +9,14 @@ CRenderCommandList::CRenderCommandList()
 
 CRenderCommandList::~CRenderCommandList() {}
 
-void CRenderCommandList::ExecuteAndFlush()
+void CRenderCommandList::ExecuteFrontCommand()
 {
-	for (const std::unique_ptr<IRenderCommand>& Command : Commands)
-	{
-		Command->Execute(this);
-	}
+	const std::unique_ptr<IRenderCommand>& Command = Commands.front();
+	Command->Execute(this);
+	Commands.pop();
+}
 
-	Commands.clear();
+void CRenderCommandList::ClearQueue()
+{
+	Commands = {};
 }

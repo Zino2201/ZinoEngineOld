@@ -3,6 +3,7 @@
 #include "Commands.h"
 
 class IGraphicsPipeline;
+class IBuffer;
 
 /**
  * Begin command recording command
@@ -28,7 +29,8 @@ public:
 class CRenderCommandBeginRenderPass : public IRenderCommand
 {
 public:
-	CRenderCommandBeginRenderPass(const std::array<float, 4>& InClearColor) {}
+	CRenderCommandBeginRenderPass(const std::array<float, 4>& InClearColor) 
+		: ClearColor(InClearColor) {}
 
 	virtual void Execute(CRenderCommandList* InCmdList) override;
 private:
@@ -58,6 +60,9 @@ private:
 	std::shared_ptr<IGraphicsPipeline> GraphicsPipeline;
 };
 
+/**
+ * Draw command (non-indexed)
+ */
 class CRenderCommandDraw : public IRenderCommand
 {
 public:
@@ -72,4 +77,21 @@ private:
 	uint32_t InstanceCount;
 	uint32_t FirstVertex;
 	uint32_t FirstInstance;
+};
+
+/**
+ * Bind vertex buffers command
+ */
+class CRenderCommandBindVertexBuffers : public IRenderCommand
+{
+public:
+	CRenderCommandBindVertexBuffers(const std::shared_ptr<IBuffer>& InBuffer) :
+		VertexBuffers({ InBuffer }) {}
+
+	CRenderCommandBindVertexBuffers(const std::vector<std::shared_ptr<IBuffer>>& InBuffers) :
+		VertexBuffers(InBuffers) {}
+
+	virtual void Execute(CRenderCommandList* InCmdList) override;
+private:
+	std::vector<std::shared_ptr<IBuffer>> VertexBuffers;
 };

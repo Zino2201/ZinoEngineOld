@@ -1,0 +1,7 @@
+using pkg-config ;
+import pkg-config ;
+
+project enum-flags-test ;
+
+pkg-config.import enum-flags ;
+exe app : main.cpp enum-flags ;

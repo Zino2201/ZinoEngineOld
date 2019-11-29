@@ -10,6 +10,7 @@
 class CRenderCommandList;
 class IRenderCommandContext;
 class IGraphicsPipeline;
+class IBuffer;
 
 /**
  * Base render command
@@ -39,18 +40,21 @@ public:
 	{
 		static_assert(std::is_convertible<Cmd*, IRenderCommand*>::value,
 			"Command class should derive from IRenderCommand");
-		Commands.emplace_back(std::make_unique<Cmd>(InArgs...));
+		Commands.push(std::make_unique<Cmd>(InArgs...));
 		return static_cast<Cmd*>(Commands.back().get());
 	}
 
 	/**
-	 * Execute all commands and flush the queue
+	 * Execute command in front of the queue
 	 */
-	void ExecuteAndFlush();
+	void ExecuteFrontCommand();
+
+	void ClearQueue();
 
 	IRenderCommandContext* GetCommandContext() const { return CommandContext; }
+	const std::size_t GetCommandsCount() { return Commands.size(); }
 private:
-	std::vector<std::unique_ptr<IRenderCommand>> Commands;
+	std::queue<std::unique_ptr<IRenderCommand>> Commands;
 	IRenderCommandContext* CommandContext;
 };
 
@@ -88,6 +92,11 @@ public:
 	 * Bind graphics pipeline
 	 */
 	virtual void BindGraphicsPipeline(IGraphicsPipeline* InGraphicsPipeline) = 0;
+
+	/**
+	 * Bind vertex b uffers
+	 */
+	virtual void BindVertexBuffers(const std::vector<std::shared_ptr<IBuffer>>& InVertexBuffers) = 0;
 
 	/**
 	 * Draw

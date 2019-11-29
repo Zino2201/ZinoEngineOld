@@ -31,6 +31,8 @@ class CVulkanGraphicsPipeline : public IGraphicsPipeline,
 public:
 	CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 		IShader* InVertexShader,
-		IShader* InFragmentShader);
+		IShader* InFragmentShader,
+		const SVertexInputBindingDescription& InBindingDescription,
+		const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions);
 	~CVulkanGraphicsPipeline();
 };

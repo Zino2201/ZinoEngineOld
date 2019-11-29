@@ -1,6 +1,8 @@
 #pragma once
 
 #include "RenderCore.h"
+#include "Pipeline.h"
+#include "Buffer.h"
 
 class IRenderCommandContext;
 class IShader;
@@ -46,8 +48,15 @@ public:
 		const EShaderStage& InShaderStage) = 0;
 
 	/**
+	 * Create a buffer
+	 */
+	virtual std::shared_ptr<IBuffer> CreateBuffer(const SBufferInfos& InInfos) = 0;
+
+	/**
 	 * Create a graphics pipeline
 	 */
 	virtual std::shared_ptr<IGraphicsPipeline> CreateGraphicsPipeline(IShader* InVertexShader,
-		IShader* InFragmentShader) = 0;
+		IShader* InFragmentShader,
+		const SVertexInputBindingDescription& InBindingDescription,
+		const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions) = 0;
 };
