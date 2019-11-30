@@ -61,25 +61,6 @@ private:
 };
 
 /**
- * Draw command (non-indexed)
- */
-class CRenderCommandDraw : public IRenderCommand
-{
-public:
-	CRenderCommandDraw(const uint32_t& InVertexCount, const uint32_t& InInstanceCount,
-		const uint32_t& InFirstVertex, const uint32_t& InFirstInstance) :
-		VertexCount(InVertexCount), InstanceCount(InInstanceCount),
-		FirstVertex(InFirstVertex), FirstInstance(InFirstVertex) {}
-
-	virtual void Execute(CRenderCommandList* InCmdList) override;
-private:
-	uint32_t VertexCount;
-	uint32_t InstanceCount;
-	uint32_t FirstVertex;
-	uint32_t FirstInstance;
-};
-
-/**
  * Bind vertex buffers command
  */
 class CRenderCommandBindVertexBuffers : public IRenderCommand
@@ -94,4 +75,61 @@ public:
 	virtual void Execute(CRenderCommandList* InCmdList) override;
 private:
 	std::vector<std::shared_ptr<IBuffer>> VertexBuffers;
+};
+
+/**
+ * Bind index buffer command
+ */
+class CRenderCommandBindIndexBuffer : public IRenderCommand
+{
+public:
+	CRenderCommandBindIndexBuffer(const std::shared_ptr<IBuffer>& InBuffer,
+		const uint64_t& InOffset,
+		const EIndexFormat& InIndexFormat) :
+		IndexBuffer(InBuffer), Offset(InOffset), IndexFormat(InIndexFormat) {}
+
+	virtual void Execute(CRenderCommandList* InCmdList) override;
+private:
+	std::shared_ptr<IBuffer> IndexBuffer;
+	uint64_t Offset;
+	EIndexFormat IndexFormat;
+};
+
+/**
+ * Draw command (non-indexed)
+ */
+class CRenderCommandDraw : public IRenderCommand
+{
+public:
+	CRenderCommandDraw(const uint32_t& InVertexCount, const uint32_t& InInstanceCount,
+		const uint32_t& InFirstVertex, const uint32_t& InFirstInstance) :
+		VertexCount(InVertexCount), InstanceCount(InInstanceCount),
+		FirstVertex(InFirstVertex), FirstInstance(InFirstInstance) {}
+
+	virtual void Execute(CRenderCommandList* InCmdList) override;
+private:
+	uint32_t VertexCount;
+	uint32_t InstanceCount;
+	uint32_t FirstVertex;
+	uint32_t FirstInstance;
+};
+
+/**
+ * Draw command (indexed)
+ */
+class CRenderCommandDrawIndexed : public IRenderCommand
+{
+public:
+	CRenderCommandDrawIndexed(const uint32_t& InIndexCount, const uint32_t& InInstanceCount,
+		const uint32_t& InFirstIndex, const int32_t& InVertexOffset, const uint32_t& InFirstInstance) :
+		IndexCount(InIndexCount), InstanceCount(InInstanceCount),
+		FirstIndex(InFirstIndex), VertexOffset(InVertexOffset), FirstInstance(InFirstInstance) {}
+
+	virtual void Execute(CRenderCommandList* InCmdList) override;
+private:
+	uint32_t IndexCount;
+	uint32_t InstanceCount;
+	uint32_t FirstIndex;
+	int32_t VertexOffset;
+	uint32_t FirstInstance;
 };

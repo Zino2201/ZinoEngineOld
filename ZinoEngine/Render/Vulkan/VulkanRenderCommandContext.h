@@ -23,8 +23,13 @@ public:
 	virtual void EndRenderPass() override;
 	virtual void BindGraphicsPipeline(IGraphicsPipeline* InGraphicsPipeline) override;
 	virtual void BindVertexBuffers(const std::vector<std::shared_ptr<IBuffer>>& InVertexBuffers) override;
+	virtual void BindIndexBuffer(const std::shared_ptr<IBuffer>& InIndexBuffer,
+		const uint64_t& InOffset,
+		const EIndexFormat& InIndexFormat) override;
 	virtual void Draw(const uint32_t& InVertexCount, const uint32_t& InInstanceCount,
 		const uint32_t& InFirstVertex, const uint32_t& InFirstInstance) override;
+	virtual void DrawIndexed(const uint32_t& InIndexCount, const uint32_t& InInstanceCount,
+		const uint32_t& InFirstIndex, const int32_t& InVertexOffset, const uint32_t& InFirstInstance) override;
 
 	CVulkanCommandBufferManager* GetCommandBufferManager() const { return CommandBufferManager.get(); }
 	CVulkanQueue* GetQueue() const { return Queue; }

@@ -7,6 +7,7 @@ struct SDL_Window;
 class CVulkanDevice;
 class CVulkanSwapChain;
 class CVulkanRenderCommandContext;
+class CVulkanCommandPool;
 
 /**
  * Vulkan render system
@@ -37,6 +38,7 @@ public:
 	const std::vector<vk::UniqueFramebuffer>& GetFramebuffers() { return Framebuffers; }
 	CVulkanDevice* GetDevice() const { return Device.get(); }
 	CVulkanSwapChain* GetSwapChain() const { return SwapChain.get(); }
+	CVulkanCommandPool* GetMemoryPool() const { return MemoryPool.get(); }
 	IRenderCommandContext* GetRenderCommandContext() const override 
 	{ 
 		return reinterpret_cast<IRenderCommandContext*>(RenderCommandContext.get()); 
@@ -83,4 +85,7 @@ private:
 
 	/** Render command context */
 	std::unique_ptr<CVulkanRenderCommandContext> RenderCommandContext;
+
+	/** Memory transfer operations command pool */
+	std::unique_ptr<CVulkanCommandPool> MemoryPool;
 };

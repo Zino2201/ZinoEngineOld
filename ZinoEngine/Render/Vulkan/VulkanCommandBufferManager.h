@@ -40,5 +40,6 @@ private:
 	 * One per pool
 	 */
 	std::vector<std::unique_ptr<CVulkanCommandBuffer>> CommandBuffers;
+
 	CVulkanQueue* Queue;
 };

@@ -7,13 +7,13 @@
  */
 struct SBufferInfos
 {
-	uint32_t Size;
+	uint64_t Size;
 	EBufferUsageFlags Usage;
 	EBufferMemoryUsage MemoryUsage;
 	bool bUsePersistentMapping;
 
-	SBufferInfos(const std::uint32_t& InSize, 
-		const EBufferUsage& InUsage, const EBufferMemoryUsage& InMemUsage,
+	SBufferInfos(const std::uint64_t& InSize, 
+		const EBufferUsageFlags& InUsage, const EBufferMemoryUsage& InMemUsage,
 		const bool& bInUsePersistentMapping = false) : Size(InSize),
 		Usage(InUsage), MemoryUsage(InMemUsage), bUsePersistentMapping(bInUsePersistentMapping) {}
 };
@@ -24,7 +24,7 @@ struct SBufferInfos
 class IBuffer
 {
 public:
-	IBuffer(const SBufferInfos& InInfos) {}
+	IBuffer(const SBufferInfos& InInfos) : Infos(InInfos) {}
 	virtual ~IBuffer() = default;
 
 	/**
@@ -37,4 +37,13 @@ public:
 	 * Unmap the buffer
 	 */
 	virtual void Unmap() = 0;
+
+	/**
+	 * Copy buffer to specified dest
+	 */
+	virtual void Copy(IBuffer* InDst) = 0;
+
+	const SBufferInfos& GetInfos() const { return Infos; }
+protected:
+	SBufferInfos Infos;
 };

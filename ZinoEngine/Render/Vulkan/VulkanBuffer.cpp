@@ -1,5 +1,9 @@
 #include "VulkanBuffer.h"
 #include "VulkanDevice.h"
+#include "VulkanCommandPool.h"
+#include "VulkanCommandBuffer.h"
+#include "VulkanRenderSystem.h"
+#include "VulkanQueue.h"
 
 CVulkanBuffer::CVulkanBuffer(CVulkanDevice* InDevice,
 	const SBufferInfos& InInfos) : IBuffer(InInfos), CVulkanDeviceResource(InDevice)
@@ -46,4 +50,35 @@ void CVulkanBuffer::Unmap()
 {
 	vmaUnmapMemory(Device->GetAllocator(),
 		Allocation);
+}
+
+void CVulkanBuffer::Copy(IBuffer* InDst)
+{
+	CVulkanBuffer* Dst = static_cast<CVulkanBuffer*>(InDst);
+
+	/** Allocate temporary command buffer from memory pool */
+	vk::CommandBufferAllocateInfo AllocateInfo(
+		g_VulkanRenderSystem->GetMemoryPool()->GetCommandPool(),
+		vk::CommandBufferLevel::ePrimary,
+		1);
+
+	vk::UniqueCommandBuffer CommandBuffer = 
+		std::move(Device->GetDevice().allocateCommandBuffersUnique(AllocateInfo).value.front());
+
+	CommandBuffer->begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));;
+	CommandBuffer->copyBuffer(Buffer, Dst->GetBuffer(), vk::BufferCopy(0, 0, Infos.Size));
+	CommandBuffer->end();
+
+	/** Submit to graphics queue */
+
+	vk::SubmitInfo SubmitInfo(
+		0,
+		nullptr,
+		nullptr,
+		1,
+		&*CommandBuffer,
+		0,
+		nullptr);
+	Device->GetGraphicsQueue()->GetQueue().submit(SubmitInfo, vk::Fence());
+	Device->GetGraphicsQueue()->GetQueue().waitIdle();
 }

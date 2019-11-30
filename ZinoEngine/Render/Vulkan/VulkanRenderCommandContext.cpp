@@ -61,9 +61,29 @@ void CVulkanRenderCommandContext::BindVertexBuffers(
 	}
 }
 
+void CVulkanRenderCommandContext::BindIndexBuffer(const std::shared_ptr<IBuffer>& InIndexBuffer,
+	const uint64_t& InOffset,
+	const EIndexFormat& InIndexFormat)
+{
+	vk::Buffer Buffer = static_cast<CVulkanBuffer*>(InIndexBuffer.get())->GetBuffer();
+
+	CommandBufferManager->GetMainCommandBuffer()->GetCommandBuffer().bindIndexBuffer(
+		Buffer,
+		InOffset,
+		VulkanUtil::IndexFormatToVkIndexType(InIndexFormat));
+}
+
 void CVulkanRenderCommandContext::Draw(const uint32_t& InVertexCount, const uint32_t& InInstanceCount,
 	const uint32_t& InFirstVertex, const uint32_t& InFirstInstance)
 {
 	CommandBufferManager->GetMainCommandBuffer()->GetCommandBuffer().draw(InVertexCount, InInstanceCount,
 		InFirstVertex, InFirstInstance);
+}
+
+void CVulkanRenderCommandContext::DrawIndexed(const uint32_t& InIndexCount, 
+	const uint32_t& InInstanceCount,const uint32_t& InFirstIndex, 
+	const int32_t& InVertexOffset, const uint32_t& InFirstInstance)
+{
+	CommandBufferManager->GetMainCommandBuffer()->GetCommandBuffer().drawIndexed(InIndexCount,
+		InInstanceCount, InFirstIndex, InVertexOffset, InFirstInstance);
 }

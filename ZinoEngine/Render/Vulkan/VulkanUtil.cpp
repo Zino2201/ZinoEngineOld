@@ -87,6 +87,16 @@ vk::BufferUsageFlags VulkanUtil::BufferUsageFlagsToVkBufferUsageFlags(const EBuf
 		Flags |= vk::BufferUsageFlagBits::eIndexBuffer;
 	}
 
+	if (InUsage & EBufferUsage::TransferSrc)
+	{
+		Flags |= vk::BufferUsageFlagBits::eTransferSrc;
+	}
+
+	if (InUsage & EBufferUsage::TransferDst)
+	{
+		Flags |= vk::BufferUsageFlagBits::eTransferDst;
+	}
+
 	return Flags;
 }
 
@@ -103,5 +113,17 @@ VmaMemoryUsage VulkanUtil::BufferMemoryUsageToVmaMemoryUsage(const EBufferMemory
 		return VMA_MEMORY_USAGE_GPU_TO_CPU;
 	case EBufferMemoryUsage::GpuOnly:
 		return VMA_MEMORY_USAGE_GPU_ONLY;
+	}
+}
+
+vk::IndexType VulkanUtil::IndexFormatToVkIndexType(const EIndexFormat& InFormat)
+{
+	switch(InFormat)
+	{
+	default:
+	case EIndexFormat::Uint16:
+		return vk::IndexType::eUint16;
+	case EIndexFormat::Uint32:
+		return vk::IndexType::eUint32;
 	}
 }

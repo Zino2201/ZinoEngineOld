@@ -14,6 +14,7 @@
 #include "VulkanQueue.h"
 #include "VulkanCommandBufferManager.h"
 #include "VulkanBuffer.h"
+#include "VulkanCommandPool.h"
 
 CVulkanRenderSystem* g_VulkanRenderSystem = nullptr;
 
@@ -215,6 +216,11 @@ void CVulkanRenderSystem::Initialize()
 	/** Command context */
 	RenderCommandContext = std::make_unique<CVulkanRenderCommandContext>(Device.get(),
 		Device->GetGraphicsQueue());
+
+	MemoryPool = std::make_unique<CVulkanCommandPool>(
+		Device.get(),
+		0,
+		vk::CommandPoolCreateFlagBits::eTransient);
 }
 
 void CVulkanRenderSystem::OnSwapchainRecreated()

@@ -14,4 +14,5 @@ namespace VulkanUtil
 	vk::Format FormatToVkFormat(const EFormat& InFormat);
 	vk::BufferUsageFlags BufferUsageFlagsToVkBufferUsageFlags(const EBufferUsageFlags& InUsage);
 	VmaMemoryUsage BufferMemoryUsageToVmaMemoryUsage(const EBufferMemoryUsage& InUsage);
+	vk::IndexType IndexFormatToVkIndexType(const EIndexFormat& InFormat);
 }

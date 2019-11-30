@@ -25,6 +25,13 @@ enum class EFormat
 	R32G32B32Sfloat,
 };
 
+/** Index format */
+enum class EIndexFormat
+{
+	Uint16,
+	Uint32
+};
+
 /**
  * Buffer usage
  */
@@ -32,6 +39,8 @@ enum class EBufferUsage
 {
 	VertexBuffer = 1 << 0,
 	IndexBuffer	= 1 << 1,
+	TransferSrc = 1 << 2,
+	TransferDst = 1 << 3
 };
 DECLARE_FLAG_ENUM(EBufferUsage)
 

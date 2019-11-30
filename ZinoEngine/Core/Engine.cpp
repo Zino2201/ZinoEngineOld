@@ -56,9 +56,15 @@ void CEngine::Loop()
 {
 	const std::vector<SVertex> Vertices = 
 	{
-		{{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-		{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-		{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+		{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+		{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+		{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+	};
+
+	const std::vector<uint16_t> Indices = 
+	{
+		0, 1, 2, 2, 3, 0
 	};
 
 	std::shared_ptr<IShader> Vertex = g_VulkanRenderSystem->CreateShader(
@@ -75,15 +81,49 @@ void CEngine::Loop()
 		SVertex::GetBindingDescription(),
 		SVertex::GetAttributeDescriptions());
 
-	std::shared_ptr<IBuffer> VertexBuffer = g_VulkanRenderSystem->CreateBuffer(
-		SBufferInfos(
-			sizeof(Vertices[0]) * Vertices.size(), 
-			EBufferUsage::VertexBuffer,
-			EBufferMemoryUsage::CpuToGpu));
+	/** Create vertex buffer using staging buffer */
+	std::shared_ptr<IBuffer> VertexBuffer;
+	{
+		std::shared_ptr<IBuffer> StagingBuffer = g_VulkanRenderSystem->CreateBuffer(
+			SBufferInfos(
+				sizeof(Vertices[0]) * Vertices.size(),
+				EBufferUsage::TransferSrc,
+				EBufferMemoryUsage::CpuToGpu));
 
-	void* Data = VertexBuffer->Map();
-	memcpy(Data, Vertices.data(), sizeof(Vertices[0]) * Vertices.size());
-	VertexBuffer->Unmap();
+		void* Data = StagingBuffer->Map();
+		memcpy(Data, Vertices.data(), sizeof(Vertices[0]) * Vertices.size());
+		StagingBuffer->Unmap();
+
+		VertexBuffer = g_VulkanRenderSystem->CreateBuffer(
+			SBufferInfos(
+				sizeof(Vertices[0]) * Vertices.size(),
+				EBufferUsage::VertexBuffer | EBufferUsage::TransferDst,
+				EBufferMemoryUsage::GpuOnly));
+
+		StagingBuffer->Copy(VertexBuffer.get());
+	}
+
+	/** Create index buffer using staging buffer */
+	std::shared_ptr<IBuffer> IndexBuffer;
+	{
+		std::shared_ptr<IBuffer> StagingBuffer = g_VulkanRenderSystem->CreateBuffer(
+			SBufferInfos(
+				sizeof(Indices[0]) * Indices.size(),
+				EBufferUsage::TransferSrc,
+				EBufferMemoryUsage::CpuToGpu));
+
+		void* Data = StagingBuffer->Map();
+		memcpy(Data, Indices.data(), sizeof(Indices[0]) * Indices.size());
+		StagingBuffer->Unmap();
+
+		IndexBuffer = g_VulkanRenderSystem->CreateBuffer(
+			SBufferInfos(
+				sizeof(Indices[0]) * Indices.size(),
+				EBufferUsage::IndexBuffer | EBufferUsage::TransferDst,
+				EBufferMemoryUsage::GpuOnly));
+
+		StagingBuffer->Copy(IndexBuffer.get());
+	}
 
 	std::array<float, 4> ClearColor = { 0.f, 0.f, 0.f, 1.0f };
 
@@ -92,7 +132,8 @@ void CEngine::Loop()
 
 	// TODO: Game state
 
-	RenderThread = std::thread([this, &ClearColor, &Pipeline, &VertexBuffer, &Vertices]
+	RenderThread = std::thread([this, &ClearColor, &Pipeline, &VertexBuffer, &IndexBuffer, &Vertices,
+		&Indices]
 	{
 		while (Run)
 		{
@@ -102,8 +143,10 @@ void CEngine::Loop()
 			Renderer->GetMainCommandList()->Enqueue<CRenderCommandBeginRenderPass>(ClearColor);
 			Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindGraphicsPipeline>(Pipeline);
 			Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindVertexBuffers>(VertexBuffer);
-			Renderer->GetMainCommandList()->Enqueue<CRenderCommandDraw>(
-				static_cast<uint32_t>(Vertices.size()), 1, 0, 0);
+			Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindIndexBuffer>(IndexBuffer, 0,
+				EIndexFormat::Uint16);
+			Renderer->GetMainCommandList()->Enqueue<CRenderCommandDrawIndexed>(
+				static_cast<uint32_t>(Indices.size()), 1, 0, 0, 0);
 			Renderer->GetMainCommandList()->Enqueue<CRenderCommandEndRenderPass>();
 			Renderer->GetMainCommandList()->Enqueue<CRenderCommandEndRecording>();
 

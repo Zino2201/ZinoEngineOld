@@ -25,13 +25,26 @@ void CRenderCommandBindGraphicsPipeline::Execute(CRenderCommandList* InCmdList)
 	InCmdList->GetCommandContext()->BindGraphicsPipeline(GraphicsPipeline.get());
 }
 
+
+void CRenderCommandBindVertexBuffers::Execute(CRenderCommandList* InCmdList) 
+{
+	InCmdList->GetCommandContext()->BindVertexBuffers(VertexBuffers);
+}
+
+void CRenderCommandBindIndexBuffer::Execute(CRenderCommandList* InCmdList)
+{
+	InCmdList->GetCommandContext()->BindIndexBuffer(IndexBuffer,
+		Offset, IndexFormat);
+}
+
 void CRenderCommandDraw::Execute(CRenderCommandList* InCmdList)
 {
 	InCmdList->GetCommandContext()->Draw(VertexCount,
 		InstanceCount, FirstVertex, FirstInstance);
 }
 
-void CRenderCommandBindVertexBuffers::Execute(CRenderCommandList* InCmdList) 
+void CRenderCommandDrawIndexed::Execute(CRenderCommandList* InCmdList)
 {
-	InCmdList->GetCommandContext()->BindVertexBuffers(VertexBuffers);
+	InCmdList->GetCommandContext()->DrawIndexed(IndexCount,
+		InstanceCount, FirstIndex, VertexOffset, FirstInstance);
 }
