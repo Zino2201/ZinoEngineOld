@@ -15,4 +15,6 @@ namespace VulkanUtil
 	vk::BufferUsageFlags BufferUsageFlagsToVkBufferUsageFlags(const EBufferUsageFlags& InUsage);
 	VmaMemoryUsage BufferMemoryUsageToVmaMemoryUsage(const EBufferMemoryUsage& InUsage);
 	vk::IndexType IndexFormatToVkIndexType(const EIndexFormat& InFormat);
+	vk::DescriptorType ShaderAttributeTypeToVkDescriptorType(const EShaderAttributeType& InType);
+	vk::ShaderStageFlags ShaderStageFlagsToVkShaderStageFlags(const EShaderStageFlags& InFlags);
 }

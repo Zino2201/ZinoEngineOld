@@ -25,7 +25,6 @@ void CRenderCommandBindGraphicsPipeline::Execute(CRenderCommandList* InCmdList)
 	InCmdList->GetCommandContext()->BindGraphicsPipeline(GraphicsPipeline.get());
 }
 
-
 void CRenderCommandBindVertexBuffers::Execute(CRenderCommandList* InCmdList) 
 {
 	InCmdList->GetCommandContext()->BindVertexBuffers(VertexBuffers);

@@ -26,7 +26,7 @@ CVulkanBuffer::CVulkanBuffer(CVulkanDevice* InDevice,
 		&AllocInfo,
 		reinterpret_cast<VkBuffer*>(&Buffer),
 		&Allocation,
-		nullptr) != VK_SUCCESS)
+		&AllocationInfo) != VK_SUCCESS)
 		LOG(ELogSeverity::Fatal, "Failed to create Vulkan buffer")
 }
 
@@ -81,4 +81,9 @@ void CVulkanBuffer::Copy(IBuffer* InDst)
 		nullptr);
 	Device->GetGraphicsQueue()->GetQueue().submit(SubmitInfo, vk::Fence());
 	Device->GetGraphicsQueue()->GetQueue().waitIdle();
+}
+
+void* CVulkanBuffer::GetMappedMemory() const
+{
+	return AllocationInfo.pMappedData;
 }

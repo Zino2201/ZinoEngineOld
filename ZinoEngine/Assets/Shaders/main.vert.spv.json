@@ -1,0 +1,13 @@
+{
+  "attributes": [
+    {
+      "name": "UBO",
+      "binding": 0,
+      "size": 192,
+      "type": "UniformBufferStatic",
+      "count": 1,
+      "frequency": "PerInstance",
+      "meta": [ "VulkanPushConstant" ]
+    }
+  ]   
+}

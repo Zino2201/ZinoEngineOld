@@ -26,10 +26,9 @@ public:
 	virtual void WaitGPU() override;
 	virtual std::shared_ptr<IShader> CreateShader(const std::vector<uint8_t>& InData,
 		const EShaderStage& InShaderStage) override;
-	virtual std::shared_ptr<IGraphicsPipeline> CreateGraphicsPipeline(IShader* InVertexShader,
-		IShader* InFragmentShader, const SVertexInputBindingDescription& InBindingDescription,
-		const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions) override;
+	virtual std::shared_ptr<IGraphicsPipeline> CreateGraphicsPipeline(const SGraphicsPipelineInfos& InInfos) override;
 	virtual std::shared_ptr<IBuffer> CreateBuffer(const SBufferInfos& InInfos) override;
+	virtual std::shared_ptr<IUniformBuffer> CreateUniformBuffer(const SUniformBufferInfos& InInfos) override;
 
 	/** Getters */
 	const vk::Instance& GetInstance() const { return *Instance; }

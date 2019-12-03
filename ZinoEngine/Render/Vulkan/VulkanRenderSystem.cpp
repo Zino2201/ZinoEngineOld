@@ -15,6 +15,7 @@
 #include "VulkanCommandBufferManager.h"
 #include "VulkanBuffer.h"
 #include "VulkanCommandPool.h"
+#include "VulkanUniformBuffer.h"
 
 CVulkanRenderSystem* g_VulkanRenderSystem = nullptr;
 
@@ -333,21 +334,20 @@ std::shared_ptr<IShader> CVulkanRenderSystem::CreateShader(const std::vector<uin
 	return std::make_shared<CVulkanShader>(Device.get(), InData, InShaderStage);
 }
 
-std::shared_ptr<IGraphicsPipeline> CVulkanRenderSystem::CreateGraphicsPipeline(IShader* InVertexShader,
-	IShader* InFragmentShader,
-	const SVertexInputBindingDescription& InBindingDescription,
-	const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions)
+std::shared_ptr<IGraphicsPipeline> CVulkanRenderSystem::CreateGraphicsPipeline(const SGraphicsPipelineInfos& InInfos)
 {
-	return std::make_shared<CVulkanGraphicsPipeline>(Device.get(), 
-		InVertexShader, 
-		InFragmentShader,
-		InBindingDescription,
-		InAttributeDescriptions);
+	return std::make_shared<CVulkanGraphicsPipeline>(Device.get(), InInfos);
 }
 
 std::shared_ptr<IBuffer> CVulkanRenderSystem::CreateBuffer(const SBufferInfos& InInfos)
 {
 	return std::make_shared<CVulkanBuffer>(Device.get(),
+		InInfos);
+}
+
+std::shared_ptr<IUniformBuffer> CVulkanRenderSystem::CreateUniformBuffer(const SUniformBufferInfos& InInfos)
+{
+	return std::make_shared<CVulkanUniformBuffer>(Device.get(),
 		InInfos);
 }
 

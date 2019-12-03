@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RenderCore.h"
+#include "DeviceResource.h"
 
 /**
  * Buffer infos
@@ -21,7 +21,7 @@ struct SBufferInfos
 /**
  * Buffer interface
  */
-class IBuffer
+class IBuffer : public IDeviceResource
 {
 public:
 	IBuffer(const SBufferInfos& InInfos) : Infos(InInfos) {}
@@ -42,6 +42,11 @@ public:
 	 * Copy buffer to specified dest
 	 */
 	virtual void Copy(IBuffer* InDst) = 0;
+
+	/**
+	 * Get mapped memory
+	 */
+	virtual void* GetMappedMemory() const = 0;
 
 	const SBufferInfos& GetInfos() const { return Infos; }
 protected:

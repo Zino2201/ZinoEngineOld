@@ -5,7 +5,8 @@
 class CVulkanPipelineLayout : public CVulkanDeviceResource
 {
 public:
-	CVulkanPipelineLayout(CVulkanDevice* InDevice);
+	CVulkanPipelineLayout(CVulkanDevice* InDevice,
+		const std::vector<vk::DescriptorSetLayout>& InDescriptorSetLayouts);
 	~CVulkanPipelineLayout();
 
 	const vk::PipelineLayout& GetPipelineLayout() const { return *PipelineLayout; }

@@ -3,6 +3,7 @@
 #include "RenderCore.h"
 #include "Pipeline.h"
 #include "Buffer.h"
+#include "UniformBuffer.h"
 
 class IRenderCommandContext;
 class IShader;
@@ -55,8 +56,10 @@ public:
 	/**
 	 * Create a graphics pipeline
 	 */
-	virtual std::shared_ptr<IGraphicsPipeline> CreateGraphicsPipeline(IShader* InVertexShader,
-		IShader* InFragmentShader,
-		const SVertexInputBindingDescription& InBindingDescription,
-		const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions) = 0;
+	virtual std::shared_ptr<IGraphicsPipeline> CreateGraphicsPipeline(const SGraphicsPipelineInfos& InInfos) = 0;
+
+	/** 
+	 * Create a uniform buffer 
+	 */
+	virtual std::shared_ptr<IUniformBuffer> CreateUniformBuffer(const SUniformBufferInfos& InInfos) = 0;
 };

@@ -78,6 +78,15 @@
     <ClCompile Include="Render\Vulkan\VulkanMemoryAllocator.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="Render\Vulkan\VulkanUniformBuffer.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\Material.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\Vulkan\VulkanShaderAttributesManager.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\EngineCore.h">
@@ -188,9 +197,38 @@
     <ClInclude Include="Core\Flags.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="Render\UniformBuffer.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Vulkan\VulkanUniformBuffer.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Asset.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Material.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\AssetManager.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ContainerUtils.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Vulkan\VulkanShaderAttributesManager.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\ShaderAttributesManager.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Shaders\main.frag" />
     <None Include="Assets\Shaders\main.vert" />
+    <None Include="Assets\Shaders\main.frag.spv" />
+    <None Include="Assets\Shaders\main.vert.spv" />
+    <None Include="Assets\Materials\test.json" />
+    <None Include="Assets\Shaders\main.frag.spv.json" />
+    <None Include="Assets\Shaders\main.vert.spv.json" />
   </ItemGroup>
 </Project>

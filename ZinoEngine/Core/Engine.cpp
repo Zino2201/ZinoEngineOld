@@ -8,27 +8,14 @@
 #include "Render/Commands/RenderCommands.h"
 #include "Render/Renderer.h"
 #include "Render/Buffer.h"
+#include "AssetManager.h"
+#include "Render/Material.h"
 
-struct SVertex
+struct STestUBO
 {
-	glm::vec2 Position;
-	glm::vec3 Color;
-
-	static SVertexInputBindingDescription GetBindingDescription()
-	{
-		return SVertexInputBindingDescription(0, sizeof(SVertex), EVertexInputRate::Vertex);
-	}
-
-	static std::vector<SVertexInputAttributeDescription> GetAttributeDescriptions()
-	{
-		return
-		{
-			SVertexInputAttributeDescription(0, 0, EFormat::R32G32Sfloat,
-				offsetof(SVertex, Position)),
-			SVertexInputAttributeDescription(0, 1, EFormat::R32G32B32Sfloat, 
-				offsetof(SVertex, Color)),
-		};
-	}
+	glm::mat4 World;
+	glm::mat4 View;
+	glm::mat4 Projection;
 };
 
 CEngine::CEngine() : bHasBeenInitialized(false) {}
@@ -45,6 +32,7 @@ void CEngine::Initialize()
 	bHasBeenInitialized = true;
 
 	Window = std::make_unique<CWindow>(1280, 720, "ZinoEngine");
+	AssetManager = std::make_unique<CAssetManager>();
 	RenderSystem = std::make_unique<CVulkanRenderSystem>();
 	RenderSystem->Initialize();
 	Renderer = std::make_unique<CRenderer>();
@@ -75,11 +63,12 @@ void CEngine::Loop()
 		IOUtils::ReadBinaryFile("Assets/Shaders/main.frag.spv"),
 		EShaderStage::Fragment);
 
-	std::shared_ptr<IGraphicsPipeline> Pipeline = g_VulkanRenderSystem->CreateGraphicsPipeline(
-		Vertex.get(),
-		Fragment.get(),
-		SVertex::GetBindingDescription(),
-		SVertex::GetAttributeDescriptions());
+	/** Uniform buffer & pipeline */
+	std::shared_ptr<IUniformBuffer> UniformBuffer = g_VulkanRenderSystem->CreateUniformBuffer(
+		SUniformBufferInfos(sizeof(STestUBO)));
+
+	/** Material test */
+	std::shared_ptr<CMaterial> Material = AssetManager->Get<CMaterial>("Materials/test.json");
 
 	/** Create vertex buffer using staging buffer */
 	std::shared_ptr<IBuffer> VertexBuffer;
@@ -130,35 +119,17 @@ void CEngine::Loop()
 	/** Should threads continue ticking */
 	Run = true;
 
+	Material->SetShaderAttributeResource(
+		EShaderStage::Vertex,
+		"UBO", 
+		UniformBuffer->GetBuffer());
+
 	// TODO: Game state
 
-	RenderThread = std::thread([this, &ClearColor, &Pipeline, &VertexBuffer, &IndexBuffer, &Vertices,
-		&Indices]
+	RenderThread = std::thread([this, &ClearColor, &VertexBuffer, &IndexBuffer, &Vertices,
+		&Indices, &Material]
 	{
-		while (Run)
-		{
-			Renderer->GetMainCommandList()->ClearQueue();
-
-			Renderer->GetMainCommandList()->Enqueue<CRenderCommandBeginRecording>();
-			Renderer->GetMainCommandList()->Enqueue<CRenderCommandBeginRenderPass>(ClearColor);
-			Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindGraphicsPipeline>(Pipeline);
-			Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindVertexBuffers>(VertexBuffer);
-			Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindIndexBuffer>(IndexBuffer, 0,
-				EIndexFormat::Uint16);
-			Renderer->GetMainCommandList()->Enqueue<CRenderCommandDrawIndexed>(
-				static_cast<uint32_t>(Indices.size()), 1, 0, 0, 0);
-			Renderer->GetMainCommandList()->Enqueue<CRenderCommandEndRenderPass>();
-			Renderer->GetMainCommandList()->Enqueue<CRenderCommandEndRecording>();
-
-			RenderSystem->Prepare();
-			/** Execute all commands */
-			while (Renderer->GetMainCommandList()->GetCommandsCount() > 0)
-			{
-				Renderer->GetMainCommandList()->ExecuteFrontCommand();
-			}
-
-			RenderSystem->Present();
-		}
+		
 	});
 
 	/** Main thread = game thread */
@@ -171,16 +142,7 @@ void CEngine::Loop()
 			switch (Event.type)
 			{
 			case SDL_WINDOWEVENT:
-				if (Event.window.event == SDL_WINDOWEVENT_RESIZED)
-				{
-					int NewWidth = 0;
-					int NewHeight = 0;
-					SDL_GetWindowSize(Window->GetSDLWindow(), &NewWidth, &NewHeight);
-					Window->SetWidth(NewWidth);
-					Window->SetHeight(NewHeight);
-					Window->OnWindowResized.Broadcast();
-				}
-				else if (Event.window.event == SDL_WINDOWEVENT_MINIMIZED)
+				if (Event.window.event == SDL_WINDOWEVENT_MINIMIZED)
 				{
 					Uint32 Flags = SDL_GetWindowFlags(Window->GetSDLWindow());
 					while (Flags & SDL_WINDOW_MINIMIZED)
@@ -188,6 +150,15 @@ void CEngine::Loop()
 						Flags = SDL_GetWindowFlags(Window->GetSDLWindow());
 						SDL_WaitEvent(nullptr);
 					}
+				}
+				else if (Event.window.event == SDL_WINDOWEVENT_RESIZED)
+				{
+					int NewWidth = 0;
+					int NewHeight = 0;
+					SDL_GetWindowSize(Window->GetSDLWindow(), &NewWidth, &NewHeight);
+					Window->SetWidth(NewWidth);
+					Window->SetHeight(NewHeight);
+					Window->OnWindowResized.Broadcast();
 				}
 				break;
 			case SDL_QUIT:
@@ -197,5 +168,45 @@ void CEngine::Loop()
 				return;
 			}
 		}
+
+		/** Tick */
+		static auto startTime = std::chrono::high_resolution_clock::now();
+
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		float time 
+			= std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime)
+			.count();
+
+		STestUBO UBO;
+		UBO.World = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		UBO.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		UBO.Projection = glm::perspective(glm::radians(45.0f),
+			Window->GetWidth() / (float) Window->GetHeight(), 0.1f, 10.0f);
+		UBO.Projection[1][1] *= -1;
+
+		memcpy(UniformBuffer->GetMappedMemory(), &UBO, sizeof(UBO));
+
+		Renderer->GetMainCommandList()->ClearQueue();
+
+		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBeginRecording>();
+		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBeginRenderPass>(ClearColor);
+		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindGraphicsPipeline>(
+			Material->GetPipeline());
+		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindVertexBuffers>(VertexBuffer);
+		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindIndexBuffer>(IndexBuffer, 0,
+			EIndexFormat::Uint16);
+		Renderer->GetMainCommandList()->Enqueue<CRenderCommandDrawIndexed>(
+			static_cast<uint32_t>(Indices.size()), 1, 0, 0, 0);
+		Renderer->GetMainCommandList()->Enqueue<CRenderCommandEndRenderPass>();
+		Renderer->GetMainCommandList()->Enqueue<CRenderCommandEndRecording>();
+
+		RenderSystem->Prepare();
+		/** Execute all commands */
+		while (Renderer->GetMainCommandList()->GetCommandsCount() > 0)
+		{
+			Renderer->GetMainCommandList()->ExecuteFrontCommand();
+		}
+
+		RenderSystem->Present();
 	}
 }

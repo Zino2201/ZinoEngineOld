@@ -7,6 +7,8 @@
 #include "VulkanCommandBufferManager.h"
 #include "VulkanSwapChain.h"
 #include "VulkanBuffer.h"
+#include "VulkanShaderAttributesManager.h"
+#include "VulkanPipelineLayout.h"
 
 CVulkanRenderCommandContext::CVulkanRenderCommandContext(CVulkanDevice* InDevice,
 	CVulkanQueue* InQueue)
@@ -43,8 +45,18 @@ void CVulkanRenderCommandContext::BindGraphicsPipeline(IGraphicsPipeline* InGrap
 	CVulkanGraphicsPipeline* GraphicsPipeline = 
 		static_cast<CVulkanGraphicsPipeline*>(InGraphicsPipeline);
 
-	CommandBufferManager->GetMainCommandBuffer()->GetCommandBuffer().bindPipeline(vk::PipelineBindPoint::eGraphics,
-		GraphicsPipeline->GetPipeline());
+	CommandBufferManager->GetMainCommandBuffer()->GetCommandBuffer()
+		.bindPipeline(vk::PipelineBindPoint::eGraphics, GraphicsPipeline->GetPipeline());
+
+	CVulkanShaderAttributesManager* ShaderAttributesManager =
+		static_cast<CVulkanShaderAttributesManager*>(GraphicsPipeline->GetShaderAttributesManager());
+
+	CommandBufferManager->GetMainCommandBuffer()->GetCommandBuffer()
+		.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+			GraphicsPipeline->GetPipelineLayout()->GetPipelineLayout(),
+			0, 
+			{ *ShaderAttributesManager->GetDescriptorSets()[g_VulkanRenderSystem->GetSwapChain()->GetCurrentImageIndex()] },
+			{});
 }
 
 void CVulkanRenderCommandContext::BindVertexBuffers(

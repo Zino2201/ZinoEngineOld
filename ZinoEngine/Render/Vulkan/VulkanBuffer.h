@@ -16,9 +16,11 @@ public:
 	virtual void* Map() override;
 	virtual void Unmap() override;
 	virtual void Copy(IBuffer* InDst) override;
+	virtual void* GetMappedMemory() const override;
 
 	const vk::Buffer& GetBuffer() const { return Buffer; }
 private:
 	vk::Buffer Buffer;
 	VmaAllocation Allocation;
+	VmaAllocationInfo AllocationInfo;
 };

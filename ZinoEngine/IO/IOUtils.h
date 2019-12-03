@@ -23,4 +23,21 @@ namespace IOUtils
 
 		return Buffer;
 	}
+
+	static std::string ReadTextFile(const std::string& InFilename)
+	{
+		std::string Line, Text;
+		std::ifstream File(InFilename);
+		if (!File.is_open())
+			LOG(ELogSeverity::Error, "Failed to read file %s", InFilename.c_str())
+
+		while (std::getline(File, Line))
+		{
+			Text += Line + "\n";
+		}
+
+		File.close();
+
+		return Text;
+	}
 }

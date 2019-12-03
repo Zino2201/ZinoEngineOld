@@ -4,28 +4,77 @@
 #include "VulkanRenderSystem.h"
 #include "VulkanPipelineLayout.h"
 #include "VulkanDevice.h"
+#include "VulkanShaderAttributesManager.h"
 
 /** --- CVulkanPipeline --- */
-CVulkanPipeline::CVulkanPipeline(CVulkanDevice* InDevice) : CVulkanDeviceResource(InDevice) {}
+CVulkanPipeline::CVulkanPipeline(CVulkanDevice* InDevice,
+	const std::vector<SShaderAttribute>& InShaderAttributes) : CVulkanDeviceResource(InDevice) 
+{
+	ShaderAttributes = InShaderAttributes;
+
+	/** Create descriptor set layout and pool */
+	{
+		std::vector<vk::DescriptorSetLayoutBinding> SetLayoutBindings;
+		std::vector<vk::DescriptorPoolSize> PoolSizes;
+
+		for (const SShaderAttribute& Attribute : InShaderAttributes)
+		{
+			SetLayoutBindings.emplace_back(
+				Attribute.Binding,
+				VulkanUtil::ShaderAttributeTypeToVkDescriptorType(Attribute.Type),
+				Attribute.Count,
+				VulkanUtil::ShaderStageFlagsToVkShaderStageFlags(Attribute.StageFlags));
+
+			PoolSizes.emplace_back(VulkanUtil::ShaderAttributeTypeToVkDescriptorType(Attribute.Type),
+				static_cast<uint32_t>(g_VulkanRenderSystem->GetSwapChain()->GetImageViews().size()));
+		}
+
+		DescriptorSetLayout = Device->GetDevice().createDescriptorSetLayoutUnique(
+			vk::DescriptorSetLayoutCreateInfo(
+				vk::DescriptorSetLayoutCreateFlags(),
+				static_cast<uint32_t>(SetLayoutBindings.size()),
+				SetLayoutBindings.data())).value;
+		if (!DescriptorSetLayout)
+			LOG(ELogSeverity::Fatal, "Failed to create descriptor set layout")
+
+		DescriptorPool = Device->GetDevice().createDescriptorPoolUnique(
+			vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+				static_cast<uint32_t>(g_VulkanRenderSystem->GetSwapChain()->GetImageViews().size()),
+				static_cast<uint32_t>(PoolSizes.size()),
+				PoolSizes.data())).value;
+		if (!DescriptorPool)
+			LOG(ELogSeverity::Fatal, "Failed to create descriptor pool")
+	}
+
+	/** Create pipeline layout */
+	{
+		std::vector<vk::DescriptorSetLayout> SetLayouts = { *DescriptorSetLayout };
+
+		PipelineLayout = std::make_unique<CVulkanPipelineLayout>(Device, SetLayouts);
+	}
+
+	Create();
+}
+
 CVulkanPipeline::~CVulkanPipeline() {}
+
+void CVulkanPipeline::Create()
+{
+	ShaderAttributesManager = std::make_unique<CVulkanShaderAttributesManager>(
+		SShaderAttributesManagerInfo(this));
+}
+
 /** --- CVulkanPipeline --- */
 
 CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice, 
-	IShader* InVertexShader,
-	IShader* InFragmentShader,
-	const SVertexInputBindingDescription& InBindingDescription,
-	const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions)
-	: IGraphicsPipeline(InVertexShader, InFragmentShader, InBindingDescription, 
-		InAttributeDescriptions), CVulkanPipeline(InDevice)
+	const SGraphicsPipelineInfos& InInfos)
+	: IGraphicsPipeline(InInfos), CVulkanPipeline(InDevice, InInfos.ShaderAttributes)
 {
-	/** Create pipeline layout */
-	PipelineLayout = std::make_unique<CVulkanPipelineLayout>(Device);
-
 	/** Create stages */
 	std::vector<CVulkanShader*> Shaders =
 	{
-		static_cast<CVulkanShader*>(InVertexShader),
-		static_cast<CVulkanShader*>(InFragmentShader)
+		static_cast<CVulkanShader*>(InInfos.VertexShader),
+		static_cast<CVulkanShader*>(InInfos.FragmentShader)
 	};
 
 	std::vector<vk::PipelineShaderStageCreateInfo> Stages(Shaders.size());
@@ -43,13 +92,13 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 
 	/** Input attributes */
 	vk::VertexInputBindingDescription InputAttribute(
-		InBindingDescription.Binding,
-		InBindingDescription.Stride,
-		VulkanUtil::VertexInputRateToVkVertexInputRate(InBindingDescription.InputRate));
+		InInfos.BindingDescription.Binding,
+		InInfos.BindingDescription.Stride,
+		VulkanUtil::VertexInputRateToVkVertexInputRate(InInfos.BindingDescription.InputRate));
 
-	/** Attributes */
+	/** Vertex attributes */
 	std::vector<vk::VertexInputAttributeDescription> Attributes;
-	for(const SVertexInputAttributeDescription& Attribute : InAttributeDescriptions)
+	for(const SVertexInputAttributeDescription& Attribute : InInfos.AttributeDescriptions)
 	{
 		Attributes.emplace_back(
 			Attribute.Location,
@@ -99,7 +148,7 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 		VK_FALSE,
 		vk::PolygonMode::eFill,
 		vk::CullModeFlagBits::eBack,
-		vk::FrontFace::eClockwise,
+		vk::FrontFace::eCounterClockwise,
 		VK_FALSE,
 		0.f,
 		0.f,

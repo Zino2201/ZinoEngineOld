@@ -77,24 +77,29 @@ vk::BufferUsageFlags VulkanUtil::BufferUsageFlagsToVkBufferUsageFlags(const EBuf
 {
 	vk::BufferUsageFlags Flags;
 
-	if(InUsage & EBufferUsage::VertexBuffer)
+	if(HAS_FLAG(InUsage, EBufferUsage::VertexBuffer))
 	{
 		Flags |= vk::BufferUsageFlagBits::eVertexBuffer;
 	}
 
-	if(InUsage & EBufferUsage::IndexBuffer)
+	if(HAS_FLAG(InUsage, EBufferUsage::IndexBuffer))
 	{
 		Flags |= vk::BufferUsageFlagBits::eIndexBuffer;
 	}
 
-	if (InUsage & EBufferUsage::TransferSrc)
+	if (HAS_FLAG(InUsage, EBufferUsage::TransferSrc))
 	{
 		Flags |= vk::BufferUsageFlagBits::eTransferSrc;
 	}
 
-	if (InUsage & EBufferUsage::TransferDst)
+	if (HAS_FLAG(InUsage, EBufferUsage::TransferDst))
 	{
 		Flags |= vk::BufferUsageFlagBits::eTransferDst;
+	}
+
+	if (HAS_FLAG(InUsage, EBufferUsage::UniformBuffer))
+	{
+		Flags |= vk::BufferUsageFlagBits::eUniformBuffer;
 	}
 
 	return Flags;
@@ -126,4 +131,31 @@ vk::IndexType VulkanUtil::IndexFormatToVkIndexType(const EIndexFormat& InFormat)
 	case EIndexFormat::Uint32:
 		return vk::IndexType::eUint32;
 	}
+}
+
+vk::DescriptorType VulkanUtil::ShaderAttributeTypeToVkDescriptorType(const EShaderAttributeType& InType)
+{
+	switch(InType)
+	{
+	default:
+	case EShaderAttributeType::UniformBufferStatic:
+		return vk::DescriptorType::eUniformBuffer;
+	}
+}
+
+vk::ShaderStageFlags VulkanUtil::ShaderStageFlagsToVkShaderStageFlags(const EShaderStageFlags& InFlags)
+{
+	vk::ShaderStageFlags Flags;
+
+	if (HAS_FLAG(InFlags, EShaderStage::Vertex))
+	{
+		Flags |= vk::ShaderStageFlagBits::eVertex;
+	}
+
+	if (HAS_FLAG(InFlags, EShaderStage::Fragment))
+	{
+		Flags |= vk::ShaderStageFlagBits::eFragment;
+	}
+
+	return Flags;
 }

@@ -3,6 +3,7 @@
 #include "VulkanCore.h"
 #include "VulkanDeviceResource.h"
 #include "Render/Pipeline.h"
+#include "VulkanShaderAttributesManager.h"
 
 class CVulkanDevice;
 class CVulkanShader;
@@ -15,24 +16,36 @@ class CVulkanPipeline : public IPipeline,
 	public CVulkanDeviceResource
 {
 public:
-	CVulkanPipeline(CVulkanDevice* InDevice);
+	CVulkanPipeline(CVulkanDevice* InDevice,
+		const std::vector<SShaderAttribute>& InShaderAttributes);
 	virtual ~CVulkanPipeline();
 
 	const vk::Pipeline& GetPipeline() const { return *Pipeline; }
+	CVulkanPipelineLayout* GetPipelineLayout() const { return PipelineLayout.get(); }
+	const vk::DescriptorPool& GetDescriptorPool() const { return *DescriptorPool; }
+	const vk::DescriptorSetLayout& GetDescriptorSetLayout() const { return *DescriptorSetLayout; }
+	virtual IShaderAttributesManager* GetShaderAttributesManager() const override { return ShaderAttributesManager.get(); }
+protected:
+	void Create();
 protected:
 	vk::UniquePipeline Pipeline;
 	std::unique_ptr<CVulkanPipelineLayout> PipelineLayout;
+	vk::UniqueDescriptorSetLayout DescriptorSetLayout;
+	vk::UniqueDescriptorPool DescriptorPool;
+	std::unique_ptr<CVulkanShaderAttributesManager> ShaderAttributesManager;
+	std::vector<SShaderAttribute> ShaderAttributes;
+
+	friend class CVulkanShaderAttributesManager;
 };
 
 /** Render pipeline */
-class CVulkanGraphicsPipeline : public IGraphicsPipeline,
-	public CVulkanPipeline
+class CVulkanGraphicsPipeline : public CVulkanPipeline,
+	public IGraphicsPipeline
 {
 public:
 	CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
-		IShader* InVertexShader,
-		IShader* InFragmentShader,
-		const SVertexInputBindingDescription& InBindingDescription,
-		const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions);
+		const SGraphicsPipelineInfos& InInfos);
 	~CVulkanGraphicsPipeline();
+
+	virtual IShaderAttributesManager* GetShaderAttributesManager() const override { return ShaderAttributesManager.get(); }
 };

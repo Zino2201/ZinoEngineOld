@@ -1,13 +1,14 @@
 #include "VulkanPipelineLayout.h"
 #include "VulkanDevice.h"
 
-CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* InDevice) :
+CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* InDevice,
+	const std::vector<vk::DescriptorSetLayout>& InDescriptorSetLayouts) :
 	CVulkanDeviceResource(InDevice)
 {
 	vk::PipelineLayoutCreateInfo CreateInfos(
 		vk::PipelineLayoutCreateFlags(),
-		0,
-		nullptr,
+		static_cast<uint32_t>(InDescriptorSetLayouts.size()),
+		InDescriptorSetLayouts.data(),
 		0,
 		nullptr);
 

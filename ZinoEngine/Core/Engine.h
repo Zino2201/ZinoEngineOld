@@ -5,6 +5,7 @@
 class CWindow;
 class IRenderSystem;
 class CRenderer;
+class CAssetManager;
 
 /**
  * Engine singleton
@@ -39,6 +40,7 @@ private:
 	std::unique_ptr<CWindow> Window;
 	std::unique_ptr<IRenderSystem> RenderSystem;
 	std::unique_ptr<CRenderer> Renderer;
+	std::unique_ptr<CAssetManager> AssetManager;
 	std::thread RenderThread;
 	std::atomic_bool Run;
 };

@@ -1,0 +1,12 @@
+{
+  "shaders": [
+    {
+      "stage": "Vertex",
+      "shader": "main.vert.spv"
+    },
+    {
+      "stage": "Fragment",
+      "shader": "main.frag.spv"
+    }
+  ]
+}
