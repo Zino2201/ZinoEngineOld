@@ -22,6 +22,7 @@ void CTexture2D::Load(const std::string& InPath)
 	}
 
 	uint64_t ImageSize = Width * Height * 4;
+	uint32_t MipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(Width, Height)))) + 1;
 
 	/** Staging buffer */
 	std::shared_ptr<IBuffer> StagingBuffer = CEngine::Get().GetRenderSystem()->CreateBuffer(
@@ -38,17 +39,20 @@ void CTexture2D::Load(const std::string& InPath)
 	/** Create texture */
 	Texture = CEngine::Get().GetRenderSystem()->CreateTexture(
 		STextureInfo(ETextureType::Texture2D, EFormat::R8G8B8A8UNorm,
-			ETextureUsage::TransferDst | ETextureUsage::Sampled,
+			ETextureUsage::TransferSrc | ETextureUsage::TransferDst | ETextureUsage::Sampled,
 			ETextureMemoryUsage::GpuOnly,
 			Width,
-			Height));
+			Height,
+			1,
+			MipLevels));
 
 	/** Copy buffer to texture */
-	StagingBuffer->Copy(Texture.get());
+	Texture->Copy(StagingBuffer.get());
 
 	/** Create texture view */
 	TextureView = CEngine::Get().GetRenderSystem()->CreateTextureView(
-		STextureViewInfo(Texture.get(), ETextureViewType::TextureView2D, EFormat::R8G8B8A8UNorm));
+		STextureViewInfo(Texture.get(), ETextureViewType::ShaderResource, EFormat::R8G8B8A8UNorm,
+			MipLevels));
 
 	/** Create a sampler */
 	Sampler = CEngine::Get().GetRenderSystem()->CreateSampler(SSamplerInfo(
@@ -62,7 +66,7 @@ void CTexture2D::Load(const std::string& InPath)
 		EComparisonOp::Always,
 		0.f,
 		0.f,
-		0.f));
+		static_cast<float>(MipLevels)));
 	
 	TextureView->SetSampler(Sampler);
 }

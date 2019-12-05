@@ -165,6 +165,13 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 		VK_FALSE,
 		VK_FALSE);
 
+	vk::PipelineDepthStencilStateCreateInfo DepthState(
+		vk::PipelineDepthStencilStateCreateFlags(),
+		VK_TRUE,
+		VK_TRUE,
+		vk::CompareOp::eLess,
+		VK_FALSE);
+
 	/** Color blending */
 	vk::PipelineColorBlendAttachmentState ColorBlendAttachment(
 		VK_FALSE,
@@ -195,7 +202,7 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 		&ViewportState,
 		&RasterizerState,
 		&MultisamplingState,
-		nullptr,
+		&DepthState,
 		&ColorBlendState,
 		nullptr,
 		PipelineLayout->GetPipelineLayout(),

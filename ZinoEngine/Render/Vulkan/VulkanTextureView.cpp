@@ -10,10 +10,12 @@ CVulkanTextureView::CVulkanTextureView(CVulkanDevice* InDevice, const STextureVi
 	ImageView = Device->GetDevice().createImageViewUnique(
 		vk::ImageViewCreateInfo(vk::ImageViewCreateFlags(),
 			Texture->GetImage(),
-			VulkanUtil::TextureViewTypeViewToVkImageViewType(InInfos.ViewType),
+			VulkanUtil::TextureTypeToVkImageViewType(Texture->GetInfo().Type),
 			VulkanUtil::FormatToVkFormat(InInfos.Format),
 			vk::ComponentMapping(),
-			vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1))).value;
+			vk::ImageSubresourceRange(
+				InInfos.ViewType == ETextureViewType::DepthStencil ? vk::ImageAspectFlagBits::eDepth
+				: vk::ImageAspectFlagBits::eColor, 0, InInfos.MipLevels, 0, 1))).value;
 	if(!ImageView)
 		LOG(ELogSeverity::Fatal, "Failed to create image view")
 }

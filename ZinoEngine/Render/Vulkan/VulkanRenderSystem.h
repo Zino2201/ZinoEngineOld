@@ -9,6 +9,8 @@ class CVulkanDevice;
 class CVulkanSwapChain;
 class CVulkanRenderCommandContext;
 class CVulkanCommandPool;
+class CVulkanTexture;
+class CVulkanTextureView;
 
 /**
  * Vulkan render system
@@ -64,6 +66,13 @@ private:
 	 * Check if physical device is useable
 	 */
 	bool IsDeviceUseable(const vk::PhysicalDevice& InDevice) const;
+
+	vk::Format FindSupportedFormat(const vk::PhysicalDevice& InDevice,
+		const std::vector<vk::Format>& InCandidates,
+		vk::ImageTiling InTiling, vk::FormatFeatureFlags InFeatures) const;
+
+	vk::Format FindDepthFormat(const vk::PhysicalDevice& InDevice) const;
+	bool HasStencilComponent(vk::Format InFormat) const;
 private:
 	/** Vulkan instance */
 	vk::UniqueInstance Instance;
@@ -79,6 +88,12 @@ private:
 
 	/** Swap chain */
 	std::unique_ptr<CVulkanSwapChain> SwapChain;
+
+	/** Depth buffer */
+	std::shared_ptr<CVulkanTexture> DepthBuffer;
+
+	/** Depth buffer view */
+	std::shared_ptr<CVulkanTextureView> DepthBufferView;
 
 	/** Render pass */
 	vk::UniqueRenderPass RenderPass;

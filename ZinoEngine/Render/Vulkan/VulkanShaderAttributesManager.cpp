@@ -27,57 +27,56 @@ CVulkanShaderAttributesManager::~CVulkanShaderAttributesManager() {}
 void CVulkanShaderAttributesManager::Set(EShaderStage InStage, const std::string& InName,
 	IDeviceResource* InResource)
 {
+	// TODO: Cache ?
+
 	for(const SShaderAttribute& Attribute : Pipeline->ShaderAttributes)
 	{
 		if(Attribute.StageFlags == InStage && Attribute.Name == InName)
 		{
-			for (size_t i = 0; i < g_VulkanRenderSystem->GetSwapChain()->GetImageViews().size(); i++)
+			switch (Attribute.Type)
 			{
-				switch(Attribute.Type)
-				{
-				case EShaderAttributeType::UniformBufferStatic:
-				{
-					CVulkanBuffer* Buffer = static_cast<CVulkanBuffer*>(InResource);
+			case EShaderAttributeType::UniformBufferStatic:
+			{
+				CVulkanBuffer* Buffer = static_cast<CVulkanBuffer*>(InResource);
 
-					vk::DescriptorBufferInfo BufferInfo = vk::DescriptorBufferInfo()
-						.setBuffer(Buffer->GetBuffer())
-						.setOffset(0)
-						.setRange(VK_WHOLE_SIZE);
+				vk::DescriptorBufferInfo BufferInfo = vk::DescriptorBufferInfo()
+					.setBuffer(Buffer->GetBuffer())
+					.setOffset(0)
+					.setRange(VK_WHOLE_SIZE);
 
-					vk::WriteDescriptorSet WriteSet = vk::WriteDescriptorSet()
-						.setDstSet(*DescriptorSets[i])
-						.setDstBinding(Attribute.Binding)
-						.setDstArrayElement(0)
-						.setDescriptorType(vk::DescriptorType::eUniformBuffer)
-						.setDescriptorCount(1)
-						.setPBufferInfo(&BufferInfo);
+				vk::WriteDescriptorSet WriteSet = vk::WriteDescriptorSet()
+					.setDstSet(*DescriptorSets[g_VulkanRenderSystem->GetSwapChain()->GetCurrentImageIndex()])
+					.setDstBinding(Attribute.Binding)
+					.setDstArrayElement(0)
+					.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+					.setDescriptorCount(1)
+					.setPBufferInfo(&BufferInfo);
 
-					g_VulkanRenderSystem->GetDevice()->GetDevice()
-						.updateDescriptorSets(1, &WriteSet, 0, nullptr);
-					break;
-				}
-				case EShaderAttributeType::CombinedImageSampler:
-				{
-					CVulkanTextureView* TextureView = static_cast<CVulkanTextureView*>(InResource);
-					
-					vk::DescriptorImageInfo ImageInfo = vk::DescriptorImageInfo()
-						.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-						.setImageView(TextureView->GetImageView())
-						.setSampler(TextureView->GetVulkanSampler()->GetSampler());
+				g_VulkanRenderSystem->GetDevice()->GetDevice()
+					.updateDescriptorSets(1, &WriteSet, 0, nullptr);
+				break;
+			}
+			case EShaderAttributeType::CombinedImageSampler:
+			{
+				CVulkanTextureView* TextureView = static_cast<CVulkanTextureView*>(InResource);
 
-					vk::WriteDescriptorSet WriteSet = vk::WriteDescriptorSet()
-						.setDstSet(*DescriptorSets[i])
-						.setDstBinding(Attribute.Binding)
-						.setDstArrayElement(0)
-						.setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-						.setDescriptorCount(1)
-						.setPImageInfo(&ImageInfo);
+				vk::DescriptorImageInfo ImageInfo = vk::DescriptorImageInfo()
+					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+					.setImageView(TextureView->GetImageView())
+					.setSampler(TextureView->GetVulkanSampler()->GetSampler());
 
-					g_VulkanRenderSystem->GetDevice()->GetDevice()
-						.updateDescriptorSets(1, &WriteSet, 0, nullptr);
-					break;
-				}
-				}
+				vk::WriteDescriptorSet WriteSet = vk::WriteDescriptorSet()
+					.setDstSet(*DescriptorSets[g_VulkanRenderSystem->GetSwapChain()->GetCurrentImageIndex()])
+					.setDstBinding(Attribute.Binding)
+					.setDstArrayElement(0)
+					.setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+					.setDescriptorCount(1)
+					.setPImageInfo(&ImageInfo);
+
+				g_VulkanRenderSystem->GetDevice()->GetDevice()
+					.updateDescriptorSets(1, &WriteSet, 0, nullptr);
+				break;
+			}
 			}
 
 			return;

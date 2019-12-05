@@ -15,8 +15,7 @@ public:
 
 	virtual void* Map() override;
 	virtual void Unmap() override;
-	virtual void Copy(IBuffer* InDst) override;
-	virtual void Copy(ITexture* InDst) override;
+	virtual void Copy(IBuffer* InSrc) override;
 	virtual void* GetMappedMemory() const override;
 
 	const vk::Buffer& GetBuffer() const { return Buffer; }

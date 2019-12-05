@@ -12,6 +12,7 @@
 #include "Render/Material.h"
 #include <stb_image.h>
 #include "Render/Texture2D.h"
+#include "Render/StaticMesh.h"
 
 struct STestUBO
 {
@@ -44,27 +45,6 @@ void CEngine::Initialize()
 
 void CEngine::Loop()
 {
-	const std::vector<SVertex> Vertices = 
-	{
-		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-		{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-		{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-		{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
-	};
-
-	const std::vector<uint16_t> Indices = 
-	{
-		0, 1, 2, 2, 3, 0
-	};
-
-	std::shared_ptr<IShader> Vertex = g_VulkanRenderSystem->CreateShader(
-		IOUtils::ReadBinaryFile("Assets/Shaders/main.vert.spv"),
-		EShaderStage::Vertex);
-
-	std::shared_ptr<IShader> Fragment = g_VulkanRenderSystem->CreateShader(
-		IOUtils::ReadBinaryFile("Assets/Shaders/main.frag.spv"),
-		EShaderStage::Fragment);
-
 	/** Uniform buffer & pipeline */
 	std::shared_ptr<IUniformBuffer> UniformBuffer = g_VulkanRenderSystem->CreateUniformBuffer(
 		SUniformBufferInfos(sizeof(STestUBO)));
@@ -72,72 +52,18 @@ void CEngine::Loop()
 	/** Material test */
 	std::shared_ptr<CMaterial> Material = AssetManager->Get<CMaterial>("Materials/test.json");
 
-	/** Create vertex buffer using staging buffer */
-	std::shared_ptr<IBuffer> VertexBuffer;
-	{
-		std::shared_ptr<IBuffer> StagingBuffer = g_VulkanRenderSystem->CreateBuffer(
-			SBufferInfos(
-				sizeof(Vertices[0]) * Vertices.size(),
-				EBufferUsage::TransferSrc,
-				EBufferMemoryUsage::CpuToGpu));
-
-		void* Data = StagingBuffer->Map();
-		memcpy(Data, Vertices.data(), sizeof(Vertices[0]) * Vertices.size());
-		StagingBuffer->Unmap();
-
-		VertexBuffer = g_VulkanRenderSystem->CreateBuffer(
-			SBufferInfos(
-				sizeof(Vertices[0]) * Vertices.size(),
-				EBufferUsage::VertexBuffer | EBufferUsage::TransferDst,
-				EBufferMemoryUsage::GpuOnly));
-
-		StagingBuffer->Copy(VertexBuffer.get());
-	}
-
-	/** Create index buffer using staging buffer */
-	std::shared_ptr<IBuffer> IndexBuffer;
-	{
-		std::shared_ptr<IBuffer> StagingBuffer = g_VulkanRenderSystem->CreateBuffer(
-			SBufferInfos(
-				sizeof(Indices[0]) * Indices.size(),
-				EBufferUsage::TransferSrc,
-				EBufferMemoryUsage::CpuToGpu));
-
-		void* Data = StagingBuffer->Map();
-		memcpy(Data, Indices.data(), sizeof(Indices[0]) * Indices.size());
-		StagingBuffer->Unmap();
-
-		IndexBuffer = g_VulkanRenderSystem->CreateBuffer(
-			SBufferInfos(
-				sizeof(Indices[0]) * Indices.size(),
-				EBufferUsage::IndexBuffer | EBufferUsage::TransferDst,
-				EBufferMemoryUsage::GpuOnly));
-
-		StagingBuffer->Copy(IndexBuffer.get());
-	}
-
 	/** Load texture */
-	std::shared_ptr<CTexture2D> Texture = AssetManager->Get<CTexture2D>("Textures/Pepsiman.jpg");
+	std::shared_ptr<CTexture2D> Texture = AssetManager->Get<CTexture2D>("chalet.jpg");
+	std::shared_ptr<CStaticMesh> Mesh = AssetManager->Get<CStaticMesh>("chalet.obj");
 
 	std::array<float, 4> ClearColor = { 0.f, 0.f, 0.f, 1.0f };
 
 	/** Should threads continue ticking */
 	Run = true;
 
-	Material->SetShaderAttributeResource(
-		EShaderStage::Vertex,
-		"UBO", 
-		UniformBuffer->GetBuffer());
-
-	Material->SetShaderAttributeResource(
-		EShaderStage::Fragment,
-		"TexSampler",
-		Texture->GetTextureView());
-
 	// TODO: Game state
 
-	RenderThread = std::thread([this, &ClearColor, &VertexBuffer, &IndexBuffer, &Vertices,
-		&Indices, &Material]
+	RenderThread = std::thread([this, &ClearColor]
 	{
 		
 	});
@@ -188,7 +114,7 @@ void CEngine::Loop()
 			.count();
 
 		STestUBO UBO;
-		UBO.World = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), 
+		UBO.World = glm::rotate(glm::mat4(1.0f), time * glm::radians(40.0f), 
 			glm::vec3(0.0f, 0.0f, 1.0f));
 		UBO.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), 
 			glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -204,15 +130,28 @@ void CEngine::Loop()
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBeginRenderPass>(ClearColor);
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindGraphicsPipeline>(
 			Material->GetPipeline());
-		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindVertexBuffers>(VertexBuffer);
-		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindIndexBuffer>(IndexBuffer, 0,
-			EIndexFormat::Uint16);
+		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindVertexBuffers>(
+			Mesh->GetVertexBuffer());
+		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindIndexBuffer>(
+			Mesh->GetIndexBuffer(), 0,
+			EIndexFormat::Uint32);
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandDrawIndexed>(
-			static_cast<uint32_t>(Indices.size()), 1, 0, 0, 0);
+			Mesh->GetIndexCount(), 1, 0, 0, 0);
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandEndRenderPass>();
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandEndRecording>();
 
 		RenderSystem->Prepare();
+
+		Material->SetShaderAttributeResource(
+			EShaderStage::Vertex,
+			"UBO",
+			UniformBuffer->GetBuffer());
+
+		Material->SetShaderAttributeResource(
+			EShaderStage::Fragment,
+			"TexSampler",
+			Texture->GetTextureView());
+
 		/** Execute all commands */
 		while (Renderer->GetMainCommandList()->GetCommandsCount() > 0)
 		{

@@ -43,14 +43,18 @@ void CVulkanCommandBuffer::Begin()
 void CVulkanCommandBuffer::BeginRenderPass(const vk::RenderPass& InRenderPass,
 	const vk::Framebuffer& InFramebuffer, const std::array<float, 4>& InClearColor)
 {
-	const vk::ClearValue ClearValue = vk::ClearColorValue(InClearColor);
+	std::array<vk::ClearValue, 2> ClearValues =
+	{
+		vk::ClearColorValue(InClearColor),
+		vk::ClearDepthStencilValue(1.f, 0)
+	};
 
 	vk::RenderPassBeginInfo BeginInfo(
 		InRenderPass,
 		InFramebuffer,
 		vk::Rect2D(vk::Offset2D(), g_VulkanRenderSystem->GetSwapChain()->GetExtent()),
-		1,
-		&ClearValue);
+		static_cast<uint32_t>(ClearValues.size()),
+		ClearValues.data());
 
 	CommandBuffer->beginRenderPass(BeginInfo, vk::SubpassContents::eInline);
 }

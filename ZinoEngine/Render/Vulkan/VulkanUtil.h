@@ -12,6 +12,7 @@ namespace VulkanUtil
 	vk::ShaderStageFlagBits ShaderStageToVkShaderStage(const EShaderStage& InShaderStage);
 	vk::VertexInputRate VertexInputRateToVkVertexInputRate(const EVertexInputRate& InInputRate);
 	vk::Format FormatToVkFormat(const EFormat& InFormat);
+	EFormat VkFormatToFormat(const vk::Format& InFormat);
 	vk::BufferUsageFlags BufferUsageFlagsToVkBufferUsageFlags(const EBufferUsageFlags& InUsage);
 	VmaMemoryUsage BufferMemoryUsageToVmaMemoryUsage(const EBufferMemoryUsage& InUsage);
 	vk::IndexType IndexFormatToVkIndexType(const EIndexFormat& InFormat);
@@ -20,7 +21,7 @@ namespace VulkanUtil
 	vk::ImageType TextureTypeToVkImageType(const ETextureType& InType);
 	vk::ImageUsageFlags TextureUsageFlagsToVkImageUsageFlags(const ETextureUsageFlags& InUsage);
 	VmaMemoryUsage TextureMemoryUsageToVmaMemoryUsage(const ETextureMemoryUsage& InUsage);
-	vk::ImageViewType TextureViewTypeViewToVkImageViewType(const ETextureViewType& InViewType);
+	vk::ImageViewType TextureTypeToVkImageViewType(const ETextureType& InViewType);
 	vk::Filter SamplerFilterToVkFilter(const ESamplerFilter& InFilter);
 	vk::SamplerMipmapMode SamplerFilterToVkSamplerMipmapMode(const ESamplerFilter& InFilter);
 	vk::SamplerAddressMode SamplerAddressModeToVkSamplerAddressMode(const ESamplerAddressMode& InMode);

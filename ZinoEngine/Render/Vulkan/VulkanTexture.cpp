@@ -3,6 +3,7 @@
 #include "VulkanRenderSystem.h"
 #include "VulkanQueue.h"
 #include "VulkanCommandPool.h"
+#include "VulkanBuffer.h"
 
 CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice, const STextureInfo& InInfos)
 	: ITexture(InInfos), CVulkanDeviceResource(InDevice), Infos(InInfos)
@@ -35,6 +36,162 @@ CVulkanTexture::~CVulkanTexture()
 	vmaDestroyImage(Device->GetAllocator(),
 		Image,
 		Allocation);
+}
+
+void CVulkanTexture::Copy(IBuffer* InSrc)
+{
+	CVulkanBuffer* Src = static_cast<CVulkanBuffer*>(InSrc);
+
+	/** Transition image layout before copying */
+	TransitionImageLayout(vk::ImageLayout::eUndefined,
+		vk::ImageLayout::eTransferDstOptimal);
+
+	/** Allocate temporary command buffer from memory pool */
+	vk::CommandBufferAllocateInfo AllocateInfo(
+		g_VulkanRenderSystem->GetMemoryPool()->GetCommandPool(),
+		vk::CommandBufferLevel::ePrimary,
+		1);
+
+	vk::UniqueCommandBuffer CommandBuffer =
+		std::move(Device->GetDevice().allocateCommandBuffersUnique(AllocateInfo).value.front());
+
+	CommandBuffer->begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));;
+	CommandBuffer->copyBufferToImage(Src->GetBuffer(),
+		Image,
+		vk::ImageLayout::eTransferDstOptimal,
+		{ vk::BufferImageCopy(0, 0, 0,
+			vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor,
+				0,
+				0,
+				1),
+			vk::Offset3D(),
+			vk::Extent3D(Infos.Width, Infos.Height, Infos.Depth)) });
+	CommandBuffer->end();
+
+	/** Submit to graphics queue */
+
+	vk::SubmitInfo SubmitInfo(
+		0,
+		nullptr,
+		nullptr,
+		1,
+		&*CommandBuffer,
+		0,
+		nullptr);
+	Device->GetGraphicsQueue()->GetQueue().submit(SubmitInfo, vk::Fence());
+	Device->GetGraphicsQueue()->GetQueue().waitIdle();
+
+	/** Generate mipmaps */
+	GenerateMipmaps();
+}
+
+void CVulkanTexture::GenerateMipmaps()
+{
+	/** Allocate temporary command buffer from memory pool */
+	vk::CommandBufferAllocateInfo AllocateInfo(
+		g_VulkanRenderSystem->GetMemoryPool()->GetCommandPool(),
+		vk::CommandBufferLevel::ePrimary,
+		1);
+
+	vk::UniqueCommandBuffer CommandBuffer =
+		std::move(Device->GetDevice().allocateCommandBuffersUnique(AllocateInfo).value.front());
+
+	CommandBuffer->begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+	
+	uint32_t MipWidth = Infos.Width;
+	uint32_t MipHeight = Infos.Height;
+
+	for(uint32_t i = 1; i < Infos.MipLevels; ++i)
+	{
+		CommandBuffer->pipelineBarrier(
+			vk::PipelineStageFlagBits::eTransfer,
+			vk::PipelineStageFlagBits::eTransfer,
+			vk::DependencyFlags(),
+			{},
+			{},
+			{ 
+				vk::ImageMemoryBarrier(
+					vk::AccessFlagBits::eTransferWrite,
+					vk::AccessFlagBits::eTransferRead,
+					vk::ImageLayout::eTransferDstOptimal,
+					vk::ImageLayout::eTransferSrcOptimal,
+					VK_QUEUE_FAMILY_IGNORED,
+					VK_QUEUE_FAMILY_IGNORED,
+					Image,
+					vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor,
+						i - 1, 1, 0, 1))
+			});
+
+		CommandBuffer->blitImage(
+			Image, vk::ImageLayout::eTransferSrcOptimal,
+			Image, vk::ImageLayout::eTransferDstOptimal,
+			{ 
+				vk::ImageBlit(
+					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor,
+						i - 1, 0, 1),
+					{ vk::Offset3D(), vk::Offset3D(MipWidth, MipHeight, 1) },
+					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor,
+						i, 0, 1),
+					{ vk::Offset3D(), vk::Offset3D(MipWidth > 1 ? MipWidth / 2 : 1, 
+						MipHeight > 1 ? MipHeight / 2 : 1, 1) }) 
+			}, 
+			vk::Filter::eLinear);
+
+		CommandBuffer->pipelineBarrier(
+			vk::PipelineStageFlagBits::eTransfer,
+			vk::PipelineStageFlagBits::eFragmentShader,
+			vk::DependencyFlags(),
+			{},
+			{},
+			{
+				vk::ImageMemoryBarrier(
+					vk::AccessFlagBits::eTransferRead,
+					vk::AccessFlagBits::eShaderRead,
+					vk::ImageLayout::eTransferSrcOptimal,
+					vk::ImageLayout::eShaderReadOnlyOptimal,
+					VK_QUEUE_FAMILY_IGNORED,
+					VK_QUEUE_FAMILY_IGNORED,
+					Image,
+					vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor,
+						i - 1, 1, 0, 1))
+			});
+
+		if (MipWidth > 1) MipWidth /= 2;
+		if (MipHeight > 1) MipHeight /= 2;
+	}
+
+	CommandBuffer->pipelineBarrier(
+		vk::PipelineStageFlagBits::eTransfer,
+		vk::PipelineStageFlagBits::eFragmentShader,
+		vk::DependencyFlags(),
+		{},
+		{},
+			{
+				vk::ImageMemoryBarrier(
+					vk::AccessFlagBits::eTransferWrite,
+					vk::AccessFlagBits::eShaderRead,
+					vk::ImageLayout::eTransferDstOptimal,
+					vk::ImageLayout::eShaderReadOnlyOptimal,
+					VK_QUEUE_FAMILY_IGNORED,
+					VK_QUEUE_FAMILY_IGNORED,
+					Image,
+					vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor,
+						Infos.MipLevels - 1, 1, 0, 1))
+			});
+
+	CommandBuffer->end();
+
+	/** Submit to graphics queue */
+	vk::SubmitInfo SubmitInfo(
+		0,
+		nullptr,
+		nullptr,
+		1,
+		&*CommandBuffer,
+		0,
+		nullptr);
+	Device->GetGraphicsQueue()->GetQueue().submit(SubmitInfo, vk::Fence());
+	Device->GetGraphicsQueue()->GetQueue().waitIdle();
 }
 
 void CVulkanTexture::TransitionImageLayout(vk::ImageLayout InOldLayout, vk::ImageLayout InNewLayout)
@@ -92,7 +249,7 @@ void CVulkanTexture::TransitionImageLayout(vk::ImageLayout InOldLayout, vk::Imag
 			VK_QUEUE_FAMILY_IGNORED,
 			Image,
 			vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor,
-				0, 1, 0, 1)) });
+				0, Infos.MipLevels, 0, 1)) });
 	CommandBuffer->end();
 
 	/** Submit to graphics queue */

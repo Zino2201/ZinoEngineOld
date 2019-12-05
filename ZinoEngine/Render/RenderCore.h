@@ -61,6 +61,9 @@ enum class EVertexInputRate
 /** Format */
 enum class EFormat
 {
+	D32Sfloat,
+	D32SfloatS8Uint,
+	D24UnormS8Uint,
 	R8G8B8A8UNorm,
 	R32G32Sfloat,
 	R32G32B32Sfloat,
@@ -102,13 +105,16 @@ enum class ETextureType
 
 enum class ETextureViewType
 {
-	TextureView2D,
+	ShaderResource,
+	DepthStencil,
 };
 
 enum class ETextureUsage
 {
-	TransferDst = 1 << 0,
-	Sampled = 1 << 1,
+	TransferSrc = 1 << 0,
+	TransferDst = 1 << 1,
+	Sampled = 1 << 2,
+	DepthStencil = 1 << 3
 };
 DECLARE_FLAG_ENUM(ETextureUsage)
 
@@ -180,7 +186,7 @@ struct SVertexInputAttributeDescription
 /** Vertex structure */
 struct SVertex
 {
-	glm::vec2 Position;
+	glm::vec3 Position;
 	glm::vec3 Color;
 	glm::vec2 TexCoord;
 
@@ -193,7 +199,7 @@ struct SVertex
 	{
 		return
 		{
-			SVertexInputAttributeDescription(0, 0, EFormat::R32G32Sfloat,
+			SVertexInputAttributeDescription(0, 0, EFormat::R32G32B32Sfloat,
 				offsetof(SVertex, Position)),
 			SVertexInputAttributeDescription(0, 1, EFormat::R32G32B32Sfloat,
 				offsetof(SVertex, Color)),
@@ -201,4 +207,24 @@ struct SVertex
 				offsetof(SVertex, TexCoord)),
 		};
 	}
+
+	bool operator==(const SVertex& InOther) const
+	{
+		return Position == InOther.Position 
+			&& Color == InOther.Color 
+			&& TexCoord == InOther.TexCoord;
+	}
 };
+
+namespace std 
+{
+	template<> struct hash<SVertex> 
+	{
+		size_t operator()(const SVertex& InVertex) const
+		{
+			return ((hash<glm::vec3>()(InVertex.Position) ^
+				(hash<glm::vec3>()(InVertex.Color) << 1)) >> 1) ^
+				(hash<glm::vec2>()(InVertex.TexCoord) << 1);
+		}
+	};
+}

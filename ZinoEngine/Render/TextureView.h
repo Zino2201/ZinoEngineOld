@@ -10,9 +10,11 @@ struct STextureViewInfo
 	ITexture* Texture;
 	ETextureViewType ViewType;
 	EFormat Format;
+	uint32_t MipLevels;
 
 	STextureViewInfo(ITexture* InTexture, const ETextureViewType& InViewType,
-		const EFormat& InFormat) : Texture(InTexture), ViewType(InViewType), Format(InFormat) {}
+		const EFormat& InFormat, const uint32_t& InMipLevels = 1) : 
+		Texture(InTexture), ViewType(InViewType), Format(InFormat), MipLevels(InMipLevels) {}
 };
 
 class ITextureView : public IDeviceResource

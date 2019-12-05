@@ -107,15 +107,15 @@
       <PreprocessorDefinitions>_NO_DEBUG_HEAP=1;_HAS_EXCEPTIONS=0;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\Projects\ZinoEngine\Libs\stb_image;D:\Projects\ZinoEngine\Libs\rapidjson-1.1.0\include;D:\Projects\ZinoEngine\Libs\VulkanMemoryAllocator;D:\Projects\ZinoEngine\Libs\enum-flags\include;D:\Projects\ZinoEngine\Libs\magic_enum;D:\Projects\ZinoEngine\Libs\glm;D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Projects\ZinoEngine\Libs\assimp\include;D:\Projects\ZinoEngine\Libs\stb_image;D:\Projects\ZinoEngine\Libs\rapidjson-1.1.0\include;D:\Projects\ZinoEngine\Libs\VulkanMemoryAllocator;D:\Projects\ZinoEngine\Libs\enum-flags\include;D:\Projects\ZinoEngine\Libs\magic_enum;D:\Projects\ZinoEngine\Libs\glm;D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\VulkanSDK\1.1.126.0\Lib;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Projects\ZinoEngine\Libs\assimp\lib;D:\VulkanSDK\1.1.126.0\Lib;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc142-mt.lib;SDL2.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -150,7 +150,7 @@
       <ConformanceMode>true</ConformanceMode>
       <MinimalRebuild>false</MinimalRebuild>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\Projects\ZinoEngine\Libs\stb_image;D:\Projects\ZinoEngine\Libs\rapidjson-1.1.0\include;D:\Projects\ZinoEngine\Libs\VulkanMemoryAllocator;D:\Projects\ZinoEngine\Libs\enum-flags\include;D:\Projects\ZinoEngine\Libs\magic_enum;D:\Projects\ZinoEngine\Libs\glm;D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Projects\ZinoEngine\Libs\assimp\include;D:\Projects\ZinoEngine\Libs\stb_image;D:\Projects\ZinoEngine\Libs\rapidjson-1.1.0\include;D:\Projects\ZinoEngine\Libs\VulkanMemoryAllocator;D:\Projects\ZinoEngine\Libs\enum-flags\include;D:\Projects\ZinoEngine\Libs\magic_enum;D:\Projects\ZinoEngine\Libs\glm;D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
     <Link>
@@ -158,8 +158,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\VulkanSDK\1.1.126.0\Lib;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Projects\ZinoEngine\Libs\assimp\lib;D:\VulkanSDK\1.1.126.0\Lib;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc142-mt.lib;SDL2.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -170,6 +170,7 @@
     <ClCompile Include="Render\Commands\RenderCommands.cpp" />
     <ClCompile Include="Render\Material.cpp" />
     <ClCompile Include="Render\Renderer.cpp" />
+    <ClCompile Include="Render\StaticMesh.cpp" />
     <ClCompile Include="Render\Texture2D.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanCommandBuffer.cpp" />
@@ -215,6 +216,7 @@
     <ClInclude Include="Render\Sampler.h" />
     <ClInclude Include="Render\Shader.h" />
     <ClInclude Include="Render\ShaderAttributesManager.h" />
+    <ClInclude Include="Render\StaticMesh.h" />
     <ClInclude Include="Render\Texture.h" />
     <ClInclude Include="Render\Texture2D.h" />
     <ClInclude Include="Render\TextureView.h" />

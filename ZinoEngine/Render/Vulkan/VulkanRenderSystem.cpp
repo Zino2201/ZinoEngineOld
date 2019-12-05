@@ -19,6 +19,8 @@
 #include "VulkanTexture.h"
 #include "VulkanTextureView.h"
 #include "VulkanSampler.h"
+#include "VulkanTexture.h"
+#include "VulkanTextureView.h"
 
 CVulkanRenderSystem* g_VulkanRenderSystem = nullptr;
 
@@ -232,6 +234,8 @@ void CVulkanRenderSystem::OnSwapchainRecreated()
 	/** Free swapchain objects */
 	Framebuffers.clear();
 	RenderPass.reset();
+	DepthBuffer.reset();
+	DepthBufferView.reset();
 
 	/** Recreate it */
 	CreateSwapchainObjects();
@@ -239,6 +243,25 @@ void CVulkanRenderSystem::OnSwapchainRecreated()
 
 void CVulkanRenderSystem::CreateSwapchainObjects()
 {
+	vk::Format DepthFormat = FindDepthFormat(Device->GetPhysicalDevice());
+
+	/** Depth buffer image */
+	{
+		DepthBuffer = std::make_shared<CVulkanTexture>(Device.get(),
+			STextureInfo(
+				ETextureType::Texture2D,
+				VulkanUtil::VkFormatToFormat(DepthFormat),
+				ETextureUsage::DepthStencil,
+				ETextureMemoryUsage::GpuOnly,
+				SwapChain->GetExtent().width,
+				SwapChain->GetExtent().height));
+		DepthBufferView = std::make_shared<CVulkanTextureView>(Device.get(),
+			STextureViewInfo(
+				DepthBuffer.get(),
+				ETextureViewType::DepthStencil,
+				VulkanUtil::VkFormatToFormat(DepthFormat)));
+	}
+
 	/** Create render pass */
 	{
 		vk::AttachmentDescription ColorAttachment(
@@ -252,9 +275,25 @@ void CVulkanRenderSystem::CreateSwapchainObjects()
 			vk::ImageLayout::eUndefined,
 			vk::ImageLayout::ePresentSrcKHR);
 
+		vk::AttachmentDescription DepthAttachment(
+			vk::AttachmentDescriptionFlags(),
+			DepthFormat,
+			vk::SampleCountFlagBits::e1,
+			vk::AttachmentLoadOp::eClear,
+			vk::AttachmentStoreOp::eDontCare,
+			vk::AttachmentLoadOp::eDontCare,
+			vk::AttachmentStoreOp::eDontCare,
+			vk::ImageLayout::eUndefined,
+			vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
 		vk::AttachmentReference ColorAttachmentRef(
 			0,
 			vk::ImageLayout::eColorAttachmentOptimal);
+
+
+		vk::AttachmentReference DepthAttachmentRef(
+			1,
+			vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
 		vk::SubpassDescription Subpass(
 			vk::SubpassDescriptionFlags(),
@@ -262,7 +301,9 @@ void CVulkanRenderSystem::CreateSwapchainObjects()
 			0,
 			nullptr,
 			1,
-			&ColorAttachmentRef);
+			&ColorAttachmentRef,
+			nullptr,
+			&DepthAttachmentRef);
 
 		vk::SubpassDependency SubpassDependency(
 			VK_SUBPASS_EXTERNAL,
@@ -272,10 +313,12 @@ void CVulkanRenderSystem::CreateSwapchainObjects()
 			vk::AccessFlags(),
 			vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
 
+		std::array<vk::AttachmentDescription, 2> Attachments = { ColorAttachment, DepthAttachment };
+
 		vk::RenderPassCreateInfo CreateInfos(
 			vk::RenderPassCreateFlags(),
-			1,
-			&ColorAttachment,
+			static_cast<uint32_t>(Attachments.size()),
+			Attachments.data(),
 			1,
 			&Subpass,
 			1,
@@ -292,11 +335,17 @@ void CVulkanRenderSystem::CreateSwapchainObjects()
 
 		for (int i = 0; i < SwapChain->GetImageViews().size(); ++i)
 		{
+			std::array<vk::ImageView, 2> Attachments = 
+			{ 
+				*SwapChain->GetImageViews()[i], 
+				DepthBufferView->GetImageView() 
+			}; 
+
 			vk::FramebufferCreateInfo CreateInfo(
 				vk::FramebufferCreateFlags(),
 				*RenderPass,
-				1,
-				&*SwapChain->GetImageViews()[i],
+				static_cast<uint32_t>(Attachments.size()),
+				Attachments.data(),
 				SwapChain->GetExtent().width,
 				SwapChain->GetExtent().height,
 				1);
@@ -430,4 +479,35 @@ bool CVulkanRenderSystem::IsDeviceUseable(const vk::PhysicalDevice& InDevice) co
 	SwapChainSupported = !SwapChainDetails.Formats.empty() && !SwapChainDetails.PresentModes.empty();
 
 	return RequiredExtensions.empty() && SwapChainSupported;
+}
+
+vk::Format CVulkanRenderSystem::FindSupportedFormat(const vk::PhysicalDevice& InDevice,
+	const std::vector<vk::Format>& InCandidates,
+	vk::ImageTiling InTiling, vk::FormatFeatureFlags InFeatures) const
+{
+	for(const vk::Format& Format : InCandidates)
+	{
+		vk::FormatProperties Properties = InDevice.getFormatProperties(Format);
+
+		if(InTiling == vk::ImageTiling::eLinear &&
+			(Properties.linearTilingFeatures & InFeatures) == InFeatures)
+			return Format;
+
+		if (InTiling == vk::ImageTiling::eOptimal &&
+			(Properties.optimalTilingFeatures & InFeatures) == InFeatures)
+			return Format;
+	}
+}
+
+vk::Format CVulkanRenderSystem::FindDepthFormat(const vk::PhysicalDevice& InDevice) const
+{
+	return FindSupportedFormat(InDevice,
+		{ vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint },
+		vk::ImageTiling::eOptimal,
+		vk::FormatFeatureFlagBits::eDepthStencilAttachment);
+}
+
+bool CVulkanRenderSystem::HasStencilComponent(vk::Format InFormat) const
+{
+	return InFormat == vk::Format::eD32SfloatS8Uint || InFormat == vk::Format::eD24UnormS8Uint;
 }

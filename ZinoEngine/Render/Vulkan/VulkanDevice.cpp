@@ -38,7 +38,7 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysDevice)
 
 		vk::PhysicalDeviceFeatures Features = vk::PhysicalDeviceFeatures()
 			.setSamplerAnisotropy(VK_TRUE);
-
+	
 		/** Create device */
 		vk::DeviceCreateInfo CreateInfos(
 			vk::DeviceCreateFlags(),

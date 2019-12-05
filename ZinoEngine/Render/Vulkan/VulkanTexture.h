@@ -10,10 +10,14 @@ public:
 	CVulkanTexture(CVulkanDevice* InDevice, const STextureInfo& InInfos);
 	~CVulkanTexture();
 
-	const vk::Image& GetImage() const { return Image; }
-	const STextureInfo& GetInfos() const { return Infos; }
+	virtual void Copy(IBuffer* InSrc) override;
 
 	void TransitionImageLayout(vk::ImageLayout InOldLayout, vk::ImageLayout InNewLayout);
+
+	const vk::Image& GetImage() const { return Image; }
+	virtual const STextureInfo& GetInfo() const override { return Infos; }
+private:
+	void GenerateMipmaps();
 private:
 	vk::Image Image;
 	VmaAllocation Allocation;

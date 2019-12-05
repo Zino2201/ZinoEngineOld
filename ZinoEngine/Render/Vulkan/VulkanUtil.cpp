@@ -65,6 +65,12 @@ vk::Format VulkanUtil::FormatToVkFormat(const EFormat& InFormat)
 {
 	switch(InFormat)
 	{
+	case EFormat::D32Sfloat:
+		return vk::Format::eD32Sfloat;
+	case EFormat::D32SfloatS8Uint:
+		return vk::Format::eD32SfloatS8Uint;
+	case EFormat::D24UnormS8Uint:
+		return vk::Format::eD24UnormS8Uint;
 	default:
 	case EFormat::R8G8B8A8UNorm:
 		return vk::Format::eR8G8B8A8Unorm;
@@ -72,6 +78,26 @@ vk::Format VulkanUtil::FormatToVkFormat(const EFormat& InFormat)
 		return vk::Format::eR32G32Sfloat;
 	case EFormat::R32G32B32Sfloat:
 		return vk::Format::eR32G32B32Sfloat;
+	}
+}
+
+EFormat VulkanUtil::VkFormatToFormat(const vk::Format& InFormat)
+{
+	switch (InFormat)
+	{
+	case vk::Format::eD32Sfloat:
+		return EFormat::D32Sfloat;
+	case vk::Format::eD32SfloatS8Uint:
+		return EFormat::D32SfloatS8Uint;
+	case vk::Format::eD24UnormS8Uint:
+		return EFormat::D24UnormS8Uint;
+	default:
+	case vk::Format::eR8G8B8A8Unorm:
+		return EFormat::R8G8B8A8UNorm;
+	case vk::Format::eR32G32Sfloat:
+		return EFormat::R32G32Sfloat;
+	case vk::Format::eR32G32B32Sfloat:
+		return EFormat::R32G32B32Sfloat;
 	}
 }
 
@@ -178,6 +204,11 @@ vk::ImageUsageFlags VulkanUtil::TextureUsageFlagsToVkImageUsageFlags(const EText
 {
 	vk::ImageUsageFlags Flags;
 
+	if (HAS_FLAG(InUsage, ETextureUsage::TransferSrc))
+	{
+		Flags |= vk::ImageUsageFlagBits::eTransferSrc;
+	}
+
 	if (HAS_FLAG(InUsage, ETextureUsage::TransferDst))
 	{
 		Flags |= vk::ImageUsageFlagBits::eTransferDst;
@@ -186,6 +217,11 @@ vk::ImageUsageFlags VulkanUtil::TextureUsageFlagsToVkImageUsageFlags(const EText
 	if (HAS_FLAG(InUsage, ETextureUsage::Sampled))
 	{
 		Flags |= vk::ImageUsageFlagBits::eSampled;
+	}
+
+	if (HAS_FLAG(InUsage, ETextureUsage::DepthStencil))
+	{
+		Flags |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
 	}
 
 	return Flags;
@@ -207,12 +243,12 @@ VmaMemoryUsage VulkanUtil::TextureMemoryUsageToVmaMemoryUsage(const ETextureMemo
 	}
 }
 
-vk::ImageViewType VulkanUtil::TextureViewTypeViewToVkImageViewType(const ETextureViewType& InViewType)
+vk::ImageViewType VulkanUtil::TextureTypeToVkImageViewType(const ETextureType& InViewType)
 {
 	switch(InViewType)
 	{
 	default:
-	case ETextureViewType::TextureView2D:
+	case ETextureType::Texture2D:
 		return vk::ImageViewType::e2D;
 	}
 }

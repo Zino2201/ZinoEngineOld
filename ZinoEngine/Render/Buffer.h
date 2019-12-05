@@ -41,14 +41,9 @@ public:
 	virtual void Unmap() = 0;
 
 	/**
-	 * Copy buffer to specified dest
+	 * Copy buffer from src
 	 */
-	virtual void Copy(IBuffer* InDst) = 0;
-
-	/* 
-	 * Copy to texture
-	 */
-	virtual void Copy(ITexture* InDst) = 0;
+	virtual void Copy(IBuffer* InSrc) = 0;
 
 	/**
 	 * Get mapped memory

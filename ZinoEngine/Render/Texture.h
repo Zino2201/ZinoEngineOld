@@ -3,6 +3,8 @@
 #include "RenderCore.h"
 #include "Render/DeviceResource.h"
 
+class IBuffer;
+
 struct STextureInfo
 {
 	/** Texture type */
@@ -52,4 +54,9 @@ class ITexture : public IDeviceResource
 public:
 	ITexture(const STextureInfo& InInfos) {}
 	virtual ~ITexture() = default;
+
+	/** Copy texture from buffer */
+	virtual void Copy(IBuffer* InSrc) = 0;
+
+	virtual const STextureInfo& GetInfo() const = 0;
 };
