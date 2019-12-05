@@ -6,6 +6,7 @@
 class IGraphicsPipeline;
 class IShader;
 class IDeviceResource;
+class ISampler;
 
 /**
  * Material base class

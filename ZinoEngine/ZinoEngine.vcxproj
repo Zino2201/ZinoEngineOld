@@ -107,7 +107,7 @@
       <PreprocessorDefinitions>_NO_DEBUG_HEAP=1;_HAS_EXCEPTIONS=0;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\Projects\ZinoEngine\Libs\rapidjson-1.1.0\include;D:\Projects\ZinoEngine\Libs\VulkanMemoryAllocator;D:\Projects\ZinoEngine\Libs\enum-flags\include;D:\Projects\ZinoEngine\Libs\magic_enum;D:\Projects\ZinoEngine\Libs\glm;D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Projects\ZinoEngine\Libs\stb_image;D:\Projects\ZinoEngine\Libs\rapidjson-1.1.0\include;D:\Projects\ZinoEngine\Libs\VulkanMemoryAllocator;D:\Projects\ZinoEngine\Libs\enum-flags\include;D:\Projects\ZinoEngine\Libs\magic_enum;D:\Projects\ZinoEngine\Libs\glm;D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
@@ -150,7 +150,7 @@
       <ConformanceMode>true</ConformanceMode>
       <MinimalRebuild>false</MinimalRebuild>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\Projects\ZinoEngine\Libs\rapidjson-1.1.0\include;D:\Projects\ZinoEngine\Libs\VulkanMemoryAllocator;D:\Projects\ZinoEngine\Libs\enum-flags\include;D:\Projects\ZinoEngine\Libs\magic_enum;D:\Projects\ZinoEngine\Libs\glm;D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Projects\ZinoEngine\Libs\stb_image;D:\Projects\ZinoEngine\Libs\rapidjson-1.1.0\include;D:\Projects\ZinoEngine\Libs\VulkanMemoryAllocator;D:\Projects\ZinoEngine\Libs\enum-flags\include;D:\Projects\ZinoEngine\Libs\magic_enum;D:\Projects\ZinoEngine\Libs\glm;D:\VulkanSDK\1.1.126.0\Include;D:\Projects\ZinoEngine\ZinoEngine;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
     <Link>
@@ -170,6 +170,7 @@
     <ClCompile Include="Render\Commands\RenderCommands.cpp" />
     <ClCompile Include="Render\Material.cpp" />
     <ClCompile Include="Render\Renderer.cpp" />
+    <ClCompile Include="Render\Texture2D.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanCommandBuffer.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanCommandBufferManager.cpp" />
@@ -181,12 +182,16 @@
     <ClCompile Include="Render\Vulkan\VulkanQueue.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanRenderCommandContext.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanRenderSystem.cpp" />
+    <ClCompile Include="Render\Vulkan\VulkanSampler.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanShader.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanShaderAttributesManager.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanSwapChain.cpp" />
+    <ClCompile Include="Render\Vulkan\VulkanTexture.cpp" />
+    <ClCompile Include="Render\Vulkan\VulkanTextureView.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanUniformBuffer.cpp" />
     <ClCompile Include="Render\Vulkan\VulkanUtil.cpp" />
     <ClCompile Include="Render\Window.cpp" />
+    <ClCompile Include="ThirdParty\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Asset.h" />
@@ -207,8 +212,12 @@
     <ClInclude Include="Render\Material.h" />
     <ClInclude Include="Render\Pipeline.h" />
     <ClInclude Include="Render\Renderer.h" />
+    <ClInclude Include="Render\Sampler.h" />
     <ClInclude Include="Render\Shader.h" />
     <ClInclude Include="Render\ShaderAttributesManager.h" />
+    <ClInclude Include="Render\Texture.h" />
+    <ClInclude Include="Render\Texture2D.h" />
+    <ClInclude Include="Render\TextureView.h" />
     <ClInclude Include="Render\UniformBuffer.h" />
     <ClInclude Include="Render\Vulkan\VulkanBuffer.h" />
     <ClInclude Include="Render\Vulkan\VulkanCommandBuffer.h" />
@@ -226,9 +235,12 @@
     <ClInclude Include="Render\RenderCore.h" />
     <ClInclude Include="Render\RenderSystem.h" />
     <ClInclude Include="Render\Vulkan\VulkanResource.h" />
+    <ClInclude Include="Render\Vulkan\VulkanSampler.h" />
     <ClInclude Include="Render\Vulkan\VulkanShader.h" />
     <ClInclude Include="Render\Vulkan\VulkanShaderAttributesManager.h" />
     <ClInclude Include="Render\Vulkan\VulkanSwapChain.h" />
+    <ClInclude Include="Render\Vulkan\VulkanTexture.h" />
+    <ClInclude Include="Render\Vulkan\VulkanTextureView.h" />
     <ClInclude Include="Render\Vulkan\VulkanUniformBuffer.h" />
     <ClInclude Include="Render\Vulkan\VulkanUtil.h" />
     <ClInclude Include="Render\Window.h" />
@@ -242,6 +254,9 @@
     <None Include="Assets\Shaders\main.vert" />
     <None Include="Assets\Shaders\main.vert.spv.json" />
     <None Include="Assets\Shaders\main.vert.spv" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\Textures\Pepsiman.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

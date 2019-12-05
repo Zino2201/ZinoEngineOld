@@ -16,6 +16,9 @@
 #include "VulkanBuffer.h"
 #include "VulkanCommandPool.h"
 #include "VulkanUniformBuffer.h"
+#include "VulkanTexture.h"
+#include "VulkanTextureView.h"
+#include "VulkanSampler.h"
 
 CVulkanRenderSystem* g_VulkanRenderSystem = nullptr;
 
@@ -348,6 +351,24 @@ std::shared_ptr<IBuffer> CVulkanRenderSystem::CreateBuffer(const SBufferInfos& I
 std::shared_ptr<IUniformBuffer> CVulkanRenderSystem::CreateUniformBuffer(const SUniformBufferInfos& InInfos)
 {
 	return std::make_shared<CVulkanUniformBuffer>(Device.get(),
+		InInfos);
+}
+
+std::shared_ptr<ITexture> CVulkanRenderSystem::CreateTexture(const STextureInfo& InInfos)
+{
+	return std::make_shared<CVulkanTexture>(Device.get(),
+		InInfos);
+}
+
+std::shared_ptr<ITextureView> CVulkanRenderSystem::CreateTextureView(const STextureViewInfo& InInfos)
+{
+	return std::make_shared<CVulkanTextureView>(Device.get(),
+		InInfos);
+}
+
+std::shared_ptr<ISampler> CVulkanRenderSystem::CreateSampler(const SSamplerInfo& InInfos)
+{
+	return std::make_shared<CVulkanSampler>(Device.get(),
 		InInfos);
 }
 

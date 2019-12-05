@@ -1,5 +1,7 @@
 #pragma once
 
+#include "RenderCore.h"
+
 class IDeviceResource
 {
 public:

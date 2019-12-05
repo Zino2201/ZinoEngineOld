@@ -87,6 +87,21 @@
     <ClCompile Include="Render\Vulkan\VulkanShaderAttributesManager.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="ThirdParty\stb_image.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\Texture2D.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\Vulkan\VulkanTexture.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\Vulkan\VulkanTextureView.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\Vulkan\VulkanSampler.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\EngineCore.h">
@@ -221,6 +236,27 @@
     <ClInclude Include="Render\ShaderAttributesManager.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="Render\Texture2D.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Texture.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Vulkan\VulkanTexture.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\TextureView.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Vulkan\VulkanTextureView.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Sampler.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Vulkan\VulkanSampler.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Shaders\main.frag" />
@@ -230,5 +266,10 @@
     <None Include="Assets\Materials\test.json" />
     <None Include="Assets\Shaders\main.frag.spv.json" />
     <None Include="Assets\Shaders\main.vert.spv.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\Textures\Pepsiman.jpg">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
   </ItemGroup>
 </Project>

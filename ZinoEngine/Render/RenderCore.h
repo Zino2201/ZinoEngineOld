@@ -16,7 +16,10 @@ DECLARE_FLAG_ENUM(EShaderStage)
 enum class EShaderAttributeType
 {
 	/** A uniform buffer that keep its size */
-	UniformBufferStatic
+	UniformBufferStatic,
+
+	/** Combined image sampler */
+	CombinedImageSampler
 };
 
 /**
@@ -58,6 +61,7 @@ enum class EVertexInputRate
 /** Format */
 enum class EFormat
 {
+	R8G8B8A8UNorm,
 	R32G32Sfloat,
 	R32G32B32Sfloat,
 };
@@ -88,6 +92,54 @@ enum class EBufferMemoryUsage
 	GpuOnly,
 	CpuToGpu,
 	GpuToCpu
+};
+
+/** Textures */
+enum class ETextureType
+{
+	Texture2D,
+};
+
+enum class ETextureViewType
+{
+	TextureView2D,
+};
+
+enum class ETextureUsage
+{
+	TransferDst = 1 << 0,
+	Sampled = 1 << 1,
+};
+DECLARE_FLAG_ENUM(ETextureUsage)
+
+enum class ETextureMemoryUsage
+{
+	CpuOnly,
+	GpuOnly,
+	CpuToGpu,
+	GpuToCpu
+};
+
+/** Samplers */
+enum class ESamplerFilter
+{
+	Linear,
+	Nearest
+};
+
+enum class ESamplerAddressMode
+{
+	Repeat,
+	Mirror,
+	Clamp,
+	Border,
+};
+
+/** Other */
+enum class EComparisonOp
+{
+	Never,
+	Always
 };
 
 /**
@@ -130,6 +182,7 @@ struct SVertex
 {
 	glm::vec2 Position;
 	glm::vec3 Color;
+	glm::vec2 TexCoord;
 
 	static SVertexInputBindingDescription GetBindingDescription()
 	{
@@ -144,6 +197,8 @@ struct SVertex
 				offsetof(SVertex, Position)),
 			SVertexInputAttributeDescription(0, 1, EFormat::R32G32B32Sfloat,
 				offsetof(SVertex, Color)),
+			SVertexInputAttributeDescription(0, 2, EFormat::R32G32Sfloat,
+				offsetof(SVertex, TexCoord)),
 		};
 	}
 };

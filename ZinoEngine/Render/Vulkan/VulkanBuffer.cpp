@@ -4,6 +4,7 @@
 #include "VulkanCommandBuffer.h"
 #include "VulkanRenderSystem.h"
 #include "VulkanQueue.h"
+#include "VulkanTexture.h"
 
 CVulkanBuffer::CVulkanBuffer(CVulkanDevice* InDevice,
 	const SBufferInfos& InInfos) : IBuffer(InInfos), CVulkanDeviceResource(InDevice)
@@ -81,6 +82,55 @@ void CVulkanBuffer::Copy(IBuffer* InDst)
 		nullptr);
 	Device->GetGraphicsQueue()->GetQueue().submit(SubmitInfo, vk::Fence());
 	Device->GetGraphicsQueue()->GetQueue().waitIdle();
+}
+
+void CVulkanBuffer::Copy(ITexture* InDst)
+{
+	CVulkanTexture* Dst = static_cast<CVulkanTexture*>(InDst);
+
+	/** Transition image layout before copying */
+	Dst->TransitionImageLayout(vk::ImageLayout::eUndefined,
+		vk::ImageLayout::eTransferDstOptimal);
+
+	/** Allocate temporary command buffer from memory pool */
+	vk::CommandBufferAllocateInfo AllocateInfo(
+		g_VulkanRenderSystem->GetMemoryPool()->GetCommandPool(),
+		vk::CommandBufferLevel::ePrimary,
+		1);
+
+	vk::UniqueCommandBuffer CommandBuffer =
+		std::move(Device->GetDevice().allocateCommandBuffersUnique(AllocateInfo).value.front());
+
+	CommandBuffer->begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));;
+	CommandBuffer->copyBufferToImage(Buffer,
+		Dst->GetImage(),
+		vk::ImageLayout::eTransferDstOptimal,
+		{ vk::BufferImageCopy(0, 0, 0, 
+			vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor,
+				0,
+				0,
+				1),
+			vk::Offset3D(),
+			vk::Extent3D(Dst->GetInfos().Width, Dst->GetInfos().Height, Dst->GetInfos().Depth)) });
+	CommandBuffer->end();
+
+	/** Submit to graphics queue */
+
+	vk::SubmitInfo SubmitInfo(
+		0,
+		nullptr,
+		nullptr,
+		1,
+		&*CommandBuffer,
+		0,
+		nullptr);
+	Device->GetGraphicsQueue()->GetQueue().submit(SubmitInfo, vk::Fence());
+	Device->GetGraphicsQueue()->GetQueue().waitIdle();
+
+	/** Transition image layout after copying */
+	if(HAS_FLAG(Dst->GetInfos().UsageFlags, ETextureUsage::Sampled))
+		Dst->TransitionImageLayout(vk::ImageLayout::eTransferDstOptimal,
+			vk::ImageLayout::eShaderReadOnlyOptimal);
 }
 
 void* CVulkanBuffer::GetMappedMemory() const

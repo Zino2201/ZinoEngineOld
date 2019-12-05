@@ -2,6 +2,7 @@
 
 #include "Render/RenderSystem.h"
 #include "VulkanCore.h"
+#include "Render/Texture.h"
 
 struct SDL_Window;
 class CVulkanDevice;
@@ -29,6 +30,9 @@ public:
 	virtual std::shared_ptr<IGraphicsPipeline> CreateGraphicsPipeline(const SGraphicsPipelineInfos& InInfos) override;
 	virtual std::shared_ptr<IBuffer> CreateBuffer(const SBufferInfos& InInfos) override;
 	virtual std::shared_ptr<IUniformBuffer> CreateUniformBuffer(const SUniformBufferInfos& InInfos) override;
+	virtual std::shared_ptr<ITexture> CreateTexture(const STextureInfo& InInfos) override;
+	virtual std::shared_ptr<ITextureView> CreateTextureView(const STextureViewInfo& InInfos) override;
+	virtual std::shared_ptr<ISampler> CreateSampler(const SSamplerInfo& InInfos) override;
 
 	/** Getters */
 	const vk::Instance& GetInstance() const { return *Instance; }

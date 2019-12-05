@@ -36,6 +36,9 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysDevice)
 				&QueuePriority);
 		}
 
+		vk::PhysicalDeviceFeatures Features = vk::PhysicalDeviceFeatures()
+			.setSamplerAnisotropy(VK_TRUE);
+
 		/** Create device */
 		vk::DeviceCreateInfo CreateInfos(
 			vk::DeviceCreateFlags(),
@@ -44,7 +47,8 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysDevice)
 			g_VulkanEnableValidationLayers ? static_cast<uint32_t>(g_VulkanValidationLayers.size()) : 0,
 			g_VulkanEnableValidationLayers ? g_VulkanValidationLayers.data() : 0,
 			static_cast<uint32_t>(g_VulkanRequiredDeviceExtensions.size()),
-			g_VulkanRequiredDeviceExtensions.data());
+			g_VulkanRequiredDeviceExtensions.data(),
+			&Features);
 
 		Device = PhysicalDevice.createDeviceUnique(CreateInfos).value;
 		if (!Device)

@@ -66,6 +66,8 @@ vk::Format VulkanUtil::FormatToVkFormat(const EFormat& InFormat)
 	switch(InFormat)
 	{
 	default:
+	case EFormat::R8G8B8A8UNorm:
+		return vk::Format::eR8G8B8A8Unorm;
 	case EFormat::R32G32Sfloat:
 		return vk::Format::eR32G32Sfloat;
 	case EFormat::R32G32B32Sfloat:
@@ -140,6 +142,8 @@ vk::DescriptorType VulkanUtil::ShaderAttributeTypeToVkDescriptorType(const EShad
 	default:
 	case EShaderAttributeType::UniformBufferStatic:
 		return vk::DescriptorType::eUniformBuffer;
+	case EShaderAttributeType::CombinedImageSampler:
+		return vk::DescriptorType::eCombinedImageSampler;
 	}
 }
 
@@ -158,4 +162,109 @@ vk::ShaderStageFlags VulkanUtil::ShaderStageFlagsToVkShaderStageFlags(const ESha
 	}
 
 	return Flags;
+}
+
+vk::ImageType VulkanUtil::TextureTypeToVkImageType(const ETextureType& InType)
+{
+	switch(InType)
+	{
+	default:
+	case ETextureType::Texture2D:
+		return vk::ImageType::e2D;
+	}
+}
+
+vk::ImageUsageFlags VulkanUtil::TextureUsageFlagsToVkImageUsageFlags(const ETextureUsageFlags& InUsage)
+{
+	vk::ImageUsageFlags Flags;
+
+	if (HAS_FLAG(InUsage, ETextureUsage::TransferDst))
+	{
+		Flags |= vk::ImageUsageFlagBits::eTransferDst;
+	}
+
+	if (HAS_FLAG(InUsage, ETextureUsage::Sampled))
+	{
+		Flags |= vk::ImageUsageFlagBits::eSampled;
+	}
+
+	return Flags;
+}
+
+VmaMemoryUsage VulkanUtil::TextureMemoryUsageToVmaMemoryUsage(const ETextureMemoryUsage& InUsage)
+{
+	switch (InUsage)
+	{
+	default:
+	case ETextureMemoryUsage::CpuOnly:
+		return VMA_MEMORY_USAGE_CPU_ONLY;
+	case ETextureMemoryUsage::CpuToGpu:
+		return VMA_MEMORY_USAGE_CPU_TO_GPU;
+	case ETextureMemoryUsage::GpuToCpu:
+		return VMA_MEMORY_USAGE_GPU_TO_CPU;
+	case ETextureMemoryUsage::GpuOnly:
+		return VMA_MEMORY_USAGE_GPU_ONLY;
+	}
+}
+
+vk::ImageViewType VulkanUtil::TextureViewTypeViewToVkImageViewType(const ETextureViewType& InViewType)
+{
+	switch(InViewType)
+	{
+	default:
+	case ETextureViewType::TextureView2D:
+		return vk::ImageViewType::e2D;
+	}
+}
+
+vk::Filter VulkanUtil::SamplerFilterToVkFilter(const ESamplerFilter& InFilter)
+{
+	switch(InFilter)
+	{
+	default:
+	case ESamplerFilter::Linear:
+		return vk::Filter::eLinear;
+	case ESamplerFilter::Nearest:
+		return vk::Filter::eNearest;
+	}
+}
+
+vk::SamplerMipmapMode VulkanUtil::SamplerFilterToVkSamplerMipmapMode(const ESamplerFilter& InFilter)
+{
+	switch (InFilter)
+	{
+	default:
+	case ESamplerFilter::Linear:
+		return vk::SamplerMipmapMode::eLinear;
+	case ESamplerFilter::Nearest:
+		return vk::SamplerMipmapMode::eNearest;
+	}
+}
+
+vk::SamplerAddressMode VulkanUtil::SamplerAddressModeToVkSamplerAddressMode(const ESamplerAddressMode& InMode)
+{
+	switch (InMode)
+	{
+	default:
+	case ESamplerAddressMode::Repeat:
+		return vk::SamplerAddressMode::eRepeat;
+	case ESamplerAddressMode::Clamp:
+		return vk::SamplerAddressMode::eClampToEdge;
+	case ESamplerAddressMode::Mirror:
+		return vk::SamplerAddressMode::eMirroredRepeat;
+	case ESamplerAddressMode::Border:
+		return vk::SamplerAddressMode::eClampToBorder;
+	}
+}
+
+vk::CompareOp VulkanUtil::ComparisonOpToVkCompareOp(const EComparisonOp& InOp)
+{
+	switch (InOp)
+	{
+	default:
+	case EComparisonOp::Never:
+		return vk::CompareOp::eNever;
+	case EComparisonOp::Always:
+		return vk::CompareOp::eAlways;
+	}
 }

@@ -1,3 +1,13 @@
 {
-  "attributes": []
+  "attributes": [
+    {
+      "name": "TexSampler",
+      "binding": 1,
+      "size": 0,
+      "type": "CombinedImageSampler",
+      "count": 1,
+      "frequency": "PerMaterial",
+      "meta": []
+    }
+  ]
 }

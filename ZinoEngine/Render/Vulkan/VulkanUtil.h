@@ -17,4 +17,12 @@ namespace VulkanUtil
 	vk::IndexType IndexFormatToVkIndexType(const EIndexFormat& InFormat);
 	vk::DescriptorType ShaderAttributeTypeToVkDescriptorType(const EShaderAttributeType& InType);
 	vk::ShaderStageFlags ShaderStageFlagsToVkShaderStageFlags(const EShaderStageFlags& InFlags);
+	vk::ImageType TextureTypeToVkImageType(const ETextureType& InType);
+	vk::ImageUsageFlags TextureUsageFlagsToVkImageUsageFlags(const ETextureUsageFlags& InUsage);
+	VmaMemoryUsage TextureMemoryUsageToVmaMemoryUsage(const ETextureMemoryUsage& InUsage);
+	vk::ImageViewType TextureViewTypeViewToVkImageViewType(const ETextureViewType& InViewType);
+	vk::Filter SamplerFilterToVkFilter(const ESamplerFilter& InFilter);
+	vk::SamplerMipmapMode SamplerFilterToVkSamplerMipmapMode(const ESamplerFilter& InFilter);
+	vk::SamplerAddressMode SamplerAddressModeToVkSamplerAddressMode(const ESamplerAddressMode& InMode);
+	vk::CompareOp ComparisonOpToVkCompareOp(const EComparisonOp& InOp);
 }

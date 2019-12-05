@@ -2,6 +2,8 @@
 
 #include "DeviceResource.h"
 
+class ITexture;
+
 /**
  * Buffer infos
  */
@@ -12,7 +14,7 @@ struct SBufferInfos
 	EBufferMemoryUsage MemoryUsage;
 	bool bUsePersistentMapping;
 
-	SBufferInfos(const std::uint64_t& InSize, 
+	SBufferInfos(const uint64_t& InSize, 
 		const EBufferUsageFlags& InUsage, const EBufferMemoryUsage& InMemUsage,
 		const bool& bInUsePersistentMapping = false) : Size(InSize),
 		Usage(InUsage), MemoryUsage(InMemUsage), bUsePersistentMapping(bInUsePersistentMapping) {}
@@ -42,6 +44,11 @@ public:
 	 * Copy buffer to specified dest
 	 */
 	virtual void Copy(IBuffer* InDst) = 0;
+
+	/* 
+	 * Copy to texture
+	 */
+	virtual void Copy(ITexture* InDst) = 0;
 
 	/**
 	 * Get mapped memory

@@ -4,6 +4,9 @@
 #include "Pipeline.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"
+#include "Texture.h"
+#include "TextureView.h"
+#include "Sampler.h"
 
 class IRenderCommandContext;
 class IShader;
@@ -62,4 +65,19 @@ public:
 	 * Create a uniform buffer 
 	 */
 	virtual std::shared_ptr<IUniformBuffer> CreateUniformBuffer(const SUniformBufferInfos& InInfos) = 0;
+
+	/**
+	 * Create a texture
+	 */
+	virtual std::shared_ptr<ITexture> CreateTexture(const STextureInfo& InInfos) = 0;
+
+	/**
+	 * Create a texture view
+	 */
+	virtual std::shared_ptr<ITextureView> CreateTextureView(const STextureViewInfo& InInfos) = 0;
+
+	/*
+	 * Create a sampler
+	 */
+	virtual std::shared_ptr<ISampler> CreateSampler(const SSamplerInfo& InInfos) = 0;
 };

@@ -4,6 +4,9 @@
 #include "VulkanSwapChain.h"
 #include "VulkanRenderSystem.h"
 #include "VulkanBuffer.h"
+#include "VulkanTexture.h"
+#include "VulkanTextureView.h"
+#include "VulkanSampler.h"
 
 CVulkanShaderAttributesManager::CVulkanShaderAttributesManager(
 	const SShaderAttributesManagerInfo& InInfos) : IShaderAttributesManager(InInfos),
@@ -33,6 +36,7 @@ void CVulkanShaderAttributesManager::Set(EShaderStage InStage, const std::string
 				switch(Attribute.Type)
 				{
 				case EShaderAttributeType::UniformBufferStatic:
+				{
 					CVulkanBuffer* Buffer = static_cast<CVulkanBuffer*>(InResource);
 
 					vk::DescriptorBufferInfo BufferInfo = vk::DescriptorBufferInfo()
@@ -50,8 +54,29 @@ void CVulkanShaderAttributesManager::Set(EShaderStage InStage, const std::string
 
 					g_VulkanRenderSystem->GetDevice()->GetDevice()
 						.updateDescriptorSets(1, &WriteSet, 0, nullptr);
-
 					break;
+				}
+				case EShaderAttributeType::CombinedImageSampler:
+				{
+					CVulkanTextureView* TextureView = static_cast<CVulkanTextureView*>(InResource);
+					
+					vk::DescriptorImageInfo ImageInfo = vk::DescriptorImageInfo()
+						.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+						.setImageView(TextureView->GetImageView())
+						.setSampler(TextureView->GetVulkanSampler()->GetSampler());
+
+					vk::WriteDescriptorSet WriteSet = vk::WriteDescriptorSet()
+						.setDstSet(*DescriptorSets[i])
+						.setDstBinding(Attribute.Binding)
+						.setDstArrayElement(0)
+						.setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+						.setDescriptorCount(1)
+						.setPImageInfo(&ImageInfo);
+
+					g_VulkanRenderSystem->GetDevice()->GetDevice()
+						.updateDescriptorSets(1, &WriteSet, 0, nullptr);
+					break;
+				}
 				}
 			}
 

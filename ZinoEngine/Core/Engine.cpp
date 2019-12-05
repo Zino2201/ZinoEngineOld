@@ -10,6 +10,8 @@
 #include "Render/Buffer.h"
 #include "AssetManager.h"
 #include "Render/Material.h"
+#include <stb_image.h>
+#include "Render/Texture2D.h"
 
 struct STestUBO
 {
@@ -44,10 +46,10 @@ void CEngine::Loop()
 {
 	const std::vector<SVertex> Vertices = 
 	{
-		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-		{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-		{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-		{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+		{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+		{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+		{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 	};
 
 	const std::vector<uint16_t> Indices = 
@@ -114,6 +116,9 @@ void CEngine::Loop()
 		StagingBuffer->Copy(IndexBuffer.get());
 	}
 
+	/** Load texture */
+	std::shared_ptr<CTexture2D> Texture = AssetManager->Get<CTexture2D>("Textures/Pepsiman.jpg");
+
 	std::array<float, 4> ClearColor = { 0.f, 0.f, 0.f, 1.0f };
 
 	/** Should threads continue ticking */
@@ -123,6 +128,11 @@ void CEngine::Loop()
 		EShaderStage::Vertex,
 		"UBO", 
 		UniformBuffer->GetBuffer());
+
+	Material->SetShaderAttributeResource(
+		EShaderStage::Fragment,
+		"TexSampler",
+		Texture->GetTextureView());
 
 	// TODO: Game state
 
@@ -178,8 +188,10 @@ void CEngine::Loop()
 			.count();
 
 		STestUBO UBO;
-		UBO.World = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		UBO.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		UBO.World = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), 
+			glm::vec3(0.0f, 0.0f, 1.0f));
+		UBO.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), 
+			glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		UBO.Projection = glm::perspective(glm::radians(45.0f),
 			Window->GetWidth() / (float) Window->GetHeight(), 0.1f, 10.0f);
 		UBO.Projection[1][1] *= -1;
