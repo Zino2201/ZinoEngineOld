@@ -189,7 +189,9 @@ void CVulkanRenderSystem::Initialize()
 			&SurfaceTmp))
 			LOG(ELogSeverity::Fatal, "Failed to create surface")
 
-		Surface = vk::UniqueSurfaceKHR(SurfaceTmp, *Instance);
+		Surface = vk::UniqueSurfaceKHR(SurfaceTmp, vk::ObjectDestroy<vk::Instance, 
+			VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>(*Instance, 
+				nullptr, vk::DispatchLoaderStatic()));
 	}
 
 	/** Select a physical device and create a logical device */
@@ -206,7 +208,7 @@ void CVulkanRenderSystem::Initialize()
 			}
 		}
 
-		if (PhysicalDevice == VK_NULL_HANDLE)
+		if (!PhysicalDevice)
 			LOG(ELogSeverity::Fatal, "Can't found an compatible GPU")
 
 		Device = std::make_unique<CVulkanDevice>(PhysicalDevice);

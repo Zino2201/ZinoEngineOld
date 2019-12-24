@@ -1,11 +1,13 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "GameState.h"
 
 class CWindow;
 class IRenderSystem;
 class CRenderer;
 class CAssetManager;
+class CWorld;
 
 /**
  * Engine singleton
@@ -41,6 +43,9 @@ private:
 	std::unique_ptr<IRenderSystem> RenderSystem;
 	std::unique_ptr<CRenderer> Renderer;
 	std::unique_ptr<CAssetManager> AssetManager;
+	std::unique_ptr<CWorld> World;
 	std::thread RenderThread;
 	std::atomic_bool Run;
+	SGameState GameState;
+	std::mutex GameStateMutex;
 };

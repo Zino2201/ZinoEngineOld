@@ -30,6 +30,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
+#include "Math.h"
 
 /** Utilities */
 #include "Core/Logger.h"
@@ -38,6 +39,7 @@
 #include <magic_enum.hpp>
 #include "Flags.h"
 #include "ContainerUtils.h"
+#include "Reflection.h"
 
 /** Macros */
 #define RAPIDJSON_NOMEMBERITERATORCLASS

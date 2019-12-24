@@ -1,0 +1,7 @@
+{
+  "target": "ZinoEngine.exe",
+  "cppstd": "CXX17",
+  "includes": [],
+  "libraries_paths": [],
+  "libraries": []
+}

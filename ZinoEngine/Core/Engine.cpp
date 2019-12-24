@@ -13,6 +13,9 @@
 #include <stb_image.h>
 #include "Render/Texture2D.h"
 #include "Render/StaticMesh.h"
+#include "World/World.h"
+#include "World/StaticMeshActor.h"
+#include "World/Components/StaticMeshComponent.h"
 
 struct STestUBO
 {
@@ -39,12 +42,16 @@ void CEngine::Initialize()
 	RenderSystem = std::make_unique<CVulkanRenderSystem>();
 	RenderSystem->Initialize();
 	Renderer = std::make_unique<CRenderer>();
+	World = std::make_unique<CWorld>();
 
 	Loop();
 }
 
 void CEngine::Loop()
 {
+	/** Actor */
+	std::shared_ptr<CStaticMeshActor> Actor = World->SpawnActor<CStaticMeshActor>();
+
 	/** Uniform buffer & pipeline */
 	std::shared_ptr<IUniformBuffer> UniformBuffer = g_VulkanRenderSystem->CreateUniformBuffer(
 		SUniformBufferInfos(sizeof(STestUBO)));
@@ -55,6 +62,7 @@ void CEngine::Loop()
 	/** Load texture */
 	std::shared_ptr<CTexture2D> Texture = AssetManager->Get<CTexture2D>("chalet.jpg");
 	std::shared_ptr<CStaticMesh> Mesh = AssetManager->Get<CStaticMesh>("chalet.obj");
+	Actor->GetStaticMesh()->SetStaticMesh(Mesh);
 
 	std::array<float, 4> ClearColor = { 0.f, 0.f, 0.f, 1.0f };
 
@@ -63,9 +71,9 @@ void CEngine::Loop()
 
 	// TODO: Game state
 
-	RenderThread = std::thread([this, &ClearColor]
+	RenderThread = std::thread([this, &ClearColor, &Material, &UniformBuffer, &Texture]
 	{
-		
+
 	});
 
 	/** Main thread = game thread */
@@ -106,23 +114,13 @@ void CEngine::Loop()
 		}
 
 		/** Tick */
-		static auto startTime = std::chrono::high_resolution_clock::now();
+		static auto StartTime = std::chrono::high_resolution_clock::now();
 
-		auto currentTime = std::chrono::high_resolution_clock::now();
-		float time 
-			= std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime)
-			.count();
+		auto CurrentTime = std::chrono::high_resolution_clock::now();
+		float DeltaTime = std::chrono::duration<float, std::chrono::seconds::period>
+			(CurrentTime - StartTime).count();
 
-		STestUBO UBO;
-		UBO.World = glm::rotate(glm::mat4(1.0f), time * glm::radians(40.0f), 
-			glm::vec3(0.0f, 0.0f, 1.0f));
-		UBO.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), 
-			glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		UBO.Projection = glm::perspective(glm::radians(45.0f),
-			Window->GetWidth() / (float) Window->GetHeight(), 0.1f, 10.0f);
-		UBO.Projection[1][1] *= -1;
-
-		memcpy(UniformBuffer->GetMappedMemory(), &UBO, sizeof(UBO));
+		World->Tick(DeltaTime);
 
 		Renderer->GetMainCommandList()->ClearQueue();
 
@@ -130,16 +128,35 @@ void CEngine::Loop()
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBeginRenderPass>(ClearColor);
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindGraphicsPipeline>(
 			Material->GetPipeline());
-		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindVertexBuffers>(
-			Mesh->GetVertexBuffer());
-		Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindIndexBuffer>(
-			Mesh->GetIndexBuffer(), 0,
-			EIndexFormat::Uint32);
-		Renderer->GetMainCommandList()->Enqueue<CRenderCommandDrawIndexed>(
-			Mesh->GetIndexCount(), 1, 0, 0, 0);
+
+		/** Create render commands using game state */
+		for (const std::shared_ptr<CActor>& Actor : World->GetActors())
+		{
+			if (!Actor)
+				continue;
+
+			/** Get static mesh components, TODO: renderable components */
+			auto MeshComponents = Actor->GetComponentsByClass<CStaticMeshComponent>();
+			for (const std::weak_ptr<CStaticMeshComponent>& MeshComponent : MeshComponents)
+			{
+				std::shared_ptr<CStaticMesh> Mesh = MeshComponent.lock()->GetStaticMesh();
+				if (Mesh)
+				{
+					Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindVertexBuffers>(
+						Mesh->GetVertexBuffer());
+					Renderer->GetMainCommandList()->Enqueue<CRenderCommandBindIndexBuffer>(
+						Mesh->GetIndexBuffer(), 0,
+						EIndexFormat::Uint32);
+					Renderer->GetMainCommandList()->Enqueue<CRenderCommandDrawIndexed>(
+						Mesh->GetIndexCount(), 1, 0, 0, 0);
+				}
+			}
+		}
+
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandEndRenderPass>();
 		Renderer->GetMainCommandList()->Enqueue<CRenderCommandEndRecording>();
 
+		/** Execute commands */
 		RenderSystem->Prepare();
 
 		Material->SetShaderAttributeResource(
@@ -159,5 +176,16 @@ void CEngine::Loop()
 		}
 
 		RenderSystem->Present();
+
+		STestUBO UBO;
+		UBO.World = glm::rotate(glm::mat4(1.0f), DeltaTime * glm::radians(40.0f), 
+			glm::vec3(0.0f, 0.0f, 1.0f));
+		UBO.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), 
+			glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		UBO.Projection = glm::perspective(glm::radians(45.0f),
+			Window->GetWidth() / (float) Window->GetHeight(), 0.1f, 10.0f);
+		UBO.Projection[1][1] *= -1;
+
+		memcpy(UniformBuffer->GetMappedMemory(), &UBO, sizeof(UBO));
 	}
 }
