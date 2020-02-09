@@ -1,0 +1,14 @@
+{
+  "attributes": [
+    {
+      "name": "PushConstants",
+      "binding": 0,
+      "size": 8,
+      "type": "UniformBufferStatic",
+      "count": 1,
+      "frequency": "PerInstance",
+      "meta": [ "VulkanPushConstant" ],
+      "members": []
+    }
+  ]   
+}

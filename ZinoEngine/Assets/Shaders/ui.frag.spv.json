@@ -1,0 +1,13 @@
+{
+  "attributes": [
+    {
+      "name": "FontSampler",
+      "binding": 0,
+      "size": 0,
+      "type": "CombinedImageSampler",
+      "count": 1,
+      "frequency": "PerMaterial",
+      "meta": []
+    }
+  ]
+}

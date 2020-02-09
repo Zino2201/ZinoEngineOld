@@ -3,14 +3,18 @@
 #include "RenderCore.h"
 
 class IDeviceResource;
-class IPipeline;
+class CRenderSystemPipeline;
 
 struct SShaderAttributesManagerInfo
 {
-	IPipeline* Pipeline;
+	CRenderSystemPipeline* Pipeline;
+	EShaderAttributeFrequency Frequency;
 
-	SShaderAttributesManagerInfo(IPipeline* InPipeline) :
-		Pipeline(InPipeline) {}
+	SShaderAttributesManagerInfo() {}
+
+	SShaderAttributesManagerInfo(CRenderSystemPipeline* InPipeline, EShaderAttributeFrequency
+		InFrequency = EShaderAttributeFrequency::PerMaterial) :
+		Pipeline(InPipeline), Frequency(InFrequency) {}
 };
 
 /**
@@ -24,4 +28,9 @@ public:
 
 	virtual void Set(EShaderStage InStage, const std::string& InName, 
 		IDeviceResource* InResource) = 0;
+
+	virtual void SetUniformBuffer(const std::string& InName,
+		void* InData) = 0;
+
+	virtual const SShaderAttributesManagerInfo& GetInfos() const = 0;
 };

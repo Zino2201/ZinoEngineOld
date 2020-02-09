@@ -1,4 +1,5 @@
 #include "RenderCommands.h"
+#include "Render/ShaderAttributesManager.h"
 
 void CRenderCommandBeginRecording::Execute(CRenderCommandList* InCmdList)
 {
@@ -22,7 +23,7 @@ void CRenderCommandEndRenderPass::Execute(CRenderCommandList* InCmdList)
 
 void CRenderCommandBindGraphicsPipeline::Execute(CRenderCommandList* InCmdList)
 {
-	InCmdList->GetCommandContext()->BindGraphicsPipeline(GraphicsPipeline.get());
+	InCmdList->GetCommandContext()->BindGraphicsPipeline(GraphicsPipeline);
 }
 
 void CRenderCommandBindVertexBuffers::Execute(CRenderCommandList* InCmdList) 
@@ -46,4 +47,26 @@ void CRenderCommandDrawIndexed::Execute(CRenderCommandList* InCmdList)
 {
 	InCmdList->GetCommandContext()->DrawIndexed(IndexCount,
 		InstanceCount, FirstIndex, VertexOffset, FirstInstance);
+}
+
+void CRenderCommandSetShaderAttributeResource::Execute(CRenderCommandList* InCmdList)
+{
+	ShaderAttributesManager->Set(Stage, Name, Resource);
+}
+
+void CRenderCommandUpdateUniformBuffer::Execute(CRenderCommandList* InCmdList)
+{
+	if(UniformBuffer->GetInfos().bUsePersistentMapping)
+		memcpy(UniformBuffer->GetMappedMemory(), Data, DataSize);
+	else
+	{
+		void* Dst = UniformBuffer->Map();
+		memcpy(Dst, Data, DataSize);
+		UniformBuffer->Unmap();
+	}
+}
+
+void CRenderCommandBindShaderAttributeManager::Execute(CRenderCommandList* InCmdList)
+{
+	InCmdList->GetCommandContext()->BindShaderAttributesManager(ShaderAttributesManager);
 }

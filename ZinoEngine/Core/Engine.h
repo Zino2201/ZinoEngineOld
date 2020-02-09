@@ -1,13 +1,15 @@
 #pragma once
 
 #include "EngineCore.h"
-#include "GameState.h"
 
 class CWindow;
 class IRenderSystem;
-class CRenderer;
+class IRenderer;
 class CAssetManager;
 class CWorld;
+class CImGui;
+class CRenderCommandList;
+class CSceneProxy;
 
 /**
  * Engine singleton
@@ -28,9 +30,22 @@ public:
 
 	CWindow* GetWindow() const { return Window.get(); }
 	IRenderSystem* GetRenderSystem() const { return RenderSystem.get(); }
-	CRenderer* GetRenderer() const { return Renderer.get(); }
+	IRenderer* GetRenderer() const { return Renderer.get(); }
+	CAssetManager* GetAssetManager() const { return AssetManager.get(); }
+	CSceneProxy* GetSceneProxy() const { return SceneProxy.get(); }
 private:
 	void Loop();
+	void InitImGui();
+
+	/**
+	 * Only used for creating the render thread at the end of the first game thread frame
+	 */
+	void DrawScene();
+
+	/**
+	 * Render thread main
+	 */
+	void RenderThreadMain();
 public:
 	CEngine(const CEngine&) = delete;
 	void operator=(const CEngine&) = delete;
@@ -41,11 +56,12 @@ private:
 	bool bHasBeenInitialized;
 	std::unique_ptr<CWindow> Window;
 	std::unique_ptr<IRenderSystem> RenderSystem;
-	std::unique_ptr<CRenderer> Renderer;
+	std::unique_ptr<IRenderer> Renderer;
 	std::unique_ptr<CAssetManager> AssetManager;
 	std::unique_ptr<CWorld> World;
+	std::unique_ptr<CImGui> ImGui;
 	std::thread RenderThread;
 	std::atomic_bool Run;
-	SGameState GameState;
-	std::mutex GameStateMutex;
+	std::unique_ptr<CRenderCommandList> MainCommandList;
+	std::unique_ptr<CSceneProxy> SceneProxy;
 };

@@ -30,6 +30,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
 #include "Math.h"
 
 /** Utilities */
@@ -43,6 +45,8 @@
 
 /** Macros */
 #define RAPIDJSON_NOMEMBERITERATORCLASS
+#define DEPRECATED(Why) [[deprecated(Why)]]
+#define STRINGIFY(x) #x
 
 /** Defines */
 #define SINGLETON_BODY(type) public: static type& Get(){static type Instance;return Instance;}public:type(const type&) = delete;void operator=(const type&) = delete;private:type();~type();								

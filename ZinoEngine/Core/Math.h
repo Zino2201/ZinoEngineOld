@@ -4,7 +4,10 @@
 
 struct STransform
 {
-	glm::dvec3 Position;
+	glm::vec3 Position;
 	glm::quat Rotation;
 	glm::vec3 Scale;
+
+	STransform() : Position(), Rotation(), Scale() {}
+	STransform(const glm::dvec3& InPosition) : Position(InPosition) {}
 };

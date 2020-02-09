@@ -2,12 +2,59 @@
   "attributes": [
     {
       "name": "TexSampler",
-      "binding": 1,
+      "binding": 0,
       "size": 0,
       "type": "CombinedImageSampler",
       "count": 1,
       "frequency": "PerMaterial",
       "meta": []
+    },
+    {
+      "name": "LightUBO",
+      "binding": 1,
+      "size": 12,
+      "type": "UniformBufferStatic",
+      "count": 1,
+      "frequency": "PerInstance",
+      "meta": [],
+      "members": [
+        {
+          "name": "LightPos",
+          "size": 12,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "name": "Material",
+      "binding": 1,
+      "size": 48,
+      "type": "UniformBufferStatic",
+      "count": 1,
+      "frequency": "PerMaterial",
+      "meta": [],
+      "members": [
+        {
+          "name": "Ambient",
+          "size": 12,
+          "offset": 0
+        },
+        {
+          "name": "Diffuse",
+          "size": 12,
+          "offset": 16
+        },
+        {
+          "name": "Specular",
+          "size": 12,
+          "offset": 32
+        },
+        {
+          "name": "Shininess",
+          "size": 4,
+          "offset": 44
+        }
+      ]
     }
   ]
 }

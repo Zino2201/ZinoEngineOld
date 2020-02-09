@@ -1,5 +1,5 @@
 #include "Commands.h"
-#include "Render/RenderSystem.h"
+#include "Render/RenderSystem/RenderSystem.h"
 #include "Core/Engine.h"
 
 CRenderCommandList::CRenderCommandList() 

@@ -17,6 +17,8 @@ public:
 	 * Attach specified component to this one
 	 */
 	void Attach(const std::weak_ptr<CWorldComponent>& InChildren);
+
+	const STransform& GetTransform() const { return Transform; }
 private:
 	STransform Transform;
 	std::vector<std::weak_ptr<CWorldComponent>> Childrens;

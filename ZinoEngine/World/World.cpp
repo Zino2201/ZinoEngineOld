@@ -1,7 +1,10 @@
 #include "World.h"
 #include "Actor.h"
 
-CWorld::CWorld() {}
+CWorld::CWorld() 
+{
+	
+}
 CWorld::~CWorld() {}
 
 void CWorld::Tick(float InDeltaTime)

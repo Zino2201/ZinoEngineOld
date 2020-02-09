@@ -1,9 +1,13 @@
 #pragma once
 
 #include "Commands.h"
+#include "Render/RenderSystem/RenderSystemResources.h"
 
-class IGraphicsPipeline;
-class IBuffer;
+class IRenderSystemGraphicsPipeline;
+class CRenderSystemBuffer;
+class IShaderAttributesManager;
+class IRenderSystemUniformBuffer;
+class IDeviceResource;
 
 /**
  * Begin command recording command
@@ -12,6 +16,8 @@ class CRenderCommandBeginRecording : public IRenderCommand
 {
 public:
 	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "Begin recording"; }
 };
 
 /**
@@ -21,6 +27,8 @@ class CRenderCommandEndRecording : public IRenderCommand
 {
 public:
 	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "End recording"; }
 };
 
 /**
@@ -33,6 +41,8 @@ public:
 		: ClearColor(InClearColor) {}
 
 	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "Begin render pass"; }
 private:
 	std::array<float, 4> ClearColor;
 };
@@ -44,6 +54,8 @@ class CRenderCommandEndRenderPass : public IRenderCommand
 {
 public:
 	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "End render pass"; }
 };
 
 /** 
@@ -52,12 +64,14 @@ public:
 class CRenderCommandBindGraphicsPipeline : public IRenderCommand
 {
 public:
-	CRenderCommandBindGraphicsPipeline(const std::shared_ptr<IGraphicsPipeline>& InGraphicsPipeline)
+	CRenderCommandBindGraphicsPipeline(IRenderSystemGraphicsPipeline* InGraphicsPipeline)
 		: GraphicsPipeline(InGraphicsPipeline) {}
 
 	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "Bind graphics pipeline"; }
 private:
-	std::shared_ptr<IGraphicsPipeline> GraphicsPipeline;
+	IRenderSystemGraphicsPipeline* GraphicsPipeline;
 };
 
 /**
@@ -66,15 +80,17 @@ private:
 class CRenderCommandBindVertexBuffers : public IRenderCommand
 {
 public:
-	CRenderCommandBindVertexBuffers(const std::shared_ptr<IBuffer>& InBuffer) :
+	CRenderCommandBindVertexBuffers(CRenderSystemBuffer* InBuffer) :
 		VertexBuffers({ InBuffer }) {}
 
-	CRenderCommandBindVertexBuffers(const std::vector<std::shared_ptr<IBuffer>>& InBuffers) :
+	CRenderCommandBindVertexBuffers(const std::vector<CRenderSystemBuffer*>& InBuffers) :
 		VertexBuffers(InBuffers) {}
 
 	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "Bind vertex buffers"; }
 private:
-	std::vector<std::shared_ptr<IBuffer>> VertexBuffers;
+	std::vector<CRenderSystemBuffer*> VertexBuffers;
 };
 
 /**
@@ -83,14 +99,16 @@ private:
 class CRenderCommandBindIndexBuffer : public IRenderCommand
 {
 public:
-	CRenderCommandBindIndexBuffer(const std::shared_ptr<IBuffer>& InBuffer,
+	CRenderCommandBindIndexBuffer(CRenderSystemBuffer* InBuffer,
 		const uint64_t& InOffset,
 		const EIndexFormat& InIndexFormat) :
 		IndexBuffer(InBuffer), Offset(InOffset), IndexFormat(InIndexFormat) {}
 
 	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "Bind index buffer"; }
 private:
-	std::shared_ptr<IBuffer> IndexBuffer;
+	CRenderSystemBuffer* IndexBuffer;
 	uint64_t Offset;
 	EIndexFormat IndexFormat;
 };
@@ -107,6 +125,8 @@ public:
 		FirstVertex(InFirstVertex), FirstInstance(InFirstInstance) {}
 
 	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "Draw"; }
 private:
 	uint32_t VertexCount;
 	uint32_t InstanceCount;
@@ -126,10 +146,69 @@ public:
 		FirstIndex(InFirstIndex), VertexOffset(InVertexOffset), FirstInstance(InFirstInstance) {}
 
 	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "Draw Indexed"; }
 private:
 	uint32_t IndexCount;
 	uint32_t InstanceCount;
 	uint32_t FirstIndex;
 	int32_t VertexOffset;
 	uint32_t FirstInstance;
+};
+
+/**
+ * Set shader attribute resource command
+ */
+class CRenderCommandSetShaderAttributeResource : public IRenderCommand
+{
+public:
+	CRenderCommandSetShaderAttributeResource(IShaderAttributesManager* InShaderAttributesManager,
+		EShaderStage InShaderStage, const std::string& InName, IDeviceResource* InResource) :
+		ShaderAttributesManager(InShaderAttributesManager), Stage(InShaderStage),
+		Name(InName), Resource(InResource) {}
+
+	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "Set shader attribute resource"; }
+private:
+	IShaderAttributesManager* ShaderAttributesManager;
+	EShaderStage Stage;
+	std::string Name;
+	IDeviceResource* Resource;
+};
+
+/**
+ * Update a uniform buffer
+ */
+class CRenderCommandUpdateUniformBuffer : public IRenderCommand
+{
+public:
+	CRenderCommandUpdateUniformBuffer(IRenderSystemUniformBuffer* InUniformBuffer,
+		void* InData, const size_t& InDataSize) : UniformBuffer(InUniformBuffer),
+		Data(InData), DataSize(InDataSize) {}
+
+	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "Update uniform buffer"; }
+private:
+	IRenderSystemUniformBufferPtr UniformBuffer;
+	void* Data;
+	size_t DataSize;
+};
+
+/**
+ * Shader attribute manager
+ */
+class CRenderCommandBindShaderAttributeManager : public IRenderCommand
+{
+public:
+	CRenderCommandBindShaderAttributeManager(
+		const std::shared_ptr<IShaderAttributesManager>& InShaderAttributeManager)
+		: ShaderAttributesManager(InShaderAttributeManager) {}
+
+	virtual void Execute(CRenderCommandList* InCmdList) override;
+
+	virtual std::string GetName() const override { return "Bind shader attribute manager"; }
+private:
+	std::shared_ptr<IShaderAttributesManager> ShaderAttributesManager;
 };

@@ -9,18 +9,27 @@
 
 class CRenderCommandList;
 class IRenderCommandContext;
-class IGraphicsPipeline;
-class IBuffer;
+class IRenderSystemGraphicsPipeline;
+class CRenderSystemBuffer;
+class IShaderAttributesManager;
+
+class ICommand
+{
+public:
+	virtual std::string GetName() const = 0;
+};
 
 /**
  * Base render command
  */
-class IRenderCommand
+class IRenderCommand : public ICommand
 {
 public:
 	virtual ~IRenderCommand() = default;
 
 	virtual void Execute(CRenderCommandList* InCmdList) = 0;
+	
+	virtual std::string GetName() const override = 0;
 };
 
 /**
@@ -91,17 +100,20 @@ public:
 	/**
 	 * Bind graphics pipeline
 	 */
-	virtual void BindGraphicsPipeline(IGraphicsPipeline* InGraphicsPipeline) = 0;
+	virtual void BindGraphicsPipeline(IRenderSystemGraphicsPipeline* InGraphicsPipeline) = 0;
+
+	virtual void BindShaderAttributesManager(
+		const std::shared_ptr<IShaderAttributesManager>& InManager) = 0;
 
 	/**
 	 * Bind vertex buffers
 	 */
-	virtual void BindVertexBuffers(const std::vector<std::shared_ptr<IBuffer>>& InVertexBuffers) = 0;
+	virtual void BindVertexBuffers(const std::vector<CRenderSystemBuffer*>& InVertexBuffers) = 0;
 
 	/**
 	 * Bind index buffer
 	 */
-	virtual void BindIndexBuffer(const std::shared_ptr<IBuffer>& InIndexBuffer,
+	virtual void BindIndexBuffer(CRenderSystemBuffer* InIndexBuffer,
 		const uint64_t& InOffset,
 		const EIndexFormat& InIndexFormat) = 0;
 

@@ -3,8 +3,7 @@
 #include "Core/EngineCore.h"
 #include "Core/TickableObject.h"
 #include "Components/ActorComponent.h"
-
-class CWorldComponent;
+#include "Components/WorldComponent.h"
 
 /**
  * Base class for Actors, objects in the world
@@ -52,6 +51,7 @@ public:
 		return std::static_pointer_cast<T>(ActorComponents[InID]);
 	}
 
+	const STransform& GetTransform() const { return RootComponent.lock()->GetTransform(); }
 	const std::weak_ptr<CWorldComponent>& GetRootComponent() const { return RootComponent; }
 protected:
 	/** Root component, containing other world components */

@@ -7,7 +7,29 @@
       "type": "UniformBufferStatic",
       "count": 1,
       "frequency": "PerInstance",
-      "meta": [ "VulkanPushConstant" ]
+      "meta": [],
+      "members": [
+        {
+          "name": "World",
+          "size": 64,
+          "offset": 0
+        },
+        {
+          "name": "View",
+          "size": 64,
+          "offset": 64
+        },
+        {
+          "name": "Projection",
+          "size": 64,
+          "offset": 128
+        },
+        {
+          "name": "CamPos",
+          "size": 12,
+          "offset": 256
+        }
+      ]
     }
   ]   
 }

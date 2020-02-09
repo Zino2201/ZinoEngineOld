@@ -3,10 +3,12 @@
 #include "Core/EngineCore.h"
 #include "./World/Actor.h"
 #include "./World/Components/ActorComponent.h"
+#include "./World/Components/RenderableComponent.h"
 
 RTTR_REGISTRATION
 {
 	rttr::registration::class_<CActor>("CActor");
 	rttr::registration::class_<CActorComponent>("CActorComponent")
 		.property("Owner", &CActorComponent::Owner);
+	rttr::registration::class_<CRenderableComponent>("CRenderableComponent");
 }

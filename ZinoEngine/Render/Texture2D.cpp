@@ -1,11 +1,8 @@
 #include "Texture2D.h"
 #include <stb_image.h>
-#include "Buffer.h"
-#include "RenderSystem.h"
+#include "Render/RenderSystem/RenderSystemResources.h"
+#include "Render/RenderSystem/RenderSystem.h"
 #include "Core/Engine.h"
-#include "Render/Texture.h"
-#include "Render/TextureView.h"
-#include "Render/Sampler.h"
 
 void CTexture2D::Load(const std::string& InPath)
 {
@@ -25,8 +22,8 @@ void CTexture2D::Load(const std::string& InPath)
 	uint32_t MipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(Width, Height)))) + 1;
 
 	/** Staging buffer */
-	std::shared_ptr<IBuffer> StagingBuffer = CEngine::Get().GetRenderSystem()->CreateBuffer(
-		SBufferInfos(ImageSize, EBufferUsage::TransferSrc, EBufferMemoryUsage::CpuToGpu));
+	CRenderSystemBufferPtr StagingBuffer = CEngine::Get().GetRenderSystem()->CreateBuffer(
+		SRenderSystemBufferInfos(ImageSize, EBufferUsage::TransferSrc, EBufferMemoryUsage::CpuToGpu));
 
 	/** Copy pixels to buffer */
 	void* StagingData = StagingBuffer->Map();
@@ -38,7 +35,7 @@ void CTexture2D::Load(const std::string& InPath)
 
 	/** Create texture */
 	Texture = CEngine::Get().GetRenderSystem()->CreateTexture(
-		STextureInfo(ETextureType::Texture2D, EFormat::R8G8B8A8UNorm,
+		SRenderSystemTextureInfo(ETextureType::Texture2D, EFormat::R8G8B8A8UNorm,
 			ETextureUsage::TransferSrc | ETextureUsage::TransferDst | ETextureUsage::Sampled,
 			ETextureMemoryUsage::GpuOnly,
 			Width,
@@ -51,11 +48,11 @@ void CTexture2D::Load(const std::string& InPath)
 
 	/** Create texture view */
 	TextureView = CEngine::Get().GetRenderSystem()->CreateTextureView(
-		STextureViewInfo(Texture.get(), ETextureViewType::ShaderResource, EFormat::R8G8B8A8UNorm,
+		SRenderSystemTextureViewInfo(Texture.get(), ETextureViewType::ShaderResource, EFormat::R8G8B8A8UNorm,
 			MipLevels));
 
 	/** Create a sampler */
-	Sampler = CEngine::Get().GetRenderSystem()->CreateSampler(SSamplerInfo(
+	Sampler = CEngine::Get().GetRenderSystem()->CreateSampler(SRenderSystemSamplerInfo(
 		ESamplerFilter::Linear,
 		ESamplerFilter::Linear,
 		ESamplerFilter::Linear,
@@ -68,5 +65,5 @@ void CTexture2D::Load(const std::string& InPath)
 		0.f,
 		static_cast<float>(MipLevels)));
 	
-	TextureView->SetSampler(Sampler);
+	TextureView->SetSampler(Sampler.get());
 }

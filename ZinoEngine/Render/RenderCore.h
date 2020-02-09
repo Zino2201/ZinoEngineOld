@@ -3,6 +3,28 @@
 #include "Core/EngineCore.h"
 
 /**
+ * Shader parameter type
+ */
+enum class EShaderParameterType
+{
+	UniformBuffer,
+	CombinedImageSampler
+};
+
+/**
+ * A shader parameter
+ */
+struct SShaderParameter
+{
+	std::string Name;
+	EShaderParameterType Type;
+	uint32_t Set;
+	uint32_t Binding;
+	uint64_t Size;
+	uint32_t Count;
+};
+
+/**
  * Shader stages
  */
 enum class EShaderStage
@@ -12,6 +34,21 @@ enum class EShaderStage
 };
 DECLARE_FLAG_ENUM(EShaderStage)
 
+/**
+ * Shader related elements
+ */
+enum class EShaderParameterType__
+{
+	/** Uniform buffer */
+	UniformBuffer,
+
+	/** Sampler */
+	Sampler,
+
+	/** Vulkan only */
+	CombinedImageSampler
+};
+
 /** Shader attribute type */
 enum class EShaderAttributeType
 {
@@ -20,6 +57,36 @@ enum class EShaderAttributeType
 
 	/** Combined image sampler */
 	CombinedImageSampler
+};
+
+enum class EShaderAttributeFrequency : uint8_t
+{
+	PerMaterial,
+	PerInstance
+};
+
+enum class EShaderAttributeMeta
+{
+	None = -1,
+
+	/** Vulkan push constant */
+	VulkanPushConstant = 1 << 0
+};
+DECLARE_FLAG_ENUM(EShaderAttributeMeta)
+
+
+/**
+ * Member of a attribute
+ */
+struct SShaderAttributeMember
+{
+	std::string Name;
+	uint64_t Size;
+	uint64_t Offset;
+
+	SShaderAttributeMember(const std::string& InName,
+		const uint64_t& InSize, const uint64_t& InOffset) : Name(InName),
+		Size(InSize), Offset(InOffset) {}
 };
 
 /**
@@ -33,8 +100,14 @@ struct SShaderAttribute
 	/** Binding */
 	uint32_t Binding;
 
+	/** Size */
+	uint64_t Size;
+
 	/** Attribute type */
 	EShaderAttributeType Type;
+
+	/** Attribute frequency */
+	EShaderAttributeFrequency Frequency;
 
 	/** Stages */
 	EShaderStageFlags StageFlags;
@@ -42,14 +115,38 @@ struct SShaderAttribute
 	/** Count, should be 1 if not an array */
 	uint32_t Count;
 
+	/** Meta */
+	EShaderAttributeMeta Meta;
+
+	/** Members */
+	std::vector<SShaderAttributeMember> Members;
+
 	SShaderAttribute(
 		const std::string& InName,
 		const uint32_t& InBinding,
+		const uint64_t& InSize,
 		const EShaderAttributeType& InType,
+		const EShaderAttributeFrequency& InFrequency,
 		const EShaderStageFlags& InStageFlags,
-		const uint32_t& InCount = 1) : Name(InName), Binding(InBinding), Type(InType),
-		StageFlags(InStageFlags), Count(InCount) {}
+		const uint32_t& InCount = 1,
+		const EShaderAttributeMeta& InMeta = EShaderAttributeMeta::None,
+		const std::vector<SShaderAttributeMember>& InMembers = {}) : 
+		Name(InName), Binding(InBinding), Size(InSize), Type(InType),
+		Frequency(InFrequency),
+		StageFlags(InStageFlags), Count(InCount), Meta(InMeta),
+		Members(InMembers) {}
 };
+
+namespace std
+{
+	template<> struct less<SShaderAttribute>
+	{
+		bool operator()(const SShaderAttribute& LHS, const SShaderAttribute& RHS) const
+		{
+			return LHS.Binding < RHS.Binding;
+		}
+	};
+}
 
 /** Vertex input rate */
 enum class EVertexInputRate
@@ -189,6 +286,10 @@ struct SVertex
 	glm::vec3 Position;
 	glm::vec3 Color;
 	glm::vec2 TexCoord;
+	glm::vec3 Normal;
+
+	SVertex() {}
+	SVertex(const glm::vec3& InPosition) : Position(InPosition) {}
 
 	static SVertexInputBindingDescription GetBindingDescription()
 	{
@@ -205,6 +306,8 @@ struct SVertex
 				offsetof(SVertex, Color)),
 			SVertexInputAttributeDescription(0, 2, EFormat::R32G32Sfloat,
 				offsetof(SVertex, TexCoord)),
+			SVertexInputAttributeDescription(0, 3, EFormat::R32G32B32Sfloat,
+				offsetof(SVertex, Normal))
 		};
 	}
 
@@ -212,7 +315,8 @@ struct SVertex
 	{
 		return Position == InOther.Position 
 			&& Color == InOther.Color 
-			&& TexCoord == InOther.TexCoord;
+			&& TexCoord == InOther.TexCoord
+			&& Normal == InOther.Normal;
 	}
 };
 
@@ -224,7 +328,34 @@ namespace std
 		{
 			return ((hash<glm::vec3>()(InVertex.Position) ^
 				(hash<glm::vec3>()(InVertex.Color) << 1)) >> 1) ^
-				(hash<glm::vec2>()(InVertex.TexCoord) << 1);
+				(hash<glm::vec2>()(InVertex.TexCoord) << 1) ^
+				(hash<glm::vec3>()(InVertex.Normal) << 1);
 		}
 	};
 }
+
+/**
+ * Render System Type
+ */
+enum class ERenderSystemType
+{
+	Unknown,
+	Vulkan,
+	GL3
+};
+
+/**
+ * Render system shader format
+ */
+enum class ERenderSystemShaderFormat
+{
+	SpirV,
+	HLSL,
+	GLSL
+};
+
+struct SRenderSystemDetails
+{
+	ERenderSystemType Type;
+	ERenderSystemShaderFormat Format;
+};

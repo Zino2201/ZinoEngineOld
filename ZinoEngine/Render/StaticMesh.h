@@ -1,19 +1,24 @@
 #pragma once
 
 #include "Core/Asset.h"
+#include "Render/RenderSystem/RenderSystemResources.h"
+#include "RenderCore.h"
 
-class IBuffer;
+class CRenderSystemBuffer;
 
 class CStaticMesh : public IAsset
 {
 public:
 	virtual void Load(const std::string& InPath) override;
 
-	const std::shared_ptr<IBuffer>& GetVertexBuffer() const { return VertexBuffer; }
-	const std::shared_ptr<IBuffer>& GetIndexBuffer() const { return IndexBuffer; }
+	CRenderSystemBuffer* GetVertexBuffer() const { return VertexBuffer.get(); }
+	CRenderSystemBuffer* GetIndexBuffer() const { return IndexBuffer.get(); }
 	const uint32_t& GetIndexCount() const { return IndexCount; }
+	EIndexFormat GetOptimalIndexFormat() const { return IndexFormat; }
 private:
-	std::shared_ptr<IBuffer> VertexBuffer;
-	std::shared_ptr<IBuffer> IndexBuffer;
+	CRenderSystemBufferPtr VertexBuffer;
+	CRenderSystemBufferPtr IndexBuffer;
 	uint32_t IndexCount;
+	EIndexFormat IndexFormat;
+	/** Static mesh */
 };

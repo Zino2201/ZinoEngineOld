@@ -21,7 +21,8 @@ public:
 	std::shared_ptr<T> SpawnActor(const STransform& InTransform = STransform(), Args&&... InArgs)
 	{
 		Actors.push_back(std::make_shared<T>(Args...));
-		assert(!Actors.back()->GetRootComponent().expired() && "Root component should not be nullptr");
+		assert(!Actors.back()->GetRootComponent().expired()
+			&& "Root component should not be nullptr");
 		Actors.back()->SetTransform(InTransform);
 		return std::static_pointer_cast<T>(Actors.back());
 	}
