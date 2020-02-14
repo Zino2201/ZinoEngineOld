@@ -68,5 +68,5 @@ private:
 	/** Should recreate swap chain */
 	bool bShouldRecreate;
 public: /* Delegates*/
-	CMulticastDelegate<> OnSwapChainRecreated;
+	TMulticastDelegate<> OnSwapChainRecreated;
 };

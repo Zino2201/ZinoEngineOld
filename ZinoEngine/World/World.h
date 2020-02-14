@@ -4,6 +4,7 @@
 #include "Core/TickableObject.h"
 
 class CActor;
+class CScene;
 
 /**
  * The world
@@ -16,6 +17,7 @@ public:
 	~CWorld();
 
 	virtual void Tick(float InDeltaTime) override;
+	void Destroy();
 
 	template<typename T, typename... Args> 
 	std::shared_ptr<T> SpawnActor(const STransform& InTransform = STransform(), Args&&... InArgs)
@@ -28,6 +30,8 @@ public:
 	}
 
 	std::vector<std::shared_ptr<CActor>> GetActors() const { return Actors; }
+	CScene* GetScene() const { return Scene.get(); }
 private:
 	std::vector<std::shared_ptr<CActor>> Actors;
+	std::unique_ptr<CScene> Scene;
 };

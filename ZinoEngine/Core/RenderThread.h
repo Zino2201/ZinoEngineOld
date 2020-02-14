@@ -4,27 +4,39 @@
 
 class CRenderableComponent;
 class CRenderCommandList;
-
-/**
- * Contains proxies used by the render thread to draw the scene
- */
 class CRenderableComponentProxy;
 
 /**
- * Scene proxy
+ * Base class for render thread resources
+ * Init render system resources in InitRenderThread
  */
-class CSceneProxy
+class CRenderResource
 {
 public:
-    void AddRenderableComponentProxy(CRenderableComponentProxy* InProxy)
-    {
-        RenderableComponents.push_back(InProxy);
-    }
+    virtual ~CRenderResource();
 
-    const std::vector<CRenderableComponentProxy*>& GetRenderableComponents() const { return RenderableComponents; }
+    /**
+     * Init resources function (enqueue to render thread)
+     */
+    virtual void InitResources();
+
+    /**
+     * Destroy resources
+     */
+    virtual void DestroyResources();
+protected:
+    /** Init the resource */
+    virtual void InitRenderThread() {}
+
+    /** Destroy the resource */
+    virtual void DestroyRenderThread() {}
 private:
-    std::vector<CRenderableComponentProxy*> RenderableComponents;
+    bool bInitialized;
 };
+
+/**
+ * Proxies used by the render thread to draw the scene and other
+ */
 
 /**
  * Renderable component proxy
@@ -35,7 +47,71 @@ public:
     CRenderableComponentProxy(const CRenderableComponent* InComponent);
 
     virtual void Draw(CRenderCommandList* InCommandList);
+    
+    const std::shared_ptr<class IShaderAttributesManager>& GetShaderAttributesManager() const { return ShaderAttributesManager; }
 protected:
     STransform Transform;
-    bool bIsOutdated;
+    std::shared_ptr<class IShaderAttributesManager> ShaderAttributesManager;
 };
+
+/**
+ * The render thread singleton
+ */
+class CRenderThread
+{
+public:
+	static CRenderThread& Get()
+	{
+		static CRenderThread Instance;
+		return Instance;
+	}
+
+    void Initialize();
+    void Start();
+    void Stop();
+
+    CSemaphore& GetRenderThreadSemaphore() { return RenderThreadSemaphore; }
+    CRenderCommandList* GetRenderCommandList() const { return RenderThreadCommandList; }
+private:
+    void RenderThreadMain();
+public:
+	CRenderThread(const CRenderThread&) = delete;
+	void operator=(const CRenderThread&) = delete;
+
+    /**
+     * Should render thread render
+     */
+    std::atomic_bool ShouldRender;
+private:
+	CRenderThread();
+	~CRenderThread();
+private:
+    /**
+     * Should render thread loop
+     */
+    std::atomic_bool LoopRenderThread;
+
+    /**
+     * Render thread handle
+     */
+    std::thread RenderThreadHandle;
+
+	/**
+	 * Semaphore used to wait the render thread
+	 */
+	CSemaphore RenderThreadSemaphore;
+
+    /**
+     * Render thread command list
+     */
+    CRenderCommandList* RenderThreadCommandList;
+};
+
+/**
+ * Enqueue render command function alias
+ */
+template<typename Lambda>
+FORCEINLINE void EnqueueRenderCommand(Lambda&& InLambda)
+{
+    CRenderThread::Get().GetRenderCommandList()->Enqueue(std::forward<Lambda>(InLambda));
+}

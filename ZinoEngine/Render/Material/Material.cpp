@@ -4,14 +4,51 @@
 #include "IO/IOUtils.h"
 #include "Core/Engine.h"
 #include "Render/RenderSystem/RenderSystem.h"
-#include "Render/Renderer/Renderer.h"
+#include "Render/Renderer/ForwardSceneRenderer.h"
 #include "Render/ShaderAttributesManager.h"
 #include "Render/Commands/RenderCommands.h"
 #include "Render/RenderSystem/Vulkan/VulkanRenderSystem.h"
 #include "Render/RenderSystem/Vulkan/VulkanDevice.h"
 
+void CMaterialRenderData::Init(CMaterial* InMaterial)
+{
+	Material = InMaterial;
+}
+
+void CMaterialRenderData::InitRenderThread()
+{
+	std::vector<SShaderAttribute> ShaderAttributes;
+	for (const auto& Value : Material->ShaderAttributeMap)
+	{
+		ShaderAttributes.insert(ShaderAttributes.end(), Value.second.begin(), Value.second.end());
+	}
+
+	/** Create pipeline */
+	Pipeline = g_Engine->GetRenderSystem()->CreateGraphicsPipeline(
+		SRenderSystemGraphicsPipelineInfos(
+		Material->ShaderMap[EShaderStage::Vertex].get(),
+		Material->ShaderMap[EShaderStage::Fragment].get(),
+		SVertex::GetBindingDescription(),
+		SVertex::GetAttributeDescriptions(),
+		ShaderAttributes));
+
+	ShaderAttributesManager =
+		Pipeline->CreateShaderAttributesManager(EShaderAttributeFrequency::PerMaterial);
+
+	/** Associate buffers with attributes */
+	for (const auto& ShaderAttribute : ShaderAttributes)
+	{
+		if (ShaderAttribute.Type == EShaderAttributeType::UniformBufferStatic
+			&& ShaderAttribute.Frequency == EShaderAttributeFrequency::PerMaterial)
+			ShaderAttributesManager->Set(ShaderAttribute.StageFlags,
+				ShaderAttribute.Name, AttributeBufferMap[ShaderAttribute]->GetBuffer());
+	}
+}
+
 void CMaterial::Load(const std::string& InPath)
 {
+	RenderData = std::make_unique<CMaterialRenderData>();
+
 	std::string Json = IOUtils::ReadTextFile(InPath);
 
 	/** Parse Json */
@@ -38,7 +75,7 @@ void CMaterial::Load(const std::string& InPath)
 
 			/** Create shader */
 			ShaderMap.insert(std::make_pair(Stage,
-				CEngine::Get().GetRenderSystem()->CreateShader(
+				g_Engine->GetRenderSystem()->CreateShader(
 				IOUtils::ReadBinaryFile("Assets/Shaders/" + Shader).data(),
 				IOUtils::ReadBinaryFile("Assets/Shaders/" + Shader).size(),
 				Stage)));
@@ -54,30 +91,8 @@ void CMaterial::Load(const std::string& InPath)
 		}
 	}
 
-	std::vector<SShaderAttribute> ShaderAttributes;
-	for(const auto& Value : ShaderAttributeMap)
-	{
-		ShaderAttributes.insert(ShaderAttributes.end(), Value.second.begin(), Value.second.end());
-	}
-
-	/** Create pipeline */
-	Pipeline = CEngine::Get().GetRenderSystem()->CreateGraphicsPipeline(SRenderSystemGraphicsPipelineInfos(
-		ShaderMap[EShaderStage::Vertex].get(),
-		ShaderMap[EShaderStage::Fragment].get(),
-		SVertex::GetBindingDescription(),
-		SVertex::GetAttributeDescriptions(),
-		ShaderAttributes));
-
-	AttributeManager = Pipeline->CreateShaderAttributesManager(EShaderAttributeFrequency::PerMaterial);
-
-	/** Associate buffers with attributes */
-	for(const auto& ShaderAttribute : ShaderAttributes)
-	{
-		if (ShaderAttribute.Type == EShaderAttributeType::UniformBufferStatic
-			&& ShaderAttribute.Frequency == EShaderAttributeFrequency::PerMaterial)
-			AttributeManager->Set(ShaderAttribute.StageFlags, 
-				ShaderAttribute.Name, AttributeBufferMap[ShaderAttribute]->GetBuffer());
-	}
+	RenderData->Init(this);
+	RenderData->InitResources();
 }
 
 std::vector<SShaderAttribute> CMaterial::ParseShaderJson(const EShaderStage& InStage,
@@ -147,8 +162,8 @@ std::vector<SShaderAttribute> CMaterial::ParseShaderJson(const EShaderStage& InS
 					&& Frequency == EShaderAttributeFrequency::PerMaterial)
 				{
 					IRenderSystemUniformBufferPtr UniformBuffer =
-						CEngine::Get().GetRenderSystem()->CreateUniformBuffer(SRenderSystemUniformBufferInfos(Size));
-					AttributeBufferMap.insert(std::make_pair(ShaderAttributes.back(), UniformBuffer));
+						g_Engine->GetRenderSystem()->CreateUniformBuffer(SRenderSystemUniformBufferInfos(Size));
+					RenderData->AttributeBufferMap.insert(std::make_pair(ShaderAttributes.back(), UniformBuffer));
 				}
 			}
 			else
@@ -168,24 +183,24 @@ std::vector<SShaderAttribute> CMaterial::ParseShaderJson(const EShaderStage& InS
 }
 
 void CMaterial::SetShaderAttributeResource(const EShaderStage& InStage,
-	const std::string& InName, IDeviceResource* InResource)
+	const std::string& InName, IRenderSystemResource* InResource)
 {
-	AttributeManager->Set(InStage, InName, InResource);
+	RenderData->ShaderAttributesManager->Set(InStage, InName, InResource);
 }
 
 void CMaterial::SetUniformData(const std::string& InName,
 	const void* InData, uint64_t InOffset, uint64_t InSize)
 {
 	for (const SShaderAttribute& Attribute : 
-		Pipeline->GetShaderAttributes(EShaderAttributeFrequency::PerMaterial))
+		RenderData->Pipeline->GetShaderAttributes(EShaderAttributeFrequency::PerMaterial))
 	{
 		if (Attribute.Name == InName)
 		{
 			if(Attribute.Type != EShaderAttributeType::UniformBufferStatic)
 				continue;
 
-			auto FindResult = AttributeBufferMap.find(Attribute);
-			if (FindResult != AttributeBufferMap.end())
+			auto FindResult = RenderData->AttributeBufferMap.find(Attribute);
+			if (FindResult != RenderData->AttributeBufferMap.end())
 			{
 				IRenderSystemUniformBufferPtr& UniformBuffer = FindResult->second;
 
@@ -214,9 +229,9 @@ void CMaterial::SetUniformData(const std::string& InName,
 }
 
 void CMaterial::SetTexture(const EShaderStage& InStage, const std::string& InName,
-	IDeviceResource* InDeviceResource)
+	IRenderSystemResource* InDeviceResource)
 {
-	AttributeManager->Set(InStage, InName, InDeviceResource);
+	RenderData->ShaderAttributesManager->Set(InStage, InName, InDeviceResource);
 }
 
 void CMaterial::SetUniformBuffer(const std::string& InName,
@@ -228,7 +243,7 @@ void CMaterial::SetUniformBuffer(const std::string& InName,
 void CMaterial::SetFloat(const std::string& InMemberName, const float& InData)	
 {
 	for (const SShaderAttribute& Attribute : 
-		Pipeline->GetShaderAttributes(EShaderAttributeFrequency::PerMaterial))
+		RenderData->Pipeline->GetShaderAttributes(EShaderAttributeFrequency::PerMaterial))
 	{
 		for(const SShaderAttributeMember& Member : Attribute.Members)
 		{
@@ -245,7 +260,7 @@ void CMaterial::SetFloat(const std::string& InMemberName, const float& InData)
 void CMaterial::SetVec3(const std::string& InMemberName, const glm::vec3& InData)
 {
 	for (const SShaderAttribute& Attribute :
-		Pipeline->GetShaderAttributes(EShaderAttributeFrequency::PerMaterial))
+		RenderData->Pipeline->GetShaderAttributes(EShaderAttributeFrequency::PerMaterial))
 	{
 		for (const SShaderAttributeMember& Member : Attribute.Members)
 		{

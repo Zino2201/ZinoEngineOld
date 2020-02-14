@@ -88,3 +88,10 @@ void* CVulkanBuffer::GetMappedMemory() const
 {
 	return AllocationInfo.pMappedData;
 }
+
+void CVulkanBuffer::Destroy()
+{
+	vmaDestroyBuffer(Device->GetAllocator(),
+		Buffer,
+		Allocation);
+}

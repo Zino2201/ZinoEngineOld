@@ -26,5 +26,5 @@ private:
 	std::string Title;
 	SDL_Window* Window;
 public:
-	CMulticastDelegate<> OnWindowResized;
+	TMulticastDelegate<> OnWindowResized;
 };

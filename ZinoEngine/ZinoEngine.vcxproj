@@ -177,8 +177,9 @@
     <ClCompile Include="Render\Commands\RenderCommands.cpp" />
     <ClCompile Include="Render\Material\Material.cpp" />
     <ClCompile Include="Render\Material\MaterialShader.cpp" />
-    <ClCompile Include="Render\Renderer\ForwardRenderer.cpp" />
-    <ClCompile Include="Render\Renderer\Renderer.cpp" />
+    <ClCompile Include="Render\Renderer\ForwardSceneRenderer.cpp" />
+    <ClCompile Include="Render\Renderer\SceneRenderer.cpp" />
+    <ClCompile Include="Render\Renderer\Scene.cpp" />
     <ClCompile Include="Render\Shader.cpp" />
     <ClCompile Include="Render\Shaders\BasicShader.cpp" />
     <ClCompile Include="Render\Shaders\EpilepsieShader.cpp" />
@@ -218,6 +219,7 @@
     <ClInclude Include="Core\Asset.h" />
     <ClInclude Include="Core\AssetManager.h" />
     <ClInclude Include="Core\ContainerUtils.h" />
+    <ClInclude Include="Core\Debugging.h" />
     <ClInclude Include="Core\Delegate.h" />
     <ClInclude Include="Core\Engine.h" />
     <ClInclude Include="Core\EngineCore.h" />
@@ -231,11 +233,12 @@
     <ClInclude Include="IO\IOUtils.h" />
     <ClInclude Include="Render\Commands\Commands.h" />
     <ClInclude Include="Render\Commands\RenderCommands.h" />
-    <ClInclude Include="Render\DeviceResource.h" />
     <ClInclude Include="Render\Material\Material.h" />
     <ClInclude Include="Render\Material\MaterialShader.h" />
-    <ClInclude Include="Render\Renderer\Renderer.h" />
-    <ClInclude Include="Render\Renderer\ForwardRenderer.h" />
+    <ClInclude Include="Render\Renderer\DeferredSceneRenderer.h" />
+    <ClInclude Include="Render\Renderer\SceneRenderer.h" />
+    <ClInclude Include="Render\Renderer\ForwardSceneRenderer.h" />
+    <ClInclude Include="Render\Renderer\Scene.h" />
     <ClInclude Include="Render\RenderSystem\RenderSystemResources.h" />
     <ClInclude Include="Render\Shader.h" />
     <ClInclude Include="Render\ShaderAttributesManager.h" />
@@ -279,6 +282,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Materials\test.json" />
+    <None Include="Assets\Shaders\BasePass\BasePass.vert" />
     <None Include="Assets\Shaders\epilepsie.frag" />
     <None Include="Assets\Shaders\epilepsie.vert" />
     <None Include="Assets\Shaders\main.frag" />

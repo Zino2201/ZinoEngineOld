@@ -4,6 +4,7 @@
 #include "./World/Actor.h"
 #include "./World/Components/ActorComponent.h"
 #include "./World/Components/RenderableComponent.h"
+#include "./World/Components/StaticMeshComponent.h"
 
 RTTR_REGISTRATION
 {
@@ -11,4 +12,5 @@ RTTR_REGISTRATION
 	rttr::registration::class_<CActorComponent>("CActorComponent")
 		.property("Owner", &CActorComponent::Owner);
 	rttr::registration::class_<CRenderableComponent>("CRenderableComponent");
+	rttr::registration::class_<CStaticMeshComponent>("CStaticMeshComponent");
 }

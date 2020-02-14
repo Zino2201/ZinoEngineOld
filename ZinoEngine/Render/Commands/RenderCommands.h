@@ -163,7 +163,7 @@ class CRenderCommandSetShaderAttributeResource : public IRenderCommand
 {
 public:
 	CRenderCommandSetShaderAttributeResource(IShaderAttributesManager* InShaderAttributesManager,
-		EShaderStage InShaderStage, const std::string& InName, IDeviceResource* InResource) :
+		EShaderStage InShaderStage, const std::string& InName, class IRenderSystemResource* InResource) :
 		ShaderAttributesManager(InShaderAttributesManager), Stage(InShaderStage),
 		Name(InName), Resource(InResource) {}
 
@@ -174,7 +174,7 @@ private:
 	IShaderAttributesManager* ShaderAttributesManager;
 	EShaderStage Stage;
 	std::string Name;
-	IDeviceResource* Resource;
+	class IRenderSystemResource* Resource;
 };
 
 /**

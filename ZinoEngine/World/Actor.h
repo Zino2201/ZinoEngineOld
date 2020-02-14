@@ -16,6 +16,7 @@ public:
 	virtual ~CActor() = default;
 
 	virtual void Tick(float InDeltaTime) override {}
+	virtual void Destroy();
 
 	/**
 	 * Set actor transform
@@ -48,6 +49,7 @@ public:
 	{
 		ActorComponents.insert(std::make_pair(InID, std::make_shared<T>(InArgs...)));
 		ActorComponents[InID]->Owner = this;
+		ActorComponents[InID]->Initialize();
 		return std::static_pointer_cast<T>(ActorComponents[InID]);
 	}
 

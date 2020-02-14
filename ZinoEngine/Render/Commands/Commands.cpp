@@ -4,16 +4,32 @@
 
 CRenderCommandList::CRenderCommandList() 
 {
-	CommandContext = CEngine::Get().GetRenderSystem()->GetRenderCommandContext();
 }
 
-CRenderCommandList::~CRenderCommandList() {}
+CRenderCommandList::~CRenderCommandList() { }
+
+void CRenderCommandList::Initialize()
+{
+	CommandContext = g_Engine->GetRenderSystem()->GetRenderCommandContext();
+}
 
 void CRenderCommandList::ExecuteFrontCommand()
 {
 	const std::unique_ptr<IRenderCommand>& Command = Commands.front();
-	Command->Execute(this);
+	if(Command)
+		Command->Execute(this);
 	Commands.pop();
+}
+
+void CRenderCommandList::Flush()
+{
+	/** Execute all commands */
+	while (!Commands.empty())
+	{
+		ExecuteFrontCommand();
+	}
+
+	ClearQueue();
 }
 
 void CRenderCommandList::ClearQueue()

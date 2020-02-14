@@ -6,7 +6,7 @@
  * Simple multicast delegate
  */
 template<typename... Args>
-class CMulticastDelegate
+class TMulticastDelegate
 {
 public:
 	/**

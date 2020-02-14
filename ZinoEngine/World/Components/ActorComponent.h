@@ -12,7 +12,9 @@ class CActorComponent : public ITickableObject
 public:
 	virtual ~CActorComponent() = default;
 
+	virtual void Initialize() {}
 	virtual void Tick(float InDeltaTime) override {}
+	virtual void Destroy() {}
 
 	CActor* GetOwner() const { return Owner; }
 private:

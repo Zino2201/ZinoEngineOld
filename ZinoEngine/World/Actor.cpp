@@ -7,3 +7,11 @@ void CActor::SetTransform(const STransform& InTransform)
 
 	RootComponent.lock()->SetTransform(InTransform);
 }
+
+void CActor::Destroy()
+{
+	for(const auto& [Name, Component] : ActorComponents)
+	{
+		Component->Destroy();
+	}
+}

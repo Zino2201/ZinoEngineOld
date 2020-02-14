@@ -19,8 +19,8 @@ CImGui::CImGui()
 
 	///** Dimensions */
 	//ImGuiIO& IO = ImGui::GetIO();
-	//IO.DisplaySize = ImVec2(CEngine::Get().GetWindow()->GetWidth(), 
-	//	CEngine::Get().GetWindow()->GetHeight());
+	//IO.DisplaySize = ImVec2(g_Engine->GetWindow()->GetWidth(), 
+	//	g_Engine->GetWindow()->GetHeight());
 	//IO.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
 	///** Resources */
@@ -33,7 +33,7 @@ CImGui::CImGui()
 	//	uint64_t Size = TexWidth * TexHeight * 4 * sizeof(char);
 
 	//	/** Staging buffer */
-	//	std::shared_ptr<IBuffer> StagingBuffer = CEngine::Get().GetRenderSystem()->CreateBuffer(
+	//	std::shared_ptr<IBuffer> StagingBuffer = g_Engine->GetRenderSystem()->CreateBuffer(
 	//		SBufferInfos(Size, EBufferUsage::TransferSrc, EBufferMemoryUsage::CpuToGpu));
 
 	//	/** Copy pixels to buffer */
@@ -42,7 +42,7 @@ CImGui::CImGui()
 	//	StagingBuffer->Unmap();
 
 	//	/** Texture */
-	//	Texture = CEngine::Get().GetRenderSystem()->CreateTexture(
+	//	Texture = g_Engine->GetRenderSystem()->CreateTexture(
 	//		STextureInfo(ETextureType::Texture2D, EFormat::R8G8B8A8UNorm,
 	//			ETextureUsage::TransferDst | ETextureUsage::Sampled,
 	//			ETextureMemoryUsage::GpuOnly,
@@ -55,12 +55,12 @@ CImGui::CImGui()
 	//	Texture->Copy(StagingBuffer.get());
 
 	//	/** Create texture view */
-	//	TextureView = CEngine::Get().GetRenderSystem()->CreateTextureView(
+	//	TextureView = g_Engine->GetRenderSystem()->CreateTextureView(
 	//		STextureViewInfo(Texture.get(), ETextureViewType::ShaderResource, EFormat::R8G8B8A8UNorm,
 	//			MipLevels));
 
 	//	/** Create a sampler */
-	//	Sampler = CEngine::Get().GetRenderSystem()->CreateSampler(SSamplerInfo(
+	//	Sampler = g_Engine->GetRenderSystem()->CreateSampler(SSamplerInfo(
 	//		ESamplerFilter::Linear,
 	//		ESamplerFilter::Linear,
 	//		ESamplerFilter::Linear,
@@ -76,7 +76,7 @@ CImGui::CImGui()
 	//	TextureView->SetSampler(Sampler);
 	//}
 
-	//UIMaterial = CEngine::Get().GetAssetManager()->Get<CMaterial>("Materials/ui.json");
+	//UIMaterial = g_Engine->GetAssetManager()->Get<CMaterial>("Materials/ui.json");
 }
 
 CImGui::~CImGui()

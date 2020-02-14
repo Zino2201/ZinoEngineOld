@@ -91,10 +91,10 @@ private:
 	std::unique_ptr<CVulkanSwapChain> SwapChain;
 
 	/** Depth buffer */
-	std::shared_ptr<CVulkanTexture> DepthBuffer;
+	boost::intrusive_ptr<CVulkanTexture> DepthBuffer;
 
 	/** Depth buffer view */
-	std::shared_ptr<CVulkanTextureView> DepthBufferView;
+	boost::intrusive_ptr<CVulkanTextureView> DepthBufferView;
 
 	/** Render pass */
 	vk::UniqueRenderPass RenderPass;

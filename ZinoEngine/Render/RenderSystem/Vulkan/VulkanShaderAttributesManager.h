@@ -15,7 +15,7 @@ public:
 	~CVulkanShaderAttributesManager();
 
 	virtual void Set(EShaderStage InStage, const std::string& InName,
-		IDeviceResource* InResource) override;
+		IRenderSystemResource* InResource) override;
 
 	const std::vector<vk::UniqueDescriptorSet>& GetDescriptorSets() const { return DescriptorSets; }
 

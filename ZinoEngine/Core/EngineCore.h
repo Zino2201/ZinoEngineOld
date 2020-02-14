@@ -42,11 +42,21 @@
 #include "Flags.h"
 #include "ContainerUtils.h"
 #include "Reflection.h"
+#include "Debugging.h"
 
 /** Macros */
 #define RAPIDJSON_NOMEMBERITERATORCLASS
 #define DEPRECATED(Why) [[deprecated(Why)]]
 #define STRINGIFY(x) #x
+#define FORCEINLINE __forceinline
 
 /** Defines */
 #define SINGLETON_BODY(type) public: static type& Get(){static type Instance;return Instance;}public:type(const type&) = delete;void operator=(const type&) = delete;private:type();~type();								
+
+extern std::thread::id GameThreadID;
+extern std::thread::id RenderThreadID;
+
+FORCEINLINE bool IsInRenderThread()
+{
+	return std::this_thread::get_id() == RenderThreadID;
+}

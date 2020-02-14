@@ -9,7 +9,7 @@
 CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysDevice)
 	: PhysicalDevice(InPhysDevice)
 {
-	CWindow* Window = CEngine::Get().GetWindow();
+	CWindow* Window = g_Engine->GetWindow();
 
 	QueueFamilyIndices = VulkanUtil::GetQueueFamilyIndices(PhysicalDevice,
 		g_VulkanRenderSystem->GetSurface());

@@ -36,7 +36,7 @@ CVulkanShaderAttributesManager::CVulkanShaderAttributesManager(
 			&& ShaderAttribute.Frequency == EShaderAttributeFrequency::PerInstance)
 		{
 			IRenderSystemUniformBufferPtr UniformBuffer =
-				CEngine::Get().GetRenderSystem()->CreateUniformBuffer(
+				g_Engine->GetRenderSystem()->CreateUniformBuffer(
 					SRenderSystemUniformBufferInfos(ShaderAttribute.Size));
 			AttributeBufferMap.insert(std::make_pair(ShaderAttribute, UniformBuffer));
 
@@ -46,10 +46,10 @@ CVulkanShaderAttributesManager::CVulkanShaderAttributesManager(
 	}
 }
 
-CVulkanShaderAttributesManager::~CVulkanShaderAttributesManager() {}
+CVulkanShaderAttributesManager::~CVulkanShaderAttributesManager() { }
 
 void CVulkanShaderAttributesManager::Set(EShaderStage InStage, const std::string& InName,
-	IDeviceResource* InResource)
+	IRenderSystemResource* InResource)
 {
 	for(const SShaderAttribute& Attribute : Pipeline->GetShaderAttributes(Infos.Frequency))
 	{

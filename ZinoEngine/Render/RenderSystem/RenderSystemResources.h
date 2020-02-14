@@ -3,15 +3,19 @@
 #include "Render/RenderCore.h"
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <boost/smart_ptr/intrusive_ref_counter.hpp>
-#include "Render/DeviceResource.h"
 
 /**
  * An render system resource
  * Intrusive ptr
  */
 class IRenderSystemResource : 
-	public boost::intrusive_ref_counter<IRenderSystemResource, boost::thread_safe_counter>, 
-	public IDeviceResource /** To be deleted */ { public: virtual ~IRenderSystemResource() = default; };
+	public boost::intrusive_ref_counter<IRenderSystemResource, boost::thread_unsafe_counter>
+{ 
+public: 
+	virtual ~IRenderSystemResource() = default;
+
+	virtual void Release() {}
+};
 
 /**
  * Buffer infos
@@ -36,6 +40,7 @@ class CRenderSystemBuffer : public IRenderSystemResource
 {
 public:
 	CRenderSystemBuffer(const SRenderSystemBufferInfos& InInfos) : Infos(InInfos) {}
+	virtual ~CRenderSystemBuffer() = default;
 
 	/**
 	 * Map the buffer
@@ -57,6 +62,8 @@ public:
 	 * Get mapped memory
 	 */
 	virtual void* GetMappedMemory() const = 0;
+
+	virtual void Destroy() = 0;
 
 	const SRenderSystemBufferInfos& GetInfos() const { return Infos; }
 protected:

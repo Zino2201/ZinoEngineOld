@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/EngineCore.h"
+#include "Core/RenderThread.h"
 
 /**
  * Shader parameter type
@@ -356,6 +357,7 @@ enum class ERenderSystemShaderFormat
 
 struct SRenderSystemDetails
 {
+	std::string Name;
 	ERenderSystemType Type;
 	ERenderSystemShaderFormat Format;
 };

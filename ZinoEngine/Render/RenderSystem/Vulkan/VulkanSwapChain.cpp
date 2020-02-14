@@ -3,7 +3,7 @@
 #include "Render/Window.h"
 #include "VulkanRenderSystem.h"
 #include "VulkanDevice.h"
-#include "Render/Renderer/Renderer.h"
+#include "Render/Renderer/ForwardSceneRenderer.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanRenderCommandContext.h"
 #include "VulkanQueue.h"
@@ -11,7 +11,7 @@
 
 CVulkanSwapChain::CVulkanSwapChain()
 {
-	CEngine::Get().GetWindow()->OnWindowResized.Bind(
+	g_Engine->GetWindow()->OnWindowResized.Bind(
 		std::bind(&CVulkanSwapChain::OnWindowResized, this));
 
 	Create();
@@ -217,8 +217,8 @@ vk::Extent2D CVulkanSwapChain::ChooseSwapChainExtent(const
 	{
 		/** Default set current window width & height */
 		vk::Extent2D Extent(
-			CEngine::Get().GetWindow()->GetWidth(),
-			CEngine::Get().GetWindow()->GetHeight());
+			g_Engine->GetWindow()->GetWidth(),
+			g_Engine->GetWindow()->GetHeight());
 
 		/** Clamp to swap chain capabilities */
 		Extent.width = std::clamp(Extent.width, InCapabilities.minImageExtent.width,

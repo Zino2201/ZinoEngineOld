@@ -253,7 +253,7 @@ EShLanguage ToShLanguage(EShaderStage InStage)
 
 CShader::CShader(CShaderClass* InClass) : ShaderClass(InClass)
 {
-	SRenderSystemDetails Details = CEngine::Get().GetRenderSystem()->GetRenderSystemDetails();
+	SRenderSystemDetails Details = g_Engine->GetRenderSystem()->GetRenderSystemDetails();
 	
 	std::string ShaderData = IOUtils::ReadTextFile(InClass->GetFilename());
 	const char* ShaderStr = ShaderData.c_str();
@@ -263,6 +263,8 @@ CShader::CShader(CShaderClass* InClass) : ShaderClass(InClass)
 	GlslShader.setEntryPoint("main");
 
 	std::unique_ptr<spirv_cross::Compiler> Compiler;
+
+	LOG(ELogSeverity::Info, "Compiling shader %s", InClass->GetFilename().c_str())
 
 	switch(Details.Format)
 	{
@@ -320,7 +322,7 @@ CShader::CShader(CShaderClass* InClass) : ShaderClass(InClass)
 		glslang::GlslangToSpv(*Program.getIntermediate(ToShLanguage(InClass->GetStage())),
 			Spv, &Logger, &Options);
 		
-		Shader = CEngine::Get().GetRenderSystem()->CreateShader(Spv.data(), 
+		Shader = g_Engine->GetRenderSystem()->CreateShader(Spv.data(), 
 			Spv.size() * 4, ShaderClass->GetStage());
 
 		Compiler = std::make_unique<spirv_cross::Compiler>(Spv.data(),

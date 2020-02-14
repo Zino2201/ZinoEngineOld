@@ -9,7 +9,7 @@
 #include "VulkanRenderCommandContext.h"
 #include "VulkanShader.h"
 #include "VulkanPipeline.h"
-#include "Render/Renderer/Renderer.h"
+#include "Render/Renderer/ForwardSceneRenderer.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanQueue.h"
 #include "VulkanCommandBufferManager.h"
@@ -36,6 +36,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 	switch (InSeverity)
 	{
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
 		LOG(ELogSeverity::Debug, InCallbackData->pMessage)
 		break;
@@ -97,14 +98,14 @@ CVulkanRenderSystem::~CVulkanRenderSystem()
 
 void CVulkanRenderSystem::Initialize()
 {
-	g_VulkanRenderSystem = reinterpret_cast<CVulkanRenderSystem*>(CEngine::Get().GetRenderSystem());
+	g_VulkanRenderSystem = reinterpret_cast<CVulkanRenderSystem*>(g_Engine->GetRenderSystem());
 
 	/** First check if validation layers are enabled, and are they supported */
 	if (g_VulkanEnableValidationLayers && !IsRequiredLayersSupported())
 		LOG(ELogSeverity::Fatal, "Required layers not supported")
 
 	/** Get window */
-	CWindow* Window = CEngine::Get().GetWindow();
+	CWindow* Window = g_Engine->GetWindow();
 
 	/** Create Vulkan instance */
 	{
@@ -249,7 +250,7 @@ void CVulkanRenderSystem::CreateSwapchainObjects()
 
 	/** Depth buffer image */
 	{
-		DepthBuffer = std::make_shared<CVulkanTexture>(Device.get(),
+		DepthBuffer = new CVulkanTexture(Device.get(),
 			SRenderSystemTextureInfo(
 				ETextureType::Texture2D,
 				VulkanUtil::VkFormatToFormat(DepthFormat),
@@ -257,7 +258,7 @@ void CVulkanRenderSystem::CreateSwapchainObjects()
 				ETextureMemoryUsage::GpuOnly,
 				SwapChain->GetExtent().width,
 				SwapChain->GetExtent().height));
-		DepthBufferView = std::make_shared<CVulkanTextureView>(Device.get(),
+		DepthBufferView = new CVulkanTextureView(Device.get(),
 			SRenderSystemTextureViewInfo(
 				DepthBuffer.get(),
 				ETextureViewType::DepthStencil,
@@ -500,6 +501,8 @@ vk::Format CVulkanRenderSystem::FindSupportedFormat(const vk::PhysicalDevice& In
 			(Properties.optimalTilingFeatures & InFeatures) == InFeatures)
 			return Format;
 	}
+
+	return vk::Format::eUndefined;
 }
 
 vk::Format CVulkanRenderSystem::FindDepthFormat(const vk::PhysicalDevice& InDevice) const
@@ -518,6 +521,7 @@ bool CVulkanRenderSystem::HasStencilComponent(vk::Format InFormat) const
 SRenderSystemDetails CVulkanRenderSystem::GetRenderSystemDetails() const
 {
 	SRenderSystemDetails Details;
+	Details.Name = "Vulkan";
 	Details.Format = ERenderSystemShaderFormat::SpirV;
 	Details.Type = ERenderSystemType::Vulkan;
 	return Details;

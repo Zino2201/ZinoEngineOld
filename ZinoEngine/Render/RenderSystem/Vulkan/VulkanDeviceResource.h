@@ -8,7 +8,7 @@ class CVulkanDeviceResource
 {
 public:
 	CVulkanDeviceResource(CVulkanDevice* InDevice) : Device(InDevice) {}
-	virtual ~CVulkanDeviceResource() {}
+	virtual ~CVulkanDeviceResource() { } 
 protected:
 	CVulkanDevice* Device;
 };

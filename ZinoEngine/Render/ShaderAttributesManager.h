@@ -2,7 +2,7 @@
 
 #include "RenderCore.h"
 
-class IDeviceResource;
+class IRenderSystemResource;
 class CRenderSystemPipeline;
 
 struct SShaderAttributesManagerInfo
@@ -27,7 +27,7 @@ public:
 	virtual ~IShaderAttributesManager() = default;
 
 	virtual void Set(EShaderStage InStage, const std::string& InName, 
-		IDeviceResource* InResource) = 0;
+		IRenderSystemResource* InResource) = 0;
 
 	virtual void SetUniformBuffer(const std::string& InName,
 		void* InData) = 0;

@@ -33,6 +33,26 @@ public:
 };
 
 /**
+ * Class for lambdas
+ */
+template<typename LambdaType>
+class CRenderCommandLambda : public IRenderCommand
+{
+public:
+	CRenderCommandLambda(LambdaType&& InLambda) :
+		Lambda(InLambda) {}
+
+	virtual void Execute(CRenderCommandList* InCmdList) override
+	{
+		Lambda(InCmdList);
+	}
+
+	virtual std::string GetName() const override { return "Lambda"; }
+private:
+	LambdaType Lambda;
+};
+
+/**
  * Render command list
  */
 class CRenderCommandList
@@ -40,6 +60,8 @@ class CRenderCommandList
 public:
 	CRenderCommandList();
 	~CRenderCommandList();
+
+	void Initialize();
 
 	/**
 	 * Enqueue a command
@@ -54,9 +76,20 @@ public:
 	}
 
 	/**
+	 * Enqueue a lambda
+	 */
+	template<typename Lambda>
+	void Enqueue(Lambda&& InLambda)
+	{
+		Commands.push(std::make_unique<CRenderCommandLambda<Lambda>>(std::forward<Lambda>(InLambda)));
+	}
+
+	/**
 	 * Execute command in front of the queue
 	 */
 	void ExecuteFrontCommand();
+
+	void Flush();
 
 	void ClearQueue();
 

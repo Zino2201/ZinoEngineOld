@@ -15,14 +15,17 @@ struct STestUBO
 /**
  * Component that render a mesh
  */
+ZCLASS()
 class CStaticMeshComponent : public CRenderableComponent
 {
 	REFLECTED_CLASS(CWorldComponent)
 
 public:
+	CStaticMeshComponent();
+
 	void SetStaticMesh(const std::shared_ptr<CStaticMesh>& InStaticMesh);
 
-	virtual CRenderableComponentProxy* CreateRenderProxy() const override;
+	virtual CRenderableComponentProxy* InstantiateRenderProxy() const override;
 
 	const std::shared_ptr<CStaticMesh>& GetStaticMesh() const { return StaticMesh; }
 public:
