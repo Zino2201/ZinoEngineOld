@@ -7,6 +7,7 @@
 #include "VulkanCommandBuffer.h"
 #include "VulkanRenderCommandContext.h"
 #include "VulkanQueue.h"
+#include "VulkanPipelineLayout.h"
 #include <SDL2/SDL.h>
 
 CVulkanSwapChain::CVulkanSwapChain()
@@ -84,6 +85,7 @@ void CVulkanSwapChain::Create()
 	}
 
 	/** Create semaphores and fences */
+	if(InFlightFences.empty())
 	{
 		vk::SemaphoreCreateInfo CreateInfos;
 		vk::FenceCreateInfo FenceCreateInfos(vk::FenceCreateFlagBits::eSignaled);
@@ -103,8 +105,10 @@ void CVulkanSwapChain::Create()
 			InFlightFences.emplace_back(g_VulkanRenderSystem->GetDevice()->GetDevice()
 				.createFenceUnique(FenceCreateInfos).value);
 			if (!InFlightFences[i])
-				LOG(ELogSeverity::Fatal, "Failed to create in flight fence")
+				LOG(ELogSeverity::Fatal, "Failed to create in flight fence")	
 		}
+
+		ImagesInFlight.resize(ImageViews.size(), nullptr);
 	}
 }
 
@@ -116,9 +120,6 @@ void CVulkanSwapChain::OnSwapChainOutOfDate()
 	g_VulkanRenderSystem->WaitGPU();
 
 	/** First free all existing objects */
-	InFlightFences.clear();
-	ImageAvailableSemaphores.clear();
-	RenderFinishedSemaphores.clear();
 	ImageViews.clear();
 	Images.clear();
 	SwapChain.reset();
@@ -138,12 +139,12 @@ void CVulkanSwapChain::OnWindowResized()
 	bShouldRecreate = true;
 }
 
+// TODO: Fix resizing
 void CVulkanSwapChain::AcquireImage()
 {
 	/** Wait for last frame render before acquriring new image */
 	g_VulkanRenderSystem->GetDevice()->GetDevice().waitForFences(
 		{ GetFenceForCurrentFrame() }, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	g_VulkanRenderSystem->GetDevice()->GetDevice().resetFences({ GetFenceForCurrentFrame() });
 
 	vk::ResultValue<uint32_t> Result = 
 		g_VulkanRenderSystem->GetDevice()->GetDevice().acquireNextImageKHR(
@@ -154,11 +155,28 @@ void CVulkanSwapChain::AcquireImage()
 
 	CurrentImageIndex = Result.value;
 
-	if (Result.result == vk::Result::eErrorOutOfDateKHR || bShouldRecreate)
+	if (Result.result == vk::Result::eErrorOutOfDateKHR
+		|| Result.result == vk::Result::eSuboptimalKHR)
 	{
 		/** Swap chain is out of date, recreate it and broadcast the message */
 		OnSwapChainOutOfDate();
+		return;
 	}
+
+	if (ImagesInFlight[CurrentImageIndex]) 
+	{
+		g_VulkanRenderSystem->GetDevice()->GetDevice().waitForFences(
+			{ ImagesInFlight[CurrentImageIndex] }, VK_TRUE, std::numeric_limits<uint64_t>::max());
+
+		// TODO: Move this to another place ?
+		/** Reset all pipeline layouts from previous frame */
+		for (CVulkanPipelineLayout* PipelineLayout : CVulkanPipelineLayout::PipelineLayouts)
+		{
+			PipelineLayout->GetDescriptorPoolManager()->ResetPools();
+		}
+	}
+
+	ImagesInFlight[CurrentImageIndex] = *InFlightFences[CurrentFrame];
 }
 
 void CVulkanSwapChain::Present(CVulkanQueue* InPresentQueue)

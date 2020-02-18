@@ -10,7 +10,7 @@ class CActorComponent : public ITickableObject
 	REFLECTED_CLASS()
 
 public:
-	virtual ~CActorComponent() = default;
+	virtual ~CActorComponent() {}
 
 	virtual void Initialize() {}
 	virtual void Tick(float InDeltaTime) override {}

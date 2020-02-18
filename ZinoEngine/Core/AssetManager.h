@@ -15,6 +15,8 @@ class IAsset;
 class CAssetManager
 {
 public:
+	~CAssetManager() {}
+
 	/**
 	 * Get an asset
 	 * Path relative to Assets directory

@@ -10,7 +10,8 @@ void CLogger::Log(const ELogSeverity& InSeverity, const std::string& InMessage, 
 	if (InSeverity != ELogSeverity::Debug)
 	{
 #endif
-		std::cout << "[" << SeverityToString(InSeverity) << "] ";
+		std::cout << "[" << SeverityToString(InSeverity) << "/" << 
+			(IsInRenderThread() ? "RenderThread" : "GameThread") << "] ";
 		std::vprintf(InMessage.c_str(), InArgs);
 		std::cout << std::endl;
 #ifdef NDEBUG

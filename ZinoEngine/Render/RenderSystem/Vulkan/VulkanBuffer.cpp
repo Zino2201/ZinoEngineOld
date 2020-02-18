@@ -18,9 +18,11 @@ CVulkanBuffer::CVulkanBuffer(CVulkanDevice* InDevice,
 
 	VmaAllocationCreateFlags Flags = InInfos.bUsePersistentMapping 
 		? VMA_ALLOCATION_CREATE_MAPPED_BIT : 0;
+	Flags |= VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
 	VmaAllocationCreateInfo AllocInfo = {};
 	AllocInfo.usage = VulkanUtil::BufferMemoryUsageToVmaMemoryUsage(InInfos.MemoryUsage);
 	AllocInfo.flags = Flags;
+	AllocInfo.pUserData = const_cast<char*>(InInfos.DebugName.c_str());
 
 	if(vmaCreateBuffer(Device->GetAllocator(),
 		reinterpret_cast<VkBufferCreateInfo*>(&CreateInfo),
@@ -31,12 +33,7 @@ CVulkanBuffer::CVulkanBuffer(CVulkanDevice* InDevice,
 		LOG(ELogSeverity::Fatal, "Failed to create Vulkan buffer")
 }
 
-CVulkanBuffer::~CVulkanBuffer() 
-{
-	vmaDestroyBuffer(Device->GetAllocator(),
-		Buffer,
-		Allocation);
-}
+CVulkanBuffer::~CVulkanBuffer() { }
 
 void* CVulkanBuffer::Map()
 {
@@ -91,6 +88,9 @@ void* CVulkanBuffer::GetMappedMemory() const
 
 void CVulkanBuffer::Destroy()
 {
+	LOG(ELogSeverity::Debug, "Destroyed buffer %s",
+		Infos.DebugName.c_str())
+
 	vmaDestroyBuffer(Device->GetAllocator(),
 		Buffer,
 		Allocation);

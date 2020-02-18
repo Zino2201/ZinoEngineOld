@@ -8,11 +8,12 @@ class CVulkanTexture : public CRenderSystemTexture,
 {
 public:
 	CVulkanTexture(CVulkanDevice* InDevice, const SRenderSystemTextureInfo& InInfos);
-	~CVulkanTexture();
 
 	virtual void Copy(CRenderSystemBuffer* InSrc) override;
 
 	void TransitionImageLayout(vk::ImageLayout InOldLayout, vk::ImageLayout InNewLayout);
+
+	virtual void Destroy() override;
 
 	const vk::Image& GetImage() const { return Image; }
 	virtual const SRenderSystemTextureInfo& GetInfo() const override { return Infos; }

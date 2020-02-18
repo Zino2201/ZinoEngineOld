@@ -92,6 +92,9 @@ CVulkanRenderSystem::CVulkanRenderSystem() {}
 
 CVulkanRenderSystem::~CVulkanRenderSystem() 
 {
+	DepthBuffer->Destroy();
+	DepthBufferView->Destroy();
+
 	if(g_VulkanEnableValidationLayers)
 		DestroyDebugUtilsMessengerEXT(*Instance, Callback, nullptr);
 }
@@ -109,7 +112,8 @@ void CVulkanRenderSystem::Initialize()
 
 	/** Create Vulkan instance */
 	{
-		vk::ApplicationInfo ApplicationInfos;
+		vk::ApplicationInfo ApplicationInfos(nullptr,
+			0, nullptr, 0, VK_API_VERSION_1_1);
 
 		/** Get required extensions */
 		std::vector<const char*> RequiredExtensions = GetRequiredExtensions(Window->GetSDLWindow());
@@ -370,6 +374,8 @@ void CVulkanRenderSystem::Prepare()
 
 void CVulkanRenderSystem::Present()
 {
+	Device->GetDevice().resetFences({ SwapChain->GetFenceForCurrentFrame() });
+
 	RenderCommandContext->GetCommandBufferManager()
 		->SubmitMainCommandBuffer(SwapChain->GetRenderFinishedSemaphore());
 
@@ -492,7 +498,7 @@ vk::Format CVulkanRenderSystem::FindSupportedFormat(const vk::PhysicalDevice& In
 	for(const vk::Format& Format : InCandidates)
 	{
 		vk::FormatProperties Properties = InDevice.getFormatProperties(Format);
-
+		
 		if(InTiling == vk::ImageTiling::eLinear &&
 			(Properties.linearTilingFeatures & InFeatures) == InFeatures)
 			return Format;

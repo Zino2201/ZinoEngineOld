@@ -11,5 +11,7 @@ int main()
 	/** Stop game thread at end */
 	CRenderThread::Get().Stop();
 
+	_CrtDumpMemoryLeaks();
+
 	return 0;
 }

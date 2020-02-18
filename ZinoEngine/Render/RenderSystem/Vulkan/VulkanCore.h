@@ -2,6 +2,7 @@
 
 #include "Core/EngineCore.h"
 #include "Render/RenderCore.h"
+#include "Render/RenderSystem/RenderSystemResources.h"
 
 /** Includes */
 
@@ -14,11 +15,12 @@
 
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_ASSERT
+#define VMA_ASSERT(expr) must(expr)
+
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
 
 /** Constants */
-
 const std::vector<const char*> g_VulkanValidationLayers =
 {
 	"VK_LAYER_KHRONOS_validation"
@@ -33,8 +35,12 @@ constexpr bool g_VulkanEnableValidationLayers = true;
 /** Required device extensions */
 const std::vector<const char*> g_VulkanRequiredDeviceExtensions =
 {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
+
+constexpr int g_VulkanMaxDescriptorSets = 8; 
+constexpr int g_VulkanMaxBindings = 16;
+constexpr int g_VulkanNumSetsPerPool = 1;
 
 /** Globals */
 extern class CVulkanRenderSystem* g_VulkanRenderSystem;
@@ -61,5 +67,20 @@ struct SVulkanSwapChainSupportDetails
 	std::vector<vk::PresentModeKHR> PresentModes;
 };
 
+/**
+ * Shader resource binding
+ */
+struct SVulkanShaderResourceBinding
+{
+	vk::DescriptorBufferInfo Buffer;
+};
+
+/**
+ * Shader resource bindings
+ */
+struct SVulkanShaderResourceBindings
+{
+	SVulkanShaderResourceBinding Bindings[g_VulkanMaxDescriptorSets][g_VulkanMaxBindings];
+};
 
 #include "VulkanUtil.h"

@@ -25,7 +25,9 @@ void CStaticMeshVertexIndexBuffer::InitRenderThread()
 			SRenderSystemBufferInfos(
 				sizeof(Vertices[0]) * Vertices.size(),
 				EBufferUsage::TransferSrc,
-				EBufferMemoryUsage::CpuOnly));
+				EBufferMemoryUsage::CpuOnly,
+				false,
+				"VertexBufferStaging"));
 
 		void* Data = StagingBuffer->Map();
 		memcpy(Data, Vertices.data(), sizeof(Vertices[0]) * Vertices.size());
@@ -35,9 +37,13 @@ void CStaticMeshVertexIndexBuffer::InitRenderThread()
 			SRenderSystemBufferInfos(
 				sizeof(Vertices[0]) * Vertices.size(),
 				EBufferUsage::VertexBuffer | EBufferUsage::TransferDst,
-				EBufferMemoryUsage::GpuOnly));
+				EBufferMemoryUsage::GpuOnly,
+				false,
+				"VertexBuffer"));
 
 		VertexBuffer->Copy(StagingBuffer.get());
+
+		StagingBuffer->Destroy();
 	}
 
 	/** Create index buffer using staging buffer */
@@ -46,7 +52,9 @@ void CStaticMeshVertexIndexBuffer::InitRenderThread()
 			SRenderSystemBufferInfos(
 				sizeof(Indices[0]) * Indices.size(),
 				EBufferUsage::TransferSrc,
-				EBufferMemoryUsage::CpuOnly));
+				EBufferMemoryUsage::CpuOnly,
+				false,
+				"IndexBufferStaging"));
 
 		void* Data = StagingBuffer->Map();
 		memcpy(Data, Indices.data(), sizeof(Indices[0]) * Indices.size());
@@ -56,15 +64,27 @@ void CStaticMeshVertexIndexBuffer::InitRenderThread()
 			SRenderSystemBufferInfos(
 				sizeof(Indices[0]) * Indices.size(),
 				EBufferUsage::IndexBuffer | EBufferUsage::TransferDst,
-				EBufferMemoryUsage::GpuOnly));
+				EBufferMemoryUsage::GpuOnly,
+				false,
+				"IndexBuffer"));
 
 		IndexBuffer->Copy(StagingBuffer.get());
+
+		StagingBuffer->Destroy();
 	}
 }
 
 void CStaticMeshVertexIndexBuffer::DestroyRenderThread()
 {
-	
+	VertexBuffer->Destroy();
+	IndexBuffer->Destroy();
+}
+
+CStaticMesh::~CStaticMesh()
+{
+	VertexIndexBuffer->DestroyResources();
+	VertexIndexBuffer->GetDestroyedSemaphore().Wait();
+	delete VertexIndexBuffer;
 }
 
 void CStaticMesh::Load(const std::string& InPath)
@@ -104,7 +124,7 @@ void CStaticMesh::Load(const std::string& InPath)
 	IndexCount = static_cast<uint32_t>(Indices.size());
 
 	/** Create resources */
-	VertexIndexBuffer = std::make_unique<CStaticMeshVertexIndexBuffer>();
+	VertexIndexBuffer = new CStaticMeshVertexIndexBuffer;
 	VertexIndexBuffer->Init(Vertices, Indices);
 	VertexIndexBuffer->InitResources();
 }

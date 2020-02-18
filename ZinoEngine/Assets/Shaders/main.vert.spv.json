@@ -4,9 +4,9 @@
       "name": "UBO",
       "binding": 0,
       "size": 192,
-      "type": "UniformBufferStatic",
+      "type": "UniformBuffer",
       "count": 1,
-      "frequency": "PerInstance",
+      "set": 1,
       "meta": [],
       "members": [
         {

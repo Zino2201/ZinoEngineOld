@@ -9,9 +9,9 @@
 class CForwardSceneRenderer : public ISceneRenderer
 {
 public:
-    virtual void Render(CRenderCommandList* InCommandList,
+    virtual void Render(IRenderCommandContext* InCommandContext,
         CScene* InScene) override;
 private:
-    void DrawWorld(CRenderCommandList* InCommandList,
+    void DrawWorld(IRenderCommandContext* InCommandContext,
         CScene* InScene);
 };

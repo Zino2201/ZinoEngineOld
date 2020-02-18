@@ -6,7 +6,6 @@ class CWindow;
 class IRenderSystem;
 class CAssetManager;
 class CWorld;
-class CImGui;
 class CRenderCommandList;
 
 /**
@@ -32,7 +31,6 @@ public:
 	CWorld* GetWorld() const { return World.get(); }
 private:
 	void Loop();
-	void InitImGui();
 public:
 	CEngine();
 	~CEngine();
@@ -42,7 +40,6 @@ private:
 	std::unique_ptr<IRenderSystem> RenderSystem;
 	std::unique_ptr<CAssetManager> AssetManager;
 	std::unique_ptr<CWorld> World;
-	std::unique_ptr<CImGui> ImGui;
 	std::atomic_bool GameLoop;
 public:
 	std::atomic_int GameThreadCounter;

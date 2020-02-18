@@ -29,7 +29,7 @@ public:
 		return std::static_pointer_cast<T>(Actors.back());
 	}
 
-	std::vector<std::shared_ptr<CActor>> GetActors() const { return Actors; }
+	const std::vector<std::shared_ptr<CActor>>& GetActors() const { return Actors; }
 	CScene* GetScene() const { return Scene.get(); }
 private:
 	std::vector<std::shared_ptr<CActor>> Actors;

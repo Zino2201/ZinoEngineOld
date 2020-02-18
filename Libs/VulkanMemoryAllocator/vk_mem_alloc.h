@@ -3192,7 +3192,7 @@ void *aligned_alloc(size_t alignment, size_t size)
 // Normal assert to check for programmer's errors, especially in Debug configuration.
 #ifndef VMA_ASSERT
    #ifdef _DEBUG
-       #define VMA_ASSERT(expr)         assert(expr)
+       #define VMA_ASSERT(expr)         must(expr)
    #else
        #define VMA_ASSERT(expr)
    #endif

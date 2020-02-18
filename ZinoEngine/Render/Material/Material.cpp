@@ -5,8 +5,8 @@
 #include "Core/Engine.h"
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/Renderer/ForwardSceneRenderer.h"
-#include "Render/ShaderAttributesManager.h"
-#include "Render/Commands/RenderCommands.h"
+#include "Render/Commands/Commands.h"
+#include "Render/RenderSystem/RenderSystemResources.h"
 #include "Render/RenderSystem/Vulkan/VulkanRenderSystem.h"
 #include "Render/RenderSystem/Vulkan/VulkanDevice.h"
 
@@ -17,10 +17,10 @@ void CMaterialRenderData::Init(CMaterial* InMaterial)
 
 void CMaterialRenderData::InitRenderThread()
 {
-	std::vector<SShaderAttribute> ShaderAttributes;
-	for (const auto& Value : Material->ShaderAttributeMap)
+	std::vector<SShaderParameter> ShaderParameters;
+	for (const auto& Value : Material->ShaderParameterMap)
 	{
-		ShaderAttributes.insert(ShaderAttributes.end(), Value.second.begin(), Value.second.end());
+		ShaderParameters.insert(ShaderParameters.end(), Value.second.begin(), Value.second.end());
 	}
 
 	/** Create pipeline */
@@ -30,25 +30,28 @@ void CMaterialRenderData::InitRenderThread()
 		Material->ShaderMap[EShaderStage::Fragment].get(),
 		SVertex::GetBindingDescription(),
 		SVertex::GetAttributeDescriptions(),
-		ShaderAttributes));
+		ShaderParameters));
 
-	ShaderAttributesManager =
-		Pipeline->CreateShaderAttributesManager(EShaderAttributeFrequency::PerMaterial);
+	UniformBuffer = g_Engine->GetRenderSystem()->CreateUniformBuffer(
+		SRenderSystemUniformBufferInfos(48));
+}
 
-	/** Associate buffers with attributes */
-	for (const auto& ShaderAttribute : ShaderAttributes)
-	{
-		if (ShaderAttribute.Type == EShaderAttributeType::UniformBufferStatic
-			&& ShaderAttribute.Frequency == EShaderAttributeFrequency::PerMaterial)
-			ShaderAttributesManager->Set(ShaderAttribute.StageFlags,
-				ShaderAttribute.Name, AttributeBufferMap[ShaderAttribute]->GetBuffer());
-	}
+void CMaterialRenderData::DestroyRenderThread()
+{
+	UniformBuffer->Destroy();
+}
+
+CMaterial::~CMaterial() 
+{ 
+	RenderData->DestroyResources();
+	RenderData->GetDestroyedSemaphore().Wait();
+	delete RenderData;
 }
 
 void CMaterial::Load(const std::string& InPath)
 {
-	RenderData = std::make_unique<CMaterialRenderData>();
-
+	RenderData = new CMaterialRenderData;
+	 
 	std::string Json = IOUtils::ReadTextFile(InPath);
 
 	/** Parse Json */
@@ -81,7 +84,7 @@ void CMaterial::Load(const std::string& InPath)
 				Stage)));
 
 			/** Shader attributes */
-			ShaderAttributeMap.insert(std::make_pair(Stage,
+			ShaderParameterMap.insert(std::make_pair(Stage,
 				ParseShaderJson(Stage, "Assets/Shaders/" + Shader + ".json")));
 		}
 		else
@@ -95,10 +98,10 @@ void CMaterial::Load(const std::string& InPath)
 	RenderData->InitResources();
 }
 
-std::vector<SShaderAttribute> CMaterial::ParseShaderJson(const EShaderStage& InStage,
+std::vector<SShaderParameter> CMaterial::ParseShaderJson(const EShaderStage& InStage,
 	const std::string& InPath)
 {
-	std::vector<SShaderAttribute> ShaderAttributes;
+	std::vector<SShaderParameter> ShaderAttributes;
 
 	std::string Json = IOUtils::ReadTextFile(InPath);
 
@@ -126,51 +129,14 @@ std::vector<SShaderAttribute> CMaterial::ParseShaderJson(const EShaderStage& InS
 			+ ((Size % UboAlignment) > 0 ? UboAlignment : 0));
 
 		std::string TypeStr = Attributes[i]["type"].GetString();
-		std::string FrequencyStr = Attributes[i]["frequency"].GetString();
+		uint32_t Set = Attributes[i]["set"].GetUint();
 		uint32_t Count = Attributes[i]["count"].GetUint();
-		rapidjson::Value& Meta = Attributes[i]["meta"];
-		std::vector<SShaderAttributeMember> AttributeMembers;
 
-		auto TypeVal = magic_enum::enum_cast<EShaderAttributeType>(TypeStr);
+		auto TypeVal = magic_enum::enum_cast<EShaderParameterType>(TypeStr);
 		if (TypeVal.has_value())
 		{
-			if(Attributes[i].HasMember("members"))
-			{
-				rapidjson::Value& Members = Attributes[i]["members"];
-				AttributeMembers.reserve(Members.Size());
-
-				for (rapidjson::SizeType i = 0; i < Members.Size(); ++i)
-				{
-					std::string MemberName = Members[i]["name"].GetString();
-					uint64_t MemberSize = Members[i]["size"].GetUint64();
-					uint64_t MemberOffset = Members[i]["offset"].GetUint64();
-
-					AttributeMembers.emplace_back(MemberName, MemberSize, MemberOffset);
-				}
-			}
-
-			auto FrequencyVal = magic_enum::enum_cast<EShaderAttributeFrequency>(FrequencyStr);
-			if(FrequencyVal.has_value())
-			{
-				EShaderAttributeType Type = TypeVal.value();
-				EShaderAttributeFrequency Frequency = FrequencyVal.value();
-				EShaderAttributeMeta Meta;
-
-				ShaderAttributes.emplace_back(Name, Binding, AlignedSize, Type, Frequency, InStage, Count,
-					Meta, AttributeMembers);
-				if (Type == EShaderAttributeType::UniformBufferStatic
-					&& Frequency == EShaderAttributeFrequency::PerMaterial)
-				{
-					IRenderSystemUniformBufferPtr UniformBuffer =
-						g_Engine->GetRenderSystem()->CreateUniformBuffer(SRenderSystemUniformBufferInfos(Size));
-					RenderData->AttributeBufferMap.insert(std::make_pair(ShaderAttributes.back(), UniformBuffer));
-				}
-			}
-			else
-			{
-				LOG(ELogSeverity::Error, "Invalid frequency");
-				return {};
-			}
+			EShaderParameterType Type = TypeVal.value();
+			ShaderAttributes.push_back({Name, Type, Set, Binding, Size, Count, InStage });
 		}
 		else
 		{
@@ -182,94 +148,12 @@ std::vector<SShaderAttribute> CMaterial::ParseShaderJson(const EShaderStage& InS
 	return ShaderAttributes;
 }
 
-void CMaterial::SetShaderAttributeResource(const EShaderStage& InStage,
-	const std::string& InName, IRenderSystemResource* InResource)
+void CMaterial::SetMaterialUBO(const void* InNewData, const uint64_t& InSize)
 {
-	RenderData->ShaderAttributesManager->Set(InStage, InName, InResource);
-}
-
-void CMaterial::SetUniformData(const std::string& InName,
-	const void* InData, uint64_t InOffset, uint64_t InSize)
-{
-	for (const SShaderAttribute& Attribute : 
-		RenderData->Pipeline->GetShaderAttributes(EShaderAttributeFrequency::PerMaterial))
+	EnqueueRenderCommand([this, InNewData, InSize](CRenderCommandList* InCommandList)
 	{
-		if (Attribute.Name == InName)
-		{
-			if(Attribute.Type != EShaderAttributeType::UniformBufferStatic)
-				continue;
-
-			auto FindResult = RenderData->AttributeBufferMap.find(Attribute);
-			if (FindResult != RenderData->AttributeBufferMap.end())
-			{
-				IRenderSystemUniformBufferPtr& UniformBuffer = FindResult->second;
-
-				if (UniformBuffer->GetInfos().bUsePersistentMapping)
-				{
-					void* Dst = UniformBuffer->GetMappedMemory();
-					char* DstCh = reinterpret_cast<char*>(Dst); // Use char* for arithmetic
-					memcpy(DstCh + InOffset, 
-						InData, 
-						InSize == 0 ? Attribute.Size : InSize);
-				}
-				else
-				{
-					void* Dst = UniformBuffer->Map();
-					char* DstCh = reinterpret_cast<char*>(Dst); // Use char* for arithmetic
-					memcpy(DstCh + InOffset, 
-						InData,
-						InSize == 0 ? Attribute.Size : InSize);
-					UniformBuffer->Unmap();
-				}
-
-				return;
-			}
-		}
-	}
-}
-
-void CMaterial::SetTexture(const EShaderStage& InStage, const std::string& InName,
-	IRenderSystemResource* InDeviceResource)
-{
-	RenderData->ShaderAttributesManager->Set(InStage, InName, InDeviceResource);
-}
-
-void CMaterial::SetUniformBuffer(const std::string& InName,
-	void* InData)
-{
-	SetUniformData(InName, InData);
-}
-
-void CMaterial::SetFloat(const std::string& InMemberName, const float& InData)	
-{
-	for (const SShaderAttribute& Attribute : 
-		RenderData->Pipeline->GetShaderAttributes(EShaderAttributeFrequency::PerMaterial))
-	{
-		for(const SShaderAttributeMember& Member : Attribute.Members)
-		{
-			if(Member.Name == InMemberName)
-			{
-				SetUniformData(Attribute.Name, reinterpret_cast<const void*>(&InData),
-					Member.Offset, Member.Size);
-				return;
-			}
-		}
-	}
-}
-
-void CMaterial::SetVec3(const std::string& InMemberName, const glm::vec3& InData)
-{
-	for (const SShaderAttribute& Attribute :
-		RenderData->Pipeline->GetShaderAttributes(EShaderAttributeFrequency::PerMaterial))
-	{
-		for (const SShaderAttributeMember& Member : Attribute.Members)
-		{
-			if (Member.Name == InMemberName)
-			{
-				SetUniformData(Attribute.Name, reinterpret_cast<const void*>(&InData),
-					Member.Offset, Member.Size);
-				return;
-			}
-		}
-	}
+		void* Mem = RenderData->GetUniformBuffer()->Map();
+		memcpy(Mem, InNewData, InSize);
+		RenderData->GetUniformBuffer()->Unmap();
+	});
 }

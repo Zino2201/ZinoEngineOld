@@ -30,12 +30,14 @@ private:
 class CTexture2D : public IAsset
 {
 public:
+	~CTexture2D();
+
 	virtual void Load(const std::string& InPath) override;
 
-	CTexture* GetResource() const { return Resource.get(); }
+	CTexture* GetResource() const { return Resource; }
 private:
 	uint32_t Width;
 	uint32_t Height;
 	uint32_t Channels;
-	std::unique_ptr<CTexture> Resource;
+	CTexture* Resource;
 };

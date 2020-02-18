@@ -7,8 +7,8 @@ CVulkanUniformBuffer::CVulkanUniformBuffer(CVulkanDevice* InDevice,
 	const SRenderSystemUniformBufferInfos& InInfos) : UniformBufferInfos(InInfos),
 	IRenderSystemUniformBuffer(InInfos), CVulkanDeviceResource(InDevice)
 {
-	g_VulkanRenderSystem->GetSwapChain()->OnSwapChainRecreated.Bind(
-		std::bind(&CVulkanUniformBuffer::OnSwapchainRecreated, this));
+	//g_VulkanRenderSystem->GetSwapChain()->OnSwapChainRecreated.Bind(
+	//	std::bind(&CVulkanUniformBuffer::OnSwapchainRecreated, this));
 
 	Create();
 }
@@ -17,39 +17,41 @@ CVulkanUniformBuffer::~CVulkanUniformBuffer() {}
 
 void CVulkanUniformBuffer::Create()
 {
-	Buffers.resize(g_VulkanRenderSystem->GetSwapChain()->GetImageViews().size());
-	for (size_t i = 0; i < g_VulkanRenderSystem->GetSwapChain()->GetImageViews().size(); ++i)
-	{
-		Buffers[i] = g_VulkanRenderSystem->CreateBuffer(SRenderSystemBufferInfos(
-				UniformBufferInfos.Size,
-				EBufferUsage::UniformBuffer,
-				EBufferMemoryUsage::CpuToGpu,
-				UniformBufferInfos.bUsePersistentMapping));
-	}
+	Buffer = g_VulkanRenderSystem->CreateBuffer(SRenderSystemBufferInfos(
+		UniformBufferInfos.Size,
+		EBufferUsage::UniformBuffer,
+		EBufferMemoryUsage::CpuToGpu,
+		UniformBufferInfos.bUsePersistentMapping,
+		"UniformBuffer"));
+}
+
+void CVulkanUniformBuffer::Destroy()
+{
+	Buffer->Destroy();
 }
 
 void CVulkanUniformBuffer::OnSwapchainRecreated()
 {
-	Buffers.clear();
-	Create();
+	//Buffers.clear();
+	//Create();
 }
 
 void* CVulkanUniformBuffer::Map()
 {
-	return Buffers[0]->Map();
+	return Buffer->Map();
 }
 
 void CVulkanUniformBuffer::Unmap()
 {
-	Buffers[0]->Unmap();
+	Buffer->Unmap();
 }
 
 void* CVulkanUniformBuffer::GetMappedMemory() const
 {
-	return Buffers[0]->GetMappedMemory();
+	return Buffer->GetMappedMemory();
 }
 
 CRenderSystemBuffer* CVulkanUniformBuffer::GetBuffer() const
 {
-	return Buffers[0].get();
+	return Buffer.get();
 }

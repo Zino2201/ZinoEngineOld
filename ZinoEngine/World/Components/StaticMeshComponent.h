@@ -22,6 +22,7 @@ class CStaticMeshComponent : public CRenderableComponent
 
 public:
 	CStaticMeshComponent();
+	~CStaticMeshComponent(); 
 
 	void SetStaticMesh(const std::shared_ptr<CStaticMesh>& InStaticMesh);
 

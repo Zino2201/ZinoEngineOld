@@ -5,7 +5,6 @@
 /**
  * Basic shader map
  */
-extern std::map<std::string, CShader*> g_BasicShaderMap;
 
 /**
  * Get a basic shader by name
@@ -13,7 +12,7 @@ extern std::map<std::string, CShader*> g_BasicShaderMap;
 template<typename T>
 T* GetBasicShaderByName(const std::string& InName)
 {
-	return static_cast<T*>(g_BasicShaderMap[InName]);
+	return static_cast<T*>(CBasicShaderClass::BasicShaderMap[InName].get());
 }
 
 /**
@@ -28,6 +27,10 @@ public:
 		InstantiateFunctionType InInstantiateFunction);
 
 	static void InstantiateBasicShaders();
+	static void DestroyBasicShaders();
+
+	static std::map<std::string, CShaderPtr> BasicShaderMap;
+	static std::map<std::string, CShaderClass*> BasicShaderClassesMap;
 };
 
 /**

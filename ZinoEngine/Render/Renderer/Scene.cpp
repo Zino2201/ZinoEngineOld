@@ -1,7 +1,7 @@
 #include "Scene.h"
 #include "World/Components/RenderableComponent.h"
 #include "Core/Engine.h"
-#include "Render/Commands/RenderCommands.h"
+#include "Render/World/RenderableComponentProxy.h"
 
 CScene::CScene(CWorld* InWorld) : World(InWorld) {}
 

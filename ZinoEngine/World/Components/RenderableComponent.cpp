@@ -1,12 +1,11 @@
 #include "RenderableComponent.h"
-#include "Render/ShaderAttributesManager.h"
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/Material/Material.h"
 #include "Core/Engine.h"
 #include "Core/RenderThread.h"
-#include "Render/Commands/RenderCommands.h"
 #include "World/World.h"
 #include "Render/Renderer/Scene.h"
+#include "Render/World/RenderableComponentProxy.h"
 
 TMulticastDelegate<CRenderableComponent*> CRenderableComponent::OnQueueRenderProxyUpdate;
 std::vector<CRenderableComponent*> CRenderableComponent::RenderableComponentsToUpdate;

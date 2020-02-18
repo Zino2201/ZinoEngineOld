@@ -15,4 +15,7 @@ void CWorld::Destroy()
 {
 	for(const auto& Actor : Actors)
 		Actor->Destroy();
+
+	/** Release all actors */
+	Actors.clear();
 }

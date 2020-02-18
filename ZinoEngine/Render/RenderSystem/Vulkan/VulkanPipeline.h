@@ -1,9 +1,8 @@
 #pragma once
 
 #include "VulkanCore.h"
-#include "VulkanDeviceResource.h"
-#include "VulkanShaderAttributesManager.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "VulkanDeviceResource.h"
 
 class CVulkanDevice;
 class CVulkanShader;
@@ -17,31 +16,19 @@ class CVulkanPipeline : public CRenderSystemPipeline,
 {
 public:
 	CVulkanPipeline(CVulkanDevice* InDevice,
-		const std::vector<SShaderAttribute>& InShaderAttributes);
+		const std::vector<SShaderParameter>& InShaderParameters);
 	virtual ~CVulkanPipeline();
 
 	const vk::Pipeline& GetPipeline() const { return *Pipeline; }
 	CVulkanPipelineLayout* GetPipelineLayout() const { return PipelineLayout.get(); }
-	const vk::DescriptorSetLayout& GetDescriptorSetLayout(EShaderAttributeFrequency Frequency) 
-		{ return *DescriptorSetLayoutMap[Frequency]; }
-	const std::vector<vk::DescriptorPoolSize>& GetPoolSizes(EShaderAttributeFrequency Frequency)
-		{ return PoolSizeMap[Frequency]; }
-	virtual std::shared_ptr<IShaderAttributesManager> CreateShaderAttributesManager(
-		EShaderAttributeFrequency InFrequency) const override;
-	virtual const std::vector<SShaderAttribute>& GetShaderAttributes() const override { return ShaderAttributes; }
-	virtual const std::vector<SShaderAttribute>& GetShaderAttributes(EShaderAttributeFrequency Frequency) 
-		override { return AttributeMap[Frequency]; }
 protected:
 	void Create();
 protected:
 	vk::UniquePipeline Pipeline;
 	std::unique_ptr<CVulkanPipelineLayout> PipelineLayout;
-	std::map<EShaderAttributeFrequency, vk::UniqueDescriptorSetLayout> DescriptorSetLayoutMap;
-	std::map<EShaderAttributeFrequency, std::vector<vk::DescriptorPoolSize>> PoolSizeMap;
-	std::vector<SShaderAttribute> ShaderAttributes;
-	std::map<EShaderAttributeFrequency, std::vector<SShaderAttribute>> AttributeMap;
-
-	friend class CVulkanShaderAttributesManager;
+	std::map<uint32_t, vk::UniqueDescriptorSetLayout> SetLayouts;
+	std::map<uint32_t, std::vector<vk::DescriptorSetLayoutBinding>> SetLayoutBindings;
+	std::vector<SShaderParameter> ShaderParameters;
 };
 
 /** Render pipeline */
@@ -52,11 +39,4 @@ public:
 	CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 		const SRenderSystemGraphicsPipelineInfos& InInfos);
 	~CVulkanGraphicsPipeline();
-
-	virtual std::shared_ptr<IShaderAttributesManager> CreateShaderAttributesManager(
-		EShaderAttributeFrequency InFrequency) const override 
-	{ return CVulkanPipeline::CreateShaderAttributesManager(InFrequency);}
-	virtual const std::vector<SShaderAttribute>& GetShaderAttributes() const override { return ShaderAttributes; }
-	virtual const std::vector<SShaderAttribute>& GetShaderAttributes(EShaderAttributeFrequency Frequency)
-		override { return CVulkanPipeline::GetShaderAttributes(Frequency); }
 };

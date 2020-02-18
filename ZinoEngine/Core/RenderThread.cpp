@@ -1,12 +1,13 @@
 #include "RenderThread.h"
 #include "World/Components/RenderableComponent.h"
 #include "Core/Engine.h"
-#include "Render/Commands/RenderCommands.h"
 #include "Render/Renderer/ForwardSceneRenderer.h"
 #include "World/World.h"
 #include "Render/RenderSystem/RenderSystem.h"
+#include "Render/Commands/Commands.h"
+#include "Render/Commands/RenderCommandContext.h"
 
-CRenderResource::~CRenderResource() { must(!bInitialized) }
+CRenderResource::~CRenderResource() { must(!bInitialized); }
 
 void CRenderResource::InitResources()
 {
@@ -32,6 +33,7 @@ void CRenderResource::DestroyResources()
 	{
 		DestroyRenderThread();
 		bInitialized = false;
+		DestroyedSemaphore.Notify();
 	}
 	else
 	{
@@ -40,14 +42,10 @@ void CRenderResource::DestroyResources()
 		{
 			DestroyRenderThread();
 			bInitialized = false;
+			DestroyedSemaphore.Notify();
 		});
 	}
 }
-
-CRenderableComponentProxy::CRenderableComponentProxy(const CRenderableComponent* InComponent) :
-	Transform(InComponent->GetTransform()) {}
-
-void CRenderableComponentProxy::Draw(CRenderCommandList* InCommandList) {}
 
 /** Render Thread */
 
@@ -77,27 +75,22 @@ void CRenderThread::RenderThreadMain()
 
 	while (LoopRenderThread)
 	{
-		/** Wait the game thread if we are too fast */
-
-		/** Render world */
-
-		if(ShouldRender)
-		{
-			g_Engine->GetRenderSystem()->Prepare();
-			RenderThreadCommandList->Enqueue<CRenderCommandBeginRecording>();
-			ForwardRenderer->Render(RenderThreadCommandList,
-				g_Engine->GetWorld()->GetScene());
-			RenderThreadCommandList->Enqueue<CRenderCommandEndRecording>();
-		}
-
-		/** Execute all commands */
+		/** Execute all commands coming from game thread */
 		while (RenderThreadCommandList->GetCommandsCount() > 0)
 		{
 			RenderThreadCommandList->ExecuteFrontCommand();
 		}
 
+		/** Render world, skip first frame */
 		if(ShouldRender)
+		{
+			g_Engine->GetRenderSystem()->Prepare();
+			RenderThreadCommandList->GetCommandContext()->Begin();
+			ForwardRenderer->Render(RenderThreadCommandList->GetCommandContext(),
+				g_Engine->GetWorld()->GetScene());
+			RenderThreadCommandList->GetCommandContext()->End();
 			g_Engine->GetRenderSystem()->Present();
+		}
 
 		g_Engine->RenderThreadCounter++;
 

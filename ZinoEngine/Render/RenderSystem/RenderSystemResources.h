@@ -12,9 +12,81 @@ class IRenderSystemResource :
 	public boost::intrusive_ref_counter<IRenderSystemResource, boost::thread_unsafe_counter>
 { 
 public: 
-	virtual ~IRenderSystemResource() = default;
+	virtual ~IRenderSystemResource() {}
 
-	virtual void Release() {}
+	virtual void Destroy() {}
+};
+
+/**
+ * Buffer usage
+ */
+enum class EBufferUsage
+{
+	VertexBuffer = 1 << 0,
+	IndexBuffer	= 1 << 1,
+	TransferSrc = 1 << 2,
+	TransferDst = 1 << 3,
+	UniformBuffer = 1 << 4
+};
+DECLARE_FLAG_ENUM(EBufferUsage)
+
+enum class EBufferMemoryUsage
+{
+	CpuOnly,
+	GpuOnly,
+	CpuToGpu,
+	GpuToCpu
+};
+
+/** Textures */
+enum class ETextureType
+{
+	Texture2D,
+};
+
+enum class ETextureViewType
+{
+	ShaderResource,
+	DepthStencil,
+};
+
+enum class ETextureUsage
+{
+	TransferSrc = 1 << 0,
+	TransferDst = 1 << 1,
+	Sampled = 1 << 2,
+	DepthStencil = 1 << 3
+};
+DECLARE_FLAG_ENUM(ETextureUsage)
+
+enum class ETextureMemoryUsage
+{
+	CpuOnly,
+	GpuOnly,
+	CpuToGpu,
+	GpuToCpu
+};
+
+/** Samplers */
+enum class ESamplerFilter
+{
+	Linear,
+	Nearest
+};
+
+enum class ESamplerAddressMode
+{
+	Repeat,
+	Mirror,
+	Clamp,
+	Border,
+};
+
+/** Other */
+enum class EComparisonOp
+{
+	Never,
+	Always
 };
 
 /**
@@ -22,6 +94,7 @@ public:
  */
 struct SRenderSystemBufferInfos
 {
+	std::string DebugName;
 	uint64_t Size;
 	EBufferUsageFlags Usage;
 	EBufferMemoryUsage MemoryUsage;
@@ -29,8 +102,10 @@ struct SRenderSystemBufferInfos
 
 	SRenderSystemBufferInfos(const uint64_t& InSize, 
 		const EBufferUsageFlags& InUsage, const EBufferMemoryUsage& InMemUsage,
-		const bool& bInUsePersistentMapping = false) : Size(InSize),
-		Usage(InUsage), MemoryUsage(InMemUsage), bUsePersistentMapping(bInUsePersistentMapping) {}
+		const bool& bInUsePersistentMapping = false,
+		const std::string& InDebugName = "Buffer") : Size(InSize),
+		Usage(InUsage), MemoryUsage(InMemUsage), bUsePersistentMapping(bInUsePersistentMapping),
+		DebugName(InDebugName) {}
 };
 
 /**
@@ -40,7 +115,6 @@ class CRenderSystemBuffer : public IRenderSystemResource
 {
 public:
 	CRenderSystemBuffer(const SRenderSystemBufferInfos& InInfos) : Infos(InInfos) {}
-	virtual ~CRenderSystemBuffer() = default;
 
 	/**
 	 * Map the buffer
@@ -63,7 +137,7 @@ public:
 	 */
 	virtual void* GetMappedMemory() const = 0;
 
-	virtual void Destroy() = 0;
+	virtual void Destroy() override = 0;
 
 	const SRenderSystemBufferInfos& GetInfos() const { return Infos; }
 protected:
@@ -73,6 +147,8 @@ protected:
 /** Texture */
 struct SRenderSystemTextureInfo
 {
+	std::string DebugName;
+
 	/** Texture type */
 	ETextureType Type;
 
@@ -108,11 +184,12 @@ struct SRenderSystemTextureInfo
 		const uint32_t& InHeight,
 		const uint32_t& InDepth = 1,
 		const uint32_t& InMipLevels = 1,
-		const uint32_t& InArrayLayers = 1) : Type(InType), Format(InFormat),
+		const uint32_t& InArrayLayers = 1,
+		const std::string& InDebugName = "Texture") : Type(InType), Format(InFormat),
 		UsageFlags(InUsageFlags),
 		MemoryUsage(InMemoryUsage),
 		Width(InWidth), Height(InHeight), Depth(InDepth), MipLevels(InMipLevels),
-		ArrayLayers(InArrayLayers) {}
+		ArrayLayers(InArrayLayers), DebugName(InDebugName) {}
 };
 
 /**
@@ -125,6 +202,8 @@ public:
 
 	/** Copy texture from buffer */
 	virtual void Copy(CRenderSystemBuffer* InSrc) = 0;
+
+	virtual void Destroy() = 0;
 
 	virtual const SRenderSystemTextureInfo& GetInfo() const = 0;
 };
@@ -216,12 +295,6 @@ public:
  */
 class CRenderSystemPipeline : public IRenderSystemResource
 {
-public:
-	virtual std::shared_ptr<class IShaderAttributesManager> CreateShaderAttributesManager(
-		EShaderAttributeFrequency InFrequency) const = 0;
-	virtual const std::vector<SShaderAttribute>& GetShaderAttributes() const = 0;
-	virtual const std::vector<SShaderAttribute>& GetShaderAttributes(EShaderAttributeFrequency Frequency)
-		= 0;
 };
 
 /**
@@ -233,15 +306,15 @@ struct SRenderSystemGraphicsPipelineInfos
 	CRenderSystemShader* FragmentShader;
 	SVertexInputBindingDescription BindingDescription;
 	std::vector<SVertexInputAttributeDescription> AttributeDescriptions;
-	std::vector<SShaderAttribute> ShaderAttributes;
+	std::vector<SShaderParameter> ShaderParameters;
 
 	SRenderSystemGraphicsPipelineInfos(CRenderSystemShader* InVertexShader,
 		CRenderSystemShader* InFragmentShader,
 		const SVertexInputBindingDescription& InBindingDescription,
 		const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions,
-		const std::vector<SShaderAttribute>& InShaderAttributes) : VertexShader(InVertexShader),
+		const std::vector<SShaderParameter>& InShaderParameters) : VertexShader(InVertexShader),
 		FragmentShader(InFragmentShader), BindingDescription(InBindingDescription),
-		AttributeDescriptions(InAttributeDescriptions), ShaderAttributes(InShaderAttributes) {}
+		AttributeDescriptions(InAttributeDescriptions), ShaderParameters(InShaderParameters) {}
 };
 
 /**

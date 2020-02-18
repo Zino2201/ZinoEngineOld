@@ -3,7 +3,6 @@
 #include <SDL2/SDL.h>
 #include "Render/RenderSystem/Vulkan/VulkanRenderSystem.h"
 #include "IO/IOUtils.h"
-#include "Render/Commands/RenderCommands.h"
 #include "Render/Renderer/ForwardSceneRenderer.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "AssetManager.h"
@@ -14,14 +13,12 @@
 #include "World/World.h"
 #include "World/StaticMeshActor.h"
 #include "World/Components/StaticMeshComponent.h"
-#include "Render/ShaderAttributesManager.h"
-#include "UI/ImGui.h"
 #include "Render/Shader.h"
 #include <glslang/Public/ShaderLang.h>
 #include "Render/Shaders/BasicShader.h"
 #include "Render/Shaders/EpilepsieShader.h"
-#include "Render/Commands/RenderCommands.h"
-#include "RenderThread.h"
+#include "Render/Commands/Commands.h"
+#include "Core/RenderThread.h"
 
 CEngine* g_Engine = nullptr;
 
@@ -48,11 +45,13 @@ void CEngine::Initialize()
 	Window = std::make_unique<CWindow>(1280, 720, "ZinoEngine");
 	/** Initialize render command list early */
 	CRenderThread::Get().Initialize();
-	AssetManager = std::make_unique<CAssetManager>();
 	RenderSystem = std::make_unique<CVulkanRenderSystem>();
 	RenderSystem->Initialize();
 	LOG(ELogSeverity::Info, "Using render system %s", 
 		RenderSystem->GetRenderSystemDetails().Name.c_str());
+	/** Create asset manager after render system, 
+	 * so we can free all assets before destroying render system */
+	AssetManager = std::make_unique<CAssetManager>();
 	CBasicShaderClass::InstantiateBasicShaders();
 	World = std::make_unique<CWorld>();
 	CRenderableComponent::InitStatics();
@@ -60,35 +59,43 @@ void CEngine::Initialize()
 	Loop();
 }
 
-void CEngine::InitImGui()
+struct SMaterialTest
 {
-	ImGui = std::make_unique<CImGui>();
-}
+	alignas(16) glm::vec3 Ambient;
+	alignas(16) glm::vec3 Diffuse;
+	alignas(16) glm::vec3 Specular;
+	float Shininess;
+};
 
 void CEngine::Loop()
 {
-	LOG(ELogSeverity::Info, "Shader classes: %d", CShaderClass::GetShaderClassMap().size())
+	LOG(ELogSeverity::Info, "Shader classes: %d", CShaderClass::GetShaderClassMap().size());
 
 	/** Material test */
 	std::shared_ptr<CMaterial> Material = AssetManager->Get<CMaterial>("Materials/test.json");
 
+	SMaterialTest MatTest;
+	//Material->SetVec3("Ambient", glm::vec3(.0215f, .1745f, .0215f));
+//Material->SetVec3("Diffuse", glm::vec3(.07568f, .61424f, .07568f));
+//Material->SetVec3("Specular", glm::vec3(.633f, .727811f, .633f));
+//Material->SetFloat("Shininess", 76.8f);
+	MatTest.Ambient = glm::vec3(.0215f, .1745f, .0215f);
+	MatTest.Diffuse = glm::vec3(.07568f, .61424f, .07568f);
+	MatTest.Specular = glm::vec3(.633f, .727811f, .633f);
+	MatTest.Shininess = 76.8f;
+
+	Material->SetMaterialUBO(&MatTest, sizeof(MatTest));
+
 	///** Load texture */
 	std::shared_ptr<CTexture2D> Texture = AssetManager->Get<CTexture2D>("dragon.jpg");
-
-	EnqueueRenderCommand(
-		[Material, Texture](CRenderCommandList* InCommandList)
-	{
-		Material->SetTexture(EShaderStage::Fragment,
-			"TexSampler",
-			Texture->GetResource()->GetTextureView());
-	});
+	Material->TestTexture = Texture.get();
 
 	std::vector<std::shared_ptr<CStaticMesh>> Meshes =
 	{
 		AssetManager->Get<CStaticMesh>("dragon.obj"),
 	};
 
-	for(int i = 0; i < 5; ++i)
+	for(int i = 0; i < 50; ++i)
 	{
 		std::shared_ptr<CStaticMeshActor> Actor = World->SpawnActor<CStaticMeshActor>(
 			STransform(glm::dvec3(0.f, 0.f, i * 3)));
@@ -129,7 +136,7 @@ void CEngine::Loop()
 
 		/** Event handling */
 
-		float CameraSpeed = 0.00015f * DeltaTime;
+		float CameraSpeed = 0.0015f * DeltaTime;
 
 		SDL_Event Event;
 		while (SDL_PollEvent(&Event))
@@ -257,6 +264,9 @@ void CEngine::Exit()
 
 	/** Wait the GPU/render thread, don't destroy it yet */
 	FlushRenderCommands();
+
+	/** Destroy all basic shaders */
+	CBasicShaderClass::DestroyBasicShaders();
 
 	LOG(ELogSeverity::Debug, "Destroying engine")
 }

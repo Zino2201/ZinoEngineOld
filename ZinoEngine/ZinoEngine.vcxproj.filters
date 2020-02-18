@@ -30,9 +30,6 @@
     <ClCompile Include="Render\Commands\Commands.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Render\Commands\RenderCommands.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="ThirdParty\stb_image.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
@@ -67,9 +64,6 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="World\Components\RenderableComponent.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="UI\ImGui.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="Render\RenderSystem\Vulkan\VulkanBuffer.cpp">
@@ -109,9 +103,6 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="Render\RenderSystem\Vulkan\VulkanShader.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\RenderSystem\Vulkan\VulkanShaderAttributesManager.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="Render\RenderSystem\Vulkan\VulkanSwapChain.cpp">
@@ -156,6 +147,12 @@
     <ClCompile Include="Render\Renderer\ForwardSceneRenderer.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="Render\World\RenderableComponentProxy.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\RenderSystem\RenderSystemResources.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\EngineCore.h">
@@ -170,16 +167,10 @@
     <ClInclude Include="Core\Logger.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="Render\RenderCore.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
     <ClInclude Include="IO\IOUtils.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="Render\Commands\Commands.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\Commands\RenderCommands.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="Core\Delegate.h">
@@ -201,9 +192,6 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="Core\ContainerUtils.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\ShaderAttributesManager.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="Render\Texture2D.h">
@@ -237,9 +225,6 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="World\Components\RenderableComponent.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\ImGui.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="Render\RenderSystem\RenderSystem.h">
@@ -293,9 +278,6 @@
     <ClInclude Include="Render\RenderSystem\Vulkan\VulkanShader.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="Render\RenderSystem\Vulkan\VulkanShaderAttributesManager.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
     <ClInclude Include="Render\RenderSystem\Vulkan\VulkanSwapChain.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
@@ -323,9 +305,6 @@
     <ClInclude Include="Render\Shaders\BasicShader.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="Render\Shaders\EpilepsieShader.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
     <ClInclude Include="Render\Material\MaterialShader.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
@@ -345,6 +324,21 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="Render\Renderer\DeferredSceneRenderer.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\Shaders\Minimal.glsl">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\RenderCore.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Shaders\EpilepsieShader.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\World\RenderableComponentProxy.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Commands\RenderCommandContext.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>

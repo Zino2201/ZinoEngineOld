@@ -1,1 +1,1 @@
-#pragma once
+/** Basepass vertex shader */

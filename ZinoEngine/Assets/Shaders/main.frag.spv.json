@@ -6,16 +6,16 @@
       "size": 0,
       "type": "CombinedImageSampler",
       "count": 1,
-      "frequency": "PerMaterial",
+      "set": 0,
       "meta": []
     },
     {
       "name": "LightUBO",
       "binding": 1,
       "size": 12,
-      "type": "UniformBufferStatic",
+      "type": "UniformBuffer",
       "count": 1,
-      "frequency": "PerInstance",
+      "set": 1,
       "meta": [],
       "members": [
         {
@@ -29,9 +29,9 @@
       "name": "Material",
       "binding": 1,
       "size": 48,
-      "type": "UniformBufferStatic",
+      "type": "UniformBuffer",
       "count": 1,
-      "frequency": "PerMaterial",
+      "set": 0,
       "meta": [],
       "members": [
         {

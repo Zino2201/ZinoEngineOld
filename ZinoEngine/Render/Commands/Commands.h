@@ -12,6 +12,8 @@ class IRenderCommandContext;
 class IRenderSystemGraphicsPipeline;
 class CRenderSystemBuffer;
 class IShaderAttributesManager;
+class IRenderSystemUniformBuffer;
+class CRenderSystemTextureView;
 
 class ICommand
 {
@@ -98,64 +100,4 @@ public:
 private:
 	std::queue<std::unique_ptr<IRenderCommand>> Commands;
 	IRenderCommandContext* CommandContext;
-};
-
-/**
- * Render command context
- *
- * Used for rendering
- */
-class IRenderCommandContext
-{
-public:
-	virtual ~IRenderCommandContext() = default;
-
-	/**
-	 * Begin command recording 
-	 */
-	virtual void Begin() = 0;
-
-	/** 
-	 * End command recording 
-	 */
-	virtual void End() = 0;
-
-	/**
-	 * Begin render pass
-	 */
-	virtual void BeginRenderPass(const std::array<float, 4>& InClearColor) = 0;
-
-	/**
-	 * End render pass
-	 */
-	virtual void EndRenderPass() = 0;
-
-	/**
-	 * Bind graphics pipeline
-	 */
-	virtual void BindGraphicsPipeline(IRenderSystemGraphicsPipeline* InGraphicsPipeline) = 0;
-
-	virtual void BindShaderAttributesManager(
-		const std::shared_ptr<IShaderAttributesManager>& InManager) = 0;
-
-	/**
-	 * Bind vertex buffers
-	 */
-	virtual void BindVertexBuffers(const std::vector<CRenderSystemBuffer*>& InVertexBuffers) = 0;
-
-	/**
-	 * Bind index buffer
-	 */
-	virtual void BindIndexBuffer(CRenderSystemBuffer* InIndexBuffer,
-		const uint64_t& InOffset,
-		const EIndexFormat& InIndexFormat) = 0;
-
-	/**
-	 * Draw
-	 */
-	virtual void Draw(const uint32_t& InVertexCount, const uint32_t& InInstanceCount,
-		const uint32_t& InFirstVertex, const uint32_t& InFirstInstance) = 0;
-
-	virtual void DrawIndexed(const uint32_t& InIndexCount, const uint32_t& InInstanceCount,
-		const uint32_t& InFirstIndex, const int32_t& InVertexOffset, const uint32_t& InFirstInstance) = 0;
 };

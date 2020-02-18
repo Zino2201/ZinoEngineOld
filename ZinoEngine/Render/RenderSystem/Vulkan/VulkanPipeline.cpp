@@ -4,53 +4,50 @@
 #include "VulkanRenderSystem.h"
 #include "VulkanPipelineLayout.h"
 #include "VulkanDevice.h"
-#include "VulkanShaderAttributesManager.h"
 
 /** --- CVulkanPipeline --- */
 CVulkanPipeline::CVulkanPipeline(CVulkanDevice* InDevice,
-	const std::vector<SShaderAttribute>& InShaderAttributes) : CVulkanDeviceResource(InDevice) 
+	const std::vector<SShaderParameter>& InShaderParameters) : CVulkanDeviceResource(InDevice) ,
+	ShaderParameters(InShaderParameters)
 {
-	ShaderAttributes = InShaderAttributes;
-
-	std::vector<vk::DescriptorSetLayout> SetLayouts;
-
-	/** Create descriptor set layout and pool */
+	// TODO: Hashing for pipeline layouts
+	//	for now every pipeline create its own pipeline layout
+	 
+	/** Create set layouts and bindings */
+	for(const auto& Parameter : ShaderParameters)
 	{
-		for (const SShaderAttribute& Attribute : InShaderAttributes)
-		{
-			AttributeMap[Attribute.Frequency].push_back(Attribute);
-		}
+		SetLayoutBindings[Parameter.Set].emplace_back(
+			Parameter.Binding,
+			VulkanUtil::ShaderParameterTypeToVkDescriptorType(Parameter.Type),
+			Parameter.Count,
+			VulkanUtil::ShaderStageFlagsToVkShaderStageFlags(Parameter.StageFlags));
+	}
 
-		for(const auto& [Frequency, Attributes] : AttributeMap)
-		{
-			std::vector<vk::DescriptorSetLayoutBinding> SetLayoutBindings;
-
-			for(const SShaderAttribute& Attribute : Attributes)
-			{
-				SetLayoutBindings.emplace_back(
-					Attribute.Binding,
-					VulkanUtil::ShaderAttributeTypeToVkDescriptorType(Attribute.Type),
-					Attribute.Count,
-					VulkanUtil::ShaderStageFlagsToVkShaderStageFlags(Attribute.StageFlags));
-
-				PoolSizeMap[Attribute.Frequency].emplace_back(VulkanUtil::ShaderAttributeTypeToVkDescriptorType(Attribute.Type),
-					static_cast<uint32_t>(g_VulkanRenderSystem->GetSwapChain()->GetImageViews().size()));
-			}
-
-			DescriptorSetLayoutMap.insert(std::make_pair(Frequency, 
-				Device->GetDevice().createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(
-						vk::DescriptorSetLayoutCreateFlags(),
-						static_cast<uint32_t>(SetLayoutBindings.size()),
-						SetLayoutBindings.data())).value));
-
-			SetLayouts.emplace_back(*DescriptorSetLayoutMap[Frequency]);
-		}
+	for(const auto& [Set, Bindings] : SetLayoutBindings)
+	{
+		SetLayouts.insert(std::make_pair(Set,
+			Device->GetDevice().createDescriptorSetLayoutUnique(
+				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(),
+					static_cast<uint32_t>(Bindings.size()),
+					Bindings.data())).value));
 	}
 
 	/** Create pipeline layout */
 	{
-		PipelineLayout = std::make_unique<CVulkanPipelineLayout>(Device, SetLayouts);
+		/** Copy every set layout bindings of each set to the LayoutSetBindings vector */
+		std::vector<vk::DescriptorSetLayoutBinding> LayoutSetBindings;
+		for(const auto& [Set, SetLayoutBinding] : SetLayoutBindings)
+			std::copy(SetLayoutBinding.begin(), SetLayoutBinding.end(), 
+				std::back_inserter(LayoutSetBindings));
+
+		std::map<uint32_t, vk::DescriptorSetLayout> LayoutSetLayouts;
+		for(const auto& [Set, UniqueLayout] : SetLayouts)
+			LayoutSetLayouts[Set] = *UniqueLayout;
+
+		SVulkanPipelineLayoutInfos Infos;
+		Infos.SetLayoutBindings = LayoutSetBindings;
+		Infos.SetLayouts = LayoutSetLayouts;
+		PipelineLayout = std::make_unique<CVulkanPipelineLayout>(Device, Infos);
 	}
 
 	Create();
@@ -62,21 +59,11 @@ void CVulkanPipeline::Create()
 {
 }
 
-std::shared_ptr<IShaderAttributesManager> CVulkanPipeline::CreateShaderAttributesManager(EShaderAttributeFrequency InFrequency) const
-{
-	SShaderAttributesManagerInfo Infos;
-	Infos.Pipeline = const_cast<CVulkanPipeline*>(this);
-	Infos.Frequency = InFrequency;
-
-	return std::make_shared<CVulkanShaderAttributesManager>(
-		Infos);
-}
-
 /** --- CVulkanPipeline --- */
 
 CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice, 
 	const SRenderSystemGraphicsPipelineInfos& InInfos)
-	: IRenderSystemGraphicsPipeline(InInfos), CVulkanPipeline(InDevice, InInfos.ShaderAttributes)
+	: IRenderSystemGraphicsPipeline(InInfos), CVulkanPipeline(InDevice, InInfos.ShaderParameters)
 {
 	/** Create stages */
 	std::vector<CVulkanShader*> Shaders =

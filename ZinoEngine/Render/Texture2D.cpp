@@ -62,11 +62,22 @@ void CTexture::InitRenderThread()
 		static_cast<float>(MipLevels)));
 
 	TextureView->SetSampler(Sampler.get());
+
+	StagingBuffer->Destroy();
 }
 
 void CTexture::DestroyRenderThread()
 {
-	
+	Texture->Destroy();
+	TextureView->Destroy();
+	Sampler->Destroy();
+}
+
+CTexture2D::~CTexture2D() 
+{ 
+	Resource->DestroyResources(); 
+	Resource->GetDestroyedSemaphore().Wait();
+	delete Resource;
 }
 
 void CTexture2D::Load(const std::string& InPath)
@@ -84,7 +95,7 @@ void CTexture2D::Load(const std::string& InPath)
 	}
 
 	/** Initialize resource */
-	Resource = std::make_unique<CTexture>();
+	Resource = new CTexture;
 	Resource->Init(Width, Height, Channels, Pixels);
 	Resource->InitResources();
 }

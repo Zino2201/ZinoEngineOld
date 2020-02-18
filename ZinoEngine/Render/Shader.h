@@ -7,6 +7,8 @@
 class CShader;
 class CShaderClass;
 
+using CShaderPtr = boost::intrusive_ptr<CShader>;
+
 /**
  * A shader class
  * Store CShader
@@ -26,7 +28,8 @@ public:
      */
     CShader* InstantiateShader();
     void AddShader(CShader* InShader);
-    static const std::map<std::string, CShaderClass*>& GetShaderClassMap() { return ShaderClasses; }
+    static std::map<std::string, CShaderClass*>& GetShaderClassMap() { return ShaderClasses; }
+    void ClearShaders();
 
     const std::string& GetName() const { return Name; }
     const std::string& GetFilename() const { return Filename; }
@@ -35,7 +38,7 @@ protected:
 	static std::map<std::string, CShaderClass*> ShaderClasses;
 
     /** Shader map, each shader class should have one */
-    std::vector<CShader*> Shaders;
+    std::vector<CShaderPtr> Shaders;
 
     /** Shader name */
     std::string Name;
@@ -55,7 +58,8 @@ protected:
  * Perform reflection and compile to the appropriate format for the RenderSystem
  * Assumes that InData is in GLSL format !
  */
-class CShader
+class CShader : 
+    public boost::intrusive_ref_counter<CShader, boost::thread_unsafe_counter>
 {
 public:
 	CShader(CShaderClass* InClass);

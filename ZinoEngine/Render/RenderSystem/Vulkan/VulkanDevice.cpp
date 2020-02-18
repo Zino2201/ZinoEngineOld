@@ -69,5 +69,12 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysDevice)
 
 CVulkanDevice::~CVulkanDevice() 
 {
+#ifdef _DEBUG
+	/** Print a output to check for any uncleared resources */
+	char* Output;
+	vmaBuildStatsString(Allocator, &Output, VK_TRUE);
+	LOG(ELogSeverity::Debug, "%s", Output);
+	vmaFreeStatsString(Allocator, Output);
+#endif
 	vmaDestroyAllocator(Allocator);
 }

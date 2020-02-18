@@ -21,6 +21,8 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice, const SRenderSystemTextu
 
 	VmaAllocationCreateInfo AllocInfo = {};
 	AllocInfo.usage = VulkanUtil::TextureMemoryUsageToVmaMemoryUsage(InInfos.MemoryUsage);
+	AllocInfo.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
+	AllocInfo.pUserData = const_cast<char*>(InInfos.DebugName.c_str());
 
 	if (vmaCreateImage(Device->GetAllocator(),
 		reinterpret_cast<VkImageCreateInfo*>(&CreateInfo),
@@ -31,8 +33,11 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice, const SRenderSystemTextu
 		LOG(ELogSeverity::Fatal, "Failed to create Vulkan image")
 }
 
-CVulkanTexture::~CVulkanTexture()
+void CVulkanTexture::Destroy()
 {
+	LOG(ELogSeverity::Debug, "Destroyed texture(image) %s",
+		Infos.DebugName.c_str())
+
 	vmaDestroyImage(Device->GetAllocator(),
 		Image,
 		Allocation);

@@ -23,6 +23,7 @@ public:
 	const vk::Semaphore& GetRenderFinishedSemaphore() const { return *RenderFinishedSemaphores[CurrentFrame]; }
 	const uint32_t& GetCurrentImageIndex() const { return CurrentImageIndex; }
 	const uint32_t GetImageCount() const { return static_cast<uint32_t>(Images.size()); }
+	const uint32_t GetCurrentFrame() const { return CurrentFrame; }
 	const vk::Fence& GetFenceForCurrentFrame() const { return *InFlightFences[CurrentFrame]; }
 private:
 	void Create();
@@ -58,6 +59,9 @@ private:
 
 	/** Per frame in flight fence */
 	std::vector<vk::UniqueFence> InFlightFences;
+
+	/** Imagee in flight fence */
+	std::vector<vk::Fence> ImagesInFlight;
 
 	/** Current image index */
 	uint32_t CurrentImageIndex;

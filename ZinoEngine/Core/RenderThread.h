@@ -1,10 +1,12 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "Render/Commands/Commands.h"
 
 class CRenderableComponent;
 class CRenderCommandList;
 class CRenderableComponentProxy;
+class IRenderCommandContext;
 
 /**
  * Base class for render thread resources
@@ -24,6 +26,8 @@ public:
      * Destroy resources
      */
     virtual void DestroyResources();
+
+    CSemaphore& GetDestroyedSemaphore() { return DestroyedSemaphore; }
 protected:
     /** Init the resource */
     virtual void InitRenderThread() {}
@@ -32,26 +36,7 @@ protected:
     virtual void DestroyRenderThread() {}
 private:
     bool bInitialized;
-};
-
-/**
- * Proxies used by the render thread to draw the scene and other
- */
-
-/**
- * Renderable component proxy
- */
-class CRenderableComponentProxy
-{
-public:
-    CRenderableComponentProxy(const CRenderableComponent* InComponent);
-
-    virtual void Draw(CRenderCommandList* InCommandList);
-    
-    const std::shared_ptr<class IShaderAttributesManager>& GetShaderAttributesManager() const { return ShaderAttributesManager; }
-protected:
-    STransform Transform;
-    std::shared_ptr<class IShaderAttributesManager> ShaderAttributesManager;
+    CSemaphore DestroyedSemaphore;
 };
 
 /**

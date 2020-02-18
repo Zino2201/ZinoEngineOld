@@ -33,15 +33,17 @@ private:
 class CStaticMesh : public IAsset
 {
 public:
+	~CStaticMesh();
+
 	virtual void Load(const std::string& InPath) override;
 
 	const uint32_t& GetIndexCount() const { return IndexCount; }
 	const std::vector<SVertex>& GetVertices() const { return Vertices; }
 	const std::vector<uint32_t>& GetIndices() const { return Indices; }
-	CStaticMeshVertexIndexBuffer* GetVertexIndexBuffer() const { return VertexIndexBuffer.get(); }
+	CStaticMeshVertexIndexBuffer* GetVertexIndexBuffer() const { return VertexIndexBuffer; }
 private:
 	std::vector<SVertex> Vertices;
 	std::vector<uint32_t> Indices;
-	std::unique_ptr<CStaticMeshVertexIndexBuffer> VertexIndexBuffer;
+	CStaticMeshVertexIndexBuffer* VertexIndexBuffer;
 	uint32_t IndexCount;
 };

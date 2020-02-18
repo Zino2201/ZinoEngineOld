@@ -4,6 +4,16 @@
 #include "Core/RenderThread.h"
 
 /**
+ * Shader stages
+ */
+enum class EShaderStage
+{
+	Vertex,
+	Fragment
+};
+DECLARE_FLAG_ENUM(EShaderStage)
+
+/**
  * Shader parameter type
  */
 enum class EShaderParameterType
@@ -17,132 +27,33 @@ enum class EShaderParameterType
  */
 struct SShaderParameter
 {
+	/** Parameter name */
 	std::string Name;
+
+	/** Parameter type */
 	EShaderParameterType Type;
+
+	/** Parameter set (used only with render systems that support descriptor sets like Vulkan) */
 	uint32_t Set;
+
+	/** Parameter binding point */
 	uint32_t Binding;
+
+	/** Parameter size */
 	uint64_t Size;
+
+	/** Parameter count (> 1 if an array) */
 	uint32_t Count;
-};
 
-/**
- * Shader stages
- */
-enum class EShaderStage
-{
-	Vertex,
-	Fragment
-};
-DECLARE_FLAG_ENUM(EShaderStage)
-
-/**
- * Shader related elements
- */
-enum class EShaderParameterType__
-{
-	/** Uniform buffer */
-	UniformBuffer,
-
-	/** Sampler */
-	Sampler,
-
-	/** Vulkan only */
-	CombinedImageSampler
-};
-
-/** Shader attribute type */
-enum class EShaderAttributeType
-{
-	/** A uniform buffer that keep its size */
-	UniformBufferStatic,
-
-	/** Combined image sampler */
-	CombinedImageSampler
-};
-
-enum class EShaderAttributeFrequency : uint8_t
-{
-	PerMaterial,
-	PerInstance
-};
-
-enum class EShaderAttributeMeta
-{
-	None = -1,
-
-	/** Vulkan push constant */
-	VulkanPushConstant = 1 << 0
-};
-DECLARE_FLAG_ENUM(EShaderAttributeMeta)
-
-
-/**
- * Member of a attribute
- */
-struct SShaderAttributeMember
-{
-	std::string Name;
-	uint64_t Size;
-	uint64_t Offset;
-
-	SShaderAttributeMember(const std::string& InName,
-		const uint64_t& InSize, const uint64_t& InOffset) : Name(InName),
-		Size(InSize), Offset(InOffset) {}
-};
-
-/**
- * Shader attribute
- */
-struct SShaderAttribute
-{
-	/** Name */
-	std::string Name;
-
-	/** Binding */
-	uint32_t Binding;
-
-	/** Size */
-	uint64_t Size;
-
-	/** Attribute type */
-	EShaderAttributeType Type;
-
-	/** Attribute frequency */
-	EShaderAttributeFrequency Frequency;
-
-	/** Stages */
+	/** Shader stage flags */
 	EShaderStageFlags StageFlags;
-
-	/** Count, should be 1 if not an array */
-	uint32_t Count;
-
-	/** Meta */
-	EShaderAttributeMeta Meta;
-
-	/** Members */
-	std::vector<SShaderAttributeMember> Members;
-
-	SShaderAttribute(
-		const std::string& InName,
-		const uint32_t& InBinding,
-		const uint64_t& InSize,
-		const EShaderAttributeType& InType,
-		const EShaderAttributeFrequency& InFrequency,
-		const EShaderStageFlags& InStageFlags,
-		const uint32_t& InCount = 1,
-		const EShaderAttributeMeta& InMeta = EShaderAttributeMeta::None,
-		const std::vector<SShaderAttributeMember>& InMembers = {}) : 
-		Name(InName), Binding(InBinding), Size(InSize), Type(InType),
-		Frequency(InFrequency),
-		StageFlags(InStageFlags), Count(InCount), Meta(InMeta),
-		Members(InMembers) {}
 };
 
 namespace std
 {
-	template<> struct less<SShaderAttribute>
+	template<> struct less<SShaderParameter>
 	{
-		bool operator()(const SShaderAttribute& LHS, const SShaderAttribute& RHS) const
+		bool operator()(const SShaderParameter& LHS, const SShaderParameter& RHS) const
 		{
 			return LHS.Binding < RHS.Binding;
 		}
@@ -172,78 +83,6 @@ enum class EIndexFormat
 {
 	Uint16,
 	Uint32
-};
-
-/**
- * Buffer usage
- */
-enum class EBufferUsage
-{
-	VertexBuffer = 1 << 0,
-	IndexBuffer	= 1 << 1,
-	TransferSrc = 1 << 2,
-	TransferDst = 1 << 3,
-	UniformBuffer = 1 << 4
-};
-DECLARE_FLAG_ENUM(EBufferUsage)
-
-enum class EBufferMemoryUsage
-{
-	CpuOnly,
-	GpuOnly,
-	CpuToGpu,
-	GpuToCpu
-};
-
-/** Textures */
-enum class ETextureType
-{
-	Texture2D,
-};
-
-enum class ETextureViewType
-{
-	ShaderResource,
-	DepthStencil,
-};
-
-enum class ETextureUsage
-{
-	TransferSrc = 1 << 0,
-	TransferDst = 1 << 1,
-	Sampled = 1 << 2,
-	DepthStencil = 1 << 3
-};
-DECLARE_FLAG_ENUM(ETextureUsage)
-
-enum class ETextureMemoryUsage
-{
-	CpuOnly,
-	GpuOnly,
-	CpuToGpu,
-	GpuToCpu
-};
-
-/** Samplers */
-enum class ESamplerFilter
-{
-	Linear,
-	Nearest
-};
-
-enum class ESamplerAddressMode
-{
-	Repeat,
-	Mirror,
-	Clamp,
-	Border,
-};
-
-/** Other */
-enum class EComparisonOp
-{
-	Never,
-	Always
 };
 
 /**

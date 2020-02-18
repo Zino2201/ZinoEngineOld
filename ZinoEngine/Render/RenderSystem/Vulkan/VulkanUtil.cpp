@@ -161,14 +161,14 @@ vk::IndexType VulkanUtil::IndexFormatToVkIndexType(const EIndexFormat& InFormat)
 	}
 }
 
-vk::DescriptorType VulkanUtil::ShaderAttributeTypeToVkDescriptorType(const EShaderAttributeType& InType)
+vk::DescriptorType VulkanUtil::ShaderParameterTypeToVkDescriptorType(const EShaderParameterType& InType)
 {
 	switch(InType)
 	{
 	default:
-	case EShaderAttributeType::UniformBufferStatic:
+	case EShaderParameterType::UniformBuffer:
 		return vk::DescriptorType::eUniformBuffer;
-	case EShaderAttributeType::CombinedImageSampler:
+	case EShaderParameterType::CombinedImageSampler:
 		return vk::DescriptorType::eCombinedImageSampler;
 	}
 }

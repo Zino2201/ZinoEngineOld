@@ -2,7 +2,7 @@
 
 #include "Render/RenderCore.h"
 
-class CRenderCommandList;
+class IRenderCommandContext;
 class CScene;
 
 /**
@@ -16,6 +16,6 @@ public:
 	 * Render a scene
 	 * Should be called by the render thread
 	 */
-	virtual void Render(CRenderCommandList* InCommandList,
+	virtual void Render(IRenderCommandContext* InCommandContext,
 		CScene* InScene) = 0;
 };

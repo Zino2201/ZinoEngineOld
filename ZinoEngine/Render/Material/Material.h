@@ -20,13 +20,13 @@ class CMaterialRenderData final : public CRenderResource
 public:
 	void Init(CMaterial* InMaterial);
 	virtual void InitRenderThread() override;
+	virtual void DestroyRenderThread() override;
 
 	IRenderSystemGraphicsPipeline* GetPipeline() const { return Pipeline.get(); }
-	const std::shared_ptr<IShaderAttributesManager>& GetShaderAttributesManager() const { return ShaderAttributesManager; }
+	IRenderSystemUniformBuffer* GetUniformBuffer() const { return UniformBuffer.get(); }
 private:
-	std::shared_ptr<IShaderAttributesManager> ShaderAttributesManager;
-	std::map<SShaderAttribute, IRenderSystemUniformBufferPtr> AttributeBufferMap;
 	IRenderSystemGraphicsPipelinePtr Pipeline;
+	IRenderSystemUniformBufferPtr UniformBuffer;
 	CMaterial* Material;
 };
 
@@ -39,43 +39,19 @@ class CMaterial : public IAsset
 	friend class CMaterialRenderData;
 
 public:
+	~CMaterial();
+
 	virtual void Load(const std::string& InPath) override;
 
-	void SetShaderAttributeResource(const EShaderStage& InStage,
-		const std::string& InName, IRenderSystemResource* InResource);
-
-	void SetUniformBuffer(const std::string& InName, void* InData);
-
-	/**
-	 * Set a float member variable
-	 * Only from the material set
-	 */
-	void SetFloat(const std::string& InMemberName, const float& InData);
-	
-	/**
-	 * Set a vector3 member variable
-	 */
-	void SetVec3(const std::string& InMemberName, const glm::vec3& InData);
-	
-	/**
-	 * Set texture
-	 * WARN: Should not be called inside a command buffer !
-	 */
-	void SetTexture(const EShaderStage& InStage, const std::string& InName,
-		IRenderSystemResource* InDeviceResource);
-
-	CMaterialRenderData* GetRenderData() const { return RenderData.get(); }
+	/** test func */
+	void SetMaterialUBO(const void* InNewData, const uint64_t& InSize);
+	CMaterialRenderData* GetRenderData() const { return RenderData; }
+	class CTexture2D* TestTexture;
 private:
-	std::vector<SShaderAttribute> ParseShaderJson(const EShaderStage& InStage,
+	std::vector<SShaderParameter> ParseShaderJson(const EShaderStage& InStage,
 		const std::string& InPath);
-
-	/**
-	 * Set a uniform data
-	 */
-	void SetUniformData(const std::string& InName,
-		const void* InData, uint64_t InOffset = 0, uint64_t InSize = 0);
 private:
 	std::map<EShaderStage, CRenderSystemShaderPtr> ShaderMap;
-	std::map<EShaderStage, std::vector<SShaderAttribute>> ShaderAttributeMap;
-	std::unique_ptr<CMaterialRenderData> RenderData;
+	std::map<EShaderStage, std::vector<SShaderParameter>> ShaderParameterMap;
+	CMaterialRenderData* RenderData;
 };

@@ -21,10 +21,11 @@ public:
 	virtual void* GetMappedMemory() const override;
 	virtual CRenderSystemBuffer* GetBuffer() const override;
 	virtual const SRenderSystemUniformBufferInfos& GetInfos() const override { return UniformBufferInfos; }
+	virtual void Destroy() override;
 private:
 	void Create();
 	void OnSwapchainRecreated();
 private:
-	std::vector<CRenderSystemBufferPtr> Buffers;
+	CRenderSystemBufferPtr Buffer;
 	SRenderSystemUniformBufferInfos UniformBufferInfos;
 };

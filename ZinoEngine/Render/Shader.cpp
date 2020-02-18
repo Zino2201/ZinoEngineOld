@@ -134,6 +134,11 @@ void CShaderClass::AddShader(CShader* InShader)
 	Shaders.push_back(InShader);
 }
 
+void CShaderClass::ClearShaders()
+{
+	Shaders.clear();
+}
+
 CShader* CShaderClass::InstantiateShader()
 {
 	CShader* Shader = InstantiateFunction(this);

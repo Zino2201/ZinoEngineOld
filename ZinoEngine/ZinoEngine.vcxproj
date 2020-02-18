@@ -116,7 +116,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>D:\Projects\ZinoEngine\Libs\glslang\lib;D:\Projects\ZinoEngine\Libs\spirv-cross\lib;D:\Projects\ZinoEngine\Libs\rttr\lib;D:\Projects\ZinoEngine\Libs\assimp\lib;D:\VulkanSDK\1.1.130.0\Lib;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>librttr_core_d.lib;assimp-vc142-mt.lib;SDL2.lib;vulkan-1.lib;spirv-cross-cored.lib;spirv-cross-cppd.lib;spirv-cross-glsld.lib;spirv-cross-reflectd.lib;glslangd.lib;SPIRVd.lib;HLSLd.lib;OGLCompilerd.lib;OSDependentd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>librttr_core_d.lib;assimp-vc142-mt.lib;SDL2.lib;vulkan-1.lib;spirv-cross-cored.lib;spirv-cross-cppd.lib;spirv-cross-glsld.lib;spirv-cross-reflectd.lib;glslangd.lib;SPIRVd.lib;HLSLd.lib;OGLCompilerd.lib;OSDependentd.lib;VkLayer_utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>call D:\Projects\ZinoEngine\x64\Debug\ZinoReflectionTool.exe</Command>
@@ -163,7 +163,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>D:\Projects\ZinoEngine\Libs\glslang\lib;D:\Projects\ZinoEngine\Libs\spirv-cross\lib;D:\Projects\ZinoEngine\Libs\rttr\lib;D:\Projects\ZinoEngine\Libs\assimp\lib;D:\VulkanSDK\1.1.130.0\Lib;D:\Projects\ZinoEngine\Libs\SDL2-2.0.10\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>librttr_core.lib;assimp-vc142-mt.lib;SDL2.lib;vulkan-1.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;spirv-cross-reflect.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>librttr_core.lib;assimp-vc142-mt.lib;SDL2.lib;vulkan-1.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;spirv-cross-reflect.lib;glslang.lib;SPIRV.lib;HLSL.lib;OGLCompiler.lib;OSDependent.lib;VkLayer_utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -174,12 +174,12 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ReflectionData.cpp" />
     <ClCompile Include="Render\Commands\Commands.cpp" />
-    <ClCompile Include="Render\Commands\RenderCommands.cpp" />
     <ClCompile Include="Render\Material\Material.cpp" />
     <ClCompile Include="Render\Material\MaterialShader.cpp" />
     <ClCompile Include="Render\Renderer\ForwardSceneRenderer.cpp" />
     <ClCompile Include="Render\Renderer\SceneRenderer.cpp" />
     <ClCompile Include="Render\Renderer\Scene.cpp" />
+    <ClCompile Include="Render\RenderSystem\RenderSystemResources.cpp" />
     <ClCompile Include="Render\Shader.cpp" />
     <ClCompile Include="Render\Shaders\BasicShader.cpp" />
     <ClCompile Include="Render\Shaders\EpilepsieShader.cpp" />
@@ -198,15 +198,14 @@
     <ClCompile Include="Render\RenderSystem\Vulkan\VulkanRenderSystem.cpp" />
     <ClCompile Include="Render\RenderSystem\Vulkan\VulkanSampler.cpp" />
     <ClCompile Include="Render\RenderSystem\Vulkan\VulkanShader.cpp" />
-    <ClCompile Include="Render\RenderSystem\Vulkan\VulkanShaderAttributesManager.cpp" />
     <ClCompile Include="Render\RenderSystem\Vulkan\VulkanSwapChain.cpp" />
     <ClCompile Include="Render\RenderSystem\Vulkan\VulkanTexture.cpp" />
     <ClCompile Include="Render\RenderSystem\Vulkan\VulkanTextureView.cpp" />
     <ClCompile Include="Render\RenderSystem\Vulkan\VulkanUniformBuffer.cpp" />
     <ClCompile Include="Render\RenderSystem\Vulkan\VulkanUtil.cpp" />
     <ClCompile Include="Render\Window.cpp" />
+    <ClCompile Include="Render\World\RenderableComponentProxy.cpp" />
     <ClCompile Include="ThirdParty\stb_image.cpp" />
-    <ClCompile Include="UI\ImGui.cpp" />
     <ClCompile Include="World\Actor.cpp" />
     <ClCompile Include="World\Components\ActorComponent.cpp" />
     <ClCompile Include="World\Components\RenderableComponent.cpp" />
@@ -216,6 +215,7 @@
     <ClCompile Include="World\Components\WorldComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Assets\Shaders\Minimal.glsl" />
     <ClInclude Include="Core\Asset.h" />
     <ClInclude Include="Core\AssetManager.h" />
     <ClInclude Include="Core\ContainerUtils.h" />
@@ -232,7 +232,7 @@
     <ClInclude Include="Core\TickableObject.h" />
     <ClInclude Include="IO\IOUtils.h" />
     <ClInclude Include="Render\Commands\Commands.h" />
-    <ClInclude Include="Render\Commands\RenderCommands.h" />
+    <ClInclude Include="Render\Commands\RenderCommandContext.h" />
     <ClInclude Include="Render\Material\Material.h" />
     <ClInclude Include="Render\Material\MaterialShader.h" />
     <ClInclude Include="Render\Renderer\DeferredSceneRenderer.h" />
@@ -241,7 +241,6 @@
     <ClInclude Include="Render\Renderer\Scene.h" />
     <ClInclude Include="Render\RenderSystem\RenderSystemResources.h" />
     <ClInclude Include="Render\Shader.h" />
-    <ClInclude Include="Render\ShaderAttributesManager.h" />
     <ClInclude Include="Render\Shaders\BasicShader.h" />
     <ClInclude Include="Render\Shaders\EpilepsieShader.h" />
     <ClInclude Include="Render\StaticMesh.h" />
@@ -264,14 +263,13 @@
     <ClInclude Include="Render\RenderSystem\Vulkan\VulkanResource.h" />
     <ClInclude Include="Render\RenderSystem\Vulkan\VulkanSampler.h" />
     <ClInclude Include="Render\RenderSystem\Vulkan\VulkanShader.h" />
-    <ClInclude Include="Render\RenderSystem\Vulkan\VulkanShaderAttributesManager.h" />
     <ClInclude Include="Render\RenderSystem\Vulkan\VulkanSwapChain.h" />
     <ClInclude Include="Render\RenderSystem\Vulkan\VulkanTexture.h" />
     <ClInclude Include="Render\RenderSystem\Vulkan\VulkanTextureView.h" />
     <ClInclude Include="Render\RenderSystem\Vulkan\VulkanUniformBuffer.h" />
     <ClInclude Include="Render\RenderSystem\Vulkan\VulkanUtil.h" />
     <ClInclude Include="Render\Window.h" />
-    <ClInclude Include="UI\ImGui.h" />
+    <ClInclude Include="Render\World\RenderableComponentProxy.h" />
     <ClInclude Include="World\Actor.h" />
     <ClInclude Include="World\Components\ActorComponent.h" />
     <ClInclude Include="World\Components\RenderableComponent.h" />
