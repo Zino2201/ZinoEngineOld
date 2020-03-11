@@ -16,11 +16,15 @@
 #include "Render/Shader.h"
 #include <glslang/Public/ShaderLang.h>
 #include "Render/Shaders/BasicShader.h"
-#include "Render/Shaders/EpilepsieShader.h"
 #include "Render/Commands/Commands.h"
 #include "Core/RenderThread.h"
+#include "Core/Stats/StatThread.h"
+#include "UI/imgui.h"
+#include "UI/imgui_impl_sdl.h"
+#include "Render/Renderer/Mesh/MeshPass.h"
 
 CEngine* g_Engine = nullptr;
+DECLARE_TIMER_STAT(GameThread, GameThreadFrameTime);
 
 std::thread::id GameThreadID;
 std::thread::id RenderThreadID;
@@ -43,8 +47,19 @@ void CEngine::Initialize()
 	glslang::InitializeProcess();
 
 	Window = std::make_unique<CWindow>(1280, 720, "ZinoEngine");
+
 	/** Initialize render command list early */
 	CRenderThread::Get().Initialize();
+
+	/** Initialize ImGui */
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+
+	ImGuiIO& IO = ImGui::GetIO();
+	IO.DisplaySize = ImVec2(Window->GetWidth(), Window->GetHeight());
+	IO.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+
 	RenderSystem = std::make_unique<CVulkanRenderSystem>();
 	RenderSystem->Initialize();
 	LOG(ELogSeverity::Info, "Using render system %s", 
@@ -55,6 +70,10 @@ void CEngine::Initialize()
 	CBasicShaderClass::InstantiateBasicShaders();
 	World = std::make_unique<CWorld>();
 	CRenderableComponent::InitStatics();
+
+#ifdef DEVELOPMENT
+	CStatThread::Start();
+#endif
 
 	Loop();
 }
@@ -84,21 +103,17 @@ void CEngine::Loop()
 	MatTest.Specular = glm::vec3(.633f, .727811f, .633f);
 	MatTest.Shininess = 76.8f;
 
-	Material->SetMaterialUBO(&MatTest, sizeof(MatTest));
-
-	///** Load texture */
-	std::shared_ptr<CTexture2D> Texture = AssetManager->Get<CTexture2D>("dragon.jpg");
-	Material->TestTexture = Texture.get();
+	//Material->SetMaterialUBO(&MatTest, sizeof(MatTest));
 
 	std::vector<std::shared_ptr<CStaticMesh>> Meshes =
 	{
-		AssetManager->Get<CStaticMesh>("dragon.obj"),
+		AssetManager->Get<CStaticMesh>("MergerSponge.obj"),
 	};
 
-	for(int i = 0; i < 50; ++i)
+	for(int i = 0; i < 500; ++i)
 	{
 		std::shared_ptr<CStaticMeshActor> Actor = World->SpawnActor<CStaticMeshActor>(
-			STransform(glm::dvec3(0.f, 0.f, i * 3)));
+			STransform(glm::dvec3(rand() % 100, rand() % 100, rand() % 100)));
 		Actor->GetStaticMesh()->SetStaticMesh(Meshes[(rand() % Meshes.size())]);
 		Actor->GetStaticMesh()->SetMaterial(Material);
 	}
@@ -122,25 +137,37 @@ void CEngine::Loop()
 
 	GameLoop = true;
 
+	Uint64 Now = SDL_GetPerformanceCounter();
+	Uint64 Last = 0;
+
 	/** Main thread = game thread */
 	while (GameLoop)
 	{
-		/** Delta time */
-		static auto StartTime = std::chrono::high_resolution_clock::now();
+		SCOPED_TIMER_STAT(GameThreadFrameTime);
 
-		auto CurrentTime = std::chrono::high_resolution_clock::now();
-		float DeltaTime = std::chrono::duration<float, std::chrono::seconds::period>
-			(CurrentTime - StartTime).count();
+		/** Delta time */
+		Last = Now;
+		Now = SDL_GetPerformanceCounter();
+
+		DeltaTime = (((Now - Last) * 1000 / (float) SDL_GetPerformanceFrequency()))
+			* 0.001f;
+
+		/** Used for materials */
+		ElapsedTime += DeltaTime;
 
 		float Sensitivity = 0.25f;
 
 		/** Event handling */
 
-		float CameraSpeed = 0.0015f * DeltaTime;
+		float CameraSpeed = 20.f * DeltaTime;
+
+		ImGuiIO& IO = ImGui::GetIO();
 
 		SDL_Event Event;
 		while (SDL_PollEvent(&Event))
 		{
+			ImGui_ImplSDL2_ProcessEvent(&Event);
+
 			if (Event.type == SDL_WINDOWEVENT)
 			{
 				if (Event.window.event == SDL_WINDOWEVENT_MINIMIZED)
@@ -168,26 +195,29 @@ void CEngine::Loop()
 				Exit();
 			}
 			
-			if(Event.type == SDL_MOUSEMOTION && bIsMouseGrabbed)
+			if(Event.type == SDL_MOUSEMOTION)
 			{
-				float DeltaX = Event.motion.xrel * Sensitivity;
-				float DeltaY = Event.motion.yrel * Sensitivity;
+				if(bIsMouseGrabbed)
+				{
+					float DeltaX = Event.motion.xrel * Sensitivity;
+					float DeltaY = Event.motion.yrel * Sensitivity;
 
-				CamYaw += DeltaX;
-				CamPitch += -DeltaY;
+					CamYaw += DeltaX;
+					CamPitch += -DeltaY;
 
-				if (CamPitch > 89.0f)
-					CamPitch = 89.0f;
-				if (CamPitch < -89.0f)
-					CamPitch = -89.0f;
+					if (CamPitch > 89.0f)
+						CamPitch = 89.0f;
+					if (CamPitch < -89.0f)
+						CamPitch = -89.0f;
 
-				glm::vec3 Front;
-				Front.x = cos(glm::radians(CamYaw)) * cos(glm::radians(CamPitch));
-				Front.y = sin(glm::radians(CamPitch));
-				Front.z = sin(glm::radians(CamYaw)) * cos(glm::radians(CamPitch));
-				CameraFront = glm::normalize(Front);
+					glm::vec3 Front;
+					Front.x = cos(glm::radians(CamYaw)) * cos(glm::radians(CamPitch));
+					Front.y = sin(glm::radians(CamPitch));
+					Front.z = sin(glm::radians(CamYaw)) * cos(glm::radians(CamPitch));
+					CameraFront = glm::normalize(Front);
 
-				SDL_WarpMouseInWindow(Window->GetSDLWindow(), Window->GetWidth() / 2, Window->GetHeight() / 2);
+					SDL_WarpMouseInWindow(Window->GetSDLWindow(), Window->GetWidth() / 2, Window->GetHeight() / 2);
+				}
 			}
 		}
 
@@ -195,7 +225,11 @@ void CEngine::Loop()
 		Uint32 MouseState = SDL_GetMouseState(nullptr, nullptr);
 
 		if(MouseState & SDL_BUTTON_LMASK 
-			&& !bIsMouseGrabbed)
+			&& !bIsMouseGrabbed
+			&& !ImGui::IsAnyItemHovered()
+			&& !ImGui::IsAnyWindowHovered()
+			&& !ImGui::IsAnyItemActive()
+			&& !ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 		{
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 			bIsMouseGrabbed = true;
@@ -225,25 +259,24 @@ void CEngine::Loop()
 			}
 		}
 
+		TimerManager.UpdateTimers(DeltaTime);
+
 		World->Tick(DeltaTime);
 
 		/** Start render thread if not started */
 		CRenderThread::Get().Start();
 
-		/** Wait render thread before updating proxies and other */
+		/** Wait render thread before updating proxies and other 
+		 * if it's not waiting us */
 		CRenderThread::Get().GetRenderThreadSemaphore().Wait();
 
 		/** Update render proxies */
 		CRenderableComponent::UpdateRenderProxies();
 
-		GameThreadCounter++;
-
-		/** Wait the render thread if we are too fast */
-		if (GameThreadCounter - RenderThreadCounter > 1)
-			CRenderThread::Get().GetRenderThreadSemaphore().Wait();
-
 		/** Notify render thread we have finished */
 		GameThreadSemaphore.Notify();
+
+		g_Engine->GameThreadCounter++;
 	}
 }
 
@@ -254,6 +287,10 @@ void CEngine::Exit()
 
 	/** Stop rendering */
 	CRenderThread::Get().ShouldRender = false;
+	CRenderThread::Get().ShouldWaitGT = false;
+
+	/** Destroy renderer */
+	EnqueueRenderCommand([](CRenderCommandList* InCmdList){ CRenderThread::Get().DestroyRenderer(); });
 
 	/** Wait for render thread to finish rendering before destroying world */
 	CRenderThread::Get().GetRenderThreadSemaphore().Wait();
@@ -265,8 +302,20 @@ void CEngine::Exit()
 	/** Wait the GPU/render thread, don't destroy it yet */
 	FlushRenderCommands();
 
+	/** Destroy mesh pass */
+	CMeshPass::DestroyMeshPasses();
+
 	/** Destroy all basic shaders */
 	CBasicShaderClass::DestroyBasicShaders();
+
+	/** Destroy all shader classes */
+	CShaderClass::DestroyShaderClasses();
+
+#ifdef DEVELOPMENT
+	CStatThread::Stop();
+#endif
+
+	ImGui_ImplSDL2_Shutdown();
 
 	LOG(ELogSeverity::Debug, "Destroying engine")
 }

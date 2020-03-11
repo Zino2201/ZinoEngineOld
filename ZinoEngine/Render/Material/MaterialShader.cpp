@@ -5,6 +5,7 @@ CMaterialShaderClass::CMaterialShaderClass(const std::string& InName,
 	InstantiateFunctionType InInstantiateFunction) : CShaderClass(InName,
 		InFilename, InStage, InInstantiateFunction) {}
 
-CMaterialShader::CMaterialShader(CShaderClass* InClass)
-	: CShader(InClass) {}
+CMaterialShader::CMaterialShader(CShaderClass* InClass,
+	const SCompiledShaderData& InData)
+	: CShader(InClass, InData) {}
 CMaterialShader::~CMaterialShader() {}

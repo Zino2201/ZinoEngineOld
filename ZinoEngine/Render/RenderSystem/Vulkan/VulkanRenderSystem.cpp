@@ -21,6 +21,12 @@
 #include "VulkanSampler.h"
 #include "VulkanTexture.h"
 #include "VulkanTextureView.h"
+#include "VulkanVertexBuffer.h"
+#include "VulkanIndexBuffer.h"
+#include "UI/imgui.h"
+#include "UI/imgui_impl_sdl.h"
+
+DEFINE_STAT_GROUP(VulkanRendering, EStatGroupCategory::Rendering);
 
 CVulkanRenderSystem* g_VulkanRenderSystem = nullptr;
 
@@ -155,13 +161,13 @@ void CVulkanRenderSystem::Initialize()
 			LOG(ELogSeverity::Info,
 				"Found all required extensions!")
 
-			vk::InstanceCreateInfo CreateInfos(
-				vk::InstanceCreateFlags(),
-				&ApplicationInfos,
-				g_VulkanEnableValidationLayers ? static_cast<uint32_t>(g_VulkanValidationLayers.size()) : 0,
-				g_VulkanEnableValidationLayers ? g_VulkanValidationLayers.data() : 0,
-				static_cast<uint32_t>(RequiredExtensions.size()),
-				RequiredExtensions.data());
+		vk::InstanceCreateInfo CreateInfos(
+			vk::InstanceCreateFlags(),
+			&ApplicationInfos,
+			g_VulkanEnableValidationLayers ? static_cast<uint32_t>(g_VulkanValidationLayers.size()) : 0,
+			g_VulkanEnableValidationLayers ? g_VulkanValidationLayers.data() : 0,
+			static_cast<uint32_t>(RequiredExtensions.size()),
+			RequiredExtensions.data());
 		Instance = vk::createInstanceUnique(CreateInfos).value;
 		if (!Instance)
 			LOG(ELogSeverity::Fatal, "Failed to create Vulkan instance")
@@ -193,6 +199,8 @@ void CVulkanRenderSystem::Initialize()
 			static_cast<VkInstance>(*Instance),
 			&SurfaceTmp))
 			LOG(ELogSeverity::Fatal, "Failed to create surface")
+
+		ImGui_ImplSDL2_InitForVulkan(Window->GetSDLWindow());
 
 		Surface = vk::UniqueSurfaceKHR(SurfaceTmp, vk::ObjectDestroy<vk::Instance, 
 			VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>(*Instance, 
@@ -372,12 +380,17 @@ void CVulkanRenderSystem::Prepare()
 		SwapChain->GetImageAvailableSemaphore());
 }
 
+DECLARE_TIMER_STAT(VulkanRendering, SubmitTime);
+
 void CVulkanRenderSystem::Present()
 {
 	Device->GetDevice().resetFences({ SwapChain->GetFenceForCurrentFrame() });
 
-	RenderCommandContext->GetCommandBufferManager()
-		->SubmitMainCommandBuffer(SwapChain->GetRenderFinishedSemaphore());
+	{
+		SCOPED_TIMER_STAT(SubmitTime);
+		RenderCommandContext->GetCommandBufferManager()
+			->SubmitMainCommandBuffer(SwapChain->GetRenderFinishedSemaphore());
+	}
 
 	SwapChain->Present(
 		Device->GetPresentQueue());
@@ -405,6 +418,22 @@ CRenderSystemBufferPtr CVulkanRenderSystem::CreateBuffer(const SRenderSystemBuff
 {
 	return new CVulkanBuffer(Device.get(),
 		InInfos);
+}
+
+IRenderSystemVertexBufferPtr CVulkanRenderSystem::CreateVertexBuffer(const uint64_t& InSize,
+	EBufferMemoryUsage InMemoryUsage,
+	bool bUsePersistentMapping,
+	const std::string& InDebugName)
+{
+	return new CVulkanVertexBuffer(InSize, InMemoryUsage, bUsePersistentMapping, InDebugName);
+}
+
+IRenderSystemIndexBufferPtr CVulkanRenderSystem::CreateIndexBuffer(const uint64_t& InSize,
+	EBufferMemoryUsage InMemoryUsage,
+	bool bUsePersistentMapping,
+	const std::string& InDebugName)
+{
+	return new CVulkanIndexBuffer(InSize, InMemoryUsage, bUsePersistentMapping, InDebugName);
 }
 
 IRenderSystemUniformBufferPtr CVulkanRenderSystem::CreateUniformBuffer(const SRenderSystemUniformBufferInfos& InInfos)

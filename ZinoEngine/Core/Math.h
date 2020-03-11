@@ -11,3 +11,12 @@ struct STransform
 	STransform() : Position(), Rotation(), Scale() {}
 	STransform(const glm::dvec3& InPosition) : Position(InPosition) {}
 };
+
+/*
+ * A 2D rectangle
+ */
+struct SRect2D
+{
+	glm::vec2 Position;
+	glm::vec2 Size;
+};

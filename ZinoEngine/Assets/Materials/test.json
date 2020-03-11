@@ -2,11 +2,19 @@
   "shaders": [
     {
       "stage": "Vertex",
-      "shader": "main.vert.spv"
+      "type": "GeometryPassShaderVS",
+      "shader": "Material/Emerald.glsl"
     },
     {
       "stage": "Fragment",
-      "shader": "main.frag.spv"
+      "type": "GeometryPassShaderFS",
+      "shader": "Material/Emerald.glsl"
     }
-  ]
+  ],
+  "defaults": {
+    "MonScalarDeOuf": 2201,
+    "MonAutreScalarDeOuf": 5,
+    "MonVec3": [ 1.0, 0.0, 0.0 ],
+    "MonAutreVec3DeOuf":  [0.0, 0.0, 0.0]
+  }
 }

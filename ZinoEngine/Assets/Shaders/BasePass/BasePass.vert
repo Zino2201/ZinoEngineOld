@@ -1,1 +1,0 @@
-/** Basepass vertex shader */

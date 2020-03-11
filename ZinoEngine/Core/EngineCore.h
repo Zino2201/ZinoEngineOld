@@ -22,6 +22,7 @@
 #include <bitset>
 #include <type_traits>
 #include <chrono>
+#include "Core/Containers/Set.h"
 
 /** Maths */
 #define GLM_FORCE_RADIANS
@@ -43,6 +44,8 @@
 #include "ContainerUtils.h"
 #include "Reflection.h"
 #include "Debugging.h"
+#include "Stats/StatSystem.h"
+#include "Timer.h"
 
 /** Macros */
 #define RAPIDJSON_NOMEMBERITERATORCLASS
@@ -55,6 +58,7 @@
 
 extern std::thread::id GameThreadID;
 extern std::thread::id RenderThreadID;
+extern std::thread::id StatThreadID;
 
 FORCEINLINE bool IsInRenderThread()
 {

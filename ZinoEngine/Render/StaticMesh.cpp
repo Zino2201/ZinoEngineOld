@@ -33,13 +33,8 @@ void CStaticMeshVertexIndexBuffer::InitRenderThread()
 		memcpy(Data, Vertices.data(), sizeof(Vertices[0]) * Vertices.size());
 		StagingBuffer->Unmap();
 
-		VertexBuffer = g_Engine->GetRenderSystem()->CreateBuffer(
-			SRenderSystemBufferInfos(
-				sizeof(Vertices[0]) * Vertices.size(),
-				EBufferUsage::VertexBuffer | EBufferUsage::TransferDst,
-				EBufferMemoryUsage::GpuOnly,
-				false,
-				"VertexBuffer"));
+		VertexBuffer = g_Engine->GetRenderSystem()->CreateVertexBuffer(
+			sizeof(Vertices[0]) * Vertices.size());
 
 		VertexBuffer->Copy(StagingBuffer.get());
 
@@ -60,13 +55,8 @@ void CStaticMeshVertexIndexBuffer::InitRenderThread()
 		memcpy(Data, Indices.data(), sizeof(Indices[0]) * Indices.size());
 		StagingBuffer->Unmap();
 
-		IndexBuffer = g_Engine->GetRenderSystem()->CreateBuffer(
-			SRenderSystemBufferInfos(
-				sizeof(Indices[0]) * Indices.size(),
-				EBufferUsage::IndexBuffer | EBufferUsage::TransferDst,
-				EBufferMemoryUsage::GpuOnly,
-				false,
-				"IndexBuffer"));
+		IndexBuffer = g_Engine->GetRenderSystem()->CreateIndexBuffer(
+				sizeof(Indices[0]) * Indices.size());
 
 		IndexBuffer->Copy(StagingBuffer.get());
 

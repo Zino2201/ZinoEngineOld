@@ -20,61 +20,33 @@ public:
 		Material(InComponent->GetMaterial().get()),
 		VertexIndexBuffer(InComponent->GetStaticMesh()->GetVertexIndexBuffer())
 	{
-		// TODO: reset transform
-
-		UniformBuffer = g_Engine->GetRenderSystem()->CreateUniformBuffer(
-			SRenderSystemUniformBufferInfos(192, true));
-
 		LightUBO = g_Engine->GetRenderSystem()->CreateUniformBuffer(
 			SRenderSystemUniformBufferInfos(12, true));
 	}
 
 	~CStaticMeshComponentProxy()
 	{
-		UniformBuffer->Destroy();
 		LightUBO->Destroy();
 	}
 
-	virtual void Draw(IRenderCommandContext* InCommandContext) override
+	virtual IRenderSystemUniformBuffer* GetLightUBO() const override
 	{
-		if(!VertexIndexBuffer || !Material)
-			return;
+		return LightUBO.get();
+	}
 
-		verify(IsInRenderThread());
+	virtual std::vector<SProxyStaticMeshData> GetStaticMeshDatas() override
+	{
+		std::vector<SProxyStaticMeshData> Datas =
+		{ 
+			SProxyStaticMeshData(Material->GetRenderData(),
+				VertexIndexBuffer->GetVertexBuffer(), 
+				VertexIndexBuffer->GetIndexBuffer(),
+				VertexIndexBuffer->GetIndexCount(),
+				VertexIndexBuffer->GetOptimalIndexFormat(),
+				EMeshPass::GeometryPass)
+		};
 
-		InCommandContext->BindGraphicsPipeline(Material->GetRenderData()->GetPipeline());
-
-		InCommandContext->SetShaderCombinedImageSampler(0, 0,
-			Material->TestTexture->GetResource()->GetTextureView());
-
-		InCommandContext->SetShaderUniformBuffer(0, 1,
-			Material->GetRenderData()->GetUniformBuffer());
-
-		UBO.World = glm::translate(glm::mat4(1.f),
-			Transform.Position);
-		UBO.View = glm::lookAt(g_Engine->CameraPos, g_Engine->CameraPos + g_Engine->CameraFront,
-			g_Engine->CameraUp);
-		UBO.Projection = glm::perspective(glm::radians(45.f),
-			(float)g_Engine->GetWindow()->GetWidth() / 
-			(float)g_Engine->GetWindow()->GetHeight(), 0.1f, 10000.0f);
-		UBO.Projection[1][1] *= -1;
-		UBO.CamPos = g_Engine->CameraPos;
-		memcpy(UniformBuffer->GetMappedMemory(), &UBO, sizeof(UBO));
-
-		InCommandContext->SetShaderUniformBuffer(1, 0,
-			UniformBuffer.get());
-
-		glm::vec3 LightPos = glm::vec3(0, 5, 10);
-		memcpy(LightUBO->GetMappedMemory(), &LightPos, sizeof(LightPos));
-
-		InCommandContext->SetShaderUniformBuffer(1, 1,
-			LightUBO.get());
-
-		InCommandContext->BindVertexBuffers({ VertexIndexBuffer->GetVertexBuffer() });
-		InCommandContext->BindIndexBuffer(VertexIndexBuffer->GetIndexBuffer(),
-			0,
-			VertexIndexBuffer->GetOptimalIndexFormat());
-		InCommandContext->DrawIndexed(VertexIndexBuffer->GetIndexCount(), 1, 0, 0, 0);
+		return Datas;
 	}
 private: 
 	CStaticMeshVertexIndexBuffer* VertexIndexBuffer;

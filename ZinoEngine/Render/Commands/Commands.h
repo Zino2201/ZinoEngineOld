@@ -15,23 +15,11 @@ class IShaderAttributesManager;
 class IRenderSystemUniformBuffer;
 class CRenderSystemTextureView;
 
-class ICommand
+class IRenderCommand 
 {
 public:
-	virtual std::string GetName() const = 0;
-};
-
-/**
- * Base render command
- */
-class IRenderCommand : public ICommand
-{
-public:
-	virtual ~IRenderCommand() = default;
-
 	virtual void Execute(CRenderCommandList* InCmdList) = 0;
-	
-	virtual std::string GetName() const override = 0;
+	virtual std::string GetName() const = 0;
 };
 
 /**
@@ -68,14 +56,14 @@ public:
 	/**
 	 * Enqueue a command
 	 */
-	template<typename Cmd, typename... Args>
-	Cmd* Enqueue(Args&&... InArgs)
-	{
-		static_assert(std::is_convertible<Cmd*, IRenderCommand*>::value,
-			"Command class should derive from IRenderCommand");
-		Commands.push(std::make_unique<Cmd>(InArgs...));
-		return static_cast<Cmd*>(Commands.back().get());
-	}
+	 /*template<typename Cmd, typename... Args>
+	 Cmd* Enqueue(Args&&... InArgs)
+	 {
+		 static_assert(std::is_convertible<Cmd*, IRenderCommand*>::value,
+			 "Command class should derive from IRenderCommand");
+		 Commands.push(new Cmd(InArgs...));
+		 return static_cast<Cmd*>(Commands.back());
+	 }*/
 
 	/**
 	 * Enqueue a lambda
@@ -83,7 +71,10 @@ public:
 	template<typename Lambda>
 	void Enqueue(Lambda&& InLambda)
 	{
-		Commands.push(std::make_unique<CRenderCommandLambda<Lambda>>(std::forward<Lambda>(InLambda)));
+		CommandMutex.lock();
+		Commands.push(
+			std::make_unique<CRenderCommandLambda<Lambda>>(std::forward<Lambda>(InLambda)));
+		CommandMutex.unlock();
 	}
 
 	/**
@@ -100,4 +91,5 @@ public:
 private:
 	std::queue<std::unique_ptr<IRenderCommand>> Commands;
 	IRenderCommandContext* CommandContext;
+	std::mutex CommandMutex;
 };

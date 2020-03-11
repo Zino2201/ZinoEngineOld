@@ -15,16 +15,16 @@ public:
 	void Init(const std::vector<SVertex>& InVertices,
 		const std::vector<uint32_t>& InIndices);
 
-	CRenderSystemBuffer* GetVertexBuffer() const { return VertexBuffer.get(); }
-	CRenderSystemBuffer* GetIndexBuffer() const { return IndexBuffer.get(); }
+	IRenderSystemVertexBuffer* GetVertexBuffer() const { return VertexBuffer.get(); }
+	IRenderSystemIndexBuffer* GetIndexBuffer() const { return IndexBuffer.get(); }
 	EIndexFormat GetOptimalIndexFormat() const { return IndexFormat; }
 	uint32_t GetIndexCount() const { return static_cast<uint32_t>(Indices.size()); }
 protected:
 	virtual void InitRenderThread() override;
 	virtual void DestroyRenderThread() override;
 private:
-	CRenderSystemBufferPtr VertexBuffer;
-	CRenderSystemBufferPtr IndexBuffer;
+	IRenderSystemVertexBufferPtr VertexBuffer;
+	IRenderSystemIndexBufferPtr IndexBuffer;
 	std::vector<SVertex> Vertices;
 	std::vector<uint32_t> Indices;
 	EIndexFormat IndexFormat;

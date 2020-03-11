@@ -13,7 +13,7 @@ public:
 
 	void TransitionImageLayout(vk::ImageLayout InOldLayout, vk::ImageLayout InNewLayout);
 
-	virtual void Destroy() override;
+	virtual void FinishDestroy() override;
 
 	const vk::Image& GetImage() const { return Image; }
 	virtual const SRenderSystemTextureInfo& GetInfo() const override { return Infos; }

@@ -25,7 +25,7 @@ void CVulkanUniformBuffer::Create()
 		"UniformBuffer"));
 }
 
-void CVulkanUniformBuffer::Destroy()
+void CVulkanUniformBuffer::FinishDestroy()
 {
 	Buffer->Destroy();
 }

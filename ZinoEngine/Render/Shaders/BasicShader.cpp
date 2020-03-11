@@ -13,10 +13,10 @@ CBasicShaderClass::CBasicShaderClass(const std::string& InName,
 
 void CBasicShaderClass::InstantiateBasicShaders()
 {
-	/** Instantiate all shaders class */
-	for(const auto& [Name, Class] : CShaderClass::GetShaderClassMap())
+	/** Instantiate all basic shader class */
+	for(const auto& [Name, Class] : BasicShaderClassesMap)
 	{
-		BasicShaderMap[Class->GetName()] = Class->InstantiateShader();
+		BasicShaderMap[Class->GetName()] = InstantiateShaderSync<CShader>(Name);
 	}
 }
 
@@ -32,8 +32,9 @@ void CBasicShaderClass::DestroyBasicShaders()
 	}
 }
 
-CBasicShader::CBasicShader(CShaderClass* InClass)
-	: CShader(InClass)
+CBasicShader::CBasicShader(CShaderClass* InClass,
+	const SCompiledShaderData& InData)
+	: CShader(InClass, InData)
 {
 	
 }

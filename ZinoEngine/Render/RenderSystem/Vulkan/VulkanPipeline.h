@@ -3,6 +3,7 @@
 #include "VulkanCore.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "VulkanDeviceResource.h"
+#include "Render/Shader.h"
 
 class CVulkanDevice;
 class CVulkanShader;
@@ -26,7 +27,6 @@ protected:
 protected:
 	vk::UniquePipeline Pipeline;
 	std::unique_ptr<CVulkanPipelineLayout> PipelineLayout;
-	std::map<uint32_t, vk::UniqueDescriptorSetLayout> SetLayouts;
 	std::map<uint32_t, std::vector<vk::DescriptorSetLayoutBinding>> SetLayoutBindings;
 	std::vector<SShaderParameter> ShaderParameters;
 };

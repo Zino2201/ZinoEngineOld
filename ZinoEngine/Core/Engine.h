@@ -29,6 +29,7 @@ public:
 	IRenderSystem* GetRenderSystem() const { return RenderSystem.get(); }
 	CAssetManager* GetAssetManager() const { return AssetManager.get(); }
 	CWorld* GetWorld() const { return World.get(); }
+	CTimerManager& GetTimerManager() { return TimerManager; }
 private:
 	void Loop();
 public:
@@ -41,6 +42,7 @@ private:
 	std::unique_ptr<CAssetManager> AssetManager;
 	std::unique_ptr<CWorld> World;
 	std::atomic_bool GameLoop;
+	CTimerManager TimerManager;
 public:
 	std::atomic_int GameThreadCounter;
 	std::atomic_int RenderThreadCounter;
@@ -48,6 +50,8 @@ public:
 	 * Semaphore used to wait game thread
 	 */
 	CSemaphore GameThreadSemaphore;
+	float DeltaTime;
+	float ElapsedTime;
 public:
 	glm::vec3 CameraPos;
 	glm::vec3 CameraFront;
@@ -55,3 +59,8 @@ public:
 };
 
 extern CEngine* g_Engine;
+
+FORCEINLINE CTimerManager& GetTimerManager()
+{
+	return g_Engine->GetTimerManager();
+}

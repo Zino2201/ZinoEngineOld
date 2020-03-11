@@ -8,8 +8,8 @@
  */
 enum class EShaderStage
 {
-	Vertex,
-	Fragment
+	Vertex = 1 << 0,
+	Fragment = 1 << 1
 };
 DECLARE_FLAG_ENUM(EShaderStage)
 
@@ -19,7 +19,33 @@ DECLARE_FLAG_ENUM(EShaderStage)
 enum class EShaderParameterType
 {
 	UniformBuffer,
-	CombinedImageSampler
+	CombinedImageSampler,
+	StorageBuffer
+};
+
+/**
+ * A member of a shader parameter
+ */
+struct SShaderParameterMember
+{
+	/** Member name */
+	std::string Name;
+	uint64_t Size;
+	uint64_t Offset;
+
+	/** If member is a struct, members */
+	std::vector<SShaderParameterMember> Members;
+
+	static const SShaderParameterMember& GetNull()
+	{
+		static SShaderParameterMember Null;
+		return Null;
+	}
+
+	bool operator==(const SShaderParameterMember& InOther) const
+	{
+		return InOther.Name == Name;
+	}
 };
 
 /**
@@ -47,6 +73,26 @@ struct SShaderParameter
 
 	/** Shader stage flags */
 	EShaderStageFlags StageFlags;
+
+	/** Members if any */
+	std::vector<SShaderParameterMember> Members;
+
+	static const SShaderParameter& GetNull()
+	{
+		static SShaderParameter Null;
+		return Null;
+	}
+
+	const SShaderParameterMember& GetMember(const std::string& InName) const
+	{
+		for(const auto& Member : Members)
+		{
+			if(Member.Name == InName)
+				return Member;
+		}
+
+		return SShaderParameterMember::GetNull();
+	}
 };
 
 namespace std
@@ -73,9 +119,12 @@ enum class EFormat
 	D32Sfloat,
 	D32SfloatS8Uint,
 	D24UnormS8Uint,
-	R8G8B8A8UNorm,
-	R32G32Sfloat,
-	R32G32B32Sfloat,
+	R32Uint, /** uint32_t */
+	R8G8B8A8UNorm, /** rgb 255*/
+	R32G32Sfloat, /** vec2*/
+	R32G32B32Sfloat, /** vec3 */
+	R32G32B32A32Sfloat,	/** vec4 */
+	R64Uint	/** uint64 */
 };
 
 /** Index format */
@@ -131,9 +180,13 @@ struct SVertex
 	SVertex() {}
 	SVertex(const glm::vec3& InPosition) : Position(InPosition) {}
 
-	static SVertexInputBindingDescription GetBindingDescription()
+	static std::vector<SVertexInputBindingDescription> GetBindingDescriptions()
 	{
-		return SVertexInputBindingDescription(0, sizeof(SVertex), EVertexInputRate::Vertex);
+		return 
+		{ 
+			SVertexInputBindingDescription(0, sizeof(SVertex), EVertexInputRate::Vertex),
+			SVertexInputBindingDescription(1, sizeof(uint32_t), EVertexInputRate::Instance),
+		};
 	}
 
 	static std::vector<SVertexInputAttributeDescription> GetAttributeDescriptions()
@@ -147,7 +200,8 @@ struct SVertex
 			SVertexInputAttributeDescription(0, 2, EFormat::R32G32Sfloat,
 				offsetof(SVertex, TexCoord)),
 			SVertexInputAttributeDescription(0, 3, EFormat::R32G32B32Sfloat,
-				offsetof(SVertex, Normal))
+				offsetof(SVertex, Normal)),
+			SVertexInputAttributeDescription(1, 4, EFormat::R32Uint, 0)
 		};
 	}
 
@@ -199,4 +253,14 @@ struct SRenderSystemDetails
 	std::string Name;
 	ERenderSystemType Type;
 	ERenderSystemShaderFormat Format;
+};
+
+/**
+ * An viewport
+ */
+struct SViewport
+{
+	SRect2D Rect;
+	float MinDepth;
+	float MaxDepth;
 };

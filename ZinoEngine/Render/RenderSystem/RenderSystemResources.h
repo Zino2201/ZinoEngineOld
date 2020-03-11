@@ -4,17 +4,36 @@
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <boost/smart_ptr/intrusive_ref_counter.hpp>
 
+class IRenderSystemResource;
+
+/** 
+ * IFrameCompletedDestruction for render system resource
+ * Hold a intrusive_ptr so the resource is still available
+ */
+class CRenderSystemResourceFrameCompletedDestruction 
+	: public IDeferredDestructionRenderResource
+{
+public:
+	CRenderSystemResourceFrameCompletedDestruction(IRenderSystemResource*
+		InResource) : Resource(InResource) {}
+
+	virtual void FinishDestroy() override;
+private:
+	boost::intrusive_ptr<IRenderSystemResource> Resource;
+};
+
 /**
  * An render system resource
  * Intrusive ptr
  */
-class IRenderSystemResource : 
-	public boost::intrusive_ref_counter<IRenderSystemResource, boost::thread_unsafe_counter>
+class IRenderSystemResource
+	: public boost::intrusive_ref_counter<IRenderSystemResource, boost::thread_unsafe_counter>
 { 
 public: 
 	virtual ~IRenderSystemResource() {}
 
-	virtual void Destroy() {}
+	virtual void Destroy();
+	virtual void FinishDestroy() {}
 };
 
 /**
@@ -26,7 +45,8 @@ enum class EBufferUsage
 	IndexBuffer	= 1 << 1,
 	TransferSrc = 1 << 2,
 	TransferDst = 1 << 3,
-	UniformBuffer = 1 << 4
+	UniformBuffer = 1 << 4,
+	StorageBuffer = 1 << 5
 };
 DECLARE_FLAG_ENUM(EBufferUsage)
 
@@ -86,7 +106,8 @@ enum class ESamplerAddressMode
 enum class EComparisonOp
 {
 	Never,
-	Always
+	Always,
+	Less
 };
 
 /**
@@ -137,7 +158,7 @@ public:
 	 */
 	virtual void* GetMappedMemory() const = 0;
 
-	virtual void Destroy() override = 0;
+	virtual void FinishDestroy() override = 0;
 
 	const SRenderSystemBufferInfos& GetInfos() const { return Infos; }
 protected:
@@ -203,7 +224,7 @@ public:
 	/** Copy texture from buffer */
 	virtual void Copy(CRenderSystemBuffer* InSrc) = 0;
 
-	virtual void Destroy() = 0;
+	virtual void FinishDestroy() = 0;
 
 	virtual const SRenderSystemTextureInfo& GetInfo() const = 0;
 };
@@ -298,23 +319,173 @@ class CRenderSystemPipeline : public IRenderSystemResource
 };
 
 /**
+ * Blend factor
+ */
+enum class EBlendFactor
+{
+	One,
+	Zero,
+	SrcAlpha,
+	OneMinusSrcAlpha,
+};
+
+enum class EBlendOp
+{
+	Add,
+};
+
+/**
+ * A blend state
+ */
+struct SRenderSystemBlendState
+{
+	bool bEnableBlend;
+	EBlendFactor SrcColorFactor;
+	EBlendFactor DestColorFactor;
+	EBlendOp ColorBlendOp;
+	EBlendFactor SrcAlphaFactor;
+	EBlendFactor DestAlphaFactor;
+	EBlendOp AlphaBlendOp;
+
+	static SRenderSystemBlendState& GetDefault()
+	{
+		static SRenderSystemBlendState Default =
+		{ 
+			false, 
+			EBlendFactor::One,
+			EBlendFactor::Zero,
+			EBlendOp::Add,
+			EBlendFactor::One,
+			EBlendFactor::Zero,
+			EBlendOp::Add
+		};
+
+		return Default;
+	}
+};
+
+enum class ERenderSystemStencilOp
+{
+	Keep,
+	Zero,
+	Replace,
+	IncrementAndClamp,
+	DecrementAndClamp,
+	Invert,
+	IncrementAndWrap,
+	DecrementAndWrap
+};
+
+struct SRenderSystemDepthStencilOp
+{
+	ERenderSystemStencilOp FailOp;
+	ERenderSystemStencilOp PassOp;
+	ERenderSystemStencilOp DepthFailOp;
+	EComparisonOp CompareOp;
+
+	SRenderSystemDepthStencilOp() : 
+		FailOp(ERenderSystemStencilOp::Keep),
+		PassOp(ERenderSystemStencilOp::Keep),
+		DepthFailOp(ERenderSystemStencilOp::Keep),
+		CompareOp(EComparisonOp::Never) {}
+};
+
+struct SRenderSystemDepthStencilState
+{
+	bool bDepthTestEnable;
+	/**
+	 * Enable write to depth-stencil buffer
+	 */
+	bool bDepthWriteEnable;
+	EComparisonOp DepthCompareOp;
+	bool bDepthBoundsTestEnable;
+	bool bStencilTestEnable;
+	SRenderSystemDepthStencilOp FrontFace;
+	SRenderSystemDepthStencilOp BackFace;
+
+	SRenderSystemDepthStencilState(
+		const bool& bInDepthTestEnable = false,
+		const bool& bInDepthWriteEnable = false,
+		const EComparisonOp& InComparaisonOp = EComparisonOp::Never,
+		const bool bInDepthBoundsTestEnable = false,
+		const bool bInStencilTestEnable = false,
+		const SRenderSystemDepthStencilOp& InFrontFace = SRenderSystemDepthStencilOp(),
+		const SRenderSystemDepthStencilOp& InBackFace = SRenderSystemDepthStencilOp()) : 
+		bDepthTestEnable(bInDepthTestEnable), bDepthWriteEnable(bInDepthWriteEnable), 
+		DepthCompareOp(InComparaisonOp),
+		bDepthBoundsTestEnable(bInDepthBoundsTestEnable), 
+		bStencilTestEnable(bInStencilTestEnable),
+		FrontFace(InFrontFace), BackFace(InBackFace) {}
+
+};
+
+enum class EPolygonMode
+{
+	Fill,
+	Line,
+	Point
+};
+
+enum class ECullMode
+{
+	None,
+	Back,
+	Front,
+	FrontAndBack
+};
+
+enum class EFrontFace
+{
+	Clockwise,
+	CounterClockwise
+};
+
+struct SRenderSystemRasterizerState
+{
+	bool bDepthClampEnable;
+	bool bRasterizerDiscardEnable;
+	EPolygonMode PolygonMode;
+	ECullMode CullMode;
+	EFrontFace FrontFace;
+
+	SRenderSystemRasterizerState(
+		bool bInDepthClampEnable = false,
+		bool bInRasterizerDiscardEnable = false,
+		EPolygonMode InPolygonMode = EPolygonMode::Fill,
+		ECullMode InCullMode = ECullMode::None,
+		EFrontFace InFrontFace = EFrontFace::CounterClockwise) :
+		bDepthClampEnable(bInDepthClampEnable),
+		bRasterizerDiscardEnable(bInRasterizerDiscardEnable), 
+		PolygonMode(InPolygonMode), CullMode(InCullMode),
+		FrontFace(InFrontFace) {}
+};
+
+/**
  * Pipeline create infos
  */
 struct SRenderSystemGraphicsPipelineInfos
 {
 	CRenderSystemShader* VertexShader;
 	CRenderSystemShader* FragmentShader;
-	SVertexInputBindingDescription BindingDescription;
+	std::vector<SVertexInputBindingDescription> BindingDescriptions;
 	std::vector<SVertexInputAttributeDescription> AttributeDescriptions;
 	std::vector<SShaderParameter> ShaderParameters;
+	SRenderSystemRasterizerState RasterizerState;
+	SRenderSystemBlendState BlendState;
+	SRenderSystemDepthStencilState DepthStencilState;
 
 	SRenderSystemGraphicsPipelineInfos(CRenderSystemShader* InVertexShader,
 		CRenderSystemShader* InFragmentShader,
-		const SVertexInputBindingDescription& InBindingDescription,
+		const std::vector<SVertexInputBindingDescription>& InBindingDescriptions,
 		const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions,
-		const std::vector<SShaderParameter>& InShaderParameters) : VertexShader(InVertexShader),
-		FragmentShader(InFragmentShader), BindingDescription(InBindingDescription),
-		AttributeDescriptions(InAttributeDescriptions), ShaderParameters(InShaderParameters) {}
+		const std::vector<SShaderParameter>& InShaderParameters,
+		const SRenderSystemRasterizerState& InRasterizerState = SRenderSystemRasterizerState(),
+		const SRenderSystemBlendState& InBlendState = SRenderSystemBlendState::GetDefault(),
+		const SRenderSystemDepthStencilState& InDepthStencilState = SRenderSystemDepthStencilState()) : 
+		VertexShader(InVertexShader),
+		FragmentShader(InFragmentShader), BindingDescriptions(InBindingDescriptions),
+		AttributeDescriptions(InAttributeDescriptions), ShaderParameters(InShaderParameters),
+		BlendState(InBlendState), DepthStencilState(InDepthStencilState) {}
 };
 
 /**
@@ -357,6 +528,52 @@ public:
 	virtual const SRenderSystemUniformBufferInfos& GetInfos() const = 0;
 };
 
+/**
+ * An vertex buffer
+ */
+class IRenderSystemVertexBuffer : public IRenderSystemResource
+{
+public:
+	IRenderSystemVertexBuffer(uint64_t InSize,
+		EBufferMemoryUsage InMemoryUsage = EBufferMemoryUsage::GpuOnly,
+		bool bUsePersistentMapping = false,
+		const std::string& InDebugName = "VertexBuffer") {}
+	
+	virtual void Copy(CRenderSystemBuffer* InSrc) = 0;
+	virtual void* Map() = 0;
+	virtual void Unmap() = 0;
+
+	/**
+	 * Release its own resource and own the other
+	 */
+	virtual void Reset(IRenderSystemVertexBuffer* InOther) = 0;
+	virtual CRenderSystemBuffer* GetBuffer() const = 0;
+};
+
+/**
+ * An index buffer
+ */
+class IRenderSystemIndexBuffer : public IRenderSystemResource
+{
+public:
+	IRenderSystemIndexBuffer(uint64_t InSize,
+		EBufferMemoryUsage InMemoryUsage = EBufferMemoryUsage::GpuOnly,
+		bool bUsePersistentMapping = false,
+		const std::string& InDebugName = "IndexBuffer") {}
+	
+	virtual void Copy(CRenderSystemBuffer* InSrc) = 0;
+	virtual void* Map() = 0;
+	virtual void Unmap() = 0;
+
+	/**
+	 * Release its own resource and own the other
+	 */
+	virtual void Reset(IRenderSystemIndexBuffer* InOther) = 0;
+	virtual CRenderSystemBuffer* GetBuffer() const = 0;
+};
+
+class IRenderSystemRenderPass {};
+
 using IRenderSystemResourcePtr = boost::intrusive_ptr<IRenderSystemResource>;
 using CRenderSystemBufferPtr = boost::intrusive_ptr<CRenderSystemBuffer>;
 using CRenderSystemTexturePtr = boost::intrusive_ptr<CRenderSystemTexture>;
@@ -364,3 +581,5 @@ using CRenderSystemTextureViewPtr = boost::intrusive_ptr<CRenderSystemTextureVie
 using CRenderSystemShaderPtr = boost::intrusive_ptr<CRenderSystemShader>;
 using IRenderSystemGraphicsPipelinePtr = boost::intrusive_ptr<IRenderSystemGraphicsPipeline>;
 using IRenderSystemUniformBufferPtr = boost::intrusive_ptr<IRenderSystemUniformBuffer>;
+using IRenderSystemVertexBufferPtr = boost::intrusive_ptr<IRenderSystemVertexBuffer>;
+using IRenderSystemIndexBufferPtr = boost::intrusive_ptr<IRenderSystemIndexBuffer>;

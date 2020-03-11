@@ -37,7 +37,7 @@ public:
 
 		if (InSeverity == ELogSeverity::Fatal)
 		{
-			__debugbreak();
+ 			__debugbreak();
 			system("pause");
 			exit(-1);
 		}

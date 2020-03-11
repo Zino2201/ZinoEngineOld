@@ -17,7 +17,7 @@ class CVulkanDescriptorPoolManager
 public:
 	CVulkanDescriptorPoolManager(const uint32_t& InMaxSetCountPerPool,
 		const std::vector<vk::DescriptorPoolSize>& InPoolSizes,
-		const std::map<uint32_t, vk::DescriptorSetLayout>& InSetLayouts);
+		const std::map<uint32_t, vk::UniqueDescriptorSetLayout>& InSetLayouts);
 
 	vk::DescriptorSet AllocateSet(const uint32_t& InSet);
 	void ResetPools();
@@ -40,8 +40,7 @@ private:
 
 struct SVulkanPipelineLayoutInfos
 {
-	std::vector<vk::DescriptorSetLayoutBinding> SetLayoutBindings;
-	std::map<uint32_t, vk::DescriptorSetLayout> SetLayouts;
+	std::map<uint32_t, std::vector<vk::DescriptorSetLayoutBinding>> SetLayoutBindings;
 };
 
 class CVulkanPipelineLayout : public CVulkanDeviceResource
@@ -60,4 +59,5 @@ private:
 	vk::UniquePipelineLayout PipelineLayout;
 	vk::UniqueDescriptorPool DescriptorPool;
 	std::unique_ptr<CVulkanDescriptorPoolManager> DescriptorPoolManager;
+	std::map<uint32_t, vk::UniqueDescriptorSetLayout> DescriptorSetLayouts;
 };

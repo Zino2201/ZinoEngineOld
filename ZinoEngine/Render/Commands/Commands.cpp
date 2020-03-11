@@ -16,10 +16,12 @@ void CRenderCommandList::Initialize()
 
 void CRenderCommandList::ExecuteFrontCommand()
 {
-	const std::unique_ptr<IRenderCommand>& Command = Commands.front();
+	CommandMutex.lock();
+	auto& Command = Commands.front();
 	if(Command)
 		Command->Execute(this);
 	Commands.pop();
+	CommandMutex.unlock();
 }
 
 void CRenderCommandList::Flush()

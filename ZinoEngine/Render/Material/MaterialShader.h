@@ -3,7 +3,7 @@
 #include "Render/Shader.h"
 
 /**
- * Material shader class
+ * Base class for shader that require materials data
  */
 class CMaterialShaderClass : public CShaderClass
 {
@@ -11,6 +11,11 @@ public:
 	CMaterialShaderClass(const std::string& InName,
 		const std::string& InFilename,
 		EShaderStage InStage, InstantiateFunctionType InInstantiateFunction);
+
+	/**
+	 * Compile and return a new instance of this materal shader
+	 */
+	CShader* CompileShader();
 };
 
 /**
@@ -19,6 +24,7 @@ public:
 class CMaterialShader : public CShader
 {
 public:
-	CMaterialShader(CShaderClass* InClass);
+	CMaterialShader(CShaderClass* InClass,
+		const SCompiledShaderData& InData);
 	virtual ~CMaterialShader();
 };

@@ -32,9 +32,11 @@ public:
         bNotified = false;
         bIsWaiting = false;
     }
+
+    bool HasWaiter() const { return bIsWaiting; }
 private:
     std::mutex Mutex;
     std::condition_variable Condition;
     bool bNotified;
-    bool bIsWaiting;
+    std::atomic_bool bIsWaiting;
 };

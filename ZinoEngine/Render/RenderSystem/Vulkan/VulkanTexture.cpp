@@ -33,7 +33,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice, const SRenderSystemTextu
 		LOG(ELogSeverity::Fatal, "Failed to create Vulkan image")
 }
 
-void CVulkanTexture::Destroy()
+void CVulkanTexture::FinishDestroy()
 {
 	LOG(ELogSeverity::Debug, "Destroyed texture(image) %s",
 		Infos.DebugName.c_str())

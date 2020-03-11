@@ -1,5 +1,7 @@
 // Minimal defines for GLSL shaders
 
+#include "Lighting.glsl"
+
 // Set indices
 
 // Global resources
@@ -11,3 +13,7 @@
 // Instance resources
 #define INSTANCE_SET 2
 
+//layout(set = GLOBAL_SET, binding = 0) uniform GlobalData
+//{
+//	float Time;
+//};

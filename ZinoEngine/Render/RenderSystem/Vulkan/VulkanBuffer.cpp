@@ -86,7 +86,7 @@ void* CVulkanBuffer::GetMappedMemory() const
 	return AllocationInfo.pMappedData;
 }
 
-void CVulkanBuffer::Destroy()
+void CVulkanBuffer::FinishDestroy()
 {
 	LOG(ELogSeverity::Debug, "Destroyed buffer %s",
 		Infos.DebugName.c_str())

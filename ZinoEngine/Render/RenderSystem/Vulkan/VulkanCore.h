@@ -26,7 +26,7 @@ const std::vector<const char*> g_VulkanValidationLayers =
 	"VK_LAYER_KHRONOS_validation"
 };
 
-#ifdef NDEBUG
+#ifndef VULKAN_ENABLE_VALIDATION_LAYERS
 constexpr bool g_VulkanEnableValidationLayers = false;
 #else
 constexpr bool g_VulkanEnableValidationLayers = true;
@@ -44,6 +44,15 @@ constexpr int g_VulkanNumSetsPerPool = 1;
 
 /** Globals */
 extern class CVulkanRenderSystem* g_VulkanRenderSystem;
+
+// Global resources
+#define GLOBAL_SET 0
+
+// Material resources
+#define MATERIAL_SET 1
+
+// Instance resources
+#define INSTANCE_SET 2
 
 /** Structures */
 
@@ -67,20 +76,7 @@ struct SVulkanSwapChainSupportDetails
 	std::vector<vk::PresentModeKHR> PresentModes;
 };
 
-/**
- * Shader resource binding
- */
-struct SVulkanShaderResourceBinding
-{
-	vk::DescriptorBufferInfo Buffer;
-};
-
-/**
- * Shader resource bindings
- */
-struct SVulkanShaderResourceBindings
-{
-	SVulkanShaderResourceBinding Bindings[g_VulkanMaxDescriptorSets][g_VulkanMaxBindings];
-};
+/** Stats */
+DECLARE_STAT_GROUP(VulkanRendering)
 
 #include "VulkanUtil.h"

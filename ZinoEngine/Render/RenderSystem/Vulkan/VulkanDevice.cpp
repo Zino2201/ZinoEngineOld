@@ -37,7 +37,9 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysDevice)
 		}
 
 		vk::PhysicalDeviceFeatures Features = vk::PhysicalDeviceFeatures()
-			.setSamplerAnisotropy(VK_TRUE);
+			.setSamplerAnisotropy(VK_TRUE)
+			.setVertexPipelineStoresAndAtomics(VK_TRUE)
+			.setShaderInt64(VK_TRUE);
 	
 		/** Create device */
 		vk::DeviceCreateInfo CreateInfos(
@@ -69,7 +71,7 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysDevice)
 
 CVulkanDevice::~CVulkanDevice() 
 {
-#ifdef _DEBUG
+#ifdef DEBUG_LOG
 	/** Print a output to check for any uncleared resources */
 	char* Output;
 	vmaBuildStatsString(Allocator, &Output, VK_TRUE);

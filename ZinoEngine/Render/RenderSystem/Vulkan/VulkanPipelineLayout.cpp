@@ -5,13 +5,13 @@
 
 CVulkanDescriptorPoolManager::CVulkanDescriptorPoolManager(const uint32_t& InMaxSetCountPerPool,
 	const std::vector<vk::DescriptorPoolSize>& InPoolSizes,
-	const std::map<uint32_t, vk::DescriptorSetLayout>& InSetLayouts)
+	const std::map<uint32_t, vk::UniqueDescriptorSetLayout>& InSetLayouts)
 	: MaxSetCountPerPool(InMaxSetCountPerPool), PoolSizes(InPoolSizes)
 {
 	for(const auto& [Set, SetLayout] : InSetLayouts)
 		SetLayouts[Set] = std::vector<vk::DescriptorSetLayout>(
 			g_VulkanRenderSystem->GetSwapChain()->GetImageCount(),
-			SetLayout);
+			*SetLayout);
 
 	if(!PoolSizes.empty())
 		CreatePool();
@@ -19,7 +19,10 @@ CVulkanDescriptorPoolManager::CVulkanDescriptorPoolManager(const uint32_t& InMax
 
 void CVulkanDescriptorPoolManager::CreatePool()
 {
-	for(int i = 0; i < g_VulkanRenderSystem->GetSwapChain()->GetImageCount() - 1; ++i)
+	uint32_t Index = 0; // g_VulkanRenderSystem->GetSwapChain()->GetCurrentFrame();
+
+	//for(uint32_t i = 0; i < g_VulkanRenderSystem->GetSwapChain()->GetImageCount() - 1; ++i)
+	for(uint32_t i = 0; i < g_VulkanRenderSystem->GetSwapChain()->GetImageCount() - 2; ++i)
 	{
 		DescriptorPools[i].push_back({ 
 			g_VulkanRenderSystem->GetDevice()->GetDevice().createDescriptorPoolUnique(
@@ -28,16 +31,18 @@ void CVulkanDescriptorPoolManager::CreatePool()
 				static_cast<uint32_t>(PoolSizes.size()),
 				PoolSizes.data())).value, 0 });
 
-		CurrentPoolForFrame[g_VulkanRenderSystem->GetSwapChain()->GetCurrentFrame()] = 
-			DescriptorPools[i].size() - 1;
+		CurrentPoolForFrame[Index] = 
+			static_cast<uint32_t>(DescriptorPools[i].size()) - 1;
 	}
 }
 
 bool CVulkanDescriptorPoolManager::FindFreePool(uint32_t& InIndex)
 {
+	uint32_t Index = 0; // g_VulkanRenderSystem->GetSwapChain()->GetCurrentFrame();
+
 	uint32_t Idx = 0;
 	for(const auto& DescriptorPool 
-		: DescriptorPools[g_VulkanRenderSystem->GetSwapChain()->GetCurrentFrame()])
+		: DescriptorPools[Index])
 	{
 		if(DescriptorPool.Allocations < MaxSetCountPerPool)
 		{
@@ -53,19 +58,21 @@ bool CVulkanDescriptorPoolManager::FindFreePool(uint32_t& InIndex)
 
 vk::DescriptorSet CVulkanDescriptorPoolManager::AllocateSet(const uint32_t& InSet)
 {
+	uint32_t Index = 0; // g_VulkanRenderSystem->GetSwapChain()->GetCurrentFrame();
+
 	bool bHasFoundFreePool = 
-		FindFreePool(CurrentPoolForFrame[g_VulkanRenderSystem->GetSwapChain()->GetCurrentFrame()]);
+		FindFreePool(CurrentPoolForFrame[Index]);
 	if (!bHasFoundFreePool)
 	{
 		CreatePool();
 	}
 
 	std::vector<vk::DescriptorSetLayout> Layouts = { 
-		SetLayouts[InSet][g_VulkanRenderSystem->GetSwapChain()->GetCurrentFrame()] };
+		SetLayouts[InSet][Index] };
 
 	SVulkanDescriptorPoolEntry& PoolToUse = 
-		DescriptorPools[g_VulkanRenderSystem->GetSwapChain()->GetCurrentFrame()]
-			[CurrentPoolForFrame[g_VulkanRenderSystem->GetSwapChain()->GetCurrentFrame()]];
+		DescriptorPools[Index]
+			[CurrentPoolForFrame[Index]];
 
 	std::vector<vk::DescriptorSet> DescriptorSet = 
 		g_VulkanRenderSystem->GetDevice()->GetDevice().allocateDescriptorSets(
@@ -83,10 +90,9 @@ vk::DescriptorSet CVulkanDescriptorPoolManager::AllocateSet(const uint32_t& InSe
 
 void CVulkanDescriptorPoolManager::ResetPools()
 {
-	/** If we do -, uint32_t will going to be very high so clamp can work */
 	uint32_t CurrentFrame = g_VulkanRenderSystem->GetSwapChain()->GetCurrentFrame();
-	uint32_t Index = std::clamp<uint32_t>(CurrentFrame - 1, 0,
-		g_VulkanRenderSystem->GetSwapChain()->GetImageCount() - 2);
+	uint32_t Index = 0; // std::clamp<uint32_t>(CurrentFrame, 0,
+		//g_VulkanRenderSystem->GetSwapChain()->GetImageCount() - 1);
 
 	for(auto& DescriptorPool : 
 		DescriptorPools[Index])
@@ -95,7 +101,8 @@ void CVulkanDescriptorPoolManager::ResetPools()
 			*DescriptorPool.DescriptorPool);
 		DescriptorPool.Allocations = 0;
 	}
-	
+
+
 	CurrentPoolForFrame[Index] = 0;
 }
 
@@ -107,10 +114,19 @@ CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* InDevice,
 	const SVulkanPipelineLayoutInfos& InInfos) :
 	CVulkanDeviceResource(InDevice)
 {
+	for (const auto& [Set, Bindings] : InInfos.SetLayoutBindings)
+	{
+		DescriptorSetLayouts.insert(std::make_pair(Set,
+			Device->GetDevice().createDescriptorSetLayoutUnique(
+				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(),
+					static_cast<uint32_t>(Bindings.size()),
+					Bindings.data())).value));
+	}
+
 	std::vector<vk::DescriptorSetLayout> LayoutSetLayouts;
-	LayoutSetLayouts.reserve(InInfos.SetLayouts.size());
-	for (const auto& [Set, SetLayout] : InInfos.SetLayouts)
-		LayoutSetLayouts.push_back(SetLayout);
+	LayoutSetLayouts.reserve(DescriptorSetLayouts.size());
+	for (const auto& [Set, SetLayout] : DescriptorSetLayouts)
+		LayoutSetLayouts.push_back(*SetLayout);
 
 	vk::PipelineLayoutCreateInfo CreateInfos(
 		vk::PipelineLayoutCreateFlags(),
@@ -124,15 +140,18 @@ CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* InDevice,
 		LOG(ELogSeverity::Fatal, "Failed to create pipeline layout");
 		
 	std::vector<vk::DescriptorPoolSize> PoolSizes;
-	for(const auto& DescriptorSetLayoutBinding : InInfos.SetLayoutBindings)
+	for(const auto& [Set, Bindings] : InInfos.SetLayoutBindings)
 	{
-		PoolSizes.emplace_back(DescriptorSetLayoutBinding.descriptorType,
-			MaxSetPipelineLayout);
+		for(const auto& Binding : Bindings)
+		{
+			PoolSizes.emplace_back(Binding.descriptorType,
+				MaxSetPipelineLayout);
+		}
 	}
 
 	DescriptorPoolManager = std::make_unique<CVulkanDescriptorPoolManager>(MaxSetPipelineLayout,
 		PoolSizes,
-		InInfos.SetLayouts);
+		DescriptorSetLayouts);
 
 	PipelineLayouts.push_back(this);
 }

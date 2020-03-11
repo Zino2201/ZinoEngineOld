@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VulkanCore.h"
+#include "Render/RenderSystem/RenderSystemResources.h"
 
 /** Vulkan util */
 namespace VulkanUtil
@@ -26,4 +27,14 @@ namespace VulkanUtil
 	vk::SamplerMipmapMode SamplerFilterToVkSamplerMipmapMode(const ESamplerFilter& InFilter);
 	vk::SamplerAddressMode SamplerAddressModeToVkSamplerAddressMode(const ESamplerAddressMode& InMode);
 	vk::CompareOp ComparisonOpToVkCompareOp(const EComparisonOp& InOp);
+
+	/** Blend */
+	vk::BlendFactor BlendFactorToVkBlendFactor(EBlendFactor InFactor);
+	vk::BlendOp BlendOpToVkBlendOp(EBlendOp InOp);
+	vk::StencilOp StencilOpToVkStencilOp(ERenderSystemStencilOp InOp);
+
+	/** Rasterizer */
+	vk::PolygonMode PolygonModeToVkPolygonMode(EPolygonMode InPolygonMode);
+	vk::CullModeFlags CullModeToVkCullMode(ECullMode InCullMode);
+	vk::FrontFace FrontFaceToVkFrontFace(EFrontFace InFrontFace);
 }

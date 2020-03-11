@@ -10,6 +10,7 @@ struct STestUBO
 	alignas(16) glm::mat4 View;
 	alignas(16) glm::mat4 Projection;
 	alignas(16) glm::vec3 CamPos;
+	alignas(16) glm::vec3 ViewDir;
 };
 
 /**

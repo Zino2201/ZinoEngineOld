@@ -17,7 +17,7 @@ public:
 	virtual void Unmap() override;
 	virtual void Copy(CRenderSystemBuffer* InSrc) override;
 	virtual void* GetMappedMemory() const override;
-	virtual void Destroy() override;
+	virtual void FinishDestroy() override;
 
 	const vk::Buffer& GetBuffer() const { return Buffer; }
 private:

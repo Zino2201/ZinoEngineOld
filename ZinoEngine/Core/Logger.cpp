@@ -6,15 +6,29 @@ CLogger::~CLogger() {}
 
 void CLogger::Log(const ELogSeverity& InSeverity, const std::string& InMessage, va_list InArgs) const
 {
-#ifdef NDEBUG
+#ifndef DEBUG_LOG
 	if (InSeverity != ELogSeverity::Debug)
 	{
 #endif
-		std::cout << "[" << SeverityToString(InSeverity) << "/" << 
-			(IsInRenderThread() ? "RenderThread" : "GameThread") << "] ";
+		std::string ThreadName;
+
+		if(std::this_thread::get_id() == GameThreadID)
+		{
+			ThreadName = "GameThread";
+		}
+		else if(std::this_thread::get_id() == RenderThreadID)
+		{
+			ThreadName = "RenderThread";
+		}
+		else if(std::this_thread::get_id() == StatThreadID)
+		{
+			ThreadName = "StatThread";
+		}
+
+		std::cout << "[" << SeverityToString(InSeverity) << "/" << ThreadName << "] ";
 		std::vprintf(InMessage.c_str(), InArgs);
 		std::cout << std::endl;
-#ifdef NDEBUG
+#ifndef DEBUG_LOG
 	}
 #endif
 }

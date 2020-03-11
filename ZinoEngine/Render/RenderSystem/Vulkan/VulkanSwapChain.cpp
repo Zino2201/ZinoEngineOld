@@ -10,6 +10,8 @@
 #include "VulkanPipelineLayout.h"
 #include <SDL2/SDL.h>
 
+DECLARE_TIMER_STAT(VulkanRendering, DescriptorSetResetTime);
+
 CVulkanSwapChain::CVulkanSwapChain()
 {
 	g_Engine->GetWindow()->OnWindowResized.Bind(
@@ -85,7 +87,7 @@ void CVulkanSwapChain::Create()
 	}
 
 	/** Create semaphores and fences */
-	if(InFlightFences.empty())
+	//if(InFlightFences.empty())
 	{
 		vk::SemaphoreCreateInfo CreateInfos;
 		vk::FenceCreateInfo FenceCreateInfos(vk::FenceCreateFlagBits::eSignaled);
@@ -124,14 +126,19 @@ void CVulkanSwapChain::OnSwapChainOutOfDate()
 	Images.clear();
 	SwapChain.reset();
 
+	ImagesInFlight.clear();
+	ImageAvailableSemaphores.clear();
+	RenderFinishedSemaphores.clear();
+	InFlightFences.clear();
+
 	/** Recreate all */
 	Create();
 
-	/** After all of that done, reacquire the image */
-	AcquireImage();
-
 	/** Broadcast the event */
 	OnSwapChainRecreated.Broadcast();
+
+	/** After all of that done, reacquire the image */
+	//AcquireImage();
 }
 
 void CVulkanSwapChain::OnWindowResized()
@@ -155,8 +162,7 @@ void CVulkanSwapChain::AcquireImage()
 
 	CurrentImageIndex = Result.value;
 
-	if (Result.result == vk::Result::eErrorOutOfDateKHR
-		|| Result.result == vk::Result::eSuboptimalKHR)
+	if (Result.result == vk::Result::eErrorOutOfDateKHR)
 	{
 		/** Swap chain is out of date, recreate it and broadcast the message */
 		OnSwapChainOutOfDate();
@@ -168,12 +174,15 @@ void CVulkanSwapChain::AcquireImage()
 		g_VulkanRenderSystem->GetDevice()->GetDevice().waitForFences(
 			{ ImagesInFlight[CurrentImageIndex] }, VK_TRUE, std::numeric_limits<uint64_t>::max());
 
+		SCOPED_TIMER_STAT(DescriptorSetResetTime);
 		// TODO: Move this to another place ?
 		/** Reset all pipeline layouts from previous frame */
 		for (CVulkanPipelineLayout* PipelineLayout : CVulkanPipelineLayout::PipelineLayouts)
 		{
 			PipelineLayout->GetDescriptorPoolManager()->ResetPools();
 		}
+
+		g_VulkanRenderSystem->GetFrameCompletedDelegate().Broadcast();
 	}
 
 	ImagesInFlight[CurrentImageIndex] = *InFlightFences[CurrentFrame];

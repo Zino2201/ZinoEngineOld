@@ -31,11 +31,20 @@ public:
 		const EShaderStage& InShaderStage) override;
 	virtual IRenderSystemGraphicsPipelinePtr CreateGraphicsPipeline(const SRenderSystemGraphicsPipelineInfos& InInfos) override;
 	virtual CRenderSystemBufferPtr CreateBuffer(const SRenderSystemBufferInfos& InInfos) override;
+	virtual IRenderSystemVertexBufferPtr CreateVertexBuffer(const uint64_t& InSize,
+		EBufferMemoryUsage InMemoryUsage = EBufferMemoryUsage::GpuOnly,
+		bool bUsePersistentMapping = false,
+		const std::string& InDebugName = "VertexBuffer") override;
+	virtual IRenderSystemIndexBufferPtr CreateIndexBuffer(const uint64_t& InSize,
+		EBufferMemoryUsage InMemoryUsage = EBufferMemoryUsage::GpuOnly,
+		bool bUsePersistentMapping = false,
+		const std::string& InDebugName = "IndexBuffer") override;
 	virtual IRenderSystemUniformBufferPtr CreateUniformBuffer(const SRenderSystemUniformBufferInfos& InInfos) override;
 	virtual CRenderSystemTexturePtr CreateTexture(const SRenderSystemTextureInfo& InInfos) override;
 	virtual CRenderSystemTextureViewPtr CreateTextureView(const SRenderSystemTextureViewInfo& InInfos) override;
 	virtual CRenderSystemSamplerPtr CreateSampler(const SRenderSystemSamplerInfo& InInfos) override;
 	virtual SRenderSystemDetails GetRenderSystemDetails() const;
+	virtual TMulticastDelegate<>& GetFrameCompletedDelegate() override { return FrameCompletedDelegate; }
 
 	/** Getters */
 	const vk::Instance& GetInstance() const { return *Instance; }
@@ -107,4 +116,7 @@ private:
 
 	/** Memory transfer operations command pool */
 	std::unique_ptr<CVulkanCommandPool> MemoryPool;
+
+	TMulticastDelegate<> FrameCompletedDelegate;
+
 };

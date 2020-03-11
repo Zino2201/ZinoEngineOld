@@ -78,6 +78,12 @@ vk::Format VulkanUtil::FormatToVkFormat(const EFormat& InFormat)
 		return vk::Format::eR32G32Sfloat;
 	case EFormat::R32G32B32Sfloat:
 		return vk::Format::eR32G32B32Sfloat;
+	case EFormat::R32G32B32A32Sfloat:
+		return vk::Format::eR32G32B32A32Sfloat;
+	case EFormat::R64Uint:
+		return vk::Format::eR64Uint;
+	case EFormat::R32Uint:
+		return vk::Format::eR32Uint;
 	}
 }
 
@@ -98,6 +104,12 @@ EFormat VulkanUtil::VkFormatToFormat(const vk::Format& InFormat)
 		return EFormat::R32G32Sfloat;
 	case vk::Format::eR32G32B32Sfloat:
 		return EFormat::R32G32B32Sfloat;
+	case vk::Format::eR32G32B32A32Sfloat:
+		return EFormat::R32G32B32A32Sfloat;
+	case vk::Format::eR64Uint:
+		return EFormat::R64Uint;
+	case vk::Format::eR32Uint:
+		return EFormat::R32Uint;
 	}
 }
 
@@ -128,6 +140,11 @@ vk::BufferUsageFlags VulkanUtil::BufferUsageFlagsToVkBufferUsageFlags(const EBuf
 	if (HAS_FLAG(InUsage, EBufferUsage::UniformBuffer))
 	{
 		Flags |= vk::BufferUsageFlagBits::eUniformBuffer;
+	}
+
+	if (HAS_FLAG(InUsage, EBufferUsage::StorageBuffer))
+	{
+		Flags |= vk::BufferUsageFlagBits::eStorageBuffer;
 	}
 
 	return Flags;
@@ -170,6 +187,8 @@ vk::DescriptorType VulkanUtil::ShaderParameterTypeToVkDescriptorType(const EShad
 		return vk::DescriptorType::eUniformBuffer;
 	case EShaderParameterType::CombinedImageSampler:
 		return vk::DescriptorType::eCombinedImageSampler;
+	case EShaderParameterType::StorageBuffer:
+		return vk::DescriptorType::eStorageBuffer;
 	}
 }
 
@@ -302,5 +321,83 @@ vk::CompareOp VulkanUtil::ComparisonOpToVkCompareOp(const EComparisonOp& InOp)
 		return vk::CompareOp::eNever;
 	case EComparisonOp::Always:
 		return vk::CompareOp::eAlways;
+	case EComparisonOp::Less:
+		return vk::CompareOp::eLess;
+	}
+}
+
+/** Blend */
+vk::BlendFactor VulkanUtil::BlendFactorToVkBlendFactor(EBlendFactor InFactor)
+{
+	switch(InFactor)
+	{
+	default:
+	case EBlendFactor::Zero:
+		return vk::BlendFactor::eZero;
+	case EBlendFactor::One:
+		return vk::BlendFactor::eOne;
+	case EBlendFactor::SrcAlpha:
+		return vk::BlendFactor::eSrcAlpha;
+	case EBlendFactor::OneMinusSrcAlpha:
+		return vk::BlendFactor::eOneMinusSrcAlpha;
+	}
+}
+
+vk::BlendOp VulkanUtil::BlendOpToVkBlendOp(EBlendOp InOp)
+{
+	switch (InOp)
+	{
+	default:
+	case EBlendOp::Add:
+		return vk::BlendOp::eAdd;
+	}
+}
+
+vk::StencilOp VulkanUtil::StencilOpToVkStencilOp(ERenderSystemStencilOp InOp)
+{
+	switch (InOp)
+	{
+	default:
+	case ERenderSystemStencilOp::Keep: return vk::StencilOp::eKeep;
+	case ERenderSystemStencilOp::Zero: return vk::StencilOp::eZero;
+	case ERenderSystemStencilOp::Replace: return vk::StencilOp::eReplace;
+	case ERenderSystemStencilOp::IncrementAndClamp: return vk::StencilOp::eIncrementAndClamp;
+	case ERenderSystemStencilOp::DecrementAndClamp: return vk::StencilOp::eDecrementAndClamp;
+	case ERenderSystemStencilOp::Invert: return vk::StencilOp::eInvert;
+	case ERenderSystemStencilOp::IncrementAndWrap: return vk::StencilOp::eIncrementAndWrap;
+	case ERenderSystemStencilOp::DecrementAndWrap: return vk::StencilOp::eDecrementAndWrap;
+	}
+}
+
+vk::PolygonMode VulkanUtil::PolygonModeToVkPolygonMode(EPolygonMode InPolygonMode)
+{
+	switch(InPolygonMode)
+	{
+	default:
+	case EPolygonMode::Fill: return vk::PolygonMode::eFill;
+	case EPolygonMode::Line: return vk::PolygonMode::eLine;
+	case EPolygonMode::Point: return vk::PolygonMode::ePoint;
+	}
+}
+
+vk::CullModeFlags VulkanUtil::CullModeToVkCullMode(ECullMode InCullMode)
+{
+	switch (InCullMode)
+	{
+	default:
+	case ECullMode::None: return vk::CullModeFlagBits::eNone;
+	case ECullMode::Back: return vk::CullModeFlagBits::eBack;
+	case ECullMode::Front: return vk::CullModeFlagBits::eFront;
+	case ECullMode::FrontAndBack: return vk::CullModeFlagBits::eFrontAndBack;
+	}
+}
+
+vk::FrontFace VulkanUtil::FrontFaceToVkFrontFace(EFrontFace InFrontFace)
+{
+	switch (InFrontFace)
+	{
+	default:
+	case EFrontFace::Clockwise: return vk::FrontFace::eClockwise;
+	case EFrontFace::CounterClockwise: return vk::FrontFace::eCounterClockwise;
 	}
 }

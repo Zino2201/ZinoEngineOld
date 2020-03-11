@@ -10,12 +10,12 @@
 TMulticastDelegate<CRenderableComponent*> CRenderableComponent::OnQueueRenderProxyUpdate;
 std::vector<CRenderableComponent*> CRenderableComponent::RenderableComponentsToUpdate;
 
-CRenderableComponent::CRenderableComponent() {}
+CRenderableComponent::CRenderableComponent() : RenderProxy(nullptr) {}
 CRenderableComponent::~CRenderableComponent() {}
 
 void CRenderableComponent::Initialize()
 {
-	NeedRenderProxyUpdate();
+	CreateRenderProxy();
 }
 
 void CRenderableComponent::Destroy()
@@ -32,6 +32,8 @@ void CRenderableComponent::SetMaterial(const std::shared_ptr<CMaterial>& InMater
 
 void CRenderableComponent::CreateRenderProxy()
 {
+	// TODO: Use another world ptr
+
 	g_Engine->GetWorld()->GetScene()->AddRenderable(this);
 }
 
@@ -43,6 +45,7 @@ void CRenderableComponent::RecreateRenderProxy()
 
 void CRenderableComponent::DeleteRenderProxy()
 {
+	// TODO: Use another world ptr
 	g_Engine->GetWorld()->GetScene()->DeleteRenderable(this);
 }
 

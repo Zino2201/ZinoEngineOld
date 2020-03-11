@@ -2,6 +2,7 @@
 
 #include "Core/Asset.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "Render/Shader.h"
 
 class IRenderSystemGraphicsPipeline;
 class CRenderSystemShader;
@@ -9,6 +10,14 @@ class IDeviceResource;
 class CRenderSystemSampler;
 class IRenderSystemUniformBuffer;
 class IShaderAttributesManager;
+class IRenderCommandContext;
+
+struct SMaterialShader
+{
+	EShaderStage Stage;
+	std::string Type;
+	std::string Shader;
+};
 
 /**
  * Material render data
@@ -18,16 +27,31 @@ class CMaterialRenderData final : public CRenderResource
 	friend class CMaterial;
 
 public:
-	void Init(CMaterial* InMaterial);
+	void Init(CMaterial* InMaterial,
+		const std::vector<SMaterialShader>& InShaders);
 	virtual void InitRenderThread() override;
 	virtual void DestroyRenderThread() override;
 
+	/**
+	 * Bind this material resources to the MATERIAL_SET
+	 */
+	void Bind(IRenderCommandContext* InContext);
+
 	IRenderSystemGraphicsPipeline* GetPipeline() const { return Pipeline.get(); }
-	IRenderSystemUniformBuffer* GetUniformBuffer() const { return UniformBuffer.get(); }
+	const CShaderMap& GetShaderMap() const { return ShaderMap; }
+	CShaderParameterUniformBuffer& GetScalars() { return Scalars; }
+	CShaderParameterUniformBuffer& GetVec3s() { return Vec3s; }
 private:
-	IRenderSystemGraphicsPipelinePtr Pipeline;
-	IRenderSystemUniformBufferPtr UniformBuffer;
 	CMaterial* Material;
+	IRenderSystemGraphicsPipelinePtr Pipeline;
+
+	/** Shader map */
+	CShaderMap ShaderMap;
+	std::vector<SMaterialShader> Shaders;
+
+	/** Resources */
+	CShaderParameterUniformBuffer Scalars;
+	CShaderParameterUniformBuffer Vec3s;
 };
 
 /**
@@ -43,13 +67,7 @@ public:
 
 	virtual void Load(const std::string& InPath) override;
 
-	/** test func */
-	void SetMaterialUBO(const void* InNewData, const uint64_t& InSize);
 	CMaterialRenderData* GetRenderData() const { return RenderData; }
-	class CTexture2D* TestTexture;
-private:
-	std::vector<SShaderParameter> ParseShaderJson(const EShaderStage& InStage,
-		const std::string& InPath);
 private:
 	std::map<EShaderStage, CRenderSystemShaderPtr> ShaderMap;
 	std::map<EShaderStage, std::vector<SShaderParameter>> ShaderParameterMap;

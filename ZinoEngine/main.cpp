@@ -1,8 +1,12 @@
 #include "Core/Engine.h"
 #include "Core/RenderThread.h"
+#include <iostream>
+#include "Core/Timer.h"
 
 int main()
-{
+{	
+	srand(time(NULL));
+
 	/** Initialize and run engine */
 	g_Engine = new CEngine;
 	g_Engine->Initialize();
@@ -10,6 +14,8 @@ int main()
 
 	/** Stop game thread at end */
 	CRenderThread::Get().Stop();
+
+	delete CStatManager::StatGroupSet;
 
 	_CrtDumpMemoryLeaks();
 

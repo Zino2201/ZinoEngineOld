@@ -7,13 +7,36 @@
 
 /** --- CVulkanPipeline --- */
 CVulkanPipeline::CVulkanPipeline(CVulkanDevice* InDevice,
-	const std::vector<SShaderParameter>& InShaderParameters) : CVulkanDeviceResource(InDevice) ,
+	const std::vector<SShaderParameter>& InShaderParameters) : CVulkanDeviceResource(InDevice),
 	ShaderParameters(InShaderParameters)
 {
 	// TODO: Hashing for pipeline layouts
 	//	for now every pipeline create its own pipeline layout
-	 
-	/** Create set layouts and bindings */
+
+	/** Shader parameters */
+	//{
+	//	/** Added parameters map (name, index) */
+	//	std::map<std::string, size_t> AddedParameters;
+
+	//	for (const auto& [Stage, Shader] : ShaderMap.GetMap())
+	//	{
+	//		for (const auto& Parameter : Shader->GetParameters())
+	//		{
+	//			if (AddedParameters.count(Parameter.Name))
+	//			{
+	//				ShaderParameters[AddedParameters[Parameter.Name]].StageFlags |=
+	//					Stage;
+	//			}
+	//			else
+	//			{
+	//				ShaderParameters.push_back(Parameter);
+	//				AddedParameters[Parameter.Name] = ShaderParameters.size() - 1;
+	//			}
+	//		}
+	//	}
+	//}
+
+	/** Create set layouts and bindings per sets  */
 	for(const auto& Parameter : ShaderParameters)
 	{
 		SetLayoutBindings[Parameter.Set].emplace_back(
@@ -23,30 +46,10 @@ CVulkanPipeline::CVulkanPipeline(CVulkanDevice* InDevice,
 			VulkanUtil::ShaderStageFlagsToVkShaderStageFlags(Parameter.StageFlags));
 	}
 
-	for(const auto& [Set, Bindings] : SetLayoutBindings)
-	{
-		SetLayouts.insert(std::make_pair(Set,
-			Device->GetDevice().createDescriptorSetLayoutUnique(
-				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(),
-					static_cast<uint32_t>(Bindings.size()),
-					Bindings.data())).value));
-	}
-
 	/** Create pipeline layout */
 	{
-		/** Copy every set layout bindings of each set to the LayoutSetBindings vector */
-		std::vector<vk::DescriptorSetLayoutBinding> LayoutSetBindings;
-		for(const auto& [Set, SetLayoutBinding] : SetLayoutBindings)
-			std::copy(SetLayoutBinding.begin(), SetLayoutBinding.end(), 
-				std::back_inserter(LayoutSetBindings));
-
-		std::map<uint32_t, vk::DescriptorSetLayout> LayoutSetLayouts;
-		for(const auto& [Set, UniqueLayout] : SetLayouts)
-			LayoutSetLayouts[Set] = *UniqueLayout;
-
 		SVulkanPipelineLayoutInfos Infos;
-		Infos.SetLayoutBindings = LayoutSetBindings;
-		Infos.SetLayouts = LayoutSetLayouts;
+		Infos.SetLayoutBindings = SetLayoutBindings;
 		PipelineLayout = std::make_unique<CVulkanPipelineLayout>(Device, Infos);
 	}
 
@@ -57,6 +60,7 @@ CVulkanPipeline::~CVulkanPipeline() {}
 
 void CVulkanPipeline::Create()
 {
+
 }
 
 /** --- CVulkanPipeline --- */
@@ -65,6 +69,12 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 	const SRenderSystemGraphicsPipelineInfos& InInfos)
 	: IRenderSystemGraphicsPipeline(InInfos), CVulkanPipeline(InDevice, InInfos.ShaderParameters)
 {
+	std::array<vk::DynamicState, 2> DynamicStates =
+	{
+		vk::DynamicState::eScissor,
+		vk::DynamicState::eViewport
+	};
+
 	/** Create stages */
 	std::vector<CVulkanShader*> Shaders =
 	{
@@ -86,10 +96,14 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 	}
 
 	/** Input attributes */
-	vk::VertexInputBindingDescription InputAttribute(
-		InInfos.BindingDescription.Binding,
-		InInfos.BindingDescription.Stride,
-		VulkanUtil::VertexInputRateToVkVertexInputRate(InInfos.BindingDescription.InputRate));
+	std::vector<vk::VertexInputBindingDescription> InputAttributes;
+	for(const auto& BindingDescription : InInfos.BindingDescriptions)
+	{
+		InputAttributes.emplace_back(
+			BindingDescription.Binding,
+			BindingDescription.Stride,
+			VulkanUtil::VertexInputRateToVkVertexInputRate(BindingDescription.InputRate));
+	}
 
 	/** Vertex attributes */
 	std::vector<vk::VertexInputAttributeDescription> Attributes;
@@ -105,8 +119,8 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 	/** Vertex input infos */
 	vk::PipelineVertexInputStateCreateInfo VertexInputInfos(
 		vk::PipelineVertexInputStateCreateFlags(),
-		1,
-		&InputAttribute,
+		static_cast<uint32_t>(InputAttributes.size()),
+		InputAttributes.data(),
 		static_cast<uint32_t>(Attributes.size()),
 		Attributes.data());
 
@@ -139,16 +153,18 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 	/** Rasterizer */
 	vk::PipelineRasterizationStateCreateInfo RasterizerState(
 		vk::PipelineRasterizationStateCreateFlags(),
-		VK_FALSE,
-		VK_FALSE,
-		vk::PolygonMode::eFill,
-		vk::CullModeFlagBits::eBack,
-		vk::FrontFace::eCounterClockwise,
+		InInfos.RasterizerState.bDepthClampEnable ? VK_TRUE : VK_FALSE,
+		InInfos.RasterizerState.bRasterizerDiscardEnable ? VK_TRUE : VK_FALSE,
+		VulkanUtil::PolygonModeToVkPolygonMode(InInfos.RasterizerState.PolygonMode),
+		VulkanUtil::CullModeToVkCullMode(InInfos.RasterizerState.CullMode), 
+		VulkanUtil::FrontFaceToVkFrontFace(InInfos.RasterizerState.FrontFace),
 		VK_FALSE,
 		0.f,
 		0.f,
 		0.f,
 		1.f);
+
+	//vk::DynamicState::
 
 	/** Multisampling */
 	vk::PipelineMultisampleStateCreateInfo MultisamplingState(
@@ -162,22 +178,34 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 
 	vk::PipelineDepthStencilStateCreateInfo DepthState(
 		vk::PipelineDepthStencilStateCreateFlags(),
-		VK_TRUE,
-		VK_TRUE,
-		vk::CompareOp::eLess,
-		VK_FALSE);
+		InInfos.DepthStencilState.bDepthTestEnable ? VK_TRUE : VK_FALSE,
+		InInfos.DepthStencilState.bDepthWriteEnable ? VK_TRUE : VK_FALSE,
+		VulkanUtil::ComparisonOpToVkCompareOp(InInfos.DepthStencilState.DepthCompareOp),
+		InInfos.DepthStencilState.bDepthBoundsTestEnable ? VK_TRUE : VK_FALSE,
+		InInfos.DepthStencilState.bStencilTestEnable ? VK_TRUE : VK_FALSE,
+		vk::StencilOpState(
+			VulkanUtil::StencilOpToVkStencilOp(InInfos.DepthStencilState.FrontFace.FailOp),
+			VulkanUtil::StencilOpToVkStencilOp(InInfos.DepthStencilState.FrontFace.PassOp),
+			VulkanUtil::StencilOpToVkStencilOp(InInfos.DepthStencilState.FrontFace.DepthFailOp),
+			VulkanUtil::ComparisonOpToVkCompareOp(InInfos.DepthStencilState.FrontFace.CompareOp)),
+		vk::StencilOpState(
+			VulkanUtil::StencilOpToVkStencilOp(InInfos.DepthStencilState.BackFace.FailOp),
+			VulkanUtil::StencilOpToVkStencilOp(InInfos.DepthStencilState.BackFace.PassOp),
+			VulkanUtil::StencilOpToVkStencilOp(InInfos.DepthStencilState.BackFace.DepthFailOp),
+			VulkanUtil::ComparisonOpToVkCompareOp(InInfos.DepthStencilState.BackFace.CompareOp))
+		);
 
 	/** Color blending */
 	vk::PipelineColorBlendAttachmentState ColorBlendAttachment(
-		VK_FALSE,
-		vk::BlendFactor::eOne,
-		vk::BlendFactor::eZero,
-		vk::BlendOp::eAdd,
-		vk::BlendFactor::eOne,
-		vk::BlendFactor::eZero,	
-		vk::BlendOp::eAdd,
+		InInfos.BlendState.bEnableBlend ? VK_TRUE : VK_FALSE,
+		VulkanUtil::BlendFactorToVkBlendFactor(InInfos.BlendState.SrcColorFactor),
+		VulkanUtil::BlendFactorToVkBlendFactor(InInfos.BlendState.DestColorFactor),
+		VulkanUtil::BlendOpToVkBlendOp(InInfos.BlendState.ColorBlendOp),
+		VulkanUtil::BlendFactorToVkBlendFactor(InInfos.BlendState.SrcAlphaFactor),
+		VulkanUtil::BlendFactorToVkBlendFactor(InInfos.BlendState.DestAlphaFactor),
+		VulkanUtil::BlendOpToVkBlendOp(InInfos.BlendState.AlphaBlendOp),
 		vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-			vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
+		vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
 
 	vk::PipelineColorBlendStateCreateInfo ColorBlendState(
 		vk::PipelineColorBlendStateCreateFlags(),
@@ -185,6 +213,11 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 		vk::LogicOp::eCopy,
 		1,
 		&ColorBlendAttachment);
+
+	vk::PipelineDynamicStateCreateInfo DynamicState = vk::PipelineDynamicStateCreateInfo(
+		vk::PipelineDynamicStateCreateFlags(),
+		DynamicStates.size(),
+		DynamicStates.data());
 
 	/** Create pipeline */
 	vk::GraphicsPipelineCreateInfo CreateInfos(
@@ -199,7 +232,7 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 		&MultisamplingState,
 		&DepthState,
 		&ColorBlendState,
-		nullptr,
+		&DynamicState,
 		PipelineLayout->GetPipelineLayout(),
 		g_VulkanRenderSystem->GetRenderPass(),
 		0,

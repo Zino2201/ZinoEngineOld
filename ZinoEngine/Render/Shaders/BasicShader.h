@@ -39,6 +39,7 @@ public:
 class CBasicShader : public CShader
 {
 public:
-	CBasicShader(CShaderClass* InClass);
+	CBasicShader(CShaderClass* InClass,
+		const SCompiledShaderData& InData);
 	virtual ~CBasicShader();
 };

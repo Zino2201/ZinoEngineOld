@@ -5,40 +5,73 @@
 #include "Core/Engine.h"
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/Renderer/ForwardSceneRenderer.h"
-#include "Render/Commands/Commands.h"
+#include "Render/Commands/RenderCommandContext.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "Render/RenderSystem/Vulkan/VulkanRenderSystem.h"
 #include "Render/RenderSystem/Vulkan/VulkanDevice.h"
+#include "Render/Material/GeometryPassShader.h"
+#include <filesystem>
+namespace fs = std::filesystem;
 
-void CMaterialRenderData::Init(CMaterial* InMaterial)
+void CMaterialRenderData::Init(CMaterial* InMaterial,
+	const std::vector<SMaterialShader>& InShaders)
 {
 	Material = InMaterial;
+	Shaders = InShaders;
 }
 
 void CMaterialRenderData::InitRenderThread()
 {
-	std::vector<SShaderParameter> ShaderParameters;
-	for (const auto& Value : Material->ShaderParameterMap)
+	/**
+	 * When compiling a shader material
+	 * We need to temporary copy the material shader at Shaders/Temp 
+	 */
+	for(const auto& InShader : Shaders)
 	{
-		ShaderParameters.insert(ShaderParameters.end(), Value.second.begin(), Value.second.end());
+		if(!InShader.Shader.empty())
+			fs::copy("Assets/Shaders/" + InShader.Shader, "Assets/Shaders/Temp/Material.glsl",
+				fs::copy_options::overwrite_existing);
+
+		LOG(ELogSeverity::Info, "Material shader: " + InShader.Shader);
+		ShaderMap.AddShader(InstantiateShaderSync<CShader>(InShader.Type));
 	}
 
 	/** Create pipeline */
 	Pipeline = g_Engine->GetRenderSystem()->CreateGraphicsPipeline(
 		SRenderSystemGraphicsPipelineInfos(
-		Material->ShaderMap[EShaderStage::Vertex].get(),
-		Material->ShaderMap[EShaderStage::Fragment].get(),
-		SVertex::GetBindingDescription(),
+		ShaderMap.GetShader(EShaderStage::Vertex)->GetShader(),
+		ShaderMap.GetShader(EShaderStage::Fragment)->GetShader(),
+		SVertex::GetBindingDescriptions(),
 		SVertex::GetAttributeDescriptions(),
-		ShaderParameters));
+		ShaderMap.GetParameters(),
+		SRenderSystemRasterizerState(
+			false,
+			false,
+			EPolygonMode::Fill,
+			ECullMode::Back,
+			EFrontFace::CounterClockwise),
+		SRenderSystemBlendState::GetDefault(),
+		SRenderSystemDepthStencilState(
+			true,
+			true,
+			EComparisonOp::Less)));
 
-	UniformBuffer = g_Engine->GetRenderSystem()->CreateUniformBuffer(
-		SRenderSystemUniformBufferInfos(48));
+	Scalars.Bind(ShaderMap.GetParameterByName("ScalarsUBO"));
+	Vec3s.Bind(ShaderMap.GetParameterByName("Vec3sUBO"));
+}
+
+void CMaterialRenderData::Bind(IRenderCommandContext* InContext)
+{
+	InContext->BindGraphicsPipeline(Pipeline.get());
+	Scalars.SetMember("MonScalarDeOuf", &g_Engine->ElapsedTime);
+	Scalars.Use(InContext);
+	Vec3s.Use(InContext);
 }
 
 void CMaterialRenderData::DestroyRenderThread()
 {
-	UniformBuffer->Destroy();
+	Scalars.Destroy();
+	Vec3s.Destroy();
 }
 
 CMaterial::~CMaterial() 
@@ -50,59 +83,10 @@ CMaterial::~CMaterial()
 
 void CMaterial::Load(const std::string& InPath)
 {
-	RenderData = new CMaterialRenderData;
-	 
-	std::string Json = IOUtils::ReadTextFile(InPath);
+	std::vector<SMaterialShader> Shaders;
+	Shaders.reserve(2);
 
 	/** Parse Json */
-	rapidjson::Document Document;
-	if(Document.Parse(Json.c_str()).HasParseError())
-	{
-		LOG(ELogSeverity::Error, "Failed to parse %s: %s", InPath.c_str(), 
-			GetParseError_En(Document.GetParseError()));
-		return;
-	}
-	
-	/** Get shaders array */
-	rapidjson::Value& Shaders = Document["shaders"];
-	for(rapidjson::SizeType i = 0; i < Shaders.Size(); ++i)
-	{
-		std::string StageStr = Shaders[i]["stage"].GetString();
-		std::string Shader = Shaders[i]["shader"].GetString();
-		
-		/** Try cast Stage to EShaderStage */
-		auto StageVal = magic_enum::enum_cast<EShaderStage>(StageStr);
-		if(StageVal.has_value())
-		{
-			EShaderStage Stage = StageVal.value();
-
-			/** Create shader */
-			ShaderMap.insert(std::make_pair(Stage,
-				g_Engine->GetRenderSystem()->CreateShader(
-				IOUtils::ReadBinaryFile("Assets/Shaders/" + Shader).data(),
-				IOUtils::ReadBinaryFile("Assets/Shaders/" + Shader).size(),
-				Stage)));
-
-			/** Shader attributes */
-			ShaderParameterMap.insert(std::make_pair(Stage,
-				ParseShaderJson(Stage, "Assets/Shaders/" + Shader + ".json")));
-		}
-		else
-		{
-			LOG(ELogSeverity::Error, "Invalid shader stage");
-			return;
-		}
-	}
-
-	RenderData->Init(this);
-	RenderData->InitResources();
-}
-
-std::vector<SShaderParameter> CMaterial::ParseShaderJson(const EShaderStage& InStage,
-	const std::string& InPath)
-{
-	std::vector<SShaderParameter> ShaderAttributes;
-
 	std::string Json = IOUtils::ReadTextFile(InPath);
 
 	/** Parse Json */
@@ -111,49 +95,59 @@ std::vector<SShaderParameter> CMaterial::ParseShaderJson(const EShaderStage& InS
 	{
 		LOG(ELogSeverity::Error, "Failed to parse %s: %s", InPath.c_str(),
 			GetParseError_En(Document.GetParseError()));
-		return {};
+		return;
 	}
 
-	rapidjson::Value& Attributes = Document["attributes"];
-	ShaderAttributes.reserve(Attributes.Size());
-
-	for(rapidjson::SizeType i = 0; i < Attributes.Size(); ++i)
+	/** Get shaders array */
+	rapidjson::Value& ShadersArray = Document["shaders"];
+	for (rapidjson::SizeType i = 0; i < ShadersArray.Size(); ++i)
 	{
-		std::string Name = Attributes[i]["name"].GetString();
-		uint32_t Binding = Attributes[i]["binding"].GetUint();
+		std::string StageStr = ShadersArray[i]["stage"].GetString();
+		auto StageVal = magic_enum::enum_cast<EShaderStage>(StageStr);
 
-		uint64_t Size = Attributes[i]["size"].GetUint64();
-		size_t UboAlignment = g_VulkanRenderSystem->GetDevice()->GetPhysicalDevice()
-			.getProperties().limits.minUniformBufferOffsetAlignment;
-		uint64_t AlignedSize = static_cast<uint32_t>((Size / UboAlignment) * UboAlignment 
-			+ ((Size % UboAlignment) > 0 ? UboAlignment : 0));
+		std::string Type = ShadersArray[i]["type"].GetString();
+		std::string Shader = ShadersArray[i]["shader"].GetString();
+		EShaderStage Stage = StageVal.value();
 
-		std::string TypeStr = Attributes[i]["type"].GetString();
-		uint32_t Set = Attributes[i]["set"].GetUint();
-		uint32_t Count = Attributes[i]["count"].GetUint();
+		Shaders.push_back({ Stage, Type, Shader });
+	}
 
-		auto TypeVal = magic_enum::enum_cast<EShaderParameterType>(TypeStr);
-		if (TypeVal.has_value())
+	RenderData = new CMaterialRenderData;
+
+	RenderData->Init(this, Shaders);
+	RenderData->InitResources();
+
+	rapidjson::Value& DefaultsArray = Document["defaults"];
+
+	std::map<std::string, float> Scalars;
+	std::map<std::string, glm::vec3> Vec3s;
+
+	for (rapidjson::Value::ConstMemberIterator It = DefaultsArray.MemberBegin(); 
+		It != DefaultsArray.MemberEnd(); ++It) 
+	{
+		std::string Name = It->name.GetString();
+		const rapidjson::Value& Default = It->value;
+
+		if (Default.IsArray()) /** Assume it is a vec3 for now */
 		{
-			EShaderParameterType Type = TypeVal.value();
-			ShaderAttributes.push_back({Name, Type, Set, Binding, Size, Count, InStage });
+			Vec3s[Name] = glm::vec3(
+				Default[0].GetFloat(),
+				Default[1].GetFloat(),
+				Default[2].GetFloat());
 		}
 		else
 		{
-			LOG(ELogSeverity::Error, "Invalid attribute type");
-			return {};
+			Scalars[Name] = Default.GetFloat();
 		}
 	}
 
-	return ShaderAttributes;
-}
-
-void CMaterial::SetMaterialUBO(const void* InNewData, const uint64_t& InSize)
-{
-	EnqueueRenderCommand([this, InNewData, InSize](CRenderCommandList* InCommandList)
+	EnqueueRenderCommand([this, Scalars, Vec3s](CRenderCommandList* InCommandList)
 	{
-		void* Mem = RenderData->GetUniformBuffer()->Map();
-		memcpy(Mem, InNewData, InSize);
-		RenderData->GetUniformBuffer()->Unmap();
+		/** Read defaults and apply them */
+		for(const auto& [Name, Data] : Scalars)
+			RenderData->GetScalars().SetMember(Name, &Data);
+
+		for (const auto& [Name, Data] : Vec3s)
+			RenderData->GetVec3s().SetMember(Name, &Data);
 	});
 }

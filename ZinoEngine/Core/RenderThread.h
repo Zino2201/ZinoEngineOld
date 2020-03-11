@@ -2,11 +2,13 @@
 
 #include "EngineCore.h"
 #include "Render/Commands/Commands.h"
+#include <queue>
 
 class CRenderableComponent;
 class CRenderCommandList;
 class CRenderableComponentProxy;
 class IRenderCommandContext;
+class ISceneRenderer;
 
 /**
  * Base class for render thread resources
@@ -40,6 +42,22 @@ private:
 };
 
 /**
+ * Base class for resources that need to be destroyed once the frame has been completed
+ */
+class IDeferredDestructionRenderResource
+{
+public:
+    /** The "fake" destroy function */
+    virtual void Destroy();
+
+    /** The actual Destroy function */
+    virtual void FinishDestroy() = 0;
+    
+    static std::queue<IDeferredDestructionRenderResource*> Resources;
+    static void DestroyResources();
+};
+
+/**
  * The render thread singleton
  */
 class CRenderThread
@@ -55,6 +73,9 @@ public:
     void Start();
     void Stop();
 
+    /** Destroy renderer */
+    void DestroyRenderer();
+
     CSemaphore& GetRenderThreadSemaphore() { return RenderThreadSemaphore; }
     CRenderCommandList* GetRenderCommandList() const { return RenderThreadCommandList; }
 private:
@@ -67,6 +88,7 @@ public:
      * Should render thread render
      */
     std::atomic_bool ShouldRender;
+    std::atomic_bool ShouldWaitGT;
 private:
 	CRenderThread();
 	~CRenderThread();
@@ -90,6 +112,11 @@ private:
      * Render thread command list
      */
     CRenderCommandList* RenderThreadCommandList;
+
+    /**
+     * Scene renderer
+     */
+    ISceneRenderer* SceneRenderer;
 };
 
 /**

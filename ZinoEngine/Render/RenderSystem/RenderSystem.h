@@ -53,6 +53,22 @@ public:
 	virtual CRenderSystemBufferPtr CreateBuffer(const SRenderSystemBufferInfos& InInfos) = 0;
 
 	/**
+	 * Create a vertex buffer
+	 */
+	virtual IRenderSystemVertexBufferPtr CreateVertexBuffer(const uint64_t& InSize,
+		EBufferMemoryUsage InMemoryUsage = EBufferMemoryUsage::GpuOnly,
+		bool bUsePersistentMapping = false,
+		const std::string& InDebugName = "VertexBuffer") = 0;
+	
+	/**
+	 * Create a index buffer
+	 */
+	virtual IRenderSystemIndexBufferPtr CreateIndexBuffer(const uint64_t& InSize,
+		EBufferMemoryUsage InMemoryUsage = EBufferMemoryUsage::GpuOnly,
+		bool bUsePersistentMapping = false,
+		const std::string& InDebugName = "IndexBuffer") = 0;
+
+	/**
 	 * Create a graphics pipeline
 	 */
 	virtual IRenderSystemGraphicsPipelinePtr CreateGraphicsPipeline(const SRenderSystemGraphicsPipelineInfos& InInfos) = 0;
@@ -78,4 +94,6 @@ public:
 	virtual CRenderSystemSamplerPtr CreateSampler(const SRenderSystemSamplerInfo& InInfos) = 0;
 
 	virtual SRenderSystemDetails GetRenderSystemDetails() const = 0;
+
+	virtual TMulticastDelegate<>& GetFrameCompletedDelegate() = 0;
 };
