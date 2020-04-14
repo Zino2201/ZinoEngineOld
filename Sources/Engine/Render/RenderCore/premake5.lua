@@ -1,0 +1,3 @@
+project "RenderCore"
+	basicModuleDefinitions()
+	includeCoreModules()

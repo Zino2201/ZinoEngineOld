@@ -1,0 +1,3 @@
+project "EngineCore"
+	basicModuleDefinitions()
+	includeCoreLibs()
