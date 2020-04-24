@@ -11,6 +11,8 @@ namespace ZE
 
 std::vector<CModule*> CModuleManager::Modules;
 
+void CModule::Initialize() {}
+
 CModule* CModuleManager::LoadModule(const std::string& InName)
 {
 	/**
@@ -55,8 +57,12 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 	
 	Module->Handle = Handle;
 #endif
-
+	
 	LOG(ELogSeverity::Info, ModuleManager, "Loaded module %s", InName.c_str());
+
+	Module->Initialize();
+
+	OnModuleLoaded.Broadcast(InName.c_str());
 
 	return Module;
 }

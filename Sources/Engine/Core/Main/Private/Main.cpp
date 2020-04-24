@@ -41,10 +41,6 @@ void CZinoEngineMain::PreInit()
 		/** Ensure the EngineCore module is loaded */
 		ZE::CModuleManager::LoadModule("EngineCore");
 		ZE::CModuleManager::LoadModule("Reflection");
-		
-		/** Create a simple CObject to register it to the class child map */
-		//CObject Dummy = CreateObject<CObject>();
-
 
 		ZE::GameThreadID = std::this_thread::get_id();
 		SDL_InitSubSystem(SDL_INIT_VIDEO);

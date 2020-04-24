@@ -5,5 +5,6 @@ project "Engine"
 	includeModule("Engine/Render/RenderSystem")
 	includeModule("Engine/Render/ShaderCompiler")
 	includeModule("Engine/Core/Reflection")
+	includeModule("Engine/Core/ECS")
 	includeLib("assimp/include", "assimp/lib")
 	links("assimp-vc142-mt")

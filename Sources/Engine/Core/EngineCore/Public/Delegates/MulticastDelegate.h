@@ -12,13 +12,15 @@ namespace ZE
 template<typename... Args>
 class TMulticastDelegate
 {
+	using TSignature = void(Args...);
+
 public:
 	/**
 	 * Bind a function to delegate
 	 */
-	void Bind(const std::function<void(Args...)>& InFunction)
+	void Bind(const std::function<TSignature>& InFunction)
 	{
-		Functions.emplace_back(InFunction);
+		Functions.push_back(InFunction);
 	}
 
 	/**
@@ -26,11 +28,11 @@ public:
 	 */
 	void Broadcast(Args&&... InArgs)
 	{
-		for (const std::function<void(Args...)>& Function : Functions)
+		for (const auto& Function : Functions)
 			Function(InArgs...);
 	}
 private:
-	std::vector<std::function<void(Args...)>> Functions;
+	std::vector<std::function<TSignature>> Functions;
 };
 
 } /* namespace ZE */

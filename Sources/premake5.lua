@@ -88,6 +88,7 @@ function includeCoreLibs()
 	includeLib("rttr/include")
 	includeLib("boost")
 	includeLib("rapidjson-1.1.0/include")
+	includeLib("nameof/include")
 	
 	links("SDL2")
 end
@@ -111,15 +112,17 @@ workspace "ZinoEngine"
 	
 	targetprefix ("ZinoEngine-")
 	
+	include("Engine/Core/Main")
 	group "Engine/Core"
-		include("Engine/Core/EngineCore")
 		include("Engine/Core/Engine")
-		include("Engine/Core/Main")
+		include("Engine/Core/EngineCore")
 		include("Engine/Core/Reflection")
+		include("Engine/Core/ECS")
 	group "Engine/Render"
 		include("Engine/Render/RenderCore")
 		include("Engine/Render/RenderSystem")
 		include("Engine/Render/VulkanRenderSystem")
+	group "Engine/Render/Shader"
 		include("Engine/Render/ShaderCompiler")
 		include("Engine/Render/VulkanShaderCompiler")
 	

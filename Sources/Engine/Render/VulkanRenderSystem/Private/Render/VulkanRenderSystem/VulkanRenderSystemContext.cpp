@@ -383,9 +383,9 @@ void CVulkanRenderSystemContext::SetScissors(const std::vector<SRect2D>& InSciss
 
 	for (const auto& Scissor : InScissors)
 	{
-		Scissors.push_back(vk::Rect2D(vk::Offset2D(Scissor.Position.x,
+		Scissors.emplace_back(vk::Offset2D(Scissor.Position.x,
 			Scissor.Position.y), vk::Extent2D(
-				static_cast<uint32_t>(Scissor.Size.x), static_cast<uint32_t>(Scissor.Size.y))));
+				static_cast<uint32_t>(Scissor.Size.x), static_cast<uint32_t>(Scissor.Size.y)));
 	}
 
 	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()

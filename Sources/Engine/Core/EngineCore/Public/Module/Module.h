@@ -13,6 +13,7 @@ class ENGINECORE_API CModule
     friend class CModuleManager;
 
 public:
+    virtual void Initialize();
     const char* GetName() const { return Name; }
     void SetName(const char* InName) { Name = InName; }
     void* GetHandle() const { return Handle; }

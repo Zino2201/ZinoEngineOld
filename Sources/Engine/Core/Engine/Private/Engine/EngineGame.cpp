@@ -12,6 +12,9 @@
 #include "Engine/StaticMesh.h"
 #include <SDL2/SDL.h>
 #include "Engine/Entity.h"
+#include "Engine/World.h"
+#include "ECS.h"
+#include "Engine/Components/TransformComponent.h"
 
 namespace ZE
 {
@@ -71,10 +74,25 @@ void CEngineGame::Initialize()
 {
 	CEngine::Initialize();
 
+	using namespace ZE::Components;
+
 	/** Create main game window */
 	Window = new CWindow("ZinoEngine", 1280, 720);
 	Viewport = std::make_unique<CViewport>(Window->GetHandle(), 1280, 720);
 	Viewport->InitResource();
+
+	World = std::make_unique<CWorld>();
+
+	ECS::EntityID Test = World->GetEntityManager()->CreateEntity();
+	ECS::EntityID Test2 = World->GetEntityManager()->CreateEntity();
+	World->GetEntityManager()->GetEntityByID(Test).AddComponent(
+		Refl::CStruct::Get<STransformComponent>());
+
+	TNonOwningPtr<ECS::SEntityComponent> Transform = World->GetEntityManager()->GetComponent(
+		Test, Refl::CStruct::Get<STransformComponent>());
+
+	__debugbreak();
+
 
 	/**
 	 * Read merger sponger

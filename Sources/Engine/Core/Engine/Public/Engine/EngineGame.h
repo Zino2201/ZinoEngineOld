@@ -22,6 +22,7 @@ public:
     ENGINE_API virtual void Initialize() override;
     ENGINE_API virtual void Tick(SDL_Event* InEvent, const float& InDeltaTime) override;
 private:
+    std::unique_ptr<class CWorld> World;
     CWindow* Window;
     std::unique_ptr<CViewport> Viewport;
     SRSRenderPass TestRenderPass;

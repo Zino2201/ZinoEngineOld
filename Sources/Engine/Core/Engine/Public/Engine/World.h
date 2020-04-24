@@ -1,23 +1,26 @@
 #pragma once
 
-#include "Entity.h"
-#include "EntityComponent.h"
+#include "EngineCore.h"
 
 namespace ZE
 {
 
+namespace ECS { class CEntityManager; }
+
 /**
  * A world
- * The world manage entities, components
- * Systems are not managed by a world, because they don't need specific world details
+ * Contains a entity manager
  */
 class CWorld
 {
 public:
+    CWorld();
+
+    void Tick(float InDeltaTime);
+
+    ECS::CEntityManager* GetEntityManager() const { return EntityManager.get(); }
 private:
-
-
-
+    std::unique_ptr<ECS::CEntityManager> EntityManager;
 };
 
 } /* namespace ZE */
