@@ -1,0 +1,6 @@
+[submodule "Sources/Libs/SPIR-Cross"]
+	path = Sources/Libs/SPIR-Cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git
+[submodule "Sources/Libs/shaderc"]
+	path = Sources/Libs/shaderc
+	url = https://github.com/google/shaderc.git
