@@ -1,6 +1,0 @@
-[submodule "Sources/Libs/nameof"]
-	path = Sources/Libs/nameof
-	url = https://github.com/Neargye/nameof.git
-[submodule "Sources/Libs/SPIRV-Cross"]
-	path = Sources/Libs/SPIRV-Cross
-	url = https://github.com/KhronosGroup/SPIRV-Cross.git
