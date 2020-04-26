@@ -10,3 +10,6 @@
 [submodule "Sources/Libs/SPIRV-Tools"]
 	path = Sources/Libs/SPIRV-Tools
 	url = https://github.com/KhronosGroup/SPIRV-Tools.git
+[submodule "Sources/Libs/glslang"]
+	path = Sources/Libs/glslang
+	url = https://github.com/KhronosGroup/glslang.git
