@@ -84,11 +84,8 @@ function includeCoreLibs()
 	includeLib("glm")
 	includeLib("stb_image")
 	includeLib("SDL2/include", "SDL2/lib")
-	includeLib("magic_enum")
-	includeLib("rttr/include")
 	includeLib("boost")
 	includeLib("rapidjson-1.1.0/include")
-	includeLib("nameof/include")
 	
 	links("SDL2")
 end

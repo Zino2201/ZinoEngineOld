@@ -2,7 +2,7 @@
 #include "Shader/ShaderCompiler.h"
 #include <shaderc/shaderc.hpp>
 #include "IO/IOUtils.h"
-#include <spirv_cross/spirv_glsl.hpp>
+#include <spirv_glsl.hpp>
 
 using namespace ZE;
 
