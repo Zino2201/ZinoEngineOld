@@ -15,7 +15,7 @@ IF NOT %errorLevel% == 0 (
 	cls
 )
 
-if not exist Sources/Libs/SPIRV-Tools git submodule init
+if not exist Sources/Libs/shaderc git submodule init
 
 echo Building 3rd party libs for VS2019... (requires CMake, Python 3 and Git)
 
@@ -46,7 +46,7 @@ echo Syncing deps
 py utils/git-sync-deps 
 mkdir build
 cd build
-cmake -G "Visual Studio 16 2019" -A x64 ../ -DENABLE_CTEST=false -DBUILD_GMOCK=false -DBUILD_TESTING=false -DSHADERC_SKIP_TESTS=true -DSHADERC_SPIRV_TOOLS_DIR=%ROOT%/Sources/Libs/SPIRV-Tools -DSHADERC_GLSLANG_DIR=%ROOT%/Sources/Libs/glslang -DSHADERC_ENABLE_SHARED_CRT=true
+cmake -G "Visual Studio 16 2019" -A x64 ../ -DENABLE_CTEST=false -DBUILD_GMOCK=false -DBUILD_TESTING=false -DSHADERC_SKIP_TESTS=true -DSHADERC_ENABLE_SHARED_CRT=true
 echo Debug
 "%MSBUILD%" ALL_BUILD.vcxproj /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
 echo Release
