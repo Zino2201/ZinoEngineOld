@@ -28,37 +28,12 @@ for /f "usebackq tokens=*" %%i in (`vswhere -latest -requires Microsoft.Componen
 
 if not defined MSBUILD goto :msbuildnotfound
 
-REM SPIRV-Tools
-echo Building SPIRV-Tools
-cd Sources/Libs/SPIRV-Tools/
-echo Syncing deps
-echo %ERRORLEVEL% > python3 utils/git-sync-deps 
-echo Building using CMake
-mkdir build
-cd build
-cmake -G "Visual Studio 16 2019" -A x64 ../
-echo Debug
-"%MSBUILD%" ALL_BUILD.vcxproj /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
-echo Release
-"%MSBUILD%" ALL_BUILD.vcxproj /t:build /p:Configuration="Release" /p:Platform="x64" /p:BuildInParallel=true
-
 REM SPIRV-Cross
 echo Building SPIRV-Cross
-cd ../../SPIRV-Cross/
+cd Sources/Libs/SPIRV-Cross/
 mkdir build
 cd build
 cmake -G "Visual Studio 16 2019" -A x64 ../
-echo Debug
-"%MSBUILD%" ALL_BUILD.vcxproj /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
-echo Release
-"%MSBUILD%" ALL_BUILD.vcxproj /t:build /p:Configuration="Release" /p:Platform="x64" /p:BuildInParallel=true
-
-REM Glslang
-echo Building glslang
-cd ../../glslang/
-mkdir build
-cd build
-cmake -G "Visual Studio 16 2019" -A x64 ../ -DENABLE_CTEST=false -DBUILD_TESTING=false -DBUILD_EXTERNAL=false -DSKIP_GLSLANG_INSTALL=true
 echo Debug
 "%MSBUILD%" ALL_BUILD.vcxproj /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
 echo Release
@@ -68,7 +43,7 @@ REM Shaderc
 echo Building shaderc
 cd ../../shaderc
 echo Syncing deps 
-echo %ERRORLEVEL% > python3 utils/git-sync-deps 
+py utils/git-sync-deps 
 mkdir build
 cd build
 cmake -G "Visual Studio 16 2019" -A x64 ../ -DENABLE_CTEST=false -DBUILD_GMOCK=false -DBUILD_TESTING=false -DSHADERC_SKIP_TESTS=true -DSHADERC_SPIRV_TOOLS_DIR=%ROOT%/Sources/Libs/SPIRV-Tools -DSHADERC_GLSLANG_DIR=%ROOT%/Sources/Libs/glslang -DSHADERC_ENABLE_SHARED_CRT=true

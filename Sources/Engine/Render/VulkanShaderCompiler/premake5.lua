@@ -9,13 +9,13 @@ project "VulkanShaderCompiler"
 	includeLib("shaderc/libshaderc_util/include", "shaderc/build/libshaderc_util/Debug")
 	--includeLib("spirv/include", "spirv/lib")
 	includeLib("SPIRV-Cross", "SPIRV-Cross/build/Debug")
-	includeLib("", "SPIRV-Tools/build/source/opt/Debug")
-	includeLib("", "SPIRV-Tools/build/source/Debug")
-	includeLib("", "glslang/build/glslang/Debug")
-	includeLib("", "glslang/build/OGLCompilersDLL/Debug")
-	includeLib("", "glslang/build/SPIRV/Debug")
-	includeLib("", "glslang/build/hlsl/Debug")
-	includeLib("", "glslang/build/glslang/OSDependent/Windows/Debug")
+	includeLib("", "shaderc/build/third_party/spirv-tools/source/opt/Debug")
+	includeLib("", "shaderc/build/third_party/spirv-tools/source/Debug")
+	includeLib("", "shaderc/build/third_party/glslang/glslang/Debug")
+	includeLib("", "shaderc/build/third_party/glslang/OGLCompilersDLL/Debug")
+	includeLib("", "shaderc/build/third_party/glslang/SPIRV/Debug")
+	includeLib("", "shaderc/build/third_party/glslang/hlsl/Debug")
+	includeLib("", "shaderc/build/third_party/glslang/glslang/OSDependent/Windows/Debug")
 	filter "configurations:Debug"
 		links { "shaderc", "shaderc_util", 
 			"spirv-cross-cd", "spirv-cross-cored", "spirv-cross-glsld", "spirv-cross-reflectd", "spirv-cross-utild", "SPIRV-Tools",
