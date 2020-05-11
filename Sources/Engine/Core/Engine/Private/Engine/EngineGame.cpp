@@ -117,23 +117,20 @@ void CEngineGame::Initialize()
 	World->GetEntityManager()->AttachEntity(Test4, Test);
 	World->GetEntityManager()->AttachEntity(Test5, Test);
 	
-	TNonOwningPtr<ECS::SEntityComponent> Transform = World->GetEntityManager()->GetComponent(
+	ECS::SEntityComponent* Transform = World->GetEntityManager()->GetComponent(
 		Test, Refl::CStruct::Get<ECS::SHierarchyComponent>());
 
-	TNonOwningPtr<ECS::SEntityComponent> Hiera2 = World->GetEntityManager()->GetComponent(
+	ECS::SEntityComponent* Hiera2 = World->GetEntityManager()->GetComponent(
 		Test2, Refl::CStruct::Get<ECS::SHierarchyComponent>());
 
-	TNonOwningPtr<ECS::SEntityComponent> Hiera3 = World->GetEntityManager()->GetComponent(
+	ECS::SEntityComponent* Hiera3 = World->GetEntityManager()->GetComponent(
 		Test3, Refl::CStruct::Get<ECS::SHierarchyComponent>());
 
-	TNonOwningPtr<ECS::SEntityComponent> Hiera4 = World->GetEntityManager()->GetComponent(
+	ECS::SEntityComponent* Hiera4 = World->GetEntityManager()->GetComponent(
 		Test4, Refl::CStruct::Get<ECS::SHierarchyComponent>());
 
-	TNonOwningPtr<ECS::SEntityComponent> Hiera5 = World->GetEntityManager()->GetComponent(
+	ECS::SEntityComponent* Hiera5 = World->GetEntityManager()->GetComponent(
 		Test5, Refl::CStruct::Get<ECS::SHierarchyComponent>());
-
-	//__debugbreak();
-
 
 	/**
 	 * Read merger sponger

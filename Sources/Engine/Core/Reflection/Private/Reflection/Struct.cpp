@@ -6,14 +6,14 @@ namespace ZE::Refl
 namespace Internal
 {
 
-TNonOwningPtr<CStruct> GetStructByName(const char* InName)
+CStruct* GetStructByName(const char* InName)
 {
 	return CStruct::Get(InName);
 }
 
 }
 
-TNonOwningPtr<CStruct> CStruct::Get(const char* InName)
+CStruct* CStruct::Get(const char* InName)
 {
 	for (auto& Struct : Structs)
 	{
@@ -24,7 +24,7 @@ TNonOwningPtr<CStruct> CStruct::Get(const char* InName)
 	return nullptr;
 }
 
-void CStruct::AddStruct(const TNonOwningPtr<CStruct>& InStruct)
+void CStruct::AddStruct(CStruct* InStruct)
 {
 	Structs.push_back(InStruct);
 
@@ -46,12 +46,12 @@ void CStruct::AddStruct(const TNonOwningPtr<CStruct>& InStruct)
 	}
 }
 
-void CStruct::AddParent(const TNonOwningPtr<CStruct>& InParent)
+void CStruct::AddParent(CStruct* InParent)
 {
 	Parents.push_back(InParent);
 }
 
-bool CStruct::IsDerivedFrom(const TNonOwningPtr<CStruct>& InParent) const
+bool CStruct::IsDerivedFrom(CStruct* InParent) const
 {
 	if (this == InParent)
 		return true;

@@ -49,7 +49,7 @@ private:
 private:
     std::vector<std::unique_ptr<ECS::IEntityComponentSystem>> Systems;
     std::unordered_map<ETickOrder, std::vector<ECS::IEntityComponentSystem*>> GroupMap;
-    std::unordered_set<TNonOwningPtr<Refl::CClass>> AddedSystems;
+    std::unordered_set<Refl::CClass*> AddedSystems;
 };
 
 using EntityID = uint64_t;
@@ -68,17 +68,17 @@ class CEntity final
     friend class CEntityManager;
 
 public:
-    CEntity(const TNonOwningPtr<CEntityManager>& InManager,
+    CEntity(CEntityManager& InManager,
         const EntityID& InID) : Manager(InManager), ID(InID) {}
 
-    ENGINE_API void AddComponent(const TNonOwningPtr<SEntityComponent>& InComponent);
+    ENGINE_API void AddComponent(SEntityComponent* InComponent);
     ENGINE_API SEntityComponent* RemoveComponent(ZE::Refl::CStruct* InComponent);
 
-    const std::vector<TNonOwningPtr<SEntityComponent>>& GetComponents() const { return Components; }
+    const std::vector<SEntityComponent*>& GetComponents() const { return Components; }
 private:
     EntityID ID;
-    std::vector<TNonOwningPtr<SEntityComponent>> Components;
-    TNonOwningPtr<CEntityManager> Manager;
+    std::vector<SEntityComponent*> Components;
+    CEntityManager& Manager;
 };
 
 /**
@@ -190,30 +190,30 @@ public:
      * Add a new component
      * If a component of the same type already exists, it returns it
      */
-    ENGINE_API TNonOwningPtr<SEntityComponent> AddComponent(
+    ENGINE_API SEntityComponent* AddComponent(
         const ECS::EntityID& InEntity,
-        const TNonOwningPtr<ZE::Refl::CStruct>& InStruct);
+        ZE::Refl::CStruct* InStruct);
 
     /**
      * Remove a component from the entity
      */
 	ENGINE_API void RemoveComponent(
 		const ECS::EntityID& InEntity,
-		const TNonOwningPtr<ZE::Refl::CStruct>& InComponent);
+		ZE::Refl::CStruct* InComponent);
 
     /**
      * Get the specified component of an entity
      */
-    ENGINE_API TNonOwningPtr<SEntityComponent> GetComponent(const EntityID& InID,
-        const TNonOwningPtr<Refl::CStruct>& InComponent);
+    ENGINE_API SEntityComponent* GetComponent(const EntityID& InID,
+        Refl::CStruct* InComponent);
 
     template<typename T>
-    TNonOwningPtr<T> GetComponent(const EntityID& InID)
+    T* GetComponent(const EntityID& InID)
     {
         return Cast<T>(GetComponent(InID, Refl::CStruct::Get<T>()));
     }
 
-    TNonOwningPtr<CEntity> TryGetEntityByID(const EntityID& InID) 
+    CEntity* TryGetEntityByID(const EntityID& InID) 
     { 
         auto& It = Entities.find(InID);
         if(It != Entities.end())
@@ -243,14 +243,14 @@ public:
     }
 private:
 	ENGINE_API EntityID GetFreeID();
-    ENGINE_API TNonOwningPtr<SEntityComponent> CreateComponent(const TNonOwningPtr<ZE::Refl::CStruct>& InStruct);
+    ENGINE_API SEntityComponent* CreateComponent(ZE::Refl::CStruct* InStruct);
 private:
     CWorld& World;
 
     std::unordered_map<EntityID, CEntity> Entities;
 
     /** Pools of components */
-    std::unordered_map<TNonOwningPtr<ZE::Refl::CStruct>, 
+    std::unordered_map<ZE::Refl::CStruct*, 
         TPool<TComponentPool>> ComponentPoolMap;
 
     /** Map to a set of components */

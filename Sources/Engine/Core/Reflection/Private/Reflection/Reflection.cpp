@@ -9,9 +9,9 @@ DEFINE_MODULE(ZE::CDefaultModule, "Reflection");
 namespace ZE::Refl
 {
 
-std::vector<TNonOwningPtr<CStruct>> GetDerivedStructsFrom(const TNonOwningPtr<CStruct>& InParent)
+std::vector<CStruct*> GetDerivedStructsFrom(CStruct* InParent)
 {
-	std::vector<TNonOwningPtr<CStruct>> Structs;
+	std::vector<CStruct*> Structs;
 	Structs.reserve(10);
 
 	for(const auto& Struct : CStruct::GetStructs())
@@ -23,9 +23,9 @@ std::vector<TNonOwningPtr<CStruct>> GetDerivedStructsFrom(const TNonOwningPtr<CS
 	return Structs;
 }
 
-std::vector<TNonOwningPtr<CClass>> GetDerivedClassesFrom(const TNonOwningPtr<CClass>& InParent)
+std::vector<CClass*> GetDerivedClassesFrom(CClass* InParent)
 {
-	std::vector<TNonOwningPtr<CClass>> Classes;
+	std::vector<CClass*> Classes;
 	Classes.reserve(10);
 
 	for (const auto& Class : CClass::GetClasses())

@@ -62,7 +62,7 @@ void CECSManager::OnModuleLoaded(const std::string_view& InName)
 }
 
 /** CEntity */
-void CEntity::AddComponent(const TNonOwningPtr<SEntityComponent>& InComponent)
+void CEntity::AddComponent(SEntityComponent* InComponent)
 {
 	Components.push_back(InComponent);
 }
@@ -113,20 +113,20 @@ EntityID CEntityManager::CreateEntity()
 {
 	EntityID ID = GetFreeID();
 
-	auto It = Entities.insert({ ID, CEntity(this, ID) });
+	auto It = Entities.insert({ ID, CEntity(*this, ID) });
 	
 	LOG(ELogSeverity::Debug, ECS, "Created new entity with ID %i", ID);
 
 	return ID;
 }
 
-TNonOwningPtr<SEntityComponent> CEntityManager::AddComponent(
+SEntityComponent* CEntityManager::AddComponent(
 	const ECS::EntityID& InEntity,
-	const TNonOwningPtr<ZE::Refl::CStruct>& InStruct)
+	ZE::Refl::CStruct* InStruct)
 {
 	must(InStruct);
 
-	TNonOwningPtr<CEntity> Entity = TryGetEntityByID(InEntity);
+	CEntity* Entity = TryGetEntityByID(InEntity);
 	if(Entity)
 	{
 		/**
@@ -161,11 +161,11 @@ TNonOwningPtr<SEntityComponent> CEntityManager::AddComponent(
 
 void CEntityManager::RemoveComponent(
 	const ECS::EntityID& InEntity,
-	const TNonOwningPtr<ZE::Refl::CStruct>& InComponent)
+	ZE::Refl::CStruct* InComponent)
 {
 	must(InComponent);
 
-	TNonOwningPtr<CEntity> Entity = TryGetEntityByID(InEntity);
+	CEntity* Entity = TryGetEntityByID(InEntity);
 	if (Entity)
 	{
 		SEntityComponent* Component = Entity->RemoveComponent(InComponent);
@@ -201,7 +201,7 @@ void CEntityManager::RemoveComponent(
 	}
 }
 
-SEntityComponent* CEntityManager::CreateComponent(const TNonOwningPtr<ZE::Refl::CStruct>& InStruct)
+SEntityComponent* CEntityManager::CreateComponent(ZE::Refl::CStruct* InStruct)
 {
 	if(!ComponentPoolMap.count(InStruct))
 		ComponentPoolMap.insert(std::make_pair(InStruct, 
@@ -250,7 +250,7 @@ void CEntityManager::AttachEntity(const EntityID& InEntity, const EntityID& InPa
 }
 
 SEntityComponent* CEntityManager::GetComponent(const EntityID& InID,
-	const TNonOwningPtr<Refl::CStruct>& InComponent)
+	Refl::CStruct* InComponent)
 {
 	auto& It = Entities.find(InID);
 

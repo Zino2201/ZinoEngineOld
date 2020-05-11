@@ -15,10 +15,10 @@ public:
 		const uint64_t& InSize)
 		: CStruct(InName, InSize), bIsInterface(false) {}
 
-	REFLECTION_API static void AddClass(const TNonOwningPtr<CClass>& InClass);
+	REFLECTION_API static void AddClass(CClass* InClass);
 
 	template<typename T>
-	static TNonOwningPtr<CClass> Get()
+	static CClass* Get()
 	{
 		auto Class = Get(TTypeName<T>::Name);
 		must(Class); // This class is not registered
@@ -26,17 +26,17 @@ public:
 		return Class;
 	}
 
-	REFLECTION_API static TNonOwningPtr<CClass> Get(const char* InName);
+	REFLECTION_API static CClass* Get(const char* InName);
 
 	void SetIsInterface(const bool& bInIsInterface) { bIsInterface = bInIsInterface; bIsInstanciable = !bIsInterface; }
 
 	bool IsInterface() const { return bIsInterface; }
 
-	REFLECTION_API static const std::vector<TNonOwningPtr<CClass>>& GetClasses() { return Classes; }
+	REFLECTION_API static const std::vector<CClass*>& GetClasses() { return Classes; }
 private:
 	bool bIsInterface;
 
-	REFLECTION_API inline static std::vector<TNonOwningPtr<CClass>> Classes;
+	REFLECTION_API inline static std::vector<CClass*> Classes;
 };
 DECLARE_REFL_TYPE(CClass);
 

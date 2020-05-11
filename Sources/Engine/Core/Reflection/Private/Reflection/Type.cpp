@@ -3,7 +3,7 @@
 namespace ZE::Refl
 {
 
-TNonOwningPtr<CType> CType::Get(const std::string_view& InName)
+CType* CType::Get(const std::string_view& InName)
 {
 	for (auto& Type : Types)
 	{

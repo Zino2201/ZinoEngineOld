@@ -39,7 +39,7 @@ public:
 
     virtual ~TTypeBuilder() = default;
 protected:
-    TNonOwningPtr<CType> Type;
+    CType* Type;
 };
 
 /**
@@ -87,7 +87,7 @@ public:
         return *this;
     }
 protected:
-    TNonOwningPtr<CStruct> Struct;
+    CStruct* Struct;
 };
 
 template<typename T, typename U = CClass>
@@ -110,7 +110,7 @@ public:
         return *this;
     }
 private:
-    TNonOwningPtr<CClass> Class;
+    CClass* Class;
 };
 
 }

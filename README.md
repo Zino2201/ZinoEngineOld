@@ -18,10 +18,10 @@ I personally love explicit code. So don't except too much `auto` for example. Bu
 
 ### T*
 
-**All** raw pointers are implicitly non owning. 
+**All** raw pointers are implicitly non owning and **must** be non owning. 
 
 Use `TOwnerPtr` for raw pointers actually owning the resource.
-(I also added a `TNonOwningPtr` type but I think I will abandon it.)
+(I don't like the idea of std::observer_ptr, so I prefer just to use regular raw pointers for non-owning pointers and have a explicit TOwnerPtr using for owning pointers)
 
 ### Naming
 

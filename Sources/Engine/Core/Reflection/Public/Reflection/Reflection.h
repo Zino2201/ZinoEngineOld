@@ -21,8 +21,8 @@ namespace ZE::Refl
 /**
  * Get all structs derived from struct
  */
-REFLECTION_API std::vector<TNonOwningPtr<CStruct>> GetDerivedStructsFrom(const TNonOwningPtr<CStruct>& InParent);
-REFLECTION_API std::vector<TNonOwningPtr<CClass>> GetDerivedClassesFrom(const TNonOwningPtr<CClass>& InParent);
+REFLECTION_API std::vector<CStruct*> GetDerivedStructsFrom(CStruct* InParent);
+REFLECTION_API std::vector<CClass*> GetDerivedClassesFrom(CClass* InParent);
 
 }
 

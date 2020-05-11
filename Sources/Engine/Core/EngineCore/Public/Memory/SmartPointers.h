@@ -9,9 +9,3 @@
  */
 template<typename T>
 using TOwnerPtr = T*;
-
-/**
- * Declare a pointer that is not owning its resource
- */
-template<typename T>
-using TNonOwningPtr = T*;

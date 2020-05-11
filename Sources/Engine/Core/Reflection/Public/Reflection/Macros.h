@@ -28,8 +28,8 @@ class CClass;
 /** For macros only */
 namespace Internal
 {
-	REFLECTION_API TNonOwningPtr<CStruct> GetStructByName(const char* InName);
-    REFLECTION_API TNonOwningPtr<CClass> GetClassByName(const char* InName);
+	REFLECTION_API CStruct* GetStructByName(const char* InName);
+    REFLECTION_API CClass* GetClassByName(const char* InName);
 }
 }
 
@@ -54,13 +54,13 @@ namespace Internal
     static void* Refl_InternalInstantiate(Args&&... InArgs) { return new Class(std::forward<Args>(InArgs)...); } \
     template<typename... Args> \
     static void Refl_InternalPlacementNew(void* InPtr, Args&&... InArgs) { new (InPtr) Class(std::forward<Args>(InArgs)...); } \
-    static TNonOwningPtr<ZE::Refl::CStruct> GetStaticStruct() { return ZE::Refl::Internal::GetStructByName(#Class); } \
-    static TNonOwningPtr<ZE::Refl::CClass> GetStaticClass() { return ZE::Refl::Internal::GetClassByName(#Class); } \
+    static ZE::Refl::CStruct* GetStaticStruct() { return ZE::Refl::Internal::GetStructByName(#Class); } \
+    static ZE::Refl::CClass* GetStaticClass() { return ZE::Refl::Internal::GetClassByName(#Class); } \
 
 #define DECLARE_REFL_STRUCT_OR_CLASS(Class) \
     DECLARE_REFL_STRUCT_OR_CLASS_INTERNAL(Class) \
     static const std::vector<const char*> GetParentClasses() { return {}; } \
-    virtual TNonOwningPtr<ZE::Refl::CStruct> GetStruct() { return ZE::Refl::Internal::GetStructByName(#Class); }
+    virtual ZE::Refl::CStruct* GetStruct() { return ZE::Refl::Internal::GetStructByName(#Class); }
 
 
 #define DECLARE_REFL_STRUCT_OR_CLASS1(Class, A) \
@@ -69,4 +69,4 @@ namespace Internal
     { \
         return { #A }; \
     } \
-    TNonOwningPtr<ZE::Refl::CStruct> GetStruct() override { return ZE::Refl::Internal::GetStructByName(#Class); }
+    ZE::Refl::CStruct* GetStruct() override { return ZE::Refl::Internal::GetStructByName(#Class); }

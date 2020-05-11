@@ -5,10 +5,10 @@
 
 namespace ZE
 {
-    class IRenderSystem;
-    class CEngine;
-    class CRenderThread;
-    class CGlobalShaderCompiler;
+class IRenderSystem;
+class CEngine;
+class CRenderThread;
+class CGlobalShaderCompiler;
 }
 
 /**
@@ -41,14 +41,14 @@ private:
     static void Loop();
 private:
     /** Render system ptr */
-    static ZE::IRenderSystem* RenderSystem;
+    inline static std::unique_ptr<ZE::IRenderSystem> RenderSystem;
 
     /** Engine ptr */
-    static ZE::CEngine* Engine;
+    inline static std::unique_ptr<ZE::CEngine> Engine;
 
-    static ZE::CRenderThread* RenderThread;
-    static ZE::CGlobalShaderCompiler* ShaderCompiler;
-    static SDL_Event Event;
+    inline static std::unique_ptr<ZE::CRenderThread> RenderThread;
+    inline static std::unique_ptr<ZE::CGlobalShaderCompiler> ShaderCompiler;
+    inline static SDL_Event Event;
 
-    static std::thread RenderThreadHandle;
+    inline static std::thread RenderThreadHandle;
 };

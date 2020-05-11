@@ -21,13 +21,6 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-ZE::IRenderSystem* CZinoEngineMain::RenderSystem = nullptr;
-ZE::CEngine* CZinoEngineMain::Engine = nullptr;
-std::thread CZinoEngineMain::RenderThreadHandle;
-ZE::CRenderThread* CZinoEngineMain::RenderThread = nullptr;
-ZE::CGlobalShaderCompiler* CZinoEngineMain::ShaderCompiler = nullptr;
-SDL_Event CZinoEngineMain::Event;
-
 void StartRenderThread()
 {
 	ZE::RenderThreadID = std::this_thread::get_id();
@@ -60,14 +53,14 @@ void CZinoEngineMain::PreInit()
 		LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing render system");
 		ZE::CModuleManager::LoadModule("VulkanRenderSystem");
 		ZE::CModuleManager::LoadModule("VulkanShaderCompiler");
-		RenderSystem = CreateVulkanRenderSystem();
+		RenderSystem.reset(CreateVulkanRenderSystem());
 		RenderSystem->Initialize();
 	}
 
 	/** INITIALIZE BASIC SHADERS */
 	{
 		LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing shader compiler");
-		ShaderCompiler = new ZE::CGlobalShaderCompiler;
+		ShaderCompiler = std::make_unique<ZE::CGlobalShaderCompiler>();
 
 		LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing basic shaders");
 	}
@@ -75,7 +68,7 @@ void CZinoEngineMain::PreInit()
 	/** START RENDER THREAD */
 	{
 		LOG(ZE::ELogSeverity::Info, EngineInit, "Starting render thread");
-		RenderThread = new ZE::CRenderThread;
+		RenderThread = std::make_unique<ZE::CRenderThread>();
 		RenderThreadHandle = std::thread(&StartRenderThread);
 	}
 }
@@ -87,7 +80,7 @@ void CZinoEngineMain::Init()
 	LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing engine class");
 
 	/** INITIALIZE ENGINE CLASS */
-	Engine = ZE::CreateEngine();
+	Engine.reset(ZE::CreateEngine());
 	Engine->Initialize();
 
 	/** LOAD RENDERER MODULE */
@@ -150,8 +143,7 @@ void CZinoEngineMain::Exit()
 	ZE::FlushRenderThread(true);
 
 	/** Delete engine */
-	delete Engine;
-	Engine = nullptr;
+	Engine.reset();
 
 	ZE::FlushRenderThread(true);
 	RenderSystem->WaitGPU();
@@ -159,15 +151,14 @@ void CZinoEngineMain::Exit()
 	/** Stopping render thread */
 	RenderThread->bRun = false;
 	RenderThreadHandle.join();
-	delete RenderThread;
+	RenderThread.reset();
 
 	/** Delete render system */
 	RenderSystem->Destroy();
-	delete RenderSystem;
-	RenderSystem = nullptr;
+	RenderSystem.reset();
 
 	/** Delete shader compiler */
-	delete ShaderCompiler;
+	ShaderCompiler.reset();
 
 	/** Clear all modules */
 	ZE::CModuleManager::UnloadModules();

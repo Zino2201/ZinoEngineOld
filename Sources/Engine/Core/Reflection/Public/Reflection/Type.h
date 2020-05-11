@@ -34,7 +34,7 @@ public:
     }
 
     template<typename T>
-    static TNonOwningPtr<CType> Get()
+    static CType* Get()
     {
 		auto& Type = Get(TTypeName<T>::Name);
 		must(Type); // This type is not registered if you hit this assert
@@ -42,7 +42,7 @@ public:
 		return Type;
     }
     
-    REFLECTION_API static TNonOwningPtr<CType> Get(const std::string_view& InName);
+    REFLECTION_API static CType* Get(const std::string_view& InName);
 
     REFLECTION_API static const std::vector<std::unique_ptr<CType>>& GetTypes() { return Types; }
 

@@ -8,6 +8,9 @@ void CTickSystem::Tick(ETickOrder InOrder, const float& InDeltaTime)
 {
 	CurrentOrder = InOrder;
 
+	/**
+	 * Check if we have any tickables waiting to be added to the global map
+	 */
 	if(!TickablesToAdd.empty())
 	{
 		for(auto& Tickable : TickablesToAdd)
@@ -20,6 +23,9 @@ void CTickSystem::Tick(ETickOrder InOrder, const float& InDeltaTime)
 		TickablesToAdd.clear();
 	}
 
+	/**
+	 * Tick the specified order and also ETickOrder::All
+	 */
 	auto& Tickables = TickablesMap[InOrder];
 	for (auto& Tickable : Tickables)
 	{

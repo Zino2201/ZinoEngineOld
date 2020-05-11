@@ -6,7 +6,7 @@ namespace ZE::Refl
 namespace Internal
 {
 
-TNonOwningPtr<CClass> GetClassByName(const char* InName)
+CClass* GetClassByName(const char* InName)
 {
 	// TODO: implement
 	must(false);
@@ -14,7 +14,7 @@ TNonOwningPtr<CClass> GetClassByName(const char* InName)
 }
 }
 
-TNonOwningPtr<CClass> CClass::Get(const char* InName)
+CClass* CClass::Get(const char* InName)
 {
 	for (auto& Class : Classes)
 	{
@@ -25,7 +25,7 @@ TNonOwningPtr<CClass> CClass::Get(const char* InName)
 	return nullptr;
 }
 
-void CClass::AddClass(const TNonOwningPtr<CClass>& InClass)
+void CClass::AddClass(CClass* InClass)
 {
 	Classes.push_back(InClass);
 }

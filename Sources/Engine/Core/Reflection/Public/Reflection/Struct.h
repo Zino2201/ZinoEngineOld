@@ -114,36 +114,35 @@ public:
 		Func->Func(InP, std::forward<Args>(InArgs)...);
 	}
 
-    REFLECTION_API static void AddStruct(const TNonOwningPtr<CStruct>& InStruct);
+    REFLECTION_API static void AddStruct(CStruct* InStruct);
 
     void AddProperty(const CProperty& InProperty)
     {
         Properties.push_back(InProperty);
     }
 
-    REFLECTION_API void AddParent(const TNonOwningPtr<CStruct>& InParent);
-
-    REFLECTION_API bool IsDerivedFrom(const TNonOwningPtr<CStruct>& InParent) const;
+    REFLECTION_API void AddParent(CStruct* InParent);
+    REFLECTION_API bool IsDerivedFrom(CStruct* InParent) const;
 
 	template<typename T>
-	static TNonOwningPtr<CStruct> Get()
+	static CStruct* Get()
 	{
-		TNonOwningPtr<CStruct> Struct = Get(TTypeName<T>::Name);
+		CStruct* Struct = Get(TTypeName<T>::Name);
 		must(Struct); // This struct is not registered
 
 		return Struct;
 	}
 
-    REFLECTION_API static TNonOwningPtr<CStruct> Get(const char* InName);
+    REFLECTION_API static CStruct* Get(const char* InName);
 
-    const std::vector<TNonOwningPtr<CStruct>>& GetParents() { return Parents; }
-    REFLECTION_API static const std::vector<TNonOwningPtr<CStruct>>& GetStructs() { return Structs; }
+    const std::vector<CStruct*>& GetParents() { return Parents; }
+    REFLECTION_API static const std::vector<CStruct*>& GetStructs() { return Structs; }
 protected:
     std::unique_ptr<IInstantiateFunc> InstantiateFunc;
     std::unique_ptr<IInstantiateFunc> PlacementNewFunc;
     std::vector<CProperty> Properties;
-    std::vector<TNonOwningPtr<CStruct>> Parents;
-    REFLECTION_API inline static std::vector<TNonOwningPtr<CStruct>> Structs;
+    std::vector<CStruct*> Parents;
+    REFLECTION_API inline static std::vector<CStruct*> Structs;
     bool bIsInstanciable;
 public:
     std::vector<const char*> Refl_ParentsWaitingAdd;
