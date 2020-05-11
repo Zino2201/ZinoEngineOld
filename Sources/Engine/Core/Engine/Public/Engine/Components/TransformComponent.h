@@ -1,7 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
-#include "ECS.h"
+#include "Engine/ECS.h"
 #include "Reflection/Reflection.h"
 
 namespace ZE::Components

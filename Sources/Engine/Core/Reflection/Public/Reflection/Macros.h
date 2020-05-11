@@ -52,6 +52,8 @@ namespace Internal
     friend ZE::Refl::CType; \
     template<typename... Args> \
     static void* Refl_InternalInstantiate(Args&&... InArgs) { return new Class(std::forward<Args>(InArgs)...); } \
+    template<typename... Args> \
+    static void Refl_InternalPlacementNew(void* InPtr, Args&&... InArgs) { new (InPtr) Class(std::forward<Args>(InArgs)...); } \
     static TNonOwningPtr<ZE::Refl::CStruct> GetStaticStruct() { return ZE::Refl::Internal::GetStructByName(#Class); } \
     static TNonOwningPtr<ZE::Refl::CClass> GetStaticClass() { return ZE::Refl::Internal::GetClassByName(#Class); } \
 

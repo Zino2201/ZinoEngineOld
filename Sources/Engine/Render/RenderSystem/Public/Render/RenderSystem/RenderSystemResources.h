@@ -1,7 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
-#include "Render/RenderCore.h"
+#include "Shader/ShaderCore.h"
 
 namespace ZE
 {
@@ -143,6 +143,7 @@ public:
 	virtual void Unmap() {}
 
 	const uint64_t& GetSize() const { return Size; }
+    virtual void* GetMappedData() const { return nullptr; }
 protected:
 	uint64_t Size;
 	ERSMemoryUsage MemoryUsage;
@@ -183,6 +184,23 @@ protected:
 };
 
 #pragma region Render Pass
+
+/**
+ * A viewport
+ */
+struct SViewport
+{
+	Math::SRect2D Rect;
+	float MinDepth;
+	float MaxDepth;
+};
+
+/** Index format */
+enum class EIndexFormat
+{
+	Uint16,
+	Uint32
+};
 
 /** Render pass */
 enum class ERSRenderPassAttachmentLoadOp
@@ -415,7 +433,7 @@ struct SRSFramebufferHash
 class CRSShader : public CRSResource
 {
 public:
-    CRSShader(const EShaderStage& InStage, 
+    CRSShader(const EShaderStage& InStage,
         const uint64_t& InBytecodeSize,
         const void* InBytecode,
         const SShaderParameterMap& InParameterMap,
@@ -676,6 +694,7 @@ public:
 };
 
 #pragma endregion
+
 
 /** Intrusive ptrs */
 using CRSSurfacePtr = boost::intrusive_ptr<CRSSurface>;

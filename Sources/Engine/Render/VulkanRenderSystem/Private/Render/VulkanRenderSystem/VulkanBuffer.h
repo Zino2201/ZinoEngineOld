@@ -30,11 +30,12 @@ public:
 		const SRSResourceCreateInfo& InInfo);
     virtual ~CVulkanBuffer();
 
-    void* Map(ERSBufferMapMode InMapMode);
-    void Unmap();
+    void* Map(ERSBufferMapMode InMapMode) override;
+    void Unmap() override;
 
     const uint64_t& GetSize() const { return Size; }
     const vk::Buffer& GetBuffer() const { return Buffer; }
+    void* GetMappedData() const override { return AllocationInfo.pMappedData; }
 private:
     vk::Buffer Buffer;
     VmaAllocation Allocation;

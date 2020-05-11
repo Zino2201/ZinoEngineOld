@@ -2,6 +2,7 @@ project "VulkanShaderCompiler"
 	basicModuleDefinitions()
 	includeCoreModules()
 	includeVulkan()
+	includeModule("Engine/Render/ShaderCore")
 	includeModule("Engine/Render/VulkanRenderSystem")
 	includeModule("Engine/Render/ShaderCompiler")
 	includeModule("Engine/Render/RenderCore")

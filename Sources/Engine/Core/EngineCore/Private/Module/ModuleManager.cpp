@@ -57,10 +57,14 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 	
 	Module->Handle = Handle;
 #endif
+
+	Modules.push_back(Module);
 	
 	LOG(ELogSeverity::Info, ModuleManager, "Loaded module %s", InName.c_str());
 
+
 	Module->Initialize();
+
 
 	OnModuleLoaded.Broadcast(InName.c_str());
 
@@ -83,7 +87,7 @@ void CModuleManager::FreeDLL(void* InHandle)
 
 void CModuleManager::UnloadModules()
 {
-	for (size_t i = Modules.size(); i > 0; --i)
+	for (size_t i = Modules.size() - 1; i > 0; --i)
 	{
 		CModule* Module = Modules[i];
 		UnloadModule(Module->GetName());

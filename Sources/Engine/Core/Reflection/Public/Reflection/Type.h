@@ -47,6 +47,7 @@ public:
     REFLECTION_API static const std::vector<std::unique_ptr<CType>>& GetTypes() { return Types; }
 
     const char* GetName() const { return Name; }
+    uint64_t GetSize() const { return Size; }
 protected:
     /** Pretty name */
     const char* Name;

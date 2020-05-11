@@ -26,10 +26,10 @@ public:
 	/**
 	 * Call all functions
 	 */
-	void Broadcast(Args&&... InArgs)
+	void Broadcast(Args... InArgs)
 	{
 		for (const auto& Function : Functions)
-			Function(InArgs...);
+			Function(std::forward<Args>(InArgs)...);
 	}
 private:
 	std::vector<std::function<TSignature>> Functions;

@@ -53,6 +53,15 @@ class CStruct : public CType
         std::function<void*(Args...)> Func;
 	};
 
+	template<typename... Args>
+	class CPlacementNewFunc : public IInstantiateFunc
+	{
+	public:
+		CPlacementNewFunc(const std::function<void(void*, Args...)>& InFunc) :
+			Func(InFunc) {}
+
+		std::function<void(void*, Args...)> Func;
+	};
 public:
 	CStruct(const char* InName,
 		const uint64_t& InSize)
@@ -70,6 +79,12 @@ public:
     void AddInstantiateFunc(const std::function<void*(Args...)>& InFunc)
     {
         InstantiateFunc = std::make_unique<CInstantiateFunc<Args...>>(InFunc);
+    }   
+    
+    template<typename... Args>
+    void AddPlacementNewFunc(const std::function<void(void*, Args...)>& InFunc)
+    {
+        PlacementNewFunc = std::make_unique<CPlacementNewFunc<Args...>>(InFunc);
     }
 
     /**
@@ -85,6 +100,19 @@ public:
         T* Obj = reinterpret_cast<T*>(Func->Func(std::forward<Args>(InArgs)...));
         return Obj;
     }
+
+    /**
+     * Placement new
+     */
+    template<typename... Args>
+	void PlacementNew(void* InP, Args&&... InArgs)
+	{
+		must(bIsInstanciable);
+
+		CPlacementNewFunc<Args...>* Func =
+			static_cast<CPlacementNewFunc<Args...>*>(PlacementNewFunc.get());
+		Func->Func(InP, std::forward<Args>(InArgs)...);
+	}
 
     REFLECTION_API static void AddStruct(const TNonOwningPtr<CStruct>& InStruct);
 
@@ -112,10 +140,13 @@ public:
     REFLECTION_API static const std::vector<TNonOwningPtr<CStruct>>& GetStructs() { return Structs; }
 protected:
     std::unique_ptr<IInstantiateFunc> InstantiateFunc;
+    std::unique_ptr<IInstantiateFunc> PlacementNewFunc;
     std::vector<CProperty> Properties;
     std::vector<TNonOwningPtr<CStruct>> Parents;
     REFLECTION_API inline static std::vector<TNonOwningPtr<CStruct>> Structs;
     bool bIsInstanciable;
+public:
+    std::vector<const char*> Refl_ParentsWaitingAdd;
 };
 DECLARE_REFL_TYPE(CStruct);
 

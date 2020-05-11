@@ -5,18 +5,21 @@
 namespace ZE::Refl::Builders
 {
 
+#define CONCAT_(x,y) x##y
+#define CONCAT(x,y) CONCAT_(x,y)
 /**
  * Helpers utilites to build types
  */
-#define REFL_INIT_BUILDERS_FUNC() \
-    struct Refl_AutoInit \
+#define REFL_INIT_BUILDERS_FUNC(UniqueName) REFL_INIT_BUILDERS_FUNC_INTERNAL(UniqueName)
+#define REFL_INIT_BUILDERS_FUNC_INTERNAL(c) \
+    struct CONCAT(_Refl_AutoInit, c) \
     { \
-        Refl_AutoInit() \
+        CONCAT(_Refl_AutoInit, c) () \
 	    { \
             ZE::Refl::Refl_InitReflectedClassesAndStructs(); \
         } \
     }; \
-    static Refl_AutoInit Refl_AutoInitStruct; \
+    static CONCAT(_Refl_AutoInit, c) CONCAT(Refl_AutoInitStruct, c); \
     static void Refl_InitReflectedClassesAndStructs()
 
 /**
@@ -28,6 +31,7 @@ class TTypeBuilder
 public:
 	TTypeBuilder(const char* InName)
     {
+        auto& Types = CType::GetTypes();
         must(!CType::Get(TTypeName<T>::Name)); // Duplicated type
 
         Type = CType::RegisterType<U>(InName, sizeof(T));
@@ -55,9 +59,12 @@ public:
         {
             auto PotentialParent = CStruct::Get(ParentClass);
 
-            must(PotentialParent);
             if(PotentialParent)
                 Struct->AddParent(PotentialParent);
+            else
+            {
+                Struct->Refl_ParentsWaitingAdd.push_back(ParentClass);
+            }
         }
     }
 
@@ -66,6 +73,9 @@ public:
 	{
         std::function<void*(Args...)> Functor = &T::Refl_InternalInstantiate<Args...>;
 		Struct->AddInstantiateFunc<Args...>(Functor);
+
+        std::function<void(void*, Args...)> Functor2 = &T::Refl_InternalPlacementNew<Args...>;
+		Struct->AddPlacementNewFunc<Args...>(Functor2);
 		return *this;
 	}
 

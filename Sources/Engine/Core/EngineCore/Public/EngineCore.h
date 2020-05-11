@@ -35,6 +35,7 @@
 #define verify(condition)
 #define must(condition)
 #endif
+#define RESTRICT __restrict
 
 namespace ZE
 {

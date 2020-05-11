@@ -11,10 +11,10 @@
 #include <assimp/postprocess.h>
 #include "Engine/StaticMesh.h"
 #include <SDL2/SDL.h>
-#include "Engine/Entity.h"
 #include "Engine/World.h"
-#include "ECS.h"
+#include "Engine/ECS.h"
 #include "Engine/Components/TransformComponent.h"
+#include "Engine/Components/StaticMeshComponent.h"
 
 namespace ZE
 {
@@ -35,7 +35,9 @@ void LoadModelUsingAssimp(const std::string_view& InPath,
 	static size_t CurrentVtx = 0;
 
 	Assimp::Importer Importer;
-	const aiScene* Scene = Importer.ReadFile(InPath.data(), aiProcess_FlipUVs);
+	const aiScene* Scene = Importer.ReadFile(InPath.data(), aiProcess_FlipUVs |
+		aiProcess_Triangulate |
+		aiProcess_JoinIdenticalVertices);
 	if(!Scene)
 		LOG(ELogSeverity::Fatal, None, "Failed to load model %s", InPath.data());
 
@@ -70,6 +72,14 @@ void LoadModelUsingAssimp(const std::string_view& InPath,
 
 }
 
+struct test
+{
+	alignas(16) glm::mat4 View;
+	alignas(16) glm::vec3 CameraPos;
+	alignas(16) glm::vec3 CameraFront;
+	alignas(16) glm::vec3 CameraUp;
+};
+
 void CEngineGame::Initialize()
 {
 	CEngine::Initialize();
@@ -85,20 +95,65 @@ void CEngineGame::Initialize()
 
 	ECS::EntityID Test = World->GetEntityManager()->CreateEntity();
 	ECS::EntityID Test2 = World->GetEntityManager()->CreateEntity();
-	World->GetEntityManager()->GetEntityByID(Test).AddComponent(
-		Refl::CStruct::Get<STransformComponent>());
+	ECS::EntityID Test3 = World->GetEntityManager()->CreateEntity();
+	ECS::EntityID Test4 = World->GetEntityManager()->CreateEntity();
+	ECS::EntityID Test5 = World->GetEntityManager()->CreateEntity();
 
+	World->GetEntityManager()->AddComponent(
+		Test, Refl::CStruct::Get<Components::SStaticMeshComponent>());
+	World->GetEntityManager()->AddComponent(
+		Test, Refl::CStruct::Get<ECS::SHierarchyComponent>());
+	World->GetEntityManager()->AddComponent(
+		Test2, Refl::CStruct::Get<ECS::SHierarchyComponent>());
+	World->GetEntityManager()->AddComponent(
+		Test3, Refl::CStruct::Get<ECS::SHierarchyComponent>());
+	World->GetEntityManager()->AddComponent(
+		Test4, Refl::CStruct::Get<ECS::SHierarchyComponent>());
+	World->GetEntityManager()->AddComponent(
+		Test5, Refl::CStruct::Get<ECS::SHierarchyComponent>());
+
+	World->GetEntityManager()->AttachEntity(Test2, Test);
+	World->GetEntityManager()->AttachEntity(Test3, Test);
+	World->GetEntityManager()->AttachEntity(Test4, Test);
+	World->GetEntityManager()->AttachEntity(Test5, Test);
+	
 	TNonOwningPtr<ECS::SEntityComponent> Transform = World->GetEntityManager()->GetComponent(
-		Test, Refl::CStruct::Get<STransformComponent>());
+		Test, Refl::CStruct::Get<ECS::SHierarchyComponent>());
 
-	__debugbreak();
+	TNonOwningPtr<ECS::SEntityComponent> Hiera2 = World->GetEntityManager()->GetComponent(
+		Test2, Refl::CStruct::Get<ECS::SHierarchyComponent>());
+
+	TNonOwningPtr<ECS::SEntityComponent> Hiera3 = World->GetEntityManager()->GetComponent(
+		Test3, Refl::CStruct::Get<ECS::SHierarchyComponent>());
+
+	TNonOwningPtr<ECS::SEntityComponent> Hiera4 = World->GetEntityManager()->GetComponent(
+		Test4, Refl::CStruct::Get<ECS::SHierarchyComponent>());
+
+	TNonOwningPtr<ECS::SEntityComponent> Hiera5 = World->GetEntityManager()->GetComponent(
+		Test5, Refl::CStruct::Get<ECS::SHierarchyComponent>());
+
+	//__debugbreak();
 
 
 	/**
 	 * Read merger sponger
 	 */
-	std::vector<SStaticMeshVertex> Vertices;
-	std::vector<uint32_t> Indices;
+	std::vector<SStaticMeshVertex> Vertices;/* = 
+	{
+		{ {-1, 1, 0}, {} },
+		{ {1, 1, 0}, {} },
+		{ {-1, -1, 0}, {} },
+		{ {1, -1, 0}, {} },
+	};*/
+	std::vector<uint32_t> Indices;/*= 
+	{ 
+		2, 1, 1,
+		3, 2, 1,
+		1, 3, 1,
+		2, 1, 1,
+		4, 4, 1,
+		3, 2, 1
+	};*/
 	LoadModelUsingAssimp("Assets/MergerSponge.obj", Vertices, Indices);
 
 	testSM = std::make_unique<CStaticMesh>();
@@ -107,7 +162,7 @@ void CEngineGame::Initialize()
 	ubo = GRenderSystem->CreateBuffer(
 		ERSBufferUsage::UniformBuffer,
 		ERSMemoryUsage::HostVisible,
-		sizeof(glm::mat4),
+		sizeof(test),
 		SRSResourceCreateInfo());
 
 	Vertex = GShaderCompiler->CompileShader(
@@ -181,11 +236,14 @@ glm::vec3 CameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 CameraDirection = glm::normalize(CameraPos - CameraTarget);
 glm::vec3 CameraRight = glm::normalize(glm::cross(Up, CameraDirection));
 glm::vec3 CameraUp = glm::cross(CameraDirection, CameraRight);
-glm::vec3 CameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 CameraFront = glm::vec3(0.0f, 0.0f, 0.0f);
 	float CamYaw = 0.f, CamPitch = 0.f;
+
 
 void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 {
+	CEngine::Tick(InEvent, InDeltaTime);
+
 	static auto startTime = std::chrono::high_resolution_clock::now();
 
 	auto currentTime = std::chrono::high_resolution_clock::now();
@@ -248,6 +306,7 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 			Front.x = cos(glm::radians(CamYaw)) * cos(glm::radians(CamPitch));
 			Front.y = sin(glm::radians(CamPitch));
 			Front.z = sin(glm::radians(CamYaw)) * cos(glm::radians(CamPitch));
+			Front.y *= -1;
 			CameraFront = glm::normalize(Front);
 
 			SDL_WarpMouseInWindow((SDL_Window*) Window->GetHandle(),
@@ -311,7 +370,7 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 					SRSRasterizerState(
 						EPolygonMode::Fill,
 						ECullMode::Back,
-						EFrontFace::CounterClockwise),
+						EFrontFace::Clockwise),
 					SRSDepthStencilState(
 						true,
 						true,
@@ -358,22 +417,24 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 			GRSContext->BindVertexBuffers({ testSM->GetRenderData()->GetVertexBuffer() });
 			GRSContext->BindIndexBuffer(testSM->GetRenderData()->GetIndexBuffer(),
 				0, testSM->GetRenderData()->GetIndexFormat());
+			
+					test WVP;
+					glm::mat4 World = glm::scale(glm::mat4(1.0f), glm::vec3(1));
+					glm::mat4 View = glm::lookAt(CameraPos, /*CameraPos
+						+ */CameraFront,
+						CameraUp);
+					glm::mat4 Proj = glm::perspective(glm::radians(45.0f),
+						1280 / (float) 720, 1000.f, 0.1f);
+					Proj[1][1] *= -1;
 
-			glm::mat4 WVP;
+					WVP.View = View;
+					WVP.CameraPos = CameraPos;
+					WVP.CameraFront = CameraFront;
+					WVP.CameraUp = CameraUp;
 
-			glm::mat4 World = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-			glm::mat4 View = glm::lookAt(CameraPos, CameraPos
-				+ CameraFront,
-				CameraUp);
-			glm::mat4 Proj = glm::perspective(glm::radians(45.0f), 
-				1280 / (float) 720, 1000.f, 0.1f);
-			Proj[1][1] *= -1;
-
-			WVP = Proj * View * World;
-
-			void* Dst = ubo->Map(ERSBufferMapMode::WriteOnly);
-			memcpy(Dst, &WVP, sizeof(glm::mat4));
-			ubo->Unmap();
+					void* Dst = ubo->Map(ERSBufferMapMode::WriteOnly);
+					memcpy(Dst, &WVP, sizeof(test));
+					ubo->Unmap();
 
 			GRSContext->SetShaderUniformBuffer(0, 0, ubo.get());
 

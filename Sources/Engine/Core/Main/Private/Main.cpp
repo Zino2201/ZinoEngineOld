@@ -49,6 +49,7 @@ void CZinoEngineMain::PreInit()
 		ZE::CModuleManager::LoadModule("Engine");
 
 		/** Load render modules */
+		ZE::CModuleManager::LoadModule("ShaderCore");
 		ZE::CModuleManager::LoadModule("RenderCore");
 		ZE::CModuleManager::LoadModule("RenderSystem");
 		ZE::CModuleManager::LoadModule("ShaderCompiler");
@@ -88,6 +89,9 @@ void CZinoEngineMain::Init()
 	/** INITIALIZE ENGINE CLASS */
 	Engine = ZE::CreateEngine();
 	Engine->Initialize();
+
+	/** LOAD RENDERER MODULE */
+	ZE::CModuleManager::LoadModule("Renderer");
 
 	LOG(ZE::ELogSeverity::Info, EngineInit, "Starting game loop");
 

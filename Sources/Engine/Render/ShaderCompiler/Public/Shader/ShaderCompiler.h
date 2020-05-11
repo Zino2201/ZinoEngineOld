@@ -1,7 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
-#include "Render/RenderCore.h"
+#include "Shader/ShaderCore.h"
 #include <future>
 #include <string_view>
 

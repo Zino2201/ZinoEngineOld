@@ -4,7 +4,7 @@
 namespace ZE::Refl
 {
 
-REFL_INIT_BUILDERS_FUNC()
+REFL_INIT_BUILDERS_FUNC(TransformComponent)
 {
 	Builders::TStructBuilder<Components::STransformComponent>("STransformComponent")
 		.Ctor<>();

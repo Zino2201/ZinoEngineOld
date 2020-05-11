@@ -8,6 +8,7 @@ layout(location = 0) out vec3 fragColor;
 layout(set = 0, binding = 0) uniform PerInstance
 {
     mat4 WVP;
+	mat4 World;
 };
 
 void main() {

@@ -1,0 +1,3 @@
+project "ShaderCore"
+	basicModuleDefinitions()
+	includeCoreModules()

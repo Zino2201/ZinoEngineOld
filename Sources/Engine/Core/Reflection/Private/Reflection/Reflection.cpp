@@ -37,7 +37,7 @@ std::vector<TNonOwningPtr<CClass>> GetDerivedClassesFrom(const TNonOwningPtr<CCl
 	return Classes;
 }
 
-REFL_INIT_BUILDERS_FUNC()
+REFL_INIT_BUILDERS_FUNC(Reflection)
 {
 	{
 		/** Register basic types */

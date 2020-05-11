@@ -3,6 +3,7 @@ project "Main"
 	includeCoreModules()
 	includeModule("Engine/Core/Engine")
 	includeModule("Engine/Render/RenderCore")
+	includeModule("Engine/Render/ShaderCore")
 	includeModule("Engine/Render/RenderSystem")
 	includeModule("Engine/Render/VulkanRenderSystem")
 	includeModule("Engine/Render/ShaderCompiler")

@@ -1,4 +1,4 @@
 project "ShaderCompiler"
 	basicModuleDefinitions()
 	includeCoreModules()
-	includeModule("Engine/Render/RenderCore")
+	includeModule("Engine/Render/ShaderCore")

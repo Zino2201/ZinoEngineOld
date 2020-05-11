@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "NonCopyable.h"
 
 namespace ZE
 {
@@ -8,7 +9,7 @@ namespace ZE
 /**
  * Module interface
  */
-class ENGINECORE_API CModule
+class ENGINECORE_API CModule : public CNonCopyable
 {
     friend class CModuleManager;
 

@@ -27,6 +27,23 @@ TNonOwningPtr<CStruct> CStruct::Get(const char* InName)
 void CStruct::AddStruct(const TNonOwningPtr<CStruct>& InStruct)
 {
 	Structs.push_back(InStruct);
+
+	// TODO: Make a better system
+	for(auto& Struct : Structs)
+	{
+		for (auto It = Struct->Refl_ParentsWaitingAdd.begin(); 
+			It != Struct->Refl_ParentsWaitingAdd.end();)
+		{
+			auto Parent = CStruct::Get(*It);
+			if (Parent)
+			{
+				Struct->AddParent(Parent);
+				It = Struct->Refl_ParentsWaitingAdd.erase(It);
+			}
+			else
+				++It;
+		}
+	}
 }
 
 void CStruct::AddParent(const TNonOwningPtr<CStruct>& InParent)
