@@ -6,27 +6,15 @@ namespace ZE
 
 DEFINE_MODULE(CDefaultModule, "ShaderCompiler")
 
-SHADERCOMPILER_API extern CGlobalShaderCompiler* GShaderCompiler = nullptr;
-
 DECLARE_LOG_CATEGORY(ShaderCompiler);
 
 IShaderCompiler::IShaderCompiler(const EShaderCompilerTarget& InTarget) : Target(InTarget) 
 {
-	ShaderCompilers.insert(std::make_pair(InTarget, this));
+	ShaderCompilers.insert(std::make_pair(InTarget, std::unique_ptr<IShaderCompiler>(this)));
 }
 
-CGlobalShaderCompiler::CGlobalShaderCompiler()
-{
-	GShaderCompiler = this;
-}
-
-CGlobalShaderCompiler::~CGlobalShaderCompiler()
-{
-	for(const auto& [Target, ShaderCompiler] : ShaderCompilers)
-	{
-		delete ShaderCompiler;
-	}
-}
+CGlobalShaderCompiler::CGlobalShaderCompiler() = default;
+CGlobalShaderCompiler::~CGlobalShaderCompiler() = default;
 
 std::future<SShaderCompilerOutput> CGlobalShaderCompiler::CompileShader(
 	const EShaderStage& InStage,

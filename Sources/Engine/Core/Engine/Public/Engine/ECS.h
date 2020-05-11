@@ -89,6 +89,8 @@ struct SEntityComponent
     DECLARE_REFL_STRUCT_OR_CLASS(SEntityComponent)
 
     virtual ~SEntityComponent() = default;
+
+    ECS::EntityID ParentEntity;
 };
 
 /**

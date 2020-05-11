@@ -7,6 +7,9 @@
 #include <thread>
 #include <mutex>
 
+/** Fix for __declspec(dllexport) templates */
+#pragma warning(disable: 4251)
+
 /** Containers */
 #include "Containers/Set.h"
 

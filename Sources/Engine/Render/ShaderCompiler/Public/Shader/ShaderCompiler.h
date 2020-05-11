@@ -4,6 +4,7 @@
 #include "Shader/ShaderCore.h"
 #include <future>
 #include <string_view>
+#include "NonCopyable.h"
 
 namespace ZE
 {
@@ -62,14 +63,20 @@ protected:
 
 #define DEFINE_SHADER_COMPILER(Target, Class) static Class* ShaderCompiler_##Class = new Class(Target)
 
-static std::unordered_map<EShaderCompilerTarget, IShaderCompiler*> ShaderCompilers;
+static std::unordered_map<EShaderCompilerTarget, std::unique_ptr<IShaderCompiler>> ShaderCompilers;
 
 /**
  * Global shader compiler
  */
-class SHADERCOMPILER_API CGlobalShaderCompiler
+class SHADERCOMPILER_API CGlobalShaderCompiler : public CNonCopyable
 {
 public:
+    static CGlobalShaderCompiler& Get()
+    {
+        static CGlobalShaderCompiler Instance;
+        return Instance;
+    }
+
     CGlobalShaderCompiler();
     ~CGlobalShaderCompiler();
 
@@ -82,18 +89,6 @@ public:
         const std::string_view& InEntryPoint,
         const EShaderCompilerTarget& InTargetFormat,
         const bool& bInShouldOptimize = true);
-//private:
-    /**
-     * Compile a GLSL shader (use glslang)
-     */
-    //SShaderCompilerOutput CompileShaderFromGLSL(
-    //    const EShaderStage& InStage,
-    //    const std::string_view& InShaderFilename,
-    //    const std::string_view& InEntryPoint,
-    //    const EShaderCompilerTargetFormat& InTargetFormat,
-    //    const bool& bInShouldOptimize);
 };
-
-SHADERCOMPILER_API extern CGlobalShaderCompiler* GShaderCompiler;
 
 }

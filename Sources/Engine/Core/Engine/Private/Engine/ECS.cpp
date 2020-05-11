@@ -139,6 +139,8 @@ SEntityComponent* CEntityManager::AddComponent(
 		SEntityComponent* Component = CreateComponent(InStruct);
 		Entity->AddComponent(Component);
 
+		Component->ParentEntity = InEntity;
+
 		if(!ComponentVecMap.count(InStruct))
 			ComponentVecMap.insert({ InStruct, {} });
 

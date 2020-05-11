@@ -3,6 +3,7 @@
 #include "EngineCore.h"
 #include <mutex>
 #include <queue>
+#include "NonCopyable.h"
 
 namespace ZE
 {
@@ -45,10 +46,14 @@ private:
 /**
  * Render class thread
  */
-class CRenderThread
+class CRenderThread : public CNonCopyable
 {
 public:
-    RENDERCORE_API CRenderThread();
+    RENDERCORE_API static CRenderThread& Get()
+    {
+        static CRenderThread Instance;
+        return Instance;
+    }
 
     RENDERCORE_API void Run();
 
@@ -58,6 +63,8 @@ public:
 	RENDERCORE_API void EnqueueCommand(IRenderThreadCommand* InCommand);
 
     bool HasCommands() const { return !Commands.empty(); }
+private:
+    RENDERCORE_API CRenderThread();
 public:
     std::atomic_bool bRun;
     CSemaphore CommandsExecutedSemaphore;
@@ -70,13 +77,11 @@ private:
     std::mutex CommandsMutex;
 };
 
-RENDERCORE_API extern CRenderThread* GRenderThread;
-
 /** Helper macro to enqueue render command */
 template<typename Lambda>
 FORCEINLINE void EnqueueRenderCommand(const char* InName, Lambda&& InLambda)
 {
-    GRenderThread->EnqueueCommand(new CRenderThreadCommandLambda(InName, 
+    CRenderThread::Get().EnqueueCommand(new CRenderThreadCommandLambda(InName, 
         std::forward<Lambda>(InLambda)));
 }
 
@@ -86,12 +91,12 @@ FORCEINLINE void EnqueueRenderCommand(const char* InName, Lambda&& InLambda)
  */
 FORCEINLINE void FlushRenderThread(const bool& bInWaitForFrame = false)
 {
-	while (GRenderThread->HasCommands())
+	while (CRenderThread::Get().HasCommands())
     {
 		if (bInWaitForFrame)
-			GRenderThread->RenderThreadFrameFinishedSemaphore.Wait();
+			CRenderThread::Get().RenderThreadFrameFinishedSemaphore.Wait();
 		else
-			GRenderThread->CommandsExecutedSemaphore.Wait();
+		    CRenderThread::Get().CommandsExecutedSemaphore.Wait();
     }
 }
 

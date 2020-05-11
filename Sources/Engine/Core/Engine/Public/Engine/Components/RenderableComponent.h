@@ -50,8 +50,8 @@ public:
 private:
     void OnComponentAdded(ECS::CEntityManager& InEntityManager, const ECS::EntityID& InEntityID, 
         ECS::SEntityComponent* InComponent);
-private:
-    std::unordered_map<SRenderableComponent*, TOwnerPtr<Renderer::CRenderableComponentProxy>> ProxyMap;
+	void OnComponentRemoved(ECS::CEntityManager& InEntityManager, const ECS::EntityID& InEntityID,
+		ECS::SEntityComponent* InComponent);
 public:
     TMulticastDelegate<> OnRenderableComponentUpdated;
 };

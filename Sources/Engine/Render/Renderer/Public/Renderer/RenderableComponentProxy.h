@@ -34,9 +34,9 @@ enum class ERenderableComponentProxyCacheMode
 class CRenderableComponentProxy : public CRenderThreadResource
 {
 public:
-    CRenderableComponentProxy(CWorldProxy* InWorld,
+    RENDERER_API CRenderableComponentProxy(CWorldProxy* InWorld,
         ERenderableComponentProxyCacheMode InCacheMode);
-    virtual ~CRenderableComponentProxy();
+    RENDERER_API virtual ~CRenderableComponentProxy();
 
     void InitResource_RenderThread() override;
     void DestroyResource_RenderThread() override;

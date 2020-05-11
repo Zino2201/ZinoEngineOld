@@ -162,13 +162,13 @@ void CEngineGame::Initialize()
 		sizeof(test),
 		SRSResourceCreateInfo());
 
-	Vertex = GShaderCompiler->CompileShader(
+	Vertex = CGlobalShaderCompiler::Get().CompileShader(
 		EShaderStage::Vertex,
 		"Shaders/main.vert",
 		"main",
 		EShaderCompilerTarget::VulkanSpirV);
 
-	Frag = GShaderCompiler->CompileShader(
+	Frag = CGlobalShaderCompiler::Get().CompileShader(
 		EShaderStage::Fragment,
 		"Shaders/main.frag",
 		"main",

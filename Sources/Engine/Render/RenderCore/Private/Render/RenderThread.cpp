@@ -6,12 +6,7 @@ namespace ZE
 
 DEFINE_MODULE(CDefaultModule, "RenderCore")
 
-CRenderThread* GRenderThread = nullptr;
-
-CRenderThread::CRenderThread()
-{
-	GRenderThread = this;
-}
+CRenderThread::CRenderThread() = default;
 
 void CRenderThread::Run()
 {

@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 void StartRenderThread()
 {
 	ZE::RenderThreadID = std::this_thread::get_id();
-	ZE::GRenderThread->Run();
+	ZE::CRenderThread::Get().Run();
 }
 
 void CZinoEngineMain::PreInit()
@@ -68,7 +68,7 @@ void CZinoEngineMain::PreInit()
 	/** START RENDER THREAD */
 	{
 		LOG(ZE::ELogSeverity::Info, EngineInit, "Starting render thread");
-		RenderThread = std::make_unique<ZE::CRenderThread>();
+		ZE::CRenderThread::Get();
 		RenderThreadHandle = std::thread(&StartRenderThread);
 	}
 }
@@ -84,6 +84,7 @@ void CZinoEngineMain::Init()
 	Engine->Initialize();
 
 	/** LOAD RENDERER MODULE */
+	LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing renderer");
 	ZE::CModuleManager::LoadModule("Renderer");
 
 	LOG(ZE::ELogSeverity::Info, EngineInit, "Starting game loop");
@@ -149,9 +150,8 @@ void CZinoEngineMain::Exit()
 	RenderSystem->WaitGPU();
 
 	/** Stopping render thread */
-	RenderThread->bRun = false;
+	ZE::CRenderThread::Get().bRun = false;
 	RenderThreadHandle.join();
-	RenderThread.reset();
 
 	/** Delete render system */
 	RenderSystem->Destroy();

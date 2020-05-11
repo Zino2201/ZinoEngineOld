@@ -1,6 +1,8 @@
 #include "Engine/Components/RenderableComponent.h"
 #include "Reflection/Builders.h"
 #include "Renderer/RenderableComponentProxy.h"
+#include "Engine/World.h"
+#include "Renderer/WorldProxy.h"
 
 namespace ZE
 {
@@ -52,9 +54,24 @@ void CRenderableComponentSystem::OnComponentAdded(ECS::CEntityManager& InEntityM
 
 		RenderableComp->Proxy = Proxy;
 
+		InEntityManager.GetWorld().GetProxy()->AddComponent(Proxy);
 	}
 }
 
+void CRenderableComponentSystem::OnComponentRemoved(ECS::CEntityManager& InEntityManager, 
+	const ECS::EntityID& InEntityID,
+	ECS::SEntityComponent* InComponent)
+{
+	/** Check if the component removed derive from SRenderableComponent */
+	if (SRenderableComponent* RenderableComp = Cast<SRenderableComponent>(InComponent))
+	{
+		if(!RenderableComp->Proxy)
+			return;
+
+		InEntityManager.GetWorld().GetProxy()->RemoveComponent(RenderableComp->Proxy);
+		RenderableComp->Proxy = nullptr;
+	}
+}
 
 } /** namespace Components */
 
