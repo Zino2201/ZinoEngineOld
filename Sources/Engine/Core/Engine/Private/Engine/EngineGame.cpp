@@ -15,6 +15,7 @@
 #include "Engine/ECS.h"
 #include "Engine/Components/TransformComponent.h"
 #include "Engine/Components/StaticMeshComponent.h"
+#include "Renderer/ClusteredForward/ClusteredForwardWorldRenderer.h"
 
 namespace ZE
 {
@@ -100,7 +101,10 @@ void CEngineGame::Initialize()
 	ECS::EntityID Test5 = World->GetEntityManager()->CreateEntity();
 
 	World->GetEntityManager()->AddComponent(
+		Test, Refl::CStruct::Get<Components::STransformComponent>());
+	World->GetEntityManager()->AddComponent(
 		Test, Refl::CStruct::Get<Components::SStaticMeshComponent>());
+
 	World->GetEntityManager()->AddComponent(
 		Test, Refl::CStruct::Get<ECS::SHierarchyComponent>());
 	World->GetEntityManager()->AddComponent(
@@ -315,129 +319,103 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 	EnqueueRenderCommand("CEngineGame::DrawWorld",
 		[this, time]()
 	{
+		ZE::Renderer::SWorldRendererView View;
+		View.Width = 1280;
+		View.Height = 720;
+		View.Surface = Viewport->GetSurface();
+		ZE::Renderer::CClusteredForwardWorldRenderer Renderer;
 		Viewport->Begin();
+
 		/** Renderer */
 
-		if (Vertex._Is_ready())
-		{
-			SShaderCompilerOutput& Output = Vertex.get();
-			shaderV = GRenderSystem->CreateShader(
-				EShaderStage::Vertex,
-				Output.Bytecode.size(),
-				Output.Bytecode.data(),
-				Output.ReflectionData.ParameterMap);
+		//if (Vertex._Is_ready())
+		//{
+		//	SShaderCompilerOutput& Output = Vertex.get();
+		//	shaderV = GRenderSystem->CreateShader(
+		//		EShaderStage::Vertex,
+		//		Output.Bytecode.size(),
+		//		Output.Bytecode.data(),
+		//		Output.ReflectionData.ParameterMap);
 
-			if (shaderV && shaderF) bshouldrendertri = true;
-		}
+		//	if (shaderV && shaderF) bshouldrendertri = true;
+		//}
 
-		if (Frag._Is_ready())
-		{
-			SShaderCompilerOutput& Output = Frag.get();
-			shaderF = GRenderSystem->CreateShader(
-				EShaderStage::Fragment,
-				Output.Bytecode.size(),
-				Output.Bytecode.data(),
-				Output.ReflectionData.ParameterMap);
+		//if (Frag._Is_ready())
+		//{
+		//	SShaderCompilerOutput& Output = Frag.get();
+		//	shaderF = GRenderSystem->CreateShader(
+		//		EShaderStage::Fragment,
+		//		Output.Bytecode.size(),
+		//		Output.Bytecode.data(),
+		//		Output.ReflectionData.ParameterMap);
 
-			if (shaderV && shaderF) bshouldrendertri = true;
-		}
+		//	if (shaderV && shaderF) bshouldrendertri = true;
+		//}
 
-		if (bshouldrendertri)
-		{
-			if (!pipeline)
-			{
-				pipeline = GRenderSystem->CreateGraphicsPipeline(
-					{
-						/** Vertex */
-						{
-							EShaderStage::Vertex,
-							shaderV.get(),
-							"main"
-						},
-						{
-							EShaderStage::Fragment,
-							shaderF.get(),
-							"main"
-						}
-					},
-					SStaticMeshVertex::GetBindingDescriptions(), 
-					SStaticMeshVertex::GetAttributeDescriptions(), 
-					TestRenderPass,
-					SRSBlendState(),
-					SRSRasterizerState(
-						EPolygonMode::Fill,
-						ECullMode::Back,
-						EFrontFace::Clockwise),
-					SRSDepthStencilState(
-						true,
-						true,
-						ERSComparisonOp::GreaterOrEqual));
-			}
-		}
+		//if (bshouldrendertri)
+		//{
+		//	if (!pipeline)
+		//	{
+		//		pipeline = GRenderSystem->CreateGraphicsPipeline(
+		//			{
+		//				/** Vertex */
+		//				{
+		//					EShaderStage::Vertex,
+		//					shaderV.get(),
+		//					"main"
+		//				},
+		//				{
+		//					EShaderStage::Fragment,
+		//					shaderF.get(),
+		//					"main"
+		//				}
+		//			},
+		//			SStaticMeshVertex::GetBindingDescriptions(), 
+		//			SStaticMeshVertex::GetAttributeDescriptions(), 
+		//			TestRenderPass,
+		//			SRSBlendState(),
+		//			SRSRasterizerState(
+		//				EPolygonMode::Fill,
+		//				ECullMode::Back,
+		//				EFrontFace::Clockwise),
+		//			SRSDepthStencilState(
+		//				true,
+		//				true,
+		//				ERSComparisonOp::GreaterOrEqual));
+		//	}
+		//}
 
-		/** Test rnder pass */
-		GRSContext->BeginRenderPass(
-			TestRenderPass,
-			{
-				/** Colors RTs */
-				{
-					Viewport->GetSurface()->GetBackbufferTexture()
-				},
+		Renderer.Render(World->GetProxy(), View);
+	
+		//if(pipeline)
+		//{
+		//	//GRSContext->BindGraphicsPipeline(pipeline.get());
+		//	//GRSContext->BindVertexBuffers({ testSM->GetRenderData()->GetVertexBuffer() });
+		//	//GRSContext->BindIndexBuffer(testSM->GetRenderData()->GetIndexBuffer(),
+		//	//	0, testSM->GetRenderData()->GetIndexFormat());
+		//	//
+		//	//		test WVP;
+		//	//		glm::mat4 World = glm::scale(glm::mat4(1.0f), glm::vec3(1));
+		//	//		glm::mat4 View = glm::lookAt(CameraPos, /*CameraPos
+		//	//			+ */CameraFront,
+		//	//			CameraUp);
+		//	//		glm::mat4 Proj = glm::perspective(glm::radians(45.0f),
+		//	//			1280 / (float) 720, 1000.f, 0.1f);
+		//	//		Proj[1][1] *= -1;
 
-				/** Depth RT */
-				{
-					Viewport->GetDepthBuffer(),
-				}
-			},
-		{ 0, 0, 0, 1 });
+		//	//		WVP.View = View;
+		//	//		WVP.CameraPos = CameraPos;
+		//	//		WVP.CameraFront = CameraFront;
+		//	//		WVP.CameraUp = CameraUp;
 
-		GRSContext->SetScissors(
-			{
-				{
-					glm::vec2(0.f, 0.f),
-					glm::vec2(1280.f, 720.f)
-				}
-			});
-		GRSContext->SetViewports(
-			{
-				{
-					{
-						glm::vec2(0.f, 0.f),
-						glm::vec2(1280.f, 720.f)
-					},
-					0.0f, 1.0f
-				}
-			});
-		if(pipeline)
-		{
-			GRSContext->BindGraphicsPipeline(pipeline.get());
-			GRSContext->BindVertexBuffers({ testSM->GetRenderData()->GetVertexBuffer() });
-			GRSContext->BindIndexBuffer(testSM->GetRenderData()->GetIndexBuffer(),
-				0, testSM->GetRenderData()->GetIndexFormat());
-			
-					test WVP;
-					glm::mat4 World = glm::scale(glm::mat4(1.0f), glm::vec3(1));
-					glm::mat4 View = glm::lookAt(CameraPos, /*CameraPos
-						+ */CameraFront,
-						CameraUp);
-					glm::mat4 Proj = glm::perspective(glm::radians(45.0f),
-						1280 / (float) 720, 1000.f, 0.1f);
-					Proj[1][1] *= -1;
+		//	//		void* Dst = ubo->Map(ERSBufferMapMode::WriteOnly);
+		//	//		memcpy(Dst, &WVP, sizeof(test));
+		//	//		ubo->Unmap();
 
-					WVP.View = View;
-					WVP.CameraPos = CameraPos;
-					WVP.CameraFront = CameraFront;
-					WVP.CameraUp = CameraUp;
+		//	//GRSContext->SetShaderUniformBuffer(0, 0, ubo.get());
 
-					void* Dst = ubo->Map(ERSBufferMapMode::WriteOnly);
-					memcpy(Dst, &WVP, sizeof(test));
-					ubo->Unmap();
-
-			GRSContext->SetShaderUniformBuffer(0, 0, ubo.get());
-
-			GRSContext->DrawIndexed(testSM->GetIndexCount(), 1, 0, 0, 0);
-		}
-		GRSContext->EndRenderPass();
+		//	//GRSContext->DrawIndexed(testSM->GetIndexCount(), 1, 0, 0, 0);
+		//}
 
 		Viewport->End();
 	});

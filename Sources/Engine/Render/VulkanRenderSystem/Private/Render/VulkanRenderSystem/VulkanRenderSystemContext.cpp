@@ -58,6 +58,9 @@ void CVulkanCommandBufferManager::SubmitGraphicsCmdBuffer(const vk::Semaphore& I
 	if (GraphicsCmdBuffer->HasBeenSubmitted())
 		GraphicsCmdBuffer->WaitFenceAndReset();
 
+	/** Release deferred destruction resources */
+	Device->GetDeferredDestructionMgr().DestroyResources();
+
 	GraphicsCmdBuffer->Begin();
 }
 
@@ -207,6 +210,9 @@ vk::Framebuffer CVulkanRenderPassManager::GetFramebuffer(const SRSFramebuffer& I
 
 	if(FoundFramebuffer != Framebuffers.end())
 	{
+		uint64_t t1 = SRSFramebufferHash()(InFramebuffer);
+		uint64_t t2 = SRSFramebufferHash()(FoundFramebuffer->first);
+
 		return FoundFramebuffer->second;
 	}
 	else
@@ -383,8 +389,9 @@ void CVulkanRenderSystemContext::SetScissors(const std::vector<SRect2D>& InSciss
 
 	for (const auto& Scissor : InScissors)
 	{
-		Scissors.emplace_back(vk::Offset2D(Scissor.Position.x,
-			Scissor.Position.y), vk::Extent2D(
+		Scissors.emplace_back(vk::Offset2D(
+			static_cast<int32_t>(Scissor.Position.x),
+			static_cast<int32_t>(Scissor.Position.y)), vk::Extent2D(
 				static_cast<uint32_t>(Scissor.Size.x), static_cast<uint32_t>(Scissor.Size.y)));
 	}
 

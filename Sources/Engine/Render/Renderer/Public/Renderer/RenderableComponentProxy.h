@@ -31,15 +31,17 @@ enum class ERenderableComponentProxyCacheMode
  * Render-thread version of a rendereable component
  * Class should be derived by rendereable components
  */
-class CRenderableComponentProxy : public CRenderThreadResource
+class RENDERER_API CRenderableComponentProxy : public CRenderThreadResource
 {
 public:
-    RENDERER_API CRenderableComponentProxy(CWorldProxy* InWorld,
+    CRenderableComponentProxy(CWorldProxy* InWorld,
         ERenderableComponentProxyCacheMode InCacheMode);
-    RENDERER_API virtual ~CRenderableComponentProxy();
+    virtual ~CRenderableComponentProxy();
 
     void InitResource_RenderThread() override;
     void DestroyResource_RenderThread() override;
+
+    void SetTransform(const Math::STransform& InTransform) { Transform = InTransform; }
 private:
     CWorldProxy* World;
 

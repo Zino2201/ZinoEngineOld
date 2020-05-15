@@ -11,6 +11,9 @@ namespace ZE
 template<typename To, typename From>
 inline To* Cast(From* In)
 {
+    if(!In)
+        return nullptr;
+
     Refl::CStruct* FromStruct = In->GetStruct();
 	Refl::CStruct* ToStruct = Refl::CStruct::Get<To>();
 

@@ -46,7 +46,6 @@ private:
     /** Engine ptr */
     inline static std::unique_ptr<ZE::CEngine> Engine;
 
-    inline static std::unique_ptr<ZE::CGlobalShaderCompiler> ShaderCompiler;
     inline static SDL_Event Event;
 
     inline static std::thread RenderThreadHandle;

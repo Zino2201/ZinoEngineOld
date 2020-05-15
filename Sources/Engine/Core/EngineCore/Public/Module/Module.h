@@ -15,6 +15,7 @@ class ENGINECORE_API CModule : public CNonCopyable
 
 public:
     virtual void Initialize();
+    virtual void Destroy() {}
     const char* GetName() const { return Name; }
     void SetName(const char* InName) { Name = InName; }
     void* GetHandle() const { return Handle; }

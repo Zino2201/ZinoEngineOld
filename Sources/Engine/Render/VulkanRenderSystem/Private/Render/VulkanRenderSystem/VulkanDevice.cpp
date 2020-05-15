@@ -33,8 +33,44 @@ void CVulkanStagingBufferManager::ReleaseStagingBuffers()
 	StagingBuffersToDelete.clear();
 }
 
+/** CVulkanDeferredDestructionMgr */
+void CVulkanDeferredDestructionManager::EnqueueResource(EHandleType InHandleType,
+	const VmaAllocation& InAllocation, uint64_t InHandle)
+{
+	Entries.emplace_back(InHandleType, InAllocation, InHandle);
+}
+
+void CVulkanDeferredDestructionManager::EnqueueResource(EHandleType InHandleType,
+	uint64_t InHandle)
+{
+	Entries.emplace_back(InHandleType, InHandle);
+}
+
+void CVulkanDeferredDestructionManager::DestroyResources()
+{
+	for(const auto& Entry : Entries)
+	{
+		switch(Entry.Type)
+		{
+		case EHandleType::Image:
+			vmaDestroyImage(Device.GetAllocator(),
+				reinterpret_cast<VkImage>(Entry.Handle),
+				Entry.Allocation);
+			break;
+		case EHandleType::ImageView:
+			Device.GetDevice().destroyImageView(
+				reinterpret_cast<VkImageView>(Entry.Handle));
+			break;
+		default:
+			break;
+		}
+	}
+
+	Entries.clear();
+}
+
 CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysicalDevice) :
-	PresentQueue(nullptr)
+	PresentQueue(nullptr), DeferredDestructionManager(*this)
 {
 	PhysicalDevice = InPhysicalDevice;
 
@@ -100,6 +136,8 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysicalDevice) :
 
 CVulkanDevice::~CVulkanDevice()
 {
+	DeferredDestructionManager.DestroyResources();
+
 #ifdef _DEBUG
 	/** Print a output to check for any uncleared resources */
 	char* Output;

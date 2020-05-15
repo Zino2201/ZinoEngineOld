@@ -27,6 +27,8 @@ void CECSManager::Initialize()
 	/** Hook to OnModuleLoaded, so we can load new systems when a module is loaded */
 	CModuleManager::GetOnModuleLoadedDelegate()
 		.Bind(std::bind(&CECSManager::OnModuleLoaded, this, std::placeholders::_1));
+
+	OnModuleLoaded("Engine");
 }	
 
 void CECSManager::OnModuleLoaded(const std::string_view& InName)

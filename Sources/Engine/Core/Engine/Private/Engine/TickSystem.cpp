@@ -32,8 +32,8 @@ void CTickSystem::Tick(ETickOrder InOrder, const float& InDeltaTime)
 		Tickable->Tick(InDeltaTime);
 	}
 
-	Tickables = TickablesMap[ETickOrder::All];
-	for (auto& Tickable : Tickables)
+	auto& AllTickables = TickablesMap[ETickOrder::All];
+	for (auto& Tickable : AllTickables)
 	{
 		Tickable->Tick(InDeltaTime);
 	}

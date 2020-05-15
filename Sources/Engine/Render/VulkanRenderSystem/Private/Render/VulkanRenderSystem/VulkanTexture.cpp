@@ -116,7 +116,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 			break;
 		}
 
-		ImageView = Device->GetDevice().createImageViewUnique(
+		ImageView = Device->GetDevice().createImageView(
 			vk::ImageViewCreateInfo(vk::ImageViewCreateFlags(),
 				Image,
 				ImageType,
@@ -169,7 +169,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 		break;
 	}
 
-	ImageView = Device->GetDevice().createImageViewUnique(
+	ImageView = Device->GetDevice().createImageView(
 		vk::ImageViewCreateInfo(vk::ImageViewCreateFlags(),
 			Image,
 			ImageType,
@@ -179,16 +179,33 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 				VulkanUtil::GetImageAspectFromFormat(InFormat), 0, InMipLevels, 0, 1))).value;
 	if (!ImageView)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image view");
+
+	PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectName = (PFN_vkSetDebugUtilsObjectNameEXT) 
+		GVulkanRenderSystem->GetInstance().getProcAddr("vkSetDebugUtilsObjectNameEXT");
+
+	VkDebugUtilsObjectNameInfoEXT Info;
+	Info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+	Info.pNext = nullptr;
+	Info.objectType = VK_OBJECT_TYPE_IMAGE_VIEW;
+	Info.objectHandle = reinterpret_cast<uint64_t>(static_cast<VkImageView>(ImageView));
+	Info.pObjectName = InCreateInfo.DebugName;
+
+	SetDebugUtilsObjectName(static_cast<VkDevice>(Device->GetDevice()), &Info);
 }
 
 CVulkanTexture::~CVulkanTexture()
 {
 	if(bShouldDestroyImage)
 	{
-		vmaDestroyImage(Device->GetAllocator(),
-			Image,
-			Allocation);
+		Device->GetDeferredDestructionMgr().EnqueueImage(
+			CVulkanDeferredDestructionManager::EHandleType::Image,
+			Allocation,
+			Image);	
 	}
+
+	Device->GetDeferredDestructionMgr().EnqueueImageView(
+		CVulkanDeferredDestructionManager::EHandleType::ImageView,
+		ImageView);
 }
 
 CRSTexture* CVulkanRenderSystem::CreateTexture(

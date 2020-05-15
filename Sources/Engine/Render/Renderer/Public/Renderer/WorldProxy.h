@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "NonCopyable.h"
 
 namespace ZE::Renderer
 {
@@ -10,14 +11,14 @@ class CRenderableComponentProxy;
 /**
  * Render-thread version of the world
  */
-class CWorldProxy final
+class RENDERER_API CWorldProxy final : public CNonCopyable
 {
 public:
-    RENDERER_API CWorldProxy();
-    RENDERER_API ~CWorldProxy();
+    CWorldProxy();
+    ~CWorldProxy();
 
-    RENDERER_API void AddComponent(const TOwnerPtr<CRenderableComponentProxy>& InProxy);
-    RENDERER_API void RemoveComponent(CRenderableComponentProxy* InProxy);
+    void AddComponent(const TOwnerPtr<CRenderableComponentProxy>& InProxy);
+    void RemoveComponent(CRenderableComponentProxy* InProxy);
 private:
     void AddComponent_RenderThread(const TOwnerPtr<CRenderableComponentProxy>& InProxy);
     void RemoveComponent_RenderThread(CRenderableComponentProxy* InProxy);

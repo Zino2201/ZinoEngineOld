@@ -175,7 +175,10 @@ public:
     const uint32_t& GetWidth() const { return Width; }
     const uint32_t& GetHeight() const { return Height; }
     const EFormat& GetFormat() const { return Format; }
+    const ERSTextureUsage& GetTextureUsage() const { return TextureUsage; }
+    const ERSTextureType& GetType() const { return Type; }
 protected:
+    ERSTextureType Type;
     EFormat Format;
     ERSTextureUsage TextureUsage;
     ERSMemoryUsage MemoryUsage;
@@ -388,6 +391,15 @@ struct SRSFramebuffer
 
     /** Depth render targets */
     CRSTexture* DepthRTs[GMaxRenderTargetPerFramebuffer];
+
+    SRSFramebuffer() 
+    {
+        for(size_t i = 0; i < GMaxRenderTargetPerFramebuffer; ++i)
+        {
+            ColorRTs[i] = nullptr;
+            DepthRTs[i] = nullptr;
+        }
+    }
 
 	bool operator==(const SRSFramebuffer& InFramebuffer) const
 	{

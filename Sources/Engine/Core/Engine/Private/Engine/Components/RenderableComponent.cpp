@@ -3,6 +3,7 @@
 #include "Renderer/RenderableComponentProxy.h"
 #include "Engine/World.h"
 #include "Renderer/WorldProxy.h"
+#include "Engine/Components/TransformComponent.h"
 
 namespace ZE
 {
@@ -46,15 +47,31 @@ void CRenderableComponentSystem::OnComponentAdded(ECS::CEntityManager& InEntityM
 	if(SRenderableComponent* RenderableComp = Cast<SRenderableComponent>(InComponent))
 	{
 		/**
-		 * Instantiate a proxy for the render thread
+		 * Get parent entity transform
 		 */
-		TOwnerPtr<Renderer::CRenderableComponentProxy> Proxy = RenderableComp->InstantiateProxy();
-		if(!Proxy)
-			return;
+		if(STransformComponent* Transform = 
+			InEntityManager.GetComponent<STransformComponent>(InEntityID))
+		{
+			/**
+			 * Instantiate a proxy for the render thread
+			 */
+			TOwnerPtr<Renderer::CRenderableComponentProxy> Proxy = RenderableComp->InstantiateProxy(
+				InEntityManager.GetWorld().GetProxy());
+			if(!Proxy)
+				return;
 
-		RenderableComp->Proxy = Proxy;
+			RenderableComp->Proxy = Proxy;
+			Proxy->SetTransform(Transform->Transform);
 
-		InEntityManager.GetWorld().GetProxy()->AddComponent(Proxy);
+			InEntityManager.GetWorld().GetProxy()->AddComponent(Proxy);
+		}
+		else
+		{
+			must(false);
+			LOG(ELogSeverity::Error, Engine, 
+				"Error! You must add a Transform Component to entity ID %d to render things.",
+				InEntityID);
+		}
 	}
 }
 

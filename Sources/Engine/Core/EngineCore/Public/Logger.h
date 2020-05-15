@@ -18,6 +18,7 @@ enum class ELogSeverity
 #define DECLARE_LOG_CATEGORY(Name) const std::string LogCategory_##Name = #Name
 
 DECLARE_LOG_CATEGORY(None);
+DECLARE_LOG_CATEGORY(Engine);
 
 /**
  * Logger singleton

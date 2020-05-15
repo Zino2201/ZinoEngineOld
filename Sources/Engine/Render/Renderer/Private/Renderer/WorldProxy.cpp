@@ -40,7 +40,19 @@ void CWorldProxy::RemoveComponent_RenderThread(CRenderableComponentProxy* InProx
 
 	/** Remove proxy from vector (this will free the proxy memory) **/
 	InProxy->DestroyResource();
-	//Proxies.erase(std::remove(Proxies.begin(), Proxies.end(), InProxy), Proxies.end());
+	{
+		size_t Idx = 0;
+		for (const auto& Proxy : Proxies)
+		{
+			if(Proxy.get() == InProxy)
+			{
+				Proxies.erase(Proxies.begin() + Idx);
+				break;
+			}
+
+			Idx++;
+		}
+	}
 }
 
 }

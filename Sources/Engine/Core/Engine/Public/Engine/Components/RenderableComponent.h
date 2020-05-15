@@ -5,6 +5,7 @@
 namespace ZE::Renderer
 {
 class CRenderableComponentProxy;
+class CWorldProxy;
 }
 
 namespace ZE::Components
@@ -22,7 +23,11 @@ struct SRenderableComponent : public ECS::SEntityComponent
     /** Notify the renderable system if the component proxy should be updated */
     bool bHasBeenUpdated;
 
-    virtual TOwnerPtr<Renderer::CRenderableComponentProxy> InstantiateProxy() const { return nullptr; }
+    /**
+     * Utility function for instanciating a proxy
+     */
+    virtual TOwnerPtr<Renderer::CRenderableComponentProxy> InstantiateProxy(Renderer::CWorldProxy* InWorld) 
+        const { return nullptr; }
 
     SRenderableComponent() : Proxy(nullptr), bHasBeenUpdated(false) {}
 };

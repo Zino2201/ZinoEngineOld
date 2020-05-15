@@ -14,6 +14,7 @@ public:
         const uint32_t& InWidth,
         const uint32_t& InHeight,
         const vk::SurfaceKHR& InSurface);
+    ~CVulkanSwapChain();
 
     void AcquireImage();
     void Present(CVulkanQueue* InPresentQueue);

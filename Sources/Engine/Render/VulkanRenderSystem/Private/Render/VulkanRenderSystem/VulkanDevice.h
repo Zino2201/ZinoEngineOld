@@ -26,6 +26,61 @@ private:
     std::vector<CVulkanInternalStagingBuffer*> StagingBuffersToDelete;
 };
 
+/**
+ * Class used to defer destruction to certain resources
+ */
+class CVulkanDeferredDestructionManager
+{
+public:
+    enum class EHandleType
+    {
+        Buffer,
+        Image,
+        ImageView
+    };
+    
+    struct SEntry
+    {
+        EHandleType Type;
+        VmaAllocation Allocation;
+        uint64_t Handle;
+
+        SEntry(EHandleType InType,
+            const VmaAllocation& InAllocation,
+            uint64_t InHandle) : Type(InType),
+            Allocation(InAllocation), Handle(InHandle) {}
+
+		SEntry(EHandleType InType,
+			uint64_t InHandle) : Type(InType),
+			Handle(InHandle) {}
+    };
+    CVulkanDeferredDestructionManager(CVulkanDevice& InDevice) : Device(InDevice) {}
+
+    void EnqueueImage(EHandleType InHandleType, const VmaAllocation& InAllocation, 
+        vk::Image& InHandle)
+    {
+        EnqueueResource(InHandleType, InAllocation, 
+            reinterpret_cast<uint64_t>(static_cast<VkImage>(InHandle)));
+	    InHandle = vk::Image();
+    }
+
+	void EnqueueImageView(EHandleType InHandleType, vk::ImageView& InHandle)
+	{
+		EnqueueResource(InHandleType, reinterpret_cast<uint64_t>(static_cast<VkImageView>(InHandle)));
+	    InHandle = vk::ImageView();
+    }
+
+    void DestroyResources();
+private:    
+    void EnqueueResource(EHandleType InHandleType, 
+        const VmaAllocation& InAllocation, uint64_t InHandle);
+	void EnqueueResource(EHandleType InHandleType,
+		uint64_t InHandle);
+private:
+    CVulkanDevice& Device;
+    std::vector<SEntry> Entries;
+};
+
 class CVulkanDevice
 {
 public:
@@ -37,6 +92,7 @@ public:
 
     CVulkanStagingBufferManager* GetStagingBufferMgr() { return StagingBufferMgr.get(); }
     CVulkanPipelineLayoutManager* GetPipelineLayoutMgr() { return PipelineLayoutMgr.get(); }
+    CVulkanDeferredDestructionManager& GetDeferredDestructionMgr() { return DeferredDestructionManager; }
     CVulkanRenderSystemContext* GetContext() const { return Context.get(); }
     const VmaAllocator& GetAllocator() const { return Allocator; }
     const vk::Device& GetDevice() const { return *Device; }
@@ -44,6 +100,7 @@ public:
     CVulkanQueue* GetGraphicsQueue() const { return GraphicsQueue.get(); }
     CVulkanQueue* GetPresentQueue() const { return PresentQueue; }
 private:
+    CVulkanDeferredDestructionManager DeferredDestructionManager;
     std::unique_ptr<CVulkanRenderSystemContext> Context;
     std::unique_ptr<CVulkanStagingBufferManager> StagingBufferMgr;
     VmaAllocator Allocator;

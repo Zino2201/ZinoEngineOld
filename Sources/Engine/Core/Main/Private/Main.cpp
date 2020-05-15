@@ -60,7 +60,7 @@ void CZinoEngineMain::PreInit()
 	/** INITIALIZE BASIC SHADERS */
 	{
 		LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing shader compiler");
-		ShaderCompiler = std::make_unique<ZE::CGlobalShaderCompiler>();
+		ZE::CGlobalShaderCompiler::Get();
 
 		LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing basic shaders");
 	}
@@ -153,12 +153,11 @@ void CZinoEngineMain::Exit()
 	ZE::CRenderThread::Get().bRun = false;
 	RenderThreadHandle.join();
 
+	ZE::CModuleManager::UnloadModule("Renderer");
+
 	/** Delete render system */
 	RenderSystem->Destroy();
 	RenderSystem.reset();
-
-	/** Delete shader compiler */
-	ShaderCompiler.reset();
 
 	/** Clear all modules */
 	ZE::CModuleManager::UnloadModules();

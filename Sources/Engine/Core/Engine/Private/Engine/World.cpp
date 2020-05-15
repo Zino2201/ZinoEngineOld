@@ -14,9 +14,9 @@ CWorld::CWorld()
 
 CWorld::~CWorld() = default;
 
-void CWorld::Tick(float InDeltaTime)
+void CWorld::Tick(const float& InDeltaTime)
 {
-	__debugbreak();
+	
 }
 
 }

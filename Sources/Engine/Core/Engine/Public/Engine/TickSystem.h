@@ -31,7 +31,7 @@ enum class ETickOrder
 /**
  * Base abstract class for objects that can be ticked
  */
-class CTickable
+class ENGINE_API CTickable
 {
 public:
     CTickable();
@@ -44,7 +44,7 @@ public:
 /**
  * Engine tick system
  */
-class CTickSystem : public CNonCopyable
+class ENGINE_API CTickSystem : public CNonCopyable
 {
 public:
     static CTickSystem& Get()

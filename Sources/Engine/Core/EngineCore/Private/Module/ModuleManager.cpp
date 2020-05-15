@@ -62,9 +62,7 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 	
 	LOG(ELogSeverity::Info, ModuleManager, "Loaded module %s", InName.c_str());
 
-
 	Module->Initialize();
-
 
 	OnModuleLoaded.Broadcast(InName.c_str());
 
@@ -99,10 +97,11 @@ void CModuleManager::UnloadModules()
 void CModuleManager::UnloadModule(const std::string& InName)
 {
 	size_t Idx = 0;
-	for(const auto& Module : Modules)
+	for (auto& Module : Modules)
 	{
 		if(Module->GetName() == InName)
 		{
+			Module->Destroy();
 			FreeDLL(Module->GetHandle());
 			delete Module;
 			Modules.erase(Modules.begin() + Idx);

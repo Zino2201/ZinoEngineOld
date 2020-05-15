@@ -94,6 +94,7 @@ enum class ESampleCount
 	inline EnumType& operator&= (EnumType& a, EnumType b) { return (EnumType&)((std::underlying_type<EnumType>::type&)a &= (std::underlying_type<EnumType>::type)b); } \
 	inline EnumType& operator^= (EnumType& a, EnumType b) { return (EnumType&)((std::underlying_type<EnumType>::type&)a ^= (std::underlying_type<EnumType>::type)b); }
 #define HAS_FLAG(Enum, Other) (Enum & Other) == Other
+#define HASN_FLAG(Enum, Other) !(HAS_FLAG(Enum, Other))
 
 /** Semaphore */
 

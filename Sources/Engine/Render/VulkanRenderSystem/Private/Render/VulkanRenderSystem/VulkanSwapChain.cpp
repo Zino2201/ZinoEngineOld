@@ -102,6 +102,8 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 	}
 }
 
+CVulkanSwapChain::~CVulkanSwapChain() = default;
+
 void CVulkanSwapChain::AcquireImage()
 {
 	/** Acquire new image */

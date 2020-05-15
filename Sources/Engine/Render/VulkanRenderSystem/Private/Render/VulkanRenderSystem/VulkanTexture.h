@@ -45,10 +45,10 @@ public:
         const SRSResourceCreateInfo& InCreateInfo);
     virtual ~CVulkanTexture();
 
-    const vk::ImageView& GetImageView() const { return *ImageView; }
+    const vk::ImageView& GetImageView() const { return ImageView; }
 protected:
     bool bShouldDestroyImage;
     vk::Image Image;
-    vk::UniqueImageView ImageView;
+    vk::ImageView ImageView;
     VmaAllocation Allocation;
 };
