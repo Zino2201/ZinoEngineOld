@@ -12,7 +12,8 @@ enum class ELogSeverity
 	Info,
 	Warn,
 	Error,
-	Fatal
+	Fatal,
+	FatalRetryDebug
 };
 
 #define DECLARE_LOG_CATEGORY(Name) const std::string LogCategory_##Name = #Name
@@ -44,13 +45,6 @@ public:
 		va_start(Va, InMessage);
 		Log(InSeverity, InCategory, InMessage, Va);
 		va_end(Va);
-
-		if (InSeverity == ELogSeverity::Fatal)
-		{
- 			__debugbreak();
-			system("pause");
-			exit(-1);
-		}
 	}
 
 	/**

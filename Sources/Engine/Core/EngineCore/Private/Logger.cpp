@@ -2,6 +2,10 @@
 #include "Logger.h"
 #include <iostream>
 #include "Module/Module.h"
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
 
 namespace ZE
 {
@@ -18,6 +22,8 @@ ENGINECORE_API std::thread::id StatThreadID;
 void CLogger::Log(const ELogSeverity& InSeverity, 
 	const std::string& InCategory, const std::string& InMessage, va_list InArgs) const
 {
+	char PrintfBuffer[1024];
+
 #ifdef NDEBUG
 	if (InSeverity != ELogSeverity::Debug)
 	{
@@ -43,11 +49,41 @@ void CLogger::Log(const ELogSeverity& InSeverity,
 
 		std::cout << "[" << SeverityToString(InSeverity) << "/" << ThreadName << "] ("
 			<< InCategory << ") ";
-		std::vprintf(InMessage.c_str(), InArgs);
+		vsprintf_s(PrintfBuffer, InMessage.c_str(), InArgs);
+		std::cout << PrintfBuffer;
 		std::cout << std::endl;
 #ifdef NDEBUG
 	}
 #endif
+
+	if (InSeverity >= ELogSeverity::Fatal)
+	{
+#ifdef _DEBUG
+		if (InSeverity == ELogSeverity::FatalRetryDebug)
+		{
+#ifdef _WIN32
+			int Ret = MessageBoxA(nullptr, PrintfBuffer, "ZINOENGINE FATAL ERROR",
+				MB_RETRYCANCEL | MB_ICONERROR);
+			if(Ret == IDRETRY)
+			{
+				return;
+			}
+			else
+			{
+				__debugbreak();
+				exit(-1);
+				return;
+			}
+		}
+#endif
+#endif
+
+#ifdef _WIN32
+		MessageBoxA(nullptr, PrintfBuffer, "ZINOENGINE FATAL ERROR", MB_OK | MB_ICONERROR);
+#endif
+		__debugbreak();
+		exit(-1);
+	}
 }
 
 std::string CLogger::SeverityToString(const ELogSeverity& InSeverity) const

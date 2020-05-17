@@ -58,10 +58,17 @@ void CClusteredForwardWorldRenderer::Render(CWorldProxy* InWorld, const SWorldRe
 					0.0f, 1.0f
 				}
 			});
+
+		RenderWorld(InWorld);
 	});
 
 	Graph.Compile();
 	Graph.Execute();
+}
+
+void CClusteredForwardWorldRenderer::RenderWorld(CWorldProxy* InWorld)
+{
+
 }
 
 }

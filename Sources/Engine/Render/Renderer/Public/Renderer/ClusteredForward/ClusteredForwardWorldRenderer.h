@@ -14,6 +14,8 @@ public:
     CClusteredForwardWorldRenderer() = default;
 
     void Render(CWorldProxy* InWorld, const SWorldRendererView& InView) override;
+private:
+    void RenderWorld(CWorldProxy* InWorld);
 };
 
 }

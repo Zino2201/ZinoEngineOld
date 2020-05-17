@@ -1,14 +1,13 @@
 #include "Module/Module.h"
 #include "Shader/ShaderCompiler.h"
-#include <shaderc/shaderc.hpp>
 #include "IO/IOUtils.h"
 #include <spirv_glsl.hpp>
+#include "ShaderConductor/ShaderConductor.hpp"
+#include <array>
 
 using namespace ZE;
 
 DECLARE_LOG_CATEGORY(VulkanShaderCompiler);
-
-DEFINE_MODULE(CDefaultModule, "VulkanShaderCompiler");
 
 /**
  * Vulkan shader compiler
@@ -18,90 +17,79 @@ class CVulkanShaderCompiler : public IShaderCompiler
 public:
 	CVulkanShaderCompiler(const EShaderCompilerTarget& InTarget) : IShaderCompiler(InTarget) {}
 
-	virtual SShaderCompilerOutput CompileShader(
+	SShaderCompilerOutput CompileShader(
 		const EShaderStage& InStage,
 		const std::string_view& InShaderFilename,
 		const std::string_view& InEntryPoint,
 		const EShaderCompilerTarget& InTargetFormat,
 		const bool& bInShouldOptimize) override
 	{
+		SShaderCompilerOutput Output;
+
 		/**
 		 * Read shader data
 		 */
 		std::string ShaderData = IOUtils::ReadTextFile(InShaderFilename);
-
-		/** Compile shader */
-		shaderc::Compiler Compiler;
-		shaderc::CompileOptions Options;
-
-		shaderc_shader_kind Kind = shaderc_vertex_shader;
-
-		/** Add define for shader stage type + set kind */
-		// TODO: Move this to shader compiler
-		switch (InStage)
+		if(ShaderData.empty())
 		{
-		case EShaderStage::Vertex:
-			Kind = shaderc_vertex_shader;
-			Options.AddMacroDefinition("VERTEX_SHADER");
-			break;
+			Output.ErrMsg = "Can't open shader file";
+			return Output;
+		}
+
+		ShaderConductor::ShaderStage Stage = ShaderConductor::ShaderStage::VertexShader;
+		switch(InStage)
+		{
 		case EShaderStage::Fragment:
-			Kind = shaderc_fragment_shader;
-			Options.AddMacroDefinition("FRAGMENT_SHADER");
+			Stage = ShaderConductor::ShaderStage::PixelShader;
 			break;
-		}
+		default:
+			break;
+		};
 
-		/** Preprocess data */
-		std::string PreprocessedShader;
-		{
-			shaderc::PreprocessedSourceCompilationResult Result =
-				Compiler.PreprocessGlsl(ShaderData, Kind, InShaderFilename.data(), Options);
+		ShaderConductor::Compiler::SourceDesc SourceDesc;
+		SourceDesc.source = ShaderData.c_str();
+		SourceDesc.fileName = InShaderFilename.data();
+		SourceDesc.entryPoint = InEntryPoint.data();
+		SourceDesc.stage = Stage;
+		SourceDesc.numDefines = 0;
+		SourceDesc.defines = nullptr;
 
-			if (Result.GetCompilationStatus() != shaderc_compilation_status_success)
-			{
-				LOG(ELogSeverity::Error, VulkanShaderCompiler, "Failed to preprocess shader %s: %s",
-					InShaderFilename.data(), Result.GetErrorMessage().c_str());
-				return {};
-			}
-			else
-			{
-				PreprocessedShader = { Result.cbegin(), Result.cend() };
-			}
-		}
-
-		/** Compile */
-		SShaderCompilerOutput Output;
-		{
-			Options.SetTargetEnvironment(shaderc_target_env_vulkan, 0);
-
-			/** If in debug mode, don't optimize */
+		ShaderConductor::Compiler::Options Options;
+		Options.disableOptimizations = bInShouldOptimize;
 #ifdef _DEBUG
-			Options.SetOptimizationLevel(bInShouldOptimize ?
-				shaderc_optimization_level_size : shaderc_optimization_level_zero);
+		Options.optimizationLevel = 1;
 #else
-			Options.SetOptimizationLevel(bInShouldOptimize ?
-				shaderc_optimization_level_performance : shaderc_optimization_level_zero);
+		Options.optimizationLevel = 3;
 #endif
 
-			shaderc::SpvCompilationResult Result = Compiler.CompileGlslToSpv(
-				PreprocessedShader.c_str(),
-				Kind,
-				InShaderFilename.data(),
-				InEntryPoint.data(),
-				Options);
+		std::array<ShaderConductor::Compiler::TargetDesc, 1> Targets = 
+		{
+			{ ShaderConductor::ShadingLanguage::SpirV, "1_0", false }
+		};
 
-			if (Result.GetCompilationStatus() != shaderc_compilation_status_success)
-			{
-				LOG(ELogSeverity::Error, VulkanShaderCompiler, "Failed to compile shader %s: %s",
-					InShaderFilename.data(), Result.GetErrorMessage().c_str());
-				return {};
-			}
-			else
-			{
-				Output.bSucceed = true;
-				Output.Bytecode = { Result.begin(), Result.end() };
-				Output.ReflectionData = GetReflectionData(Output.Bytecode);
-			}
+		ShaderConductor::Compiler::ResultDesc Result;
+		ShaderConductor::Compiler::Compile(SourceDesc, Options, 
+			Targets.data(), static_cast<uint32_t>(Targets.size()), 
+			&Result);
+
+		if(Result.hasError)
+		{
+			std::string_view ErrMsg(
+				reinterpret_cast<const char*>(Result.errorWarningMsg->Data()), 
+				Result.errorWarningMsg->Size());
+			Output.ErrMsg = ErrMsg;
+			LOG(ELogSeverity::Error, VulkanShaderCompiler, "Failed to compile shader %s: %s",
+				InShaderFilename.data(), Output.ErrMsg.c_str());
+			return Output;
 		}
+
+		uint32_t* Spv = reinterpret_cast<uint32_t*>(const_cast<void*>(Result.target->Data()));
+
+		Output.Bytecode = std::vector<uint32_t>(
+			Spv,
+			Spv + (Result.target->Size() / sizeof(uint32_t)));
+		Output.bSucceed = true;
+		Output.ReflectionData = GetReflectionData(Output.Bytecode);
 
 		return Output;
 	}
@@ -144,4 +132,14 @@ public:
 	}
 };
 
-DEFINE_SHADER_COMPILER(EShaderCompilerTarget::VulkanSpirV, CVulkanShaderCompiler);
+class CVulkanShaderCompilerModule : public CModule
+{
+public:
+	void Initialize() override
+	{
+		CGlobalShaderCompiler::Get()
+			.Register<CVulkanShaderCompiler>(EShaderCompilerTarget::VulkanSpirV);
+	}
+};
+
+DEFINE_MODULE(CVulkanShaderCompilerModule, "VulkanShaderCompiler");

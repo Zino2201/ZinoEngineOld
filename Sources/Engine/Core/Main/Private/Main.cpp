@@ -8,6 +8,7 @@
 #include <SDL2/SDL.h>
 #include "Engine/Engine.h"
 #include "Shader/ShaderCompiler.h"
+#include "Render/Shader/BasicShader.h"
 
 DECLARE_LOG_CATEGORY(EngineInit);
 
@@ -62,7 +63,8 @@ void CZinoEngineMain::PreInit()
 		LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing shader compiler");
 		ZE::CGlobalShaderCompiler::Get();
 
-		LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing basic shaders");
+		LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing & compiling basic shaders");
+		ZE::CBasicShaderManager::Get().CompileShaders();
 	}
 
 	/** START RENDER THREAD */

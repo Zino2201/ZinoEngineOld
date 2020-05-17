@@ -36,7 +36,27 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 	void* Handle = LoadDLL(Path.c_str());
 	if(!Handle)
 	{
-		LOG(ELogSeverity::Error, ModuleManager, "Failed to load module %s", InName.c_str());
+		DWORD ErrMsg = GetLastError();
+
+		LPSTR Buf = nullptr;
+		size_t Size = FormatMessageA(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM 
+				| FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, 
+			ErrMsg, 
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+			(LPSTR) &Buf, 
+			0, 
+			NULL);
+
+		std::string Msg(Buf, Size);
+
+		LOG(ELogSeverity::Error, ModuleManager, "Failed to load module %s: %s", InName.c_str(),
+			Msg.c_str());
+
+		LocalFree(Buf);
+
+		__debugbreak();
 		return nullptr;
 	}
 
@@ -72,7 +92,14 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 void* CModuleManager::LoadDLL(const std::string& InPath)
 {
 #ifdef _WIN32
-	return (void*) LoadLibraryA(InPath.c_str());
+	// TODO: Update
+	char Buffer[MAX_PATH];
+	::GetCurrentDirectoryA(MAX_PATH, Buffer);
+	std::string Path = Buffer;
+	Path += "\\Binaries\\Debug\\";
+	Path += InPath;
+
+	return (void*) LoadLibraryA(Path.c_str());
 #endif
 }
 

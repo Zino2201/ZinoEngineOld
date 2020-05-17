@@ -18,6 +18,17 @@ struct SRenderableComponentPerInstanceData
 };
 
 /**
+ * Static data about a proxy
+ */
+struct SStaticProxyData
+{
+    CRSBufferPtr VertexBuffer;
+    CRSBufferPtr IndexBuffer;
+    uint32_t IndexCount;
+    EIndexFormat IndexFormat;
+};
+
+/**
  * Cache mode of a renderable component proxy
  * Defines if draw commands will be cached for this proxy
  */

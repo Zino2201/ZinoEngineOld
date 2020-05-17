@@ -10,7 +10,7 @@ DECLARE_LOG_CATEGORY(ShaderCompiler);
 
 IShaderCompiler::IShaderCompiler(const EShaderCompilerTarget& InTarget) : Target(InTarget) 
 {
-	ShaderCompilers.insert(std::make_pair(InTarget, std::unique_ptr<IShaderCompiler>(this)));
+	
 }
 
 CGlobalShaderCompiler::CGlobalShaderCompiler() = default;
@@ -33,30 +33,34 @@ std::future<SShaderCompilerOutput> CGlobalShaderCompiler::CompileShader(
 
 		// TODO: SET DEFINES
 
+		std::string Path;
+		Path += "Shaders/";
+		Path += InShaderFilename;
+
 		return std::async(std::launch::async,
-			[Result, InStage, InShaderFilename, InEntryPoint,
+			[Result, InStage, Path, InEntryPoint,
 				InTargetFormat, bInShouldOptimize]
 			{
 				SShaderCompilerOutput Output = Result->second->CompileShader(
 					InStage,
-					InShaderFilename,
+					Path.c_str(),
 					InEntryPoint,
 					InTargetFormat,
 					bInShouldOptimize);
 
 				if(Output.bSucceed)
 					LOG(ELogSeverity::Info, ShaderCompiler, "Shader %s compiled!",
-						InShaderFilename.data());
+						Path.c_str());
 				else
 					LOG(ELogSeverity::Error, ShaderCompiler, "Failed to compile shader %s!",
-						InShaderFilename.data());
+						Path.c_str());
 
 				return Output;
 			});
 	}
 	else
 	{
-		LOG(ELogSeverity::Fatal, ShaderCompiler, 
+		LOG(ELogSeverity::Error, ShaderCompiler, 
 			"Failed to compile shader %s: unsupported format",
 			InShaderFilename.data());
 		return {};

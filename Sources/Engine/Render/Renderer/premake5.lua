@@ -4,3 +4,4 @@ project "Renderer"
 	includeModule("Engine/Render/RenderCore")
 	includeModule("Engine/Render/RenderSystem")
 	includeModule("Engine/Render/ShaderCore")
+	includeModule("Engine/Render/ShaderCompiler")

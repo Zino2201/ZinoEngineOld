@@ -166,7 +166,7 @@ void CEngineGame::Initialize()
 		sizeof(test),
 		SRSResourceCreateInfo());
 
-	Vertex = CGlobalShaderCompiler::Get().CompileShader(
+	/*Vertex = CGlobalShaderCompiler::Get().CompileShader(
 		EShaderStage::Vertex,
 		"Shaders/main.vert",
 		"main",
@@ -176,7 +176,7 @@ void CEngineGame::Initialize()
 		EShaderStage::Fragment,
 		"Shaders/main.frag",
 		"main",
-		EShaderCompilerTarget::VulkanSpirV);
+		EShaderCompilerTarget::VulkanSpirV);*/
 
 	TestRenderPass = {
 		/** Color attachments */

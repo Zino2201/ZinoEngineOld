@@ -120,6 +120,7 @@ workspace "ZinoEngine"
 		include("Engine/Render/VulkanRenderSystem")
 		include("Engine/Render/Renderer")
 	group "Engine/Rendering/Shaders"
+		include("Engine/Render/Shaders")
 		include("Engine/Render/ShaderCore")
 		include("Engine/Render/ShaderCompiler")
 		include("Engine/Render/VulkanShaderCompiler")

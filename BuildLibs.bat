@@ -28,31 +28,17 @@ for /f "usebackq tokens=*" %%i in (`vswhere -latest -requires Microsoft.Componen
 
 if not defined MSBUILD goto :msbuildnotfound
 
-REM SPIRV-Cross
-echo Building SPIRV-Cross
-cd Sources/Libs/SPIRV-Cross/
-mkdir build
-cd build
-cmake -G "Visual Studio 16 2019" -A x64 ../
+REM Shader Conductor
+echo Building Shader Conductor
+cd Sources/Libs/ShaderConductor/
 echo Debug
-"%MSBUILD%" ALL_BUILD.vcxproj /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
-echo Release
-"%MSBUILD%" ALL_BUILD.vcxproj /t:build /p:Configuration="Release" /p:Platform="x64" /p:BuildInParallel=true
-
-REM Shaderc
-echo Building shaderc
-cd ../../shaderc
-echo Syncing deps 
-py utils/git-sync-deps 
-mkdir build
-cd build
-cmake -G "Visual Studio 16 2019" -A x64 ../ -DENABLE_CTEST=false -DBUILD_GMOCK=false -DBUILD_TESTING=false -DSHADERC_SKIP_TESTS=true -DSHADERC_ENABLE_SHARED_CRT=true
-echo Debug
-"%MSBUILD%" ALL_BUILD.vcxproj /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
-echo Release
-"%MSBUILD%" ALL_BUILD.vcxproj /t:build /p:Configuration="Release" /p:Platform="x64" /p:BuildInParallel=true
+py BuildAll.py vs2019 vc150 x64 Debug
+echo Release 
+py BuildAll.py vs2019 vc150 x64 Release
 pause
 exit
+
+echo Copying DLLs
 
 :msbuildnotfound
 echo MS Build not found

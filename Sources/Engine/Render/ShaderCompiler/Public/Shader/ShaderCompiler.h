@@ -30,6 +30,7 @@ struct SShaderCompilerReflectionDataOutput
  */
 struct SShaderCompilerOutput
 {
+    std::string ErrMsg;
     bool bSucceed;
     std::vector<uint32_t> Bytecode;
     SShaderCompilerReflectionDataOutput ReflectionData;
@@ -63,8 +64,6 @@ protected:
 
 #define DEFINE_SHADER_COMPILER(Target, Class) static Class* ShaderCompiler_##Class = new Class(Target)
 
-static std::unordered_map<EShaderCompilerTarget, std::unique_ptr<IShaderCompiler>> ShaderCompilers;
-
 /**
  * Global shader compiler
  */
@@ -80,6 +79,12 @@ public:
     CGlobalShaderCompiler();
     ~CGlobalShaderCompiler();
 
+    template<typename T>
+    void Register(EShaderCompilerTarget InTarget)
+    {
+		ShaderCompilers.insert(std::make_pair(InTarget, std::make_unique<T>(InTarget)));
+    }
+
     /**
      * Begin a shader compiling process
      */
@@ -89,6 +94,8 @@ public:
         const std::string_view& InEntryPoint,
         const EShaderCompilerTarget& InTargetFormat,
         const bool& bInShouldOptimize = true);
+public:
+    std::unordered_map<EShaderCompilerTarget, std::unique_ptr<IShaderCompiler>> ShaderCompilers;
 };
 
 }
