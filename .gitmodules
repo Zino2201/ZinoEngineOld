@@ -7,3 +7,6 @@
 [submodule "Sources/Libs/glm"]
 	path = Sources/Libs/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "Sources/Libs/ShaderConductor"]
+	path = Sources/Libs/ShaderConductor
+	url = https://github.com/microsoft/ShaderConductor
