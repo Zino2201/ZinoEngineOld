@@ -33,11 +33,66 @@ void CRenderableComponentSystem::Initialize(ECS::CEntityManager& InEntityManager
 		std::placeholders::_3));
 }
 
-void CRenderableComponentSystem::Tick(ECS::CEntityManager& InEntityManager, const float& InDeltaTime)
+void CRenderableComponentSystem::Tick(ECS::CEntityManager& InEntityManager, 
+	const float& InDeltaTime)
+{
+	for(const auto& Component : ComponentsToUpdate)
+	{
+		if(!Component)
+			continue;
+
+		DeleteProxy(InEntityManager, Component);
+		CreateProxy(InEntityManager, Component->ParentEntity, Component);
+	}
+
+	ComponentsToUpdate.clear();
+}
+
+void CRenderableComponentSystem::AddRenderableComponentToUpdate(SRenderableComponent* InComponent)
+{
+	ComponentsToUpdate.emplace_back(InComponent);
+}
+
+void CRenderableComponentSystem::CreateProxy(ECS::CEntityManager& InEntityManager, 
+	const ECS::EntityID& InEntityID, 
+	SRenderableComponent* InComponent)
 {
 	/**
-	 * Update components proxies that need update
+	 * Get parent entity transform
 	 */
+	if(STransformComponent* Transform = 
+		InEntityManager.GetComponent<STransformComponent>(InEntityID))
+	{
+		/**
+		 * Instantiate a proxy for the render thread
+		 */
+		TOwnerPtr<Renderer::CRenderableComponentProxy> Proxy = InComponent->InstantiateProxy(
+			InEntityManager.GetWorld().GetProxy());
+		if(!Proxy)
+			return;
+
+		InComponent->Proxy = Proxy;
+		Proxy->SetTransform(Transform->Transform);
+
+		InEntityManager.GetWorld().GetProxy()->AddComponent(Proxy);
+	}
+	else
+	{
+		must(false);
+		LOG(ELogSeverity::Error, Engine, 
+			"Error! You must add a Transform Component to entity ID %d to render things.",
+			InEntityID);
+	}
+}
+
+void CRenderableComponentSystem::DeleteProxy(ECS::CEntityManager& InEntityManager, 
+	SRenderableComponent* InComponent)
+{
+	if (!InComponent->Proxy)
+		return;
+
+	InEntityManager.GetWorld().GetProxy()->RemoveComponent(InComponent->Proxy);
+	InComponent->Proxy = nullptr;
 }
 
 void CRenderableComponentSystem::OnComponentAdded(ECS::CEntityManager& InEntityManager, 
@@ -46,32 +101,7 @@ void CRenderableComponentSystem::OnComponentAdded(ECS::CEntityManager& InEntityM
 	/** Check if the component added derive from SRenderableComponent */
 	if(SRenderableComponent* RenderableComp = Cast<SRenderableComponent>(InComponent))
 	{
-		/**
-		 * Get parent entity transform
-		 */
-		if(STransformComponent* Transform = 
-			InEntityManager.GetComponent<STransformComponent>(InEntityID))
-		{
-			/**
-			 * Instantiate a proxy for the render thread
-			 */
-			TOwnerPtr<Renderer::CRenderableComponentProxy> Proxy = RenderableComp->InstantiateProxy(
-				InEntityManager.GetWorld().GetProxy());
-			if(!Proxy)
-				return;
-
-			RenderableComp->Proxy = Proxy;
-			Proxy->SetTransform(Transform->Transform);
-
-			InEntityManager.GetWorld().GetProxy()->AddComponent(Proxy);
-		}
-		else
-		{
-			must(false);
-			LOG(ELogSeverity::Error, Engine, 
-				"Error! You must add a Transform Component to entity ID %d to render things.",
-				InEntityID);
-		}
+		CreateProxy(InEntityManager, InEntityID, RenderableComp);
 	}
 }
 
@@ -82,11 +112,7 @@ void CRenderableComponentSystem::OnComponentRemoved(ECS::CEntityManager& InEntit
 	/** Check if the component removed derive from SRenderableComponent */
 	if (SRenderableComponent* RenderableComp = Cast<SRenderableComponent>(InComponent))
 	{
-		if(!RenderableComp->Proxy)
-			return;
-
-		InEntityManager.GetWorld().GetProxy()->RemoveComponent(RenderableComp->Proxy);
-		RenderableComp->Proxy = nullptr;
+		DeleteProxy(InEntityManager, RenderableComp);
 	}
 }
 

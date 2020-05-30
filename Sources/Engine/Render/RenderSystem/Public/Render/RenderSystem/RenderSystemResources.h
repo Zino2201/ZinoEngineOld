@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include "Shader/ShaderCore.h"
+#include <array>
 
 namespace ZE
 {
@@ -11,6 +12,8 @@ namespace ZE
  */
 enum class ERSMemoryUsage
 {
+    /** MEMORY TYPES */
+
     /** Memory that will be only accessed by the GPU */
     DeviceLocal = 1 << 0,
 
@@ -18,7 +21,11 @@ enum class ERSMemoryUsage
     HostVisible = 1 << 1,
 
     /** Memory stored in host memory */
-    HostOnly = 1 << 2
+    HostOnly = 1 << 2,
+
+    /** FLAGS */
+
+    UsePersistentMapping = 1 << 3,
 };
 DECLARE_FLAG_ENUM(ERSMemoryUsage);
 
@@ -186,6 +193,94 @@ protected:
 	uint32_t Height;
 };
 
+/**
+ * Comparison op
+ */
+/** Other */
+enum class ERSComparisonOp
+{
+	Never,
+	Always,
+	Less,
+    Equal,
+    LessOrEqual,
+    Greater,
+    NotEqual,
+    GreaterOrEqual
+};
+
+/** SAMPLER **/
+
+enum class ERSFilter
+{
+    Nearest,
+    Linear,
+};
+
+enum class ERSSamplerAddressMode
+{
+    Repeat,
+    MirroredRepeat,
+    ClampToEdge,
+    ClampToBorder,
+};
+
+enum class ERSBorderColor
+{
+    FloatTransparentBlack,
+    IntTransparentBlack,
+    FloatOpaqueBlack,
+    IntOpaqueBlack,
+    FloatOpaqueWhite,
+    IntOpaqueWhite,
+};
+
+/**
+ * Create info for a sampler
+ */
+struct SRSSamplerCreateInfo
+{
+    ERSFilter MinFilter;
+    ERSFilter MagFilter;
+    ERSFilter MipMapMode;
+    ERSSamplerAddressMode AddressModeU;
+    ERSSamplerAddressMode AddressModeV;
+    ERSSamplerAddressMode AddressModeW;
+    float MipLodBias;
+    ERSComparisonOp CompareOp;
+    bool bAnistropyEnable;
+    float MaxAnistropy;
+    float MinLOD;
+    float MaxLOD;
+
+    SRSSamplerCreateInfo(
+        const ERSFilter& InMinFilter = ERSFilter::Linear,
+        const ERSFilter& InMagFilter = ERSFilter::Linear,
+        const ERSFilter& InMipMapMode = ERSFilter::Linear,
+        const ERSSamplerAddressMode& InAddressModeU = ERSSamplerAddressMode::Repeat,
+        const ERSSamplerAddressMode& InAddressModeV = ERSSamplerAddressMode::Repeat,
+        const ERSSamplerAddressMode& InAddressModeW = ERSSamplerAddressMode::Repeat,
+        const float& InMipLodBias = 0.f,
+        const ERSComparisonOp& InCompareOp = ERSComparisonOp::Never,
+        const bool& bInAnistropyEnable = false,
+        const float& InMaxAnistropy = 0.f,
+        const float& InMinLOD = 0.f,
+        const float& InMaxLOD = 0.f) : MinFilter(InMinFilter), MagFilter(InMagFilter),
+            MipMapMode(InMipMapMode), AddressModeU(InAddressModeU), AddressModeV(InAddressModeV),
+            AddressModeW(InAddressModeW), MipLodBias(InMipLodBias), CompareOp(InCompareOp),
+            bAnistropyEnable(bInAnistropyEnable), MaxAnistropy(InMaxAnistropy), MinLOD(InMinLOD),
+            MaxLOD(InMaxLOD){}
+};
+
+/**
+ * A sampler
+ */
+class CRSSampler : public CRSResource
+{
+public:
+    CRSSampler(const SRSSamplerCreateInfo& InSamplerCreateInfo) : CRSResource({}) {}
+};
+
 #pragma region Render Pass
 
 /**
@@ -231,6 +326,9 @@ enum class ERSRenderPassAttachmentLayout
 	ColorAttachment,
 
     DepthStencilAttachment,
+
+    ShaderReadOnlyOptimal,
+    DepthStencilReadOnlyOptimal,
 
 	/** Used for present */
 	Present,
@@ -284,10 +382,13 @@ struct SRSRenderPassSubpass
 {
     std::vector<SRSRenderPassSubpassAttachmentRef> ColorAttachmentRefs;
     std::vector<SRSRenderPassSubpassAttachmentRef> DepthAttachmentRefs;
+    std::vector<SRSRenderPassSubpassAttachmentRef> InputAttachmentRefs;
 
     bool operator==(const SRSRenderPassSubpass& InOther) const
     {
-        return ColorAttachmentRefs == InOther.ColorAttachmentRefs;
+        return ColorAttachmentRefs == InOther.ColorAttachmentRefs &&
+            DepthAttachmentRefs == InOther.DepthAttachmentRefs &&
+            InputAttachmentRefs == InOther.InputAttachmentRefs;
     }
 };
 
@@ -459,22 +560,6 @@ protected:
 };
 
 /**
- * Comparison op
- */
-/** Other */
-enum class ERSComparisonOp
-{
-	Never,
-	Always,
-	Less,
-    Equal,
-    LessOrEqual,
-    Greater,
-    NotEqual,
-    GreaterOrEqual
-};
-
-/**
  * Pipeline objects and states
  */
 #pragma region Pipeline & States
@@ -495,6 +580,27 @@ struct SVertexInputBindingDescription
 	SVertexInputBindingDescription(const uint32_t& InBinding,
 		const uint32_t& InStride, const EVertexInputRate& InInputRate) :
 		Binding(InBinding), Stride(InStride), InputRate(InInputRate) {}
+
+    bool operator==(const SVertexInputBindingDescription& InOther) const
+    {
+        return Binding == InOther.Binding &&
+            Stride == InOther.Stride &&
+            InputRate == InOther.InputRate;
+    }
+};
+
+struct SVertexInputBindingDescriptionHash
+{
+	uint64_t operator()(const SVertexInputBindingDescription& InDesc) const
+	{
+		uint64_t Hash = 0;
+
+		HashCombine(Hash, InDesc.Binding);
+		HashCombine(Hash, InDesc.Stride);
+		HashCombine(Hash, InDesc.InputRate);
+
+		return Hash;
+	}
 };
 
 /**
@@ -510,6 +616,29 @@ struct SVertexInputAttributeDescription
 	SVertexInputAttributeDescription(const uint32_t& InBinding,
 		const uint32_t& InLocation, const EFormat& InFormat, const uint32_t& InOffset) :
 		Binding(InBinding), Location(InLocation), Format(InFormat), Offset(InOffset) {}
+
+	bool operator==(const SVertexInputAttributeDescription& InOther) const
+	{
+		return Binding == InOther.Binding &&
+            Location == InOther.Location &&
+			Format == InOther.Format &&
+			Offset == InOther.Offset;
+	}
+};
+
+struct SVertexInputAttributeDescriptionHash
+{
+	uint64_t operator()(const SVertexInputAttributeDescription& InDesc) const
+	{
+		uint64_t Hash = 0;
+
+		HashCombine(Hash, InDesc.Binding);
+		HashCombine(Hash, InDesc.Location);
+		HashCombine(Hash, InDesc.Format);
+		HashCombine(Hash, InDesc.Offset);
+
+		return Hash;
+	}
 };
 
 /** BLEND STATE */
@@ -531,9 +660,9 @@ enum class EBlendOp
 };
 
 /**
- * Blend state
+ * Render target blend desc
  */
-struct SRSBlendState
+struct SRSRenderTargetBlendDesc
 {
     bool bEnableBlend;
     EBlendFactor SrcColor;
@@ -546,7 +675,7 @@ struct SRSBlendState
     /**
      * Default state ctor
      */
-    SRSBlendState(
+    SRSRenderTargetBlendDesc(
         const bool& bInEnableBlending = false,
         const EBlendFactor& InSrcColor = EBlendFactor::One,
         const EBlendFactor& InDstColor = EBlendFactor::Zero,
@@ -557,7 +686,66 @@ struct SRSBlendState
         : bEnableBlend(bInEnableBlending), 
             SrcColor(InSrcColor), DstColor(InDstColor), ColorOp(InColorOp),
             SrcAlpha(InSrcAlpha), DstAlpha(InDstAlpha), AlphaOp(InAlphaOp) {}
+
+    bool operator==(const SRSRenderTargetBlendDesc& InOther) const
+    {
+        return bEnableBlend == InOther.bEnableBlend &&
+            SrcColor == InOther.SrcColor && 
+            DstColor == InOther.DstColor && 
+            ColorOp == InOther.ColorOp && 
+            SrcAlpha == InOther.SrcAlpha && 
+            DstAlpha == InOther.DstAlpha && 
+            AlphaOp == InOther.AlphaOp;
+    }
 };
+
+struct SRSRenderTargetBlendDescHash
+{
+	uint64_t operator()(const SRSRenderTargetBlendDesc& InDesc) const
+	{
+		uint64_t Hash = 0;
+
+		HashCombine(Hash, InDesc.bEnableBlend);
+		HashCombine(Hash, InDesc.SrcColor);
+		HashCombine(Hash, InDesc.DstColor);
+		HashCombine(Hash, InDesc.ColorOp);
+		HashCombine(Hash, InDesc.SrcAlpha);
+		HashCombine(Hash, InDesc.DstAlpha);
+		HashCombine(Hash, InDesc.AlphaOp);
+
+		return Hash;
+	}
+};
+
+/**
+ * Blend state
+ */
+struct SRSBlendState
+{
+    std::vector<SRSRenderTargetBlendDesc> BlendDescs;
+
+    SRSBlendState(const std::vector<SRSRenderTargetBlendDesc>& InBlendDescs 
+        = { SRSRenderTargetBlendDesc() })  : BlendDescs(InBlendDescs) {}
+
+    bool operator==(const SRSBlendState& InOther) const
+    {
+        return BlendDescs == InOther.BlendDescs;
+    }
+};
+
+struct SRSBlendStateHash
+{
+	uint64_t operator()(const SRSBlendState& InState) const
+	{
+		uint64_t Hash = 0;
+
+        for(const auto& Desc : InState.BlendDescs)
+            HashCombine<SRSRenderTargetBlendDesc, SRSRenderTargetBlendDescHash>(Hash, Desc);
+
+		return Hash;
+	}
+};
+
 
 /** DEPTH AND STENCIL STATE */
 enum class EStencilOp
@@ -587,6 +775,29 @@ struct SRSDepthStencilOp
 		PassOp(EStencilOp::Keep),
 		DepthFailOp(EStencilOp::Keep),
 		CompareOp(ERSComparisonOp::Never) {}
+
+    bool operator==(const SRSDepthStencilOp& InOther) const
+    {
+        return FailOp == InOther.FailOp &&
+            PassOp == InOther.PassOp &&
+            DepthFailOp == InOther.DepthFailOp &&
+            CompareOp == InOther.CompareOp;
+    }
+};
+
+struct SRSDepthStencilOpHash
+{
+	uint64_t operator()(const SRSDepthStencilOp& InOp) const
+	{
+		uint64_t Hash = 0;
+
+		HashCombine(Hash, InOp.FailOp);
+		HashCombine(Hash, InOp.PassOp);
+		HashCombine(Hash, InOp.DepthFailOp);
+		HashCombine(Hash, InOp.CompareOp);
+
+		return Hash;
+	}
 };
 
 /**
@@ -616,6 +827,35 @@ struct SRSDepthStencilState
 		DepthCompareOp(InComparaisonOp),
 		bDepthBoundsTestEnable(bInDepthBoundsTestEnable),
 		FrontFace(InFrontFace), BackFace(InBackFace) {}
+
+    bool operator==(const SRSDepthStencilState& InOther) const
+    {
+        return bEnableDepthTest == InOther.bEnableDepthTest &&
+            bEnableDepthWrite == InOther.bEnableDepthWrite && 
+            DepthCompareOp == InOther.DepthCompareOp &&
+            bDepthBoundsTestEnable == InOther.bDepthBoundsTestEnable &&
+            bStencilTestEnable == InOther.bStencilTestEnable &&
+            FrontFace == InOther.FrontFace &&
+            BackFace == InOther.BackFace;
+    }
+};
+
+struct SRSDepthStencilStateHash
+{
+	uint64_t operator()(const SRSDepthStencilState& InState) const
+	{
+		uint64_t Hash = 0;
+
+		HashCombine(Hash, InState.bEnableDepthTest);
+		HashCombine(Hash, InState.bEnableDepthWrite);
+		HashCombine(Hash, InState.DepthCompareOp);
+		HashCombine(Hash, InState.bDepthBoundsTestEnable);
+		HashCombine(Hash, InState.bStencilTestEnable);
+		HashCombine<SRSDepthStencilOp, SRSDepthStencilOpHash>(Hash, InState.FrontFace);
+		HashCombine<SRSDepthStencilOp, SRSDepthStencilOpHash>(Hash, InState.BackFace);
+
+		return Hash;
+	}
 };
 
 /** RENDER STATES */
@@ -652,12 +892,37 @@ struct SRSRasterizerState
     SRSRasterizerState(
         const EPolygonMode& InPolygonMode = EPolygonMode::Fill,
         const ECullMode& InCullMode = ECullMode::Back,
-        const EFrontFace& InFrontFace = EFrontFace::CounterClockwise,
+        const EFrontFace& InFrontFace = EFrontFace::Clockwise,
         const bool& bInEnableDepthClamp = false,
         const bool& bInEnableRasterizerDiscard = false) :
         PolygonMode(InPolygonMode), CullMode(InCullMode), FrontFace(InFrontFace),
         bEnableDepthClamp(bInEnableDepthClamp), 
         bEnableRasterizerDiscard(bInEnableRasterizerDiscard) {}
+
+    bool operator==(const SRSRasterizerState& InOther) const
+    {
+        return PolygonMode == InOther.PolygonMode &&
+            CullMode == InOther.CullMode &&
+            FrontFace == InOther.FrontFace &&
+            bEnableDepthClamp == InOther.bEnableDepthClamp &&
+            bEnableRasterizerDiscard == InOther.bEnableRasterizerDiscard;
+    }
+};
+
+struct SRSRasterizerStateHash
+{
+    uint64_t operator()(const SRSRasterizerState& InState) const
+    {
+        uint64_t Hash = 0;
+
+        HashCombine(Hash, InState.PolygonMode);
+        HashCombine(Hash, InState.CullMode);
+        HashCombine(Hash, InState.FrontFace);
+        HashCombine(Hash, InState.bEnableDepthClamp);
+        HashCombine(Hash, InState.bEnableRasterizerDiscard);
+
+        return Hash;
+    }
 };
 
 /**
@@ -674,6 +939,27 @@ struct SRSPipelineShaderStage
 	    CRSShader* InShader,
         const char* InEntryPoint) : 
         Stage(InStage), Shader(InShader), EntryPoint(InEntryPoint) {}
+
+    bool operator==(const SRSPipelineShaderStage& InOther) const
+    {
+        return Stage == InOther.Stage &&
+            Shader == InOther.Shader &&
+            EntryPoint == InOther.EntryPoint;
+    }
+};
+
+struct SRSPipelineShaderStageHash
+{
+	uint64_t operator()(const SRSPipelineShaderStage& InStage) const
+	{
+		uint64_t Hash = 0;
+
+		HashCombine(Hash, InStage.Stage);
+		HashCombine(Hash, InStage.Shader);
+		HashCombine(Hash, InStage.EntryPoint);
+
+		return Hash;
+	}
 };
 
 /**
@@ -683,8 +969,74 @@ class CRSPipeline : public CRSResource
 {
 public:
     CRSPipeline(
-        const std::vector<SRSPipelineShaderStage>& InShaderStages,
         const SRSResourceCreateInfo& InCreateInfo) : CRSResource(InCreateInfo) {}
+};
+
+/**
+ * Represents a compute pipeline
+ */
+struct SRSComputePipeline
+{
+};
+
+/**
+ * Represents a graphics pipeline
+ */
+struct SRSGraphicsPipeline
+{
+    std::vector<SRSPipelineShaderStage> ShaderStages;
+    std::vector<SVertexInputBindingDescription> BindingDescriptions;
+    std::vector<SVertexInputAttributeDescription> AttributeDescriptions;
+    SRSBlendState BlendState;
+    SRSRasterizerState RasterizerState;
+    SRSDepthStencilState DepthStencilState;
+
+    SRSGraphicsPipeline() = default;
+    SRSGraphicsPipeline(const std::vector<SRSPipelineShaderStage>& InStages,
+        const std::vector<SVertexInputBindingDescription>& InBindingDescriptions,
+        const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions,
+        const SRSBlendState& InBlendState,
+        const SRSRasterizerState& InRasterizerState,
+        const SRSDepthStencilState& InDepthStencilState) : ShaderStages(InStages),
+        BindingDescriptions(InBindingDescriptions), AttributeDescriptions(InAttributeDescriptions),
+        BlendState(InBlendState), RasterizerState(InRasterizerState), 
+        DepthStencilState(InDepthStencilState) {}
+
+    bool operator==(const SRSGraphicsPipeline& InOther) const
+    {
+        return ShaderStages == InOther.ShaderStages &&
+            BindingDescriptions == InOther.BindingDescriptions &&
+            AttributeDescriptions == InOther.AttributeDescriptions &&
+            BlendState == InOther.BlendState &&
+            RasterizerState == InOther.RasterizerState &&
+            DepthStencilState == InOther.DepthStencilState;
+    }
+};
+
+struct SRSGraphicsPipelineHash
+{
+    uint64_t operator()(const SRSGraphicsPipeline& InPipeline) const
+    {
+        uint64_t Hash = 0;
+
+        for(const auto& Stage : InPipeline.ShaderStages)
+            HashCombine<SRSPipelineShaderStage, SRSPipelineShaderStageHash>(Hash, Stage);
+
+		for (const auto& BindingDescription : InPipeline.BindingDescriptions)
+			HashCombine<SVertexInputBindingDescription, SVertexInputBindingDescriptionHash>(Hash,
+                BindingDescription);
+
+		for (const auto& AttributeDescription : InPipeline.AttributeDescriptions)
+			HashCombine<SVertexInputAttributeDescription, SVertexInputAttributeDescriptionHash>(Hash,
+				AttributeDescription);
+
+        HashCombine<SRSBlendState, SRSBlendStateHash>(Hash, InPipeline.BlendState);
+        HashCombine<SRSRasterizerState, SRSRasterizerStateHash>(Hash, InPipeline.RasterizerState);
+        HashCombine<SRSDepthStencilState, SRSDepthStencilStateHash>(Hash, 
+            InPipeline.DepthStencilState);
+
+        return Hash;
+    }
 };
 
 /**
@@ -693,16 +1045,9 @@ public:
 class CRSGraphicsPipeline : public CRSPipeline
 {
 public:
-    CRSGraphicsPipeline(
-        const std::vector<SRSPipelineShaderStage>& InShaderStages,
-        const std::vector<SVertexInputBindingDescription>& InBindingDescriptions,
-        const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions,
-        const SRSRenderPass& InRenderPass,
-        const SRSBlendState& InBlendState,
-        const SRSRasterizerState& InRasterizerState,
-        const SRSDepthStencilState& InDepthStencilState,
+    CRSGraphicsPipeline(const SRSGraphicsPipeline& InGraphicsPipeline,
         const SRSResourceCreateInfo& InCreateInfo) :
-        CRSPipeline(InShaderStages, InCreateInfo) {}
+        CRSPipeline(InCreateInfo) {}
 };
 
 #pragma endregion

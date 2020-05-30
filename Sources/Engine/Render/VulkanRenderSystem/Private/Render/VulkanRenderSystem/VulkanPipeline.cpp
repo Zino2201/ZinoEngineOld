@@ -6,34 +6,48 @@
 #include "VulkanRenderSystemContext.h"
 #include <unordered_set>
 
+CVulkanPipelineManager::CVulkanPipelineManager(CVulkanDevice& InDevice) : Device(InDevice) {}
+
+CVulkanGraphicsPipeline* CVulkanPipelineManager::GetOrCreateGraphicsPipeline(
+	const SRSGraphicsPipeline& InPipeline,
+	const vk::RenderPass& InRenderPass)
+{
+	SGraphicsEntry Entry;
+	Entry.Pipeline = InPipeline;
+	Entry.RenderPass = InRenderPass;
+
+	auto& Result = GraphicsPipelines.find(Entry);
+	if(Result != GraphicsPipelines.end())
+		return Result->second.get();
+
+	LOG(ELogSeverity::Debug, VulkanRS, "new CVulkanGraphicsPipeline");
+
+	TOwnerPtr<CVulkanGraphicsPipeline> Pipeline = new CVulkanGraphicsPipeline(
+		&Device, InPipeline, InRenderPass, SRSResourceCreateInfo());
+	
+	GraphicsPipelines.insert({ Entry, std::unique_ptr<CVulkanGraphicsPipeline>(Pipeline) });
+
+	return Pipeline;
+}
+
 CVulkanPipeline::CVulkanPipeline(CVulkanDevice* InDevice,
-	const std::vector<SRSPipelineShaderStage>& InShaderStages,
 	const SRSResourceCreateInfo& InCreateInfo) : CVulkanDeviceResource(InDevice),
-	CRSPipeline(InShaderStages, InCreateInfo)
+	CRSPipeline(InCreateInfo)
 {
 
 }
 
 CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
-	const std::vector<SRSPipelineShaderStage>& InShaderStages,
-	const std::vector<SVertexInputBindingDescription>& InBindingDescriptions,
-	const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions,
-	const SRSRenderPass& InRenderPass,
-	const SRSBlendState& InBlendState,
-	const SRSRasterizerState& InRasterizerState,
-	const SRSDepthStencilState& InDepthStencilState,
+	const SRSGraphicsPipeline& InGraphicsPipeline,
+	const vk::RenderPass& InRenderPass,
 	const SRSResourceCreateInfo& InCreateInfo)
-	: CVulkanPipeline(InDevice, InShaderStages, InCreateInfo),
-	CRSGraphicsPipeline(InShaderStages, InBindingDescriptions,
-		InAttributeDescriptions, 
-		InRenderPass,
-		InBlendState, InRasterizerState,
-		InDepthStencilState, InCreateInfo)
+	: CVulkanPipeline(InDevice, InCreateInfo),
+	CRSGraphicsPipeline(InGraphicsPipeline, InCreateInfo)
 {
 	std::unordered_map<uint32_t, std::vector<vk::DescriptorSetLayoutBinding>> Bindings;
 	std::unordered_set<uint64_t> AddedParametersHash;
 
-	for(const auto& Stage : InShaderStages)
+	for(const auto& Stage : InGraphicsPipeline.ShaderStages)
 	{
 		for (const auto& Parameter : Stage.Shader->GetShaderParameterMap().GetParameters())
 		{
@@ -46,6 +60,8 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 					VulkanUtil::ShaderParameterTypeToVkDescriptorType(Parameter.Type),
 					Parameter.Count,
 					VulkanUtil::ShaderStageToVkShaderStage(Stage.Stage));
+
+				AddedParametersHash.insert(HashParameter);
 			}
 			else
 			{
@@ -77,18 +93,15 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 
 	Layout = Device->GetPipelineLayoutMgr()->GetPipelineLayout(Desc);
 
-	vk::RenderPass RenderPass = Device->GetContext()->GetRenderPassMgr().GetRenderPass(
-		InRenderPass);
-
-	CreateInfo.setRenderPass(RenderPass);
+	CreateInfo.setRenderPass(InRenderPass);
 	CreateInfo.setLayout(Layout->GetPipelineLayout());
 	
 	/**
 	 * Stages
 	 */
 	std::vector<vk::PipelineShaderStageCreateInfo> Stages;
-	Stages.reserve(InShaderStages.size());
-	for (const auto& ShaderStage : InShaderStages)
+	Stages.reserve(InGraphicsPipeline.ShaderStages.size());
+	for (const auto& ShaderStage : InGraphicsPipeline.ShaderStages)
 	{
 		Stages.emplace_back(
 			vk::PipelineShaderStageCreateFlags(),
@@ -104,8 +117,8 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 	 * Vertex input state
 	 */
 	std::vector<vk::VertexInputBindingDescription> InputAttributes;
-	InputAttributes.reserve(InBindingDescriptions.size());
-	for (const auto& BindingDescription : InBindingDescriptions)
+	InputAttributes.reserve(InGraphicsPipeline.BindingDescriptions.size());
+	for (const auto& BindingDescription : InGraphicsPipeline.BindingDescriptions)
 	{
 		InputAttributes.emplace_back(
 			BindingDescription.Binding,
@@ -115,8 +128,9 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 
 	/** Vertex attributes */
 	std::vector<vk::VertexInputAttributeDescription> Attributes;
-	Attributes.reserve(InAttributeDescriptions.size());
-	for (const SVertexInputAttributeDescription& Attribute : InAttributeDescriptions)
+	Attributes.reserve(InGraphicsPipeline.AttributeDescriptions.size());
+	for (const SVertexInputAttributeDescription& Attribute : 
+		InGraphicsPipeline.AttributeDescriptions)
 	{
 		Attributes.emplace_back(
 			Attribute.Location,
@@ -163,11 +177,11 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 	/** Rasterizer state */
 	vk::PipelineRasterizationStateCreateInfo RasterizerState(
 		vk::PipelineRasterizationStateCreateFlags(),
-		InRasterizerState.bEnableDepthClamp ? VK_TRUE : VK_FALSE,
-		InRasterizerState.bEnableRasterizerDiscard ? VK_TRUE : VK_FALSE,
-		VulkanUtil::PolygonModeToVkPolygonMode(InRasterizerState.PolygonMode),
-		VulkanUtil::CullModeToVkCullMode(InRasterizerState.CullMode),
-		VulkanUtil::FrontFaceToVkFrontFace(InRasterizerState.FrontFace),
+		InGraphicsPipeline.RasterizerState.bEnableDepthClamp ? VK_TRUE : VK_FALSE,
+		InGraphicsPipeline.RasterizerState.bEnableRasterizerDiscard ? VK_TRUE : VK_FALSE,
+		VulkanUtil::PolygonModeToVkPolygonMode(InGraphicsPipeline.RasterizerState.PolygonMode),
+		VulkanUtil::CullModeToVkCullMode(InGraphicsPipeline.RasterizerState.CullMode),
+		VulkanUtil::FrontFaceToVkFrontFace(InGraphicsPipeline.RasterizerState.FrontFace),
 		VK_FALSE,
 		0.f,
 		0.f,
@@ -188,35 +202,41 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 
 	vk::PipelineDepthStencilStateCreateInfo DepthState(
 		vk::PipelineDepthStencilStateCreateFlags(),
-		InDepthStencilState.bEnableDepthTest ? VK_TRUE : VK_FALSE,
-		InDepthStencilState.bEnableDepthWrite ? VK_TRUE : VK_FALSE,
-		VulkanUtil::ComparisonOpToVkCompareOp(InDepthStencilState.DepthCompareOp),
-		InDepthStencilState.bDepthBoundsTestEnable ? VK_TRUE : VK_FALSE,
-		InDepthStencilState.bStencilTestEnable ? VK_TRUE : VK_FALSE,
+		InGraphicsPipeline.DepthStencilState.bEnableDepthTest ? VK_TRUE : VK_FALSE,
+		InGraphicsPipeline.DepthStencilState.bEnableDepthWrite ? VK_TRUE : VK_FALSE,
+		VulkanUtil::ComparisonOpToVkCompareOp(InGraphicsPipeline.DepthStencilState.DepthCompareOp),
+		InGraphicsPipeline.DepthStencilState.bDepthBoundsTestEnable ? VK_TRUE : VK_FALSE,
+		InGraphicsPipeline.DepthStencilState.bStencilTestEnable ? VK_TRUE : VK_FALSE,
 		vk::StencilOpState(
-			VulkanUtil::StencilOpToVkStencilOp(InDepthStencilState.FrontFace.FailOp),
-			VulkanUtil::StencilOpToVkStencilOp(InDepthStencilState.FrontFace.PassOp),
-			VulkanUtil::StencilOpToVkStencilOp(InDepthStencilState.FrontFace.DepthFailOp),
-			VulkanUtil::ComparisonOpToVkCompareOp(InDepthStencilState.FrontFace.CompareOp)),
+			VulkanUtil::StencilOpToVkStencilOp(InGraphicsPipeline.DepthStencilState.FrontFace.FailOp),
+			VulkanUtil::StencilOpToVkStencilOp(InGraphicsPipeline.DepthStencilState.FrontFace.PassOp),
+			VulkanUtil::StencilOpToVkStencilOp(InGraphicsPipeline.DepthStencilState.FrontFace.DepthFailOp),
+			VulkanUtil::ComparisonOpToVkCompareOp(InGraphicsPipeline.DepthStencilState.FrontFace.CompareOp)),
 		vk::StencilOpState(
-			VulkanUtil::StencilOpToVkStencilOp(InDepthStencilState.BackFace.FailOp),
-			VulkanUtil::StencilOpToVkStencilOp(InDepthStencilState.BackFace.PassOp),
-			VulkanUtil::StencilOpToVkStencilOp(InDepthStencilState.BackFace.DepthFailOp),
-			VulkanUtil::ComparisonOpToVkCompareOp(InDepthStencilState.BackFace.CompareOp))
+			VulkanUtil::StencilOpToVkStencilOp(InGraphicsPipeline.DepthStencilState.BackFace.FailOp),
+			VulkanUtil::StencilOpToVkStencilOp(InGraphicsPipeline.DepthStencilState.BackFace.PassOp),
+			VulkanUtil::StencilOpToVkStencilOp(InGraphicsPipeline.DepthStencilState.BackFace.DepthFailOp),
+			VulkanUtil::ComparisonOpToVkCompareOp(InGraphicsPipeline.DepthStencilState.BackFace.CompareOp))
 	);
 	CreateInfo.setPDepthStencilState(&DepthState);
 
 	/** Color blending */
-	vk::PipelineColorBlendAttachmentState ColorBlendAttachment(
-		InBlendState.bEnableBlend ? VK_TRUE : VK_FALSE,
-		VulkanUtil::BlendFactorToVkBlendFactor(InBlendState.SrcColor),
-		VulkanUtil::BlendFactorToVkBlendFactor(InBlendState.DstColor),
-		VulkanUtil::BlendOpToVkBlendOp(InBlendState.ColorOp),
-		VulkanUtil::BlendFactorToVkBlendFactor(InBlendState.SrcAlpha),
-		VulkanUtil::BlendFactorToVkBlendFactor(InBlendState.DstAlpha),
-		VulkanUtil::BlendOpToVkBlendOp(InBlendState.AlphaOp),
-		vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-		vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
+	std::vector<vk::PipelineColorBlendAttachmentState> ColorAttachments;
+	ColorAttachments.reserve(GMaxRenderTargetPerFramebuffer);
+
+	for(const auto& Desc : InGraphicsPipeline.BlendState.BlendDescs)
+	{
+		ColorAttachments.emplace_back(
+			Desc.bEnableBlend ? VK_TRUE : VK_FALSE,
+			VulkanUtil::BlendFactorToVkBlendFactor(Desc.SrcColor),
+			VulkanUtil::BlendFactorToVkBlendFactor(Desc.DstColor),
+			VulkanUtil::BlendOpToVkBlendOp(Desc.ColorOp),
+			VulkanUtil::BlendFactorToVkBlendFactor(Desc.SrcAlpha),
+			VulkanUtil::BlendFactorToVkBlendFactor(Desc.DstAlpha),
+			VulkanUtil::BlendOpToVkBlendOp(Desc.AlphaOp),
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+			vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
+	}
 
 	/**
 	 * Color blend state
@@ -225,8 +245,8 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 		vk::PipelineColorBlendStateCreateFlags(),
 		VK_FALSE,
 		vk::LogicOp::eCopy,
-		1,
-		&ColorBlendAttachment);
+		static_cast<uint32_t>(ColorAttachments.size()),
+		ColorAttachments.data());
 	CreateInfo.setPColorBlendState(&ColorBlendState);
 
 	/**
@@ -254,6 +274,10 @@ vk::DescriptorType VulkanUtil::ShaderParameterTypeToVkDescriptorType(
 		return vk::DescriptorType::eUniformBuffer;
 	case EShaderParameterType::CombinedImageSampler:
 		return vk::DescriptorType::eCombinedImageSampler;
+	case EShaderParameterType::Sampler:
+		return vk::DescriptorType::eSampler;
+	case EShaderParameterType::Texture:
+		return vk::DescriptorType::eSampledImage;
 	case EShaderParameterType::StorageBuffer:
 		return vk::DescriptorType::eStorageBuffer;
 	}
@@ -269,15 +293,7 @@ CRSGraphicsPipeline* CVulkanRenderSystem::CreateGraphicsPipeline(
 	const SRSDepthStencilState& InDepthStencilState,
 	const SRSResourceCreateInfo& InCreateInfo) const
 {
-	return new CVulkanGraphicsPipeline(Device.get(),
-		InShaderStages,
-		InBindingDescriptions,
-		InAttributeDescriptions,
-		InRenderPass,
-		InBlendState,
-		InRasterizerState,
-		InDepthStencilState,
-		InCreateInfo);
+	return nullptr;
 }
 
 vk::CompareOp VulkanUtil::ComparisonOpToVkCompareOp(const ERSComparisonOp& InOp)

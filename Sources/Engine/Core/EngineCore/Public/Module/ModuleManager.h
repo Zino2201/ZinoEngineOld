@@ -1,11 +1,14 @@
 #pragma once
 
 #include "Logger.h"
-#include "Module/Module.h"
 #include <vector>
 
 namespace ZE
 {
+
+class CModule;
+
+typedef class CModule*(*PFN_InstantiateModule)();
 
 DECLARE_LOG_CATEGORY(ModuleManager);
 
@@ -30,7 +33,7 @@ private:
 	ENGINECORE_API static void* LoadDLL(const std::string& InPath);
 	ENGINECORE_API static void FreeDLL(void* InHandle);
 private:
-	static std::vector<CModule*> Modules;
+	inline static std::vector<CModule*> Modules;
 	ENGINECORE_API inline static TOnModuleLoaded OnModuleLoaded;
 };
 

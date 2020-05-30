@@ -2,7 +2,7 @@
 
 #include "EngineCore.h"
 
-namespace ZE { class CRSSurface; }
+namespace ZE { class CRSSurface; class CRSBuffer; }
 
 namespace ZE::Renderer
 {
@@ -21,6 +21,12 @@ struct SWorldRendererView
     float FOV;
     float NearPlane;
     float FarPlane;
+    boost::intrusive_ptr<CRSBuffer> ViewDataUBO;
+};
+
+struct SViewData
+{
+    alignas(16) glm::mat4 ViewProj;
 };
 
 /**

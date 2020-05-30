@@ -71,6 +71,8 @@ CVulkanBuffer::CVulkanBuffer(
 
 	VmaAllocationCreateInfo AllocInfo = {};
 	AllocInfo.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
+	if(HAS_FLAG(InMemUsage, ERSMemoryUsage::UsePersistentMapping))
+		AllocInfo.flags |= VMA_ALLOCATION_CREATE_MAPPED_BIT;
 	AllocInfo.usage = VulkanUtil::BufferUsageFlagsToMemoryUsage(InMemUsage);
 	AllocInfo.pUserData = reinterpret_cast<void*>(const_cast<char*>(InInfo.DebugName));
 
@@ -101,7 +103,6 @@ CVulkanBuffer::~CVulkanBuffer()
 void* CVulkanBuffer::Map(ERSBufferMapMode InMapMode)
 {
 	must(!CurrentStagingBuffer.StagingBuffer);
-
 	/**
 	 * If we are reading only, wait all operations
 	 * Else, create a staging buffer to copy at the beginning of the new frame
@@ -211,7 +212,6 @@ void CVulkanBuffer::Unmap()
 			CurrentStagingBuffer.StagingBuffer->GetBuffer(),
 			Buffer,
 			{ vk::BufferCopy(0, 0, Size) });
-
 		Device->GetContext()->GetCmdBufferMgr().SubmitMemoryCmdBuffer();
 		Device->WaitIdle();
 		Device->GetStagingBufferMgr()->ReleaseStagingBuffer(CurrentStagingBuffer.StagingBuffer);

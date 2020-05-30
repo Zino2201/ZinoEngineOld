@@ -48,6 +48,9 @@ public:
 		const ESampleCount& InSampleCount,
 		const SRSResourceCreateInfo& InInfo = {}) const = 0;
 
+	virtual CRSSampler* CreateSampler(
+		const SRSSamplerCreateInfo& InCreateInfo) const = 0;
+
 	virtual CRSShader* CreateShader(
 		const EShaderStage& InStage,
 		const uint64_t& InBytecodeSize,

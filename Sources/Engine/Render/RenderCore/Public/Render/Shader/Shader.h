@@ -8,6 +8,7 @@ namespace ZE
 {
 
 class CShader;
+class CRSShader;
 
 /**
  * Base shader type class
@@ -15,7 +16,8 @@ class CShader;
 class RENDERCORE_API CShaderType
 {
 public:
-    using InstantiateFunctionType = CShader*(*)(const SShaderCompilerOutput& InOutput);
+    using InstantiateFunctionType = CShader*(*)(const CShaderType* InShaderType,
+        const SShaderCompilerOutput& InOutput);
 
     CShaderType(const char* InName, const char* InFilename,	const char* InEntryPoint,
         EShaderStage InStage,
@@ -43,8 +45,12 @@ class RENDERCORE_API CShader
     : public boost::intrusive_ref_counter<CShader, boost::thread_unsafe_counter>
 {
 public:
-    CShader(const SShaderCompilerOutput& InOutput);
+    CShader(const CShaderType* InShaderType, const SShaderCompilerOutput& InOutput);
     virtual ~CShader() = default;
+
+    CRSShader* GetShader() const { return Shader.get(); }
+private:
+    boost::intrusive_ptr<CRSShader> Shader;
 };
 
 using CShaderPtr = boost::intrusive_ptr<CShader>;
@@ -71,9 +77,9 @@ private:
     using ShaderType = BaseClass##Type; \
     static ShaderType ShaderStaticType; \
     inline static const char* ShaderNameType = #Class; \
-    static CShader* InstantiateShader(const SShaderCompilerOutput& InOutput) \
+    static CShader* InstantiateShader(const CShaderType* InType, const SShaderCompilerOutput& InOutput) \
     { \
-        return new Class(InOutput); \
+        return new Class(InType, InOutput); \
     }
 
 #define IMPLEMENT_SHADER(Shader, Name, Filename, EntryPoint, Stage) \

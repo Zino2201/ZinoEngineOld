@@ -4,6 +4,8 @@
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include <future>
 #include "Shader/ShaderCompiler.h"
+#include "Render/UniformBuffer.h"
+#include "Renderer/WorldRenderer.h"
 
 namespace ZE
 {
@@ -33,7 +35,8 @@ private:
     std::future<SShaderCompilerOutput> Vertex;
     std::future<SShaderCompilerOutput> Frag;
     CRSBufferPtr ubo = nullptr;
-    std::unique_ptr<class CStaticMesh> testSM;
+    std::shared_ptr<class CStaticMesh> testSM;
+    TUniformBuffer<ZE::Renderer::SViewData> ViewDataUBO;
 };
 
 } /* namespace ZE */

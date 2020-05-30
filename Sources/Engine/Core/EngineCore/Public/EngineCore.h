@@ -39,6 +39,11 @@
 #define must(condition)
 #endif
 #define RESTRICT __restrict
+#ifdef ZE_MONOLITHIC
+#define DLLEXPORT
+#else
+#define DLLEXPORT __declspec(dllexport)
+#endif
 
 namespace ZE
 {

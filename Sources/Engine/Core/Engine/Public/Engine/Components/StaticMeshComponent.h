@@ -3,19 +3,12 @@
 #include "RenderableComponent.h"
 #include "Renderer/RenderableComponentProxy.h"
 
+namespace ZE { class CStaticMesh; }
+
 namespace ZE::Components
 {
 
-/**
- * Proxy for a static mesh component
- */
-class ENGINE_API CStaticMeshComponentProxy : public Renderer::CRenderableComponentProxy
-{
-public:
-    CStaticMeshComponentProxy(Renderer::CWorldProxy* InWorld) :
-        Renderer::CRenderableComponentProxy(InWorld,
-            Renderer::ERenderableComponentProxyCacheMode::Cachable) {}
-};
+struct SStaticMeshComponent;
 
 /**
  * A static mesh component
@@ -24,13 +17,12 @@ struct SStaticMeshComponent : public SRenderableComponent
 {
 	DECLARE_REFL_STRUCT_OR_CLASS1(SStaticMeshComponent, SRenderableComponent)
 
-	//std::shared_ptr<CStaticMesh> StaticMesh;
-	// TODO: Material
+	std::shared_ptr<CStaticMesh> StaticMesh;
 
-    Renderer::CRenderableComponentProxy* InstantiateProxy(Renderer::CWorldProxy* InWorld) const override 
-    {
-        return new CStaticMeshComponentProxy(InWorld); 
-    }
+    void SetStaticMesh(const std::shared_ptr<CStaticMesh>& InSM);
+
+    TOwnerPtr<Renderer::CRenderableComponentProxy> InstantiateProxy(
+        Renderer::CWorldProxy* InWorld) const override;
 };
 DECLARE_REFL_TYPE(SStaticMeshComponent);
 

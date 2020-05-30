@@ -7,7 +7,7 @@
 namespace ZE
 {
 
-DEFINE_MODULE(CDefaultModule, "Engine")
+DEFINE_MODULE(CDefaultModule, Engine)
 
 void CEngine::Initialize()
 {

@@ -28,12 +28,16 @@ void StartRenderThread()
 	ZE::CRenderThread::Get().Run();
 }
 
+#include "Shader/ShaderCore.h"
+
 void CZinoEngineMain::PreInit()
 {
 	/** INITIALIZE BASE MODULES */
 	{
 		/** Ensure the EngineCore module is loaded */
 		ZE::CModuleManager::LoadModule("EngineCore");
+		LOG(ZE::ELogSeverity::Info, EngineInit, "=== ZinoEngine %s Build ===", ZE_CONFIGURATION_NAME);
+		
 		ZE::CModuleManager::LoadModule("Reflection");
 
 		ZE::GameThreadID = std::this_thread::get_id();

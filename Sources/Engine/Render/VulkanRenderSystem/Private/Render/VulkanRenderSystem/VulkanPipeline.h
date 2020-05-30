@@ -4,6 +4,53 @@
 
 /** Fwd declares */
 class CVulkanPipelineLayout;
+class CVulkanDevice;
+class CVulkanGraphicsPipeline;
+
+/**
+ * Class that manage pipelines
+ */
+class CVulkanPipelineManager
+{
+    struct SGraphicsEntry
+    {
+        SRSGraphicsPipeline Pipeline;
+        vk::RenderPass RenderPass;
+
+        bool operator==(const SGraphicsEntry& InEntry) const
+        {
+            return Pipeline == InEntry.Pipeline &&
+                RenderPass == InEntry.RenderPass;
+        }
+    };
+
+	struct SGraphicsEntryHash
+	{
+		SRSGraphicsPipeline Pipeline;
+		vk::RenderPass RenderPass;
+
+        uint64_t operator()(const SGraphicsEntry& InEntry) const
+        {
+            uint64_t Hash = 0;
+
+            HashCombine<SRSGraphicsPipeline, SRSGraphicsPipelineHash>(Hash, InEntry.Pipeline);
+            HashCombine(Hash, 
+                reinterpret_cast<uint64_t>(static_cast<VkRenderPass>(InEntry.RenderPass)));
+
+            return Hash;
+        }
+	};
+
+public:
+    CVulkanPipelineManager(CVulkanDevice& InDevice);
+
+    CVulkanGraphicsPipeline* GetOrCreateGraphicsPipeline(const SRSGraphicsPipeline& InPipeline,
+        const vk::RenderPass& InRenderPass);
+private:
+    CVulkanDevice& Device;
+    std::unordered_map<SGraphicsEntry, std::unique_ptr<CVulkanGraphicsPipeline>, 
+        SGraphicsEntryHash> GraphicsPipelines;
+};
 
 /**
  * Basic vulkan pipeline
@@ -12,9 +59,7 @@ class CVulkanPipeline : public CVulkanDeviceResource,
     public CRSPipeline
 {
 public:
-    CVulkanPipeline(CVulkanDevice* InDevice,
-        const std::vector<SRSPipelineShaderStage>& InShaderStages,
-		const SRSResourceCreateInfo& InCreateInfo);
+    CVulkanPipeline(CVulkanDevice* InDevice, const SRSResourceCreateInfo& InCreateInfo);
 
     virtual const vk::Pipeline& GetPipeline() const { return *Pipeline; }
     virtual CVulkanPipelineLayout* GetPipelineLayout() const { return Layout.get(); }
@@ -31,12 +76,7 @@ class CVulkanGraphicsPipeline : public CVulkanPipeline,
 {
 public:
     CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
-		const std::vector<SRSPipelineShaderStage>& InShaderStages,
-		const std::vector<SVertexInputBindingDescription>& InBindingDescriptions,
-		const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions,
-        const SRSRenderPass& InRenderPass,
-		const SRSBlendState& InBlendState,
-		const SRSRasterizerState& InRasterizerState,
-		const SRSDepthStencilState& InDepthStencilState,
-		const SRSResourceCreateInfo& InCreateInfo);
+        const SRSGraphicsPipeline& InGraphicsPipeline,
+        const vk::RenderPass& InRenderPass,
+        const SRSResourceCreateInfo& InCreateInfo);
 };

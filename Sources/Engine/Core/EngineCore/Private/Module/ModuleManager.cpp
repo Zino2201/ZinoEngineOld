@@ -1,5 +1,6 @@
 #include "EngineCore.h"
 #include "Module/ModuleManager.h"
+#include "Module/Module.h"
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -8,9 +9,6 @@
 
 namespace ZE
 {
-
-std::vector<CModule*> CModuleManager::Modules;
-
 void CModule::Initialize() {}
 
 CModule* CModuleManager::LoadModule(const std::string& InName)
@@ -27,6 +25,8 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 	/**
 	 * Load the module
 	 */
+
+#ifndef ZE_MONOLITHIC
 
 	/**
 	 * Load the library
@@ -66,8 +66,11 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 	 * Get proc address of InstantiateModule
 	 */
 #ifdef _WIN32
+	std::string FuncName = GInstantiateModuleFuncName;
+	FuncName += "_";
+	FuncName += InName;
 	PFN_InstantiateModule InstantiateFunc = (PFN_InstantiateModule) GetProcAddress(
-		static_cast<HMODULE>(Handle), GInstantiateModuleFuncName);
+		static_cast<HMODULE>(Handle), FuncName.c_str());
 	Module = InstantiateFunc(); /** This indicate that your module doesn't have a DEFINE_MODULE */
 	if (!Module)
 	{
@@ -77,6 +80,18 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 	
 	Module->Handle = Handle;
 #endif
+#else
+	CModule* Module = nullptr;
+	auto InstantiateFunc = CModule::InstantiateModuleFuncs[InName];
+	Module = InstantiateFunc(); /** This indicate that your module doesn't have a DEFINE_MODULE */
+	if (!Module)
+	{
+		LOG(ELogSeverity::Error, ModuleManager, "Failed to instantiate module %s", InName.c_str());
+		return nullptr;
+	}
+
+	Module->Handle = nullptr;
+#endif /** ZE_MONOLITHIC */
 
 	Modules.push_back(Module);
 	
@@ -96,7 +111,9 @@ void* CModuleManager::LoadDLL(const std::string& InPath)
 	char Buffer[MAX_PATH];
 	::GetCurrentDirectoryA(MAX_PATH, Buffer);
 	std::string Path = Buffer;
-	Path += "\\Binaries\\Debug\\";
+	Path += "\\Binaries\\";
+	Path += ZE_CONFIGURATION_NAME;
+	Path += "\\";
 	Path += InPath;
 
 	return (void*) LoadLibraryA(Path.c_str());
@@ -129,7 +146,9 @@ void CModuleManager::UnloadModule(const std::string& InName)
 		if(Module->GetName() == InName)
 		{
 			Module->Destroy();
+#ifndef ZE_MONOLITHIC
 			FreeDLL(Module->GetHandle());
+#endif
 			delete Module;
 			Modules.erase(Modules.begin() + Idx);
 			break;

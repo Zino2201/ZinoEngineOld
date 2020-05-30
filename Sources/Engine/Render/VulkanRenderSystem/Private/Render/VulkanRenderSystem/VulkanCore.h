@@ -28,7 +28,7 @@ const std::vector<const char*> GVulkanValidationLayers =
 };
 
 #ifdef NDEBUG
-constexpr bool GVulkanEnableValidationLayers = false;
+constexpr bool GVulkanEnableValidationLayers = false; // false
 #else
 constexpr bool GVulkanEnableValidationLayers = true;
 #endif
@@ -145,6 +145,11 @@ namespace VulkanUtil
         vk::ImageLayout AttachmentLayoutToVkImageLayout(
             const ERSRenderPassAttachmentLayout& InLayout);
     }
+
+    /** Sampler */
+    vk::Filter FilterToVkFilter(const ERSFilter& InFilter);
+    vk::SamplerMipmapMode FilterToVkSamplerMipMapMode(const ERSFilter& InFilter);
+    vk::SamplerAddressMode AddressModeToVkSamplerAddressMode(const ERSSamplerAddressMode& InAddressMode);
 }
 
 /** Log category */

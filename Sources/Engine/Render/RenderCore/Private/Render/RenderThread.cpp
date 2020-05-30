@@ -4,7 +4,7 @@
 namespace ZE
 {
 
-DEFINE_MODULE(CDefaultModule, "RenderCore")
+DEFINE_MODULE(CDefaultModule, RenderCore)
 
 CRenderThread::CRenderThread() = default;
 

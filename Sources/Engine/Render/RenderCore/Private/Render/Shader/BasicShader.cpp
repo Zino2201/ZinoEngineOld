@@ -1,5 +1,7 @@
 #include "Render/Shader/BasicShader.h"
 #include "Shader/ShaderCompiler.h"
+#include "Render/RenderSystem/RenderSystem.h"
+#include "Render/RenderSystem/RenderSystemResources.h"
 
 DECLARE_LOG_CATEGORY(BasicShader);
 

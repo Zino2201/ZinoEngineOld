@@ -40,6 +40,8 @@ public:
 		const ESampleCount& InSampleCount,
 		const SRSResourceCreateInfo& InInfo) const override;
 
+	CRSSampler* CreateSampler(const SRSSamplerCreateInfo& InCreateInfo) const override;
+
 	virtual CRSShader* CreateShader(
 		const EShaderStage& InStage,
 		const uint64_t& InBytecodeSize,

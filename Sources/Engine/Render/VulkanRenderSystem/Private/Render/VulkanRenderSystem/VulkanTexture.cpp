@@ -45,11 +45,13 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 		if (HAS_FLAG(InTextureUsage, ERSTextureUsage::RenderTarget))
 		{
 			UsageFlags |= vk::ImageUsageFlagBits::eColorAttachment;
+			UsageFlags |= vk::ImageUsageFlagBits::eInputAttachment;
 		}
 
 		if (HAS_FLAG(InTextureUsage, ERSTextureUsage::DepthStencil))
 		{
 			UsageFlags |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+			UsageFlags |= vk::ImageUsageFlagBits::eInputAttachment;
 		}
 
 		vk::ImageType ImageType;
@@ -180,6 +182,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 	if (!ImageView)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image view");
 
+#ifndef NDEBUG
 	PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectName = (PFN_vkSetDebugUtilsObjectNameEXT) 
 		GVulkanRenderSystem->GetInstance().getProcAddr("vkSetDebugUtilsObjectNameEXT");
 
@@ -191,6 +194,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 	Info.pObjectName = InCreateInfo.DebugName;
 
 	SetDebugUtilsObjectName(static_cast<VkDevice>(Device->GetDevice()), &Info);
+#endif
 }
 
 CVulkanTexture::~CVulkanTexture()

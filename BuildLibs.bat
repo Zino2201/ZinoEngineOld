@@ -15,18 +15,9 @@ IF NOT %errorLevel% == 0 (
 	cls
 )
 
-if not exist Sources/Libs/shaderc git submodule init
+if not exist Sources/Libs/ShaderConductor git submodule init
 
-echo Building 3rd party libs for VS2019... (requires CMake, Python 3 and Git)
-
-REM MS Build
-echo Locating VS...
-setlocal enabledelayedexpansion
-for /f "usebackq tokens=*" %%i in (`vswhere -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe`) do (
-  set MSBUILD=%%i
-)
-
-if not defined MSBUILD goto :msbuildnotfound
+echo Building 3rd party libs for VS2019 x64... (requires CMake, Python 3 and Git)
 
 REM Shader Conductor
 echo Building Shader Conductor
@@ -35,12 +26,5 @@ echo Debug
 py BuildAll.py vs2019 vc150 x64 Debug
 echo Release 
 py BuildAll.py vs2019 vc150 x64 Release
-pause
-exit
-
-echo Copying DLLs
-
-:msbuildnotfound
-echo MS Build not found
 pause
 exit

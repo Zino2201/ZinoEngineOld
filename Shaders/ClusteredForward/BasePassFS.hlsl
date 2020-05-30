@@ -2,5 +2,5 @@
 
 float4 Main(VSOutput Input) : SV_TARGET
 {
-	return Input.Color;
+	return float4(Input.Position.z, Input.Position.z, Input.Position.z, 1);
 }

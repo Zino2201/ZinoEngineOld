@@ -3,6 +3,7 @@
 #include "Render/VulkanRenderSystem/VulkanSwapChain.h"
 #include "Render/VulkanRenderSystem/VulkanQueue.h"
 #include <set>
+#include <iostream>
 
 CVulkanStagingBufferManager::CVulkanStagingBufferManager(CVulkanDevice* InDevice)
 	: Device(InDevice) {}
@@ -13,6 +14,9 @@ CVulkanInternalStagingBuffer* CVulkanStagingBufferManager::CreateStagingBuffer(u
 	CVulkanInternalStagingBuffer* Buffer = new CVulkanInternalStagingBuffer(Device,
 		InSize, InUsageFlags);
 	StagingBuffers.Add(Buffer);
+
+	LOG(ELogSeverity::Debug, VulkanRS, "new CVulkanInternalStagingBuffer");
+
 	return Buffer;
 }
 
@@ -61,7 +65,12 @@ void CVulkanDeferredDestructionManager::DestroyResources()
 			Device.GetDevice().destroyImageView(
 				reinterpret_cast<VkImageView>(Entry.Handle));
 			break;
+		case EHandleType::Sampler:
+			Device.GetDevice().destroySampler(
+				reinterpret_cast<VkSampler>(Entry.Handle));
+			break;
 		default:
+			must(false);
 			break;
 		}
 	}
@@ -70,7 +79,7 @@ void CVulkanDeferredDestructionManager::DestroyResources()
 }
 
 CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysicalDevice) :
-	PresentQueue(nullptr), DeferredDestructionManager(*this)
+	PresentQueue(nullptr), DeferredDestructionManager(*this), PipelineManager(*this)
 {
 	PhysicalDevice = InPhysicalDevice;
 
@@ -142,7 +151,7 @@ CVulkanDevice::~CVulkanDevice()
 	/** Print a output to check for any uncleared resources */
 	char* Output;
 	vmaBuildStatsString(Allocator, &Output, VK_TRUE);
-	LOG(ELogSeverity::Debug, VulkanRS, "%s", Output);
+	std::cout << Output << std::endl;
 	vmaFreeStatsString(Allocator, Output);
 #endif
 	vmaDestroyAllocator(Allocator);

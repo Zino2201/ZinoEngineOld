@@ -6,6 +6,21 @@ namespace ZE::Math
 {
 
 /**
+ * Base template class for a 2D vector
+ */
+template<typename T>
+struct TVector2
+{
+	T X;
+	T Y;
+
+	TVector2() : X(0), Y(0) {}
+	TVector2(T InX, T InY) : X(InX), Y(InY) {}
+};
+
+using SVector2f = TVector2<float>;
+
+/**
  * Basic template class for a 3D vector
  */
 template<typename T>
@@ -14,6 +29,9 @@ struct TVector3
 	T X;
 	T Y;
 	T Z;
+
+	TVector3() : X(0), Y(0), Z(0) {}
+	TVector3(T InX, T InY, T InZ) : X(InX), Y(InY), Z(InZ) {}
 
 	bool operator==(const TVector3<T>& InOther) const
 	{
@@ -36,7 +54,8 @@ struct SVector3 : public TVector3<double>
  */
 struct SVector3Float : public TVector3<float>
 {
-	
+	SVector3Float() {}
+	SVector3Float(float InX, float InY, float InZ) : TVector3<float>(InX, InY, InZ) {}
 };
 
 struct SVector3FloatHash

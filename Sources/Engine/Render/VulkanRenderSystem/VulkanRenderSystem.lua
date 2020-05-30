@@ -1,0 +1,5 @@
+local Mod = Module:new("VulkanRenderSystem")
+Mod:addModules({ "EngineCore", "RenderSystem", "RenderCore", "ShaderCore" })
+Mod:addIncludeDirs({ LibDir.."Vulkan/Include", LibDir.."VulkanMemoryAllocator" })
+Mod:addLibDirs({ LibDir.."Vulkan/Lib" })
+Mod:addLibs({ "vulkan-1" })

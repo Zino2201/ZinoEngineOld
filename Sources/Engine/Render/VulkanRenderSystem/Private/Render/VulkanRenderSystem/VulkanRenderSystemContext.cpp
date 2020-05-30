@@ -8,6 +8,7 @@
 #include "Render/VulkanRenderSystem/VulkanRenderSystem.h"
 #include "Render/VulkanRenderSystem/VulkanPipeline.h"
 #include "Render/VulkanRenderSystem/VulkanBuffer.h"
+#include "Render/VulkanRenderSystem/VulkanSampler.h"
 
 CVulkanCommandBufferManager::CVulkanCommandBufferManager(CVulkanDevice* InDevice)
 	: Device(InDevice)
@@ -23,7 +24,7 @@ CVulkanCommandBufferManager::CVulkanCommandBufferManager(CVulkanDevice* InDevice
 	/**
 	 * Allocate 2 command buffers
 	 */
-	MemoryCmdBuffer = std::make_unique<CVulkanCommandBuffer>(Device, *CommandPool, true);
+	MemoryCmdBuffer = std::make_unique<CVulkanCommandBuffer>(Device, *CommandPool, false);
 	if(!MemoryCmdBuffer)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to allocate memory command buffer");
 
@@ -37,10 +38,12 @@ CVulkanCommandBufferManager::~CVulkanCommandBufferManager() {}
 void CVulkanCommandBufferManager::BeginMemoryCmdBuffer()
 {
 	/**
-	 * If command buffer is submitted, wait fence
+	 * If command buffer is submitted, submit and wait
 	 */
-	if(MemoryCmdBuffer->HasBeenSubmitted())
-		MemoryCmdBuffer->WaitFenceAndReset();
+	if(MemoryCmdBuffer->HasBegun())
+	{
+		SubmitMemoryCmdBuffer();
+	}
 
 	MemoryCmdBuffer->Begin();
 }
@@ -48,6 +51,8 @@ void CVulkanCommandBufferManager::BeginMemoryCmdBuffer()
 void CVulkanCommandBufferManager::SubmitMemoryCmdBuffer()
 {
 	SubmitCmdBuffer(MemoryCmdBuffer.get(), nullptr);
+	if (MemoryCmdBuffer->HasBeenSubmitted())
+		MemoryCmdBuffer->WaitFenceAndReset();
 }
 
 void CVulkanCommandBufferManager::SubmitGraphicsCmdBuffer(const vk::Semaphore& InSemaphore)
@@ -152,6 +157,7 @@ vk::RenderPass CVulkanRenderPassManager::GetRenderPass(const SRSRenderPass& InRe
 		 */
 		std::vector<vk::AttachmentReference> ColorAttachments;
 		std::vector<vk::AttachmentReference> DepthAttachments;
+		std::vector<vk::AttachmentReference> InputAttachments;
 		size_t FirstIdx = 0;
 
 		for(const auto& Subpass : InRenderPass.Subpasses)
@@ -172,15 +178,23 @@ vk::RenderPass CVulkanRenderPassManager::GetRenderPass(const SRSRenderPass& InRe
 						DepthAttachment.Layout));
 			}
 
+			for (const auto& InputAttachment : Subpass.InputAttachmentRefs)
+			{
+				InputAttachments.emplace_back(
+					InputAttachment.Index,
+					VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(
+						InputAttachment.Layout));
+			}
+
 			Subpasses.emplace_back(
 				vk::SubpassDescriptionFlags(),
 				vk::PipelineBindPoint::eGraphics,
-				0,
-				nullptr,
+				static_cast<uint32_t>(InputAttachments.size()),
+				InputAttachments.data(),
 				static_cast<uint32_t>(Subpass.ColorAttachmentRefs.size()),
-				&ColorAttachments[FirstIdx],
+				ColorAttachments.empty() ? nullptr : &ColorAttachments[FirstIdx],
 				nullptr,
-				&DepthAttachments[FirstIdx]);
+				DepthAttachments.empty() ? nullptr : &DepthAttachments[FirstIdx]);
 
 			FirstIdx += Subpass.ColorAttachmentRefs.size();
 		}
@@ -197,6 +211,8 @@ vk::RenderPass CVulkanRenderPassManager::GetRenderPass(const SRSRenderPass& InRe
 		if(!RenderPass)
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create render pass");
 
+		LOG(ELogSeverity::Debug, VulkanRS, "new vk::RenderPass");
+
 		RenderPasses.insert(std::make_pair(InRenderPass, RenderPass));
 
 		return RenderPass;
@@ -210,9 +226,6 @@ vk::Framebuffer CVulkanRenderPassManager::GetFramebuffer(const SRSFramebuffer& I
 
 	if(FoundFramebuffer != Framebuffers.end())
 	{
-		uint64_t t1 = SRSFramebufferHash()(InFramebuffer);
-		uint64_t t2 = SRSFramebufferHash()(FoundFramebuffer->first);
-
 		return FoundFramebuffer->second;
 	}
 	else
@@ -262,6 +275,8 @@ vk::Framebuffer CVulkanRenderPassManager::GetFramebuffer(const SRSFramebuffer& I
 		if (!Framebuffer)
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create framebuffer");
 
+		LOG(ELogSeverity::Debug, VulkanRS, "new vk::Framebuffer");
+
 		Framebuffers.insert(std::make_pair(InFramebuffer, Framebuffer));
 
 		return Framebuffer;
@@ -270,23 +285,39 @@ vk::Framebuffer CVulkanRenderPassManager::GetFramebuffer(const SRSFramebuffer& I
 
 /** RENDER SYSTEM CONTEXT */
 
+PFN_vkCmdBeginDebugUtilsLabelEXT BeginMarker;
+PFN_vkCmdEndDebugUtilsLabelEXT EndMarker;
+
 CVulkanRenderSystemContext::CVulkanRenderSystemContext(CVulkanDevice* InDevice)
 	: Device(InDevice), CmdBufferMgr(InDevice), RenderPassMgr(InDevice), 
-	CurrentLayout(nullptr)
+	CurrentLayout(nullptr), ColorAttachmentsCount(0)
 {
 	GRenderSystemContext = this;
 	GRSContext = this;
+
+	if (GVulkanEnableValidationLayers)
+	{
+		BeginMarker = (PFN_vkCmdBeginDebugUtilsLabelEXT)
+			GVulkanRenderSystem->GetInstance().getProcAddr("vkCmdBeginDebugUtilsLabelEXT");
+
+		EndMarker = (PFN_vkCmdEndDebugUtilsLabelEXT)
+			GVulkanRenderSystem->GetInstance().getProcAddr("vkCmdEndDebugUtilsLabelEXT");
+	}
 }
 
 CVulkanRenderSystemContext::~CVulkanRenderSystemContext() { }
 
 void CVulkanRenderSystemContext::BeginRenderPass(const SRSRenderPass& InRenderPass,
 	const SRSFramebuffer& InFramebuffer,
-	const std::array<float, 4>& InClearColor)
+	const std::array<float, 4>& InClearColor,
+	const char* InName)
 {
 	vk::RenderPass RenderPass = RenderPassMgr.GetRenderPass(InRenderPass);
 	vk::Framebuffer Framebuffer = RenderPassMgr.GetFramebuffer(InFramebuffer,
 		RenderPass);
+
+	ColorAttachmentsCount = static_cast<uint32_t>(InRenderPass.ColorAttachments.size());
+	CurrentRenderPass = RenderPass;
 	
 	std::array<vk::ClearValue, 2> ClearValues =
 	{
@@ -303,6 +334,17 @@ void CVulkanRenderSystemContext::BeginRenderPass(const SRSRenderPass& InRenderPa
 		static_cast<uint32_t>(ClearValues.size()),
 		ClearValues.data());
 
+	if (GVulkanEnableValidationLayers)
+	{
+		VkDebugUtilsLabelEXT LabelInfo = {};
+		LabelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+		LabelInfo.pLabelName = InName;
+
+		BeginMarker(
+			static_cast<VkCommandBuffer>(CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()),
+			&LabelInfo);
+	}
+
 	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
 		.beginRenderPass(BeginInfo, vk::SubpassContents::eInline);
 }
@@ -310,6 +352,12 @@ void CVulkanRenderSystemContext::BeginRenderPass(const SRSRenderPass& InRenderPa
 void CVulkanRenderSystemContext::EndRenderPass()
 {
 	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer().endRenderPass();
+
+	if (GVulkanEnableValidationLayers)
+		EndMarker(static_cast<VkCommandBuffer>(CmdBufferMgr.GetGraphicsCmdBuffer()
+			->GetCommandBuffer()));
+
+	CurrentRenderPass = vk::RenderPass();
 }
 
 void CVulkanRenderSystemContext::BeginSurface(CRSSurface* InSurface)
@@ -359,6 +407,24 @@ void CVulkanRenderSystemContext::BindGraphicsPipeline(
 
 	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
 		.bindPipeline(vk::PipelineBindPoint::eGraphics, GraphicsPipeline->GetPipeline());
+}
+
+void CVulkanRenderSystemContext::BindGraphicsPipeline(const SRSGraphicsPipeline& InGraphicsPipeline)
+{
+	/**
+	 * Get or create a pipeline
+	 */
+	CVulkanGraphicsPipeline* Pipeline = Device->GetPipelineManager().GetOrCreateGraphicsPipeline(
+		InGraphicsPipeline,
+		CurrentRenderPass);
+
+	if (CurrentLayout != Pipeline->GetPipelineLayout())
+	{
+		CurrentLayout = Pipeline->GetPipelineLayout();
+	}
+
+	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
+		.bindPipeline(vk::PipelineBindPoint::eGraphics, Pipeline->GetPipeline());
 }
 
 void CVulkanRenderSystemContext::SetViewports(const std::vector<SViewport>& InViewports)
@@ -432,6 +498,10 @@ void CVulkanRenderSystemContext::BindIndexBuffer(CRSBuffer* InIndexBuffer,
 void CVulkanRenderSystemContext::SetShaderUniformBuffer(const uint32_t& InSet, 
 	const uint32_t& InBinding, CRSBuffer* InBuffer)
 {
+	must(InBuffer);
+	if (!InBuffer)
+		return;
+
 	CVulkanBuffer* Buffer = static_cast<CVulkanBuffer*>(InBuffer);
 
 	vk::DescriptorBufferInfo BufferInfo = vk::DescriptorBufferInfo()
@@ -441,14 +511,64 @@ void CVulkanRenderSystemContext::SetShaderUniformBuffer(const uint32_t& InSet,
 
 	SDescriptorSetWrite WriteSet(vk::DescriptorType::eUniformBuffer,
 		BufferInfo, InBinding, 1);
+	
+	AddWrite(InSet, WriteSet, std::hash<CRSBuffer*>()(InBuffer));
+}
 
+void CVulkanRenderSystemContext::SetShaderTexture(const uint32_t& InSet, const uint32_t& InBinding,
+	CRSTexture* InTexture)
+{
+	must(InTexture);
+	if(!InTexture)
+		return;
+
+	CVulkanTexture* Texture = static_cast<CVulkanTexture*>(InTexture);
+
+	vk::ImageLayout ImgLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+
+	if(HAS_FLAG(Texture->GetTextureUsage(), ERSTextureUsage::DepthStencil))
+	{
+		ImgLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
+	}
+
+	vk::DescriptorImageInfo ImageInfo = vk::DescriptorImageInfo()
+		.setImageLayout(ImgLayout)
+		.setImageView(Texture->GetImageView());
+
+	SDescriptorSetWrite WriteSet(vk::DescriptorType::eSampledImage,
+		ImageInfo, InBinding, 1);
+
+	AddWrite(InSet, WriteSet, std::hash<CRSTexture*>()(InTexture));
+}
+
+void CVulkanRenderSystemContext::SetShaderSampler(const uint32_t& InSet, const uint32_t& InBinding,
+	CRSSampler* InSampler)
+{
+	must(InSampler);
+	if (!InSampler)
+		return;
+
+	CVulkanSampler* Sampler = static_cast<CVulkanSampler*>(InSampler);
+
+	vk::DescriptorImageInfo ImageInfo = vk::DescriptorImageInfo()
+		.setSampler(Sampler->GetSampler());
+
+	SDescriptorSetWrite WriteSet(vk::DescriptorType::eSampler,
+		ImageInfo, InBinding, 1);
+
+	AddWrite(InSet, WriteSet, std::hash<CRSSampler*>()(InSampler));
+}
+
+void CVulkanRenderSystemContext::AddWrite(const uint32_t& InSet, const SDescriptorSetWrite& InWrite,
+	const uint64_t& InResourceHash)
+{
 	{
 		auto& Result = WriteSetMap.find(InSet);
 
 		if (Result == WriteSetMap.end())
 			WriteSetMap.insert({ InSet, {} });
 
-		WriteSetMap[InSet].push_back(WriteSet);
+		WriteSetMap[InSet].push_back(InWrite);
 	}
 
 	{
@@ -457,7 +577,7 @@ void CVulkanRenderSystemContext::SetShaderUniformBuffer(const uint32_t& InSet,
 		if (Result == ResourceSetHashMap.end())
 			ResourceSetHashMap.insert({ InSet, {} });
 
-		ResourceSetHashMap[InSet].push_back(std::hash<CRSBuffer*>()(InBuffer));
+		ResourceSetHashMap[InSet].push_back(InResourceHash);
 	}
 }
 
@@ -520,7 +640,7 @@ void CVulkanRenderSystemContext::FlushWrites()
 				0,
 				Write.Count,
 				Write.Type,
-				nullptr,
+				&Write.ImageInfo,
 				&Write.BufferInfo);
 		}
 
@@ -607,8 +727,12 @@ vk::ImageLayout VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(
 		return vk::ImageLayout::eUndefined;
 	case ERSRenderPassAttachmentLayout::ColorAttachment:
 		return vk::ImageLayout::eColorAttachmentOptimal;
+	case ERSRenderPassAttachmentLayout::ShaderReadOnlyOptimal:
+		return vk::ImageLayout::eShaderReadOnlyOptimal;
 	case ERSRenderPassAttachmentLayout::DepthStencilAttachment:
 		return vk::ImageLayout::eDepthStencilAttachmentOptimal;
+	case ERSRenderPassAttachmentLayout::DepthStencilReadOnlyOptimal:
+		return vk::ImageLayout::eDepthStencilReadOnlyOptimal;
 	case ERSRenderPassAttachmentLayout::Present:
 		return vk::ImageLayout::ePresentSrcKHR;
 	}

@@ -118,7 +118,7 @@ public:
 
 			Output.ParameterMap.AddParameter(Name.c_str(), 
 				{
-					Name.c_str(),
+					Name,
 					EShaderParameterType::UniformBuffer,
 					Set,
 					Binding,
@@ -126,6 +126,36 @@ public:
 					1,
 					Members
 				});
+		}
+
+		for (auto& Texture : Resources.separate_images)
+		{
+			unsigned Set = Compiler.get_decoration(Texture.id, spv::DecorationDescriptorSet);
+			unsigned Binding = Compiler.get_decoration(Texture.id, spv::DecorationBinding);
+			std::string Name = Compiler.get_name(Texture.id);
+
+			Output.ParameterMap.AddParameter(Name.c_str(), 
+				SShaderParameter(
+					Name,
+					EShaderParameterType::Texture,
+					Set,
+					Binding,
+					1));
+		}
+
+		for (auto& Sampler : Resources.separate_samplers)
+		{
+			unsigned Set = Compiler.get_decoration(Sampler.id, spv::DecorationDescriptorSet);
+			unsigned Binding = Compiler.get_decoration(Sampler.id, spv::DecorationBinding);
+			std::string Name = Compiler.get_name(Sampler.id);
+
+			Output.ParameterMap.AddParameter(Name.c_str(),
+				SShaderParameter(
+					Name,
+					EShaderParameterType::Sampler,
+					Set,
+					Binding,
+					1));
 		}
 
 		return Output;
@@ -142,4 +172,4 @@ public:
 	}
 };
 
-DEFINE_MODULE(CVulkanShaderCompilerModule, "VulkanShaderCompiler");
+DEFINE_MODULE(CVulkanShaderCompilerModule, VulkanShaderCompiler);

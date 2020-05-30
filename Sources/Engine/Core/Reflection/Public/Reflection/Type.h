@@ -3,6 +3,7 @@
 #include "EngineCore.h"
 #include "Reflection/Macros.h"
 #include <optional>
+#include "NonCopyable.h"
 
 namespace ZE::Refl
 {
@@ -10,7 +11,7 @@ namespace ZE::Refl
 /**
  * Represents a simple C++ type
  */
-class CType
+class REFLECTION_API CType : public CNonCopyable
 {
     DECLARE_REFL_STRUCT_OR_CLASS(CType)
 
@@ -28,6 +29,8 @@ public:
     static CType* RegisterType(const char* InName,
         const uint64_t& InSize)
     {
+        must(!Get(InName)); // Duplicated type
+
         T* Type = new T(InName, InSize);
 		Types.push_back(std::unique_ptr<CType>(Type));
 		return Type;
@@ -42,9 +45,9 @@ public:
 		return Type;
     }
     
-    REFLECTION_API static CType* Get(const std::string_view& InName);
+    static CType* Get(const std::string_view& InName);
 
-    REFLECTION_API static const std::vector<std::unique_ptr<CType>>& GetTypes() { return Types; }
+    static const std::vector<std::unique_ptr<CType>>& GetTypes() { return Types; }
 
     const char* GetName() const { return Name; }
     uint64_t GetSize() const { return Size; }
@@ -54,7 +57,7 @@ protected:
 
     uint64_t Size;
 public:
-    REFLECTION_API inline static std::vector<std::unique_ptr<CType>> Types;
+    inline static std::vector<std::unique_ptr<CType>> Types;
 };
 DECLARE_REFL_TYPE(CType);
 

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/RenderSystem/RenderSystemContext.h"
+#include "Renderer/RendererModule.h"
 
 DECLARE_LOG_CATEGORY(FrameGraph);
 
@@ -120,84 +121,103 @@ void CFrameGraph::BuildPhysicalResources(const CRenderPass& InRenderPass)
 void CFrameGraph::BuildPhysicalRenderPass(CRenderPass& InRenderPass)
 {
 	SRSRenderPass Pass;
-
-	/**
-	 * Used to build a subpass as they are not (yet) supported
-	 */
-	std::vector<size_t> ColorAttachmentsIdx;
-	std::vector<size_t> DepthAttachmentsIdx;
-
-	/**
-	 * Iterate over textures to find render targets/depth stencils
-	 */
-	size_t Idx = 0;
-	for(const auto& Texture : InRenderPass.Textures)
+	
+	// TODO: Support multiple subpasses
+	SRSRenderPassSubpass Subpass;
+	
+	uint32_t Idx = 0;
+	for (const auto& Resource : InRenderPass.Attachments)
 	{
+		SRenderPassResource& Texture = ResourceMap[Resource];
+		auto& ReadInfos = InRenderPass.GetReadInfos(Texture);
+		auto& WriteInfos = InRenderPass.GetWriteInfos(Texture);
+
 		SRSRenderPassAttachment Attachment;
 		Attachment.Format = Texture.TextureInfos.Format;
 		Attachment.SampleCount = Texture.TextureInfos.SampleCount;
-		
-		// TODO: Allow a way to specify Clear
-		Attachment.Load = ERSRenderPassAttachmentLoadOp::DontCare;
-		Attachment.Store = ERSRenderPassAttachmentStoreOp::Store;
 
+		SRSRenderPassSubpassAttachmentRef SubpassRef;
+		SubpassRef.Index = Idx;
+
+		/**
+		 * Specify load/store operations for attachment
+		 */
+		if (ReadInfos.has_value())
+			Attachment.Load = ReadInfos->LoadOp;
+		else
+			Attachment.Load = ERSRenderPassAttachmentLoadOp::Clear;
+
+		if (WriteInfos.has_value())
+			Attachment.Store = WriteInfos->StoreOp;
+		else
+			Attachment.Store = ERSRenderPassAttachmentStoreOp::DontCare;
+
+		/**
+		 * Determine layout based on texture usage
+		 */
 		if (HAS_FLAG(Texture.TextureInfos.Usage, ERSTextureUsage::RenderTarget))
 		{
-			/**
-			 * If it's an input, then it is already in the correct layout
-			 */
-			Attachment.InitialLayout = 
-				InRenderPass.IsInput(Texture) ? ERSRenderPassAttachmentLayout::ColorAttachment
-				: ERSRenderPassAttachmentLayout::Undefined;
+			Attachment.InitialLayout = TextureLastLayout.count(Texture.ID) ?
+				TextureLastLayout[Texture.ID] : ERSRenderPassAttachmentLayout::Undefined;
 
-			auto WriteInfos = InRenderPass.GetWriteInfos(Texture);
-			if(WriteInfos.has_value())
-				Attachment.FinalLayout = WriteInfos->FinalLayout;
-			else
-				Attachment.FinalLayout = ERSRenderPassAttachmentLayout::ColorAttachment;
-
-			ColorAttachmentsIdx.push_back(Idx++);
-			Pass.ColorAttachments.emplace_back(Attachment);
-		} 
-		else if (HAS_FLAG(Texture.TextureInfos.Usage, ERSTextureUsage::DepthStencil))
-		{
-			/**
-			 * If it's an input, then it is already in the correct layout
-			 */
-			Attachment.InitialLayout = 
-				InRenderPass.IsInput(Texture) ? ERSRenderPassAttachmentLayout::DepthStencilAttachment
-				: ERSRenderPassAttachmentLayout::Undefined;
-			
-			auto WriteInfos = InRenderPass.GetWriteInfos(Texture);
 			if (WriteInfos.has_value())
-				Attachment.FinalLayout = WriteInfos->FinalLayout;
+			{
+				Attachment.FinalLayout = TexLayoutToRSLayout(Texture.TextureInfos, 
+					WriteInfos->FinalLayout);
+			}
 			else
-				Attachment.FinalLayout = ERSRenderPassAttachmentLayout::DepthStencilAttachment;
+			{
+				/**
+				 * If there are not write infos, simply keep the layout
+				 */
+				Attachment.FinalLayout = Attachment.InitialLayout;
+			}
 
-			DepthAttachmentsIdx.push_back(Idx++);
-			Pass.DepthAttachments.emplace_back(Attachment);
+			SubpassRef.Layout = Attachment.InitialLayout == ERSRenderPassAttachmentLayout::Undefined
+				? ERSRenderPassAttachmentLayout::ColorAttachment : 
+				Attachment.InitialLayout;
+
+			Pass.ColorAttachments.emplace_back(Attachment);
+			
+			if(WriteInfos.has_value())
+				Subpass.ColorAttachmentRefs.emplace_back(SubpassRef);
 		}
-	}
-	
-	/** Subpasses */
-	SRSRenderPassSubpass Subpass;
-	for(const auto& ColorAttachmentIdx : ColorAttachmentsIdx)
-	{
-		SRSRenderPassSubpassAttachmentRef Ref;
-		Ref.Index = static_cast<uint32_t>(ColorAttachmentIdx);
-		Ref.Layout = ERSRenderPassAttachmentLayout::ColorAttachment;
-		Subpass.ColorAttachmentRefs.push_back(Ref);
+		else
+		{
+			Attachment.InitialLayout = TextureLastLayout.count(Texture.ID) ?
+				TextureLastLayout[Texture.ID] : ERSRenderPassAttachmentLayout::Undefined;
+
+			if (WriteInfos.has_value())
+			{
+				Attachment.FinalLayout = TexLayoutToRSLayout(Texture.TextureInfos,
+					WriteInfos->FinalLayout);
+			}
+			else
+			{
+				Attachment.FinalLayout = Attachment.InitialLayout;
+			}
+
+			SubpassRef.Layout = Attachment.InitialLayout == ERSRenderPassAttachmentLayout::Undefined
+				? ERSRenderPassAttachmentLayout::DepthStencilAttachment :
+				Attachment.InitialLayout;
+
+			Pass.DepthAttachments.emplace_back(Attachment);
+			if(WriteInfos.has_value())
+				Subpass.DepthAttachmentRefs.emplace_back(SubpassRef);
+		}
+		
+		TextureLastLayout[Texture.ID] = Attachment.FinalLayout;
+
+		/**
+		 * If input, add it to subpass input attachment ref
+		 */
+		if (ReadInfos.has_value())
+			Subpass.InputAttachmentRefs.emplace_back(SubpassRef);
+
+		Idx++;
 	}
 
-	for (const auto& DepthAttachmentIdx : DepthAttachmentsIdx)
-	{
-		SRSRenderPassSubpassAttachmentRef Ref;
-		Ref.Index = static_cast<uint32_t>(DepthAttachmentIdx);
-		Ref.Layout = ERSRenderPassAttachmentLayout::DepthStencilAttachment;
-		Subpass.DepthAttachmentRefs.push_back(Ref);
-	}
-
-	Pass.Subpasses.push_back(Subpass);
+	Pass.Subpasses.emplace_back(Subpass);
 
 	InRenderPass.PhysRenderPass = std::move(Pass);
 }
@@ -238,9 +258,9 @@ bool CFrameGraph::Compile()
 
 void CFrameGraph::Execute()
 {
-	for(const auto& Idx : ExecutionLayout)
+	for(const auto& CurrentPass : ExecutionLayout)
 	{
-		auto& RenderPass = RenderPasses[Idx];
+		auto& RenderPass = RenderPasses[CurrentPass];
 
 		/**
 		 * Build framebuffer
@@ -249,23 +269,13 @@ void CFrameGraph::Execute()
 
 		size_t Idx = 0;
 		size_t DIdx = 0;
-		for(const auto& ReadInfo : RenderPass->ReadInfos)
-		{
-			CRSTexture* Tex = TextureResourceMap[ReadInfo.Target.ID].get();
-			if (HAS_FLAG(ReadInfo.Target.TextureInfos.Usage, ERSTextureUsage::DepthStencil))
-			{
-				Framebuffer.DepthRTs[DIdx++] = Tex;
-			}
-			else
-			{
-				Framebuffer.ColorRTs[Idx++] = Tex;
-			}
-		}
 
-		for (const auto& WriteInfo : RenderPass->WriteInfosMap)
+		for(const auto& TextureID : RenderPass->Attachments)
 		{
-			CRSTexture* Tex = TextureResourceMap[WriteInfo.Target.ID].get();
-			if (HAS_FLAG(WriteInfo.Target.TextureInfos.Usage, ERSTextureUsage::DepthStencil))
+			CRSTexture* Tex = TextureResourceMap[TextureID].get();
+			auto& Resource = ResourceMap[TextureID];
+
+			if (HAS_FLAG(Resource.TextureInfos.Usage, ERSTextureUsage::DepthStencil))
 			{
 				Framebuffer.DepthRTs[DIdx++] = Tex;
 			}
@@ -278,7 +288,8 @@ void CFrameGraph::Execute()
  		GRSContext->BeginRenderPass(
 			RenderPass->PhysRenderPass,
 			Framebuffer,
-			{ 0, 0, 0, 1 });
+			{ 0, 0, 0, 1 },
+			RenderPass->Name.c_str());
 		RenderPass->Execute(GRSContext);
 		GRSContext->EndRenderPass();
 	}
@@ -293,6 +304,57 @@ SRenderPassResource& CFrameGraph::CreateResource(ERenderPassResourceType InType)
 	Resource = SRenderPassResource(AvailableResourceID, InType);
 	AvailableResourceID++;
 	return Resource;
+}
+
+void CFrameGraph::BeginDrawQuadFillingScreen(IRenderSystemContext* InContext,
+	const SRSPipelineShaderStage& InVertexStage,
+	const SRSPipelineShaderStage& InFragmentStage)
+{
+	InContext->BindGraphicsPipeline(
+		SRSGraphicsPipeline(
+			{ InVertexStage, InFragmentStage },
+			{ SVertexInputBindingDescription(0, 
+				sizeof(SQuadVertex), EVertexInputRate::Vertex) },
+			{ 
+				SVertexInputAttributeDescription(0, 0, EFormat::R32G32Sfloat, 
+					offsetof(SQuadVertex, Position)),
+				SVertexInputAttributeDescription(0, 1, EFormat::R32G32Sfloat, 
+					offsetof(SQuadVertex, TexCoord)),
+			},
+			SRSBlendState({}),
+			SRSRasterizerState(
+				EPolygonMode::Fill,
+				ECullMode::None,
+				EFrontFace::Clockwise),
+			SRSDepthStencilState()));
+}
+
+void CFrameGraph::EndDrawQuadFillingScreen(IRenderSystemContext* InContext)
+{
+	InContext->BindVertexBuffers({ CRendererModule::QuadVBuffer.get() });
+	InContext->BindIndexBuffer(CRendererModule::QuadIBuffer.get(), 0,
+		EIndexFormat::Uint16);
+	InContext->DrawIndexed(6, 1, 0, 0, 0);
+}
+
+ERSRenderPassAttachmentLayout CFrameGraph::TexLayoutToRSLayout(
+	const SRenderPassTextureInfos& InInfos, ERenderPassResourceLayout InLayout) const
+{
+	bool bIsDepthStencil = HAS_FLAG(InInfos.Usage, ERSTextureUsage::DepthStencil);
+
+	switch(InLayout)
+	{
+	default:
+		return ERSRenderPassAttachmentLayout::Undefined;
+	case ERenderPassResourceLayout::RenderTarget:
+		return bIsDepthStencil ? ERSRenderPassAttachmentLayout::DepthStencilAttachment :
+			ERSRenderPassAttachmentLayout::ColorAttachment;
+	case ERenderPassResourceLayout::ShaderReadOnlyOptimal:
+		return bIsDepthStencil ? ERSRenderPassAttachmentLayout::DepthStencilReadOnlyOptimal :
+			ERSRenderPassAttachmentLayout::ShaderReadOnlyOptimal;
+	case ERenderPassResourceLayout::Present:
+		return ERSRenderPassAttachmentLayout::Present;
+	}
 }
 
 }

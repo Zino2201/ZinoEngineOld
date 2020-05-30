@@ -1,10 +1,62 @@
 #include "Renderer/ClusteredForward/ClusteredForwardWorldRenderer.h"
-#include "Renderer/FrameGraph/FrameGraph.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "Renderer/FrameGraph/FrameGraph.h"
 #include "Render/RenderSystem/RenderSystemContext.h"
+#include "Renderer/WorldProxy.h"
+#include "Render/Shader/BasicShader.h"
+#include "Render/RenderSystem/RenderSystem.h"
+#include "Renderer/ProxyDrawCommand.h"
+#include "Renderer/PostProcess/BarrelDistortion.h"
 
 namespace ZE::Renderer
 {
+
+SRSGraphicsPipeline Test;
+
+CClusteredForwardWorldRenderer::CClusteredForwardWorldRenderer()
+{
+	std::vector<SVertexInputBindingDescription> BindingDescriptions = 
+	{
+			SVertexInputBindingDescription(0, 12*2,
+				EVertexInputRate::Vertex),
+	};
+
+	std::vector<SVertexInputAttributeDescription> AttributeDescriptions = 
+	{
+		
+			SVertexInputAttributeDescription(0, 0, EFormat::R32G32B32Sfloat,
+				0),
+			SVertexInputAttributeDescription(0, 1, EFormat::R32G32B32Sfloat,
+				12),
+	};
+
+	std::vector<SRSPipelineShaderStage> Stages = 
+	{
+		SRSPipelineShaderStage(
+			EShaderStage::Vertex,
+			CBasicShaderManager::Get().GetShader("BasePassVS")->GetShader(),
+			"Main"),
+		SRSPipelineShaderStage(
+			EShaderStage::Fragment,
+			CBasicShaderManager::Get().GetShader("BasePassFS")->GetShader(),
+			"Main")
+	};
+
+	Test = SRSGraphicsPipeline(
+					Stages,
+					BindingDescriptions, 
+					AttributeDescriptions, 
+					SRSBlendState(),
+					SRSRasterizerState(
+						EPolygonMode::Fill,
+						ECullMode::Back,
+						EFrontFace::Clockwise),
+					SRSDepthStencilState(
+						true,
+						true,
+						ERSComparisonOp::GreaterOrEqual) 
+	);
+}
 
 void CClusteredForwardWorldRenderer::Render(CWorldProxy* InWorld, const SWorldRendererView& InView)
 {
@@ -17,27 +69,35 @@ void CClusteredForwardWorldRenderer::Render(CWorldProxy* InWorld, const SWorldRe
 	 */
 	CFrameGraph Graph;
 
+	/** BASE PASS */
+
 	struct SBasePass
 	{
-		SRenderPassResource Color;
-		SRenderPassResource Depth;
+		RenderPassResourceID Color;
+		RenderPassResourceID Depth;
+		RenderPassResourceID Backbuffer;
 	};
 
 	const SBasePass& BasePass = Graph.AddRenderPass<SBasePass>("BasePass",
 		[&](CRenderPass& InRenderPass, SBasePass& InData)
 	{
+		SRenderPassTextureInfos ColorInfos;
+		ColorInfos.Format = InView.Surface->GetSwapChainFormat();
+		ColorInfos.Width = InView.Width;
+		ColorInfos.Height = InView.Height;
+		ColorInfos.Usage = ERSTextureUsage::RenderTarget | ERSTextureUsage::Sampled;
+
 		SRenderPassTextureInfos DepthInfos;
-		DepthInfos.Format = EFormat::D32SfloatS8Uint;
+		DepthInfos.Format = EFormat::D24UnormS8Uint;
 		DepthInfos.Width = InView.Width;
 		DepthInfos.Height = InView.Height;
 
-		InData.Color = InRenderPass.CreateRetainedTexture(InView.Surface->GetBackbufferTexture());
+		InData.Color = InRenderPass.CreateTexture(ColorInfos);
 		InData.Depth = InRenderPass.CreateTexture(DepthInfos);
+		InData.Backbuffer = InRenderPass.CreateRetainedTexture(InView.Surface->GetBackbufferTexture());
 
-		InRenderPass.Write(InData.Color,
-			ERSRenderPassAttachmentLayout::Present);
-		InRenderPass.Write(InData.Depth,
-			ERSRenderPassAttachmentLayout::DepthStencilAttachment);
+		InRenderPass.Write(InData.Color);
+		InRenderPass.Write(InData.Depth);
 	},
 	[&](IRenderSystemContext* InContext, const SBasePass& InData)
 	{
@@ -59,16 +119,49 @@ void CClusteredForwardWorldRenderer::Render(CWorldProxy* InWorld, const SWorldRe
 				}
 			});
 
-		RenderWorld(InWorld);
+		RenderWorld(InContext, InWorld, InView, EMeshRenderPass::BasePass);
 	});
+
+	/** POST PROCESS */
+	AddBarrelDistortionPass(Graph, BasePass.Color, BasePass.Backbuffer);
 
 	Graph.Compile();
 	Graph.Execute();
 }
 
-void CClusteredForwardWorldRenderer::RenderWorld(CWorldProxy* InWorld)
+void CClusteredForwardWorldRenderer::RenderWorld(IRenderSystemContext* InContext, 
+	CWorldProxy* InWorld,
+	const SWorldRendererView& InView,
+	EMeshRenderPass InRenderPass)
 {
+	for(const auto& MeshCollection : InWorld->GetCachedMeshCollections())
+	{
+		/** Bind pipeline and v/i buffers */
+		InContext->BindGraphicsPipeline(Test);
+		InContext->BindVertexBuffers({ MeshCollection.GetVertexBuffer() });
+		InContext->BindIndexBuffer({ MeshCollection.GetIndexBuffer() }, 0,
+			MeshCollection.GetIndexFormat());
 
+		for(const auto& DrawCommand : MeshCollection.GetDrawCommands(InRenderPass))
+		{
+			InContext->SetShaderUniformBuffer(0, 0, InView.ViewDataUBO.get());
+
+			/** Apply draw command shader bindings */
+			for(const auto& Binding : DrawCommand->GetBindings())
+			{
+				InContext->SetShaderUniformBuffer(Binding.Set,
+					Binding.Binding,
+					Binding.Buffer.get());
+			}
+
+			/** Do the actual draw call */
+			InContext->DrawIndexed(DrawCommand->GetIndexCount(),
+				1,
+				0,
+				0,
+				0);
+		}
+	}
 }
 
 }

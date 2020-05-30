@@ -44,6 +44,17 @@ public:
         return std::nullopt;
     }
 
+    template<typename T>
+    T* GetSystem()
+    {
+        for(auto& System : Systems)
+        {
+            if(System->GetStruct() == Refl::CStruct::Get<T>())
+                return Cast<T>(System.get());
+        }
+
+        return nullptr;
+    }
 private:
     ENGINE_API void OnModuleLoaded(const std::string_view& InName);
 private:
@@ -161,7 +172,7 @@ public:
     /**
      * System group
      */
-    ETickOrder GetOrder() const { return ETickOrder::StartOfFrame; }
+    virtual ETickOrder GetOrder() const { return ETickOrder::StartOfFrame; }
 };
 
 /**
@@ -195,6 +206,12 @@ public:
     ENGINE_API SEntityComponent* AddComponent(
         const ECS::EntityID& InEntity,
         ZE::Refl::CStruct* InStruct);
+
+    template<typename T>
+	T* AddComponent(const ECS::EntityID& InEntity)
+    {
+        return Cast<T>(AddComponent(InEntity, Refl::CStruct::Get<T>()));
+    }
 
     /**
      * Remove a component from the entity

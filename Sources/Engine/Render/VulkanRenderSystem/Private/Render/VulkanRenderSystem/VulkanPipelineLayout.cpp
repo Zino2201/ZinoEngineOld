@@ -21,6 +21,8 @@ CVulkanPipelineLayout* CVulkanPipelineLayoutManager::GetPipelineLayout(
 
 		Layouts.insert(std::make_pair(InEntry, Layout));
 
+		LOG(ELogSeverity::Debug, VulkanRS, "new CVulkanPipelineLayout");
+
 		return Layout;
 	}
 }
@@ -56,6 +58,8 @@ vk::DescriptorSet CVulkanDescriptorCacheManager::AllocateDescriptorSet(const uin
 			1,
 			&Layout->GetLayoutForSet(InSet))).value;
 
+	LOG(ELogSeverity::Debug, VulkanRS, "new vk::DescriptorSet");
+
 	return Sets.front();
 }
 
@@ -76,6 +80,8 @@ const CVulkanDescriptorCacheManager::SDescriptorPoolEntry& CVulkanDescriptorCach
 			MaxAllocationsPerPool,
 			static_cast<uint32_t>(Layout->GetPoolSizes().size()),
 			Layout->GetPoolSizes().data())).value);
+
+	LOG(ELogSeverity::Debug, VulkanRS, "new vk::DescriptorPool");
 
 	return Pools.back();
 }
@@ -130,6 +136,8 @@ CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* Device,
 	PipelineLayout = Device->GetDevice().createPipelineLayoutUnique(CreateInfo).value;
 	if (!PipelineLayout)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan pipeline layout");
+
+	LOG(ELogSeverity::Debug, VulkanRS, "new vk::PipelineLayout");
 
 	CacheMgr = std::make_unique<CVulkanDescriptorCacheManager>(Device, 
 		this, GMaxAllocationsPerPool);

@@ -1,6 +1,10 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "Module/Module.h"
+
+namespace ZE
+{
 
 /**
  * Shaders
@@ -15,6 +19,8 @@ enum class EShaderParameterType
 {
 	UniformBuffer,
 	CombinedImageSampler,
+	Texture,
+	Sampler,
 	StorageBuffer
 };
 
@@ -28,15 +34,29 @@ struct SShaderParameterMember
 /**
  * A shader parameter
  */
-struct SShaderParameter
+struct SHADERCORE_API SShaderParameter
 {
-    const char* Name;
+    std::string Name;
     EShaderParameterType Type;
     uint32_t Set;
     uint32_t Binding;
     uint64_t Size;
     uint32_t Count;
     std::vector<SShaderParameterMember> Members;
+
+	SShaderParameter(const std::string& InName,
+		const EShaderParameterType& InType,
+		const uint32_t& InSet,
+		const uint32_t& InBinding,
+		const uint32_t& InCount);
+
+	SShaderParameter(const std::string& InName,
+		const EShaderParameterType& InType,
+		const uint32_t& InSet,
+		const uint32_t& InBinding,
+		const uint64_t& InSize,
+		const uint32_t& InCount,
+		const std::vector<SShaderParameterMember>& InMembers);
 };
 
 struct SShaderParameterHash
@@ -87,3 +107,5 @@ public:
 private:
     std::unordered_map<CString, SShaderParameter> Parameters;
 };
+
+}

@@ -10,8 +10,6 @@
 namespace ZE
 {
 
-DEFINE_MODULE(CDefaultModule, "EngineCore")
-
 CLogger::CLogger() {}
 CLogger::~CLogger() {}
 
@@ -22,39 +20,37 @@ ENGINECORE_API std::thread::id StatThreadID;
 void CLogger::Log(const ELogSeverity& InSeverity, 
 	const std::string& InCategory, const std::string& InMessage, va_list InArgs) const
 {
-	char PrintfBuffer[1024];
+	char PrintfBuffer[2048];
 
 #ifdef NDEBUG
-	if (InSeverity != ELogSeverity::Debug)
+	if(InSeverity == ELogSeverity::Debug)
+		return;
+#endif
+
+	std::string ThreadName;
+
+	if (std::this_thread::get_id() == GameThreadID)
 	{
-#endif
-		std::string ThreadName;
-
-		if(std::this_thread::get_id() == GameThreadID)
-		{
-			ThreadName = "GameThread";
-		}
-		else if(std::this_thread::get_id() == RenderThreadID)
-		{
-			ThreadName = "RenderThread";
-		}
-		else if(std::this_thread::get_id() == StatThreadID)
-		{
-			ThreadName = "StatThread";
-		}
-		else
-		{
-			ThreadName = "UnknownThread";
-		}
-
-		std::cout << "[" << SeverityToString(InSeverity) << "/" << ThreadName << "] ("
-			<< InCategory << ") ";
-		vsprintf_s(PrintfBuffer, InMessage.c_str(), InArgs);
-		std::cout << PrintfBuffer;
-		std::cout << std::endl;
-#ifdef NDEBUG
+		ThreadName = "GameThread";
 	}
-#endif
+	else if (std::this_thread::get_id() == RenderThreadID)
+	{
+		ThreadName = "RenderThread";
+	}
+	else if (std::this_thread::get_id() == StatThreadID)
+	{
+		ThreadName = "StatThread";
+	}
+	else
+	{
+		ThreadName = "UnknownThread";
+	}
+
+	std::cout << "[" << SeverityToString(InSeverity) << "/" << ThreadName << "] ("
+		<< InCategory << ") ";
+	vsprintf_s(PrintfBuffer, InMessage.c_str(), InArgs);
+	std::cout << PrintfBuffer;
+	std::cout << std::endl;
 
 	if (InSeverity >= ELogSeverity::Fatal)
 	{

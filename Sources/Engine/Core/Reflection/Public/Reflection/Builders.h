@@ -31,9 +31,6 @@ class TTypeBuilder
 public:
 	TTypeBuilder(const char* InName)
     {
-        auto& Types = CType::GetTypes();
-        must(!CType::Get(TTypeName<T>::Name)); // Duplicated type
-
         Type = CType::RegisterType<U>(InName, sizeof(T));
     }
 

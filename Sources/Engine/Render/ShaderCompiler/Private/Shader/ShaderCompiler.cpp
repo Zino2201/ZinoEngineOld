@@ -4,7 +4,7 @@
 namespace ZE
 {
 
-DEFINE_MODULE(CDefaultModule, "ShaderCompiler")
+DEFINE_MODULE(CDefaultModule, ShaderCompiler)
 
 DECLARE_LOG_CATEGORY(ShaderCompiler);
 

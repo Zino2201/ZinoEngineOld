@@ -6,13 +6,12 @@ struct VSInput
 	float4 Color : COLOR;
 };
 
-cbuffer PerInstance
-{
-    float4x4 WVP;
-};
-
 VSOutput Main(VSInput Input)
 {
+	float4x4 WVP = mul(World, ViewProj);
+
+	Input.Position.w = 1.0f;
+
 	VSOutput Out;
 	Out.Position = mul(Input.Position, WVP);
 	Out.Color = Input.Color;

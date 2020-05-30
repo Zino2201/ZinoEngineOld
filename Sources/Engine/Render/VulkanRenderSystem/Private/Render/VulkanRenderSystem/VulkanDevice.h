@@ -3,6 +3,7 @@
 #include "VulkanCore.h"
 #include "VulkanRenderSystemContext.h"
 #include "VulkanPipelineLayout.h"
+#include "VulkanPipeline.h"
 
 class CVulkanSwapChain;
 class CVulkanQueue;
@@ -36,7 +37,8 @@ public:
     {
         Buffer,
         Image,
-        ImageView
+        ImageView,
+        Sampler
     };
     
     struct SEntry
@@ -70,6 +72,13 @@ public:
 	    InHandle = vk::ImageView();
     }
 
+    template<typename CPPType, typename CType>
+    void Enqueue(EHandleType InHandleType, CPPType& InHandle)
+    {
+		EnqueueResource(InHandleType, reinterpret_cast<uint64_t>(static_cast<CType>(InHandle)));
+		InHandle = CPPType();
+    }
+
     void DestroyResources();
 private:    
     void EnqueueResource(EHandleType InHandleType, 
@@ -93,6 +102,7 @@ public:
     CVulkanStagingBufferManager* GetStagingBufferMgr() { return StagingBufferMgr.get(); }
     CVulkanPipelineLayoutManager* GetPipelineLayoutMgr() { return PipelineLayoutMgr.get(); }
     CVulkanDeferredDestructionManager& GetDeferredDestructionMgr() { return DeferredDestructionManager; }
+    CVulkanPipelineManager& GetPipelineManager() { return PipelineManager; }
     CVulkanRenderSystemContext* GetContext() const { return Context.get(); }
     const VmaAllocator& GetAllocator() const { return Allocator; }
     const vk::Device& GetDevice() const { return *Device; }
@@ -111,4 +121,5 @@ private:
     std::unique_ptr<CVulkanQueue> GraphicsQueue;
     CVulkanQueue* PresentQueue;
     std::unique_ptr<CVulkanPipelineLayoutManager> PipelineLayoutMgr;
+    CVulkanPipelineManager PipelineManager;
 };

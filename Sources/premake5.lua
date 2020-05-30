@@ -1,127 +1,345 @@
+-- Useful globals
 SrcDir = os.getcwd()
 LibDir = SrcDir.."/Libs/"
 BuildDir = SrcDir.."/../Build/"
 IntermediateDir = BuildDir.."Intermediates/"
 BinDir = SrcDir.."/../Binaries/"
 
--- Utils for creating a module
-function basicModuleDefinitions(consoleApp)
+-- Src engine path
+SrcEnginePaths = os.matchdirs(SrcDir.."/Engine/**")
+SrcEnginePathStr = ""
+for k, v in pairs(SrcEnginePaths) do
+	SrcEnginePathStr = SrcEnginePathStr..v..";"
+end
+
+-- List of modules
+Modules = {}
+
+-- Module class
+Module = {}
+Module.__index = Module
+
+-- Required libs
+RequiredIncludes = 
+	{ 
+		LibDir.."glm",
+		LibDir.."stb_image",
+		LibDir.."SDL2/include",
+		LibDir.."boost"
+	}
+RequiredLibDirs = 
+	{
+		LibDir.."SDL2/lib"
+	}
+RequiredLibs = 
+	{
+		"SDL2"
+	}
+
+currentFilter = -1
+
+-- Utils functions
+function filterDebugOnly()
+	filter { "Debug or Debug Monolithic" }
+	
+	currentFilter = 0
+end
+
+function filterReleaseOnly()
+	filter { "Release or Release Editor or Release Monolithic" }
+	
+	currentFilter = 1
+end
+
+function filterMonolithicOnly()
+	filter { "Debug Monolithic or Release Monolithic" }
+	
+	currentFilter = 2
+end
+
+function filterModularOnly()
+	filter { "Debug or Release or Release Editor" }
+	
+	currentFilter = 3
+end
+
+function filterDebugModularOnly()
+	filter { "Debug or Debug Editor" }
+	
+	currentFilter = 4
+end
+
+function filterReleaseModularOnly()
+	filter { "Release or Release Editor" }
+	
+	currentFilter = 5
+end
+
+function filterDebugMonolithicOnly()
+	filter { "Debug Monolithic" }
+	
+	currentFilter = 6
+end
+
+function filterReleaseMonolithicOnly()
+	filter { "Release Monolithic" }
+	
+	currentFilter = 7
+end
+
+function filterReset()
+	filter {}
+	
+	currentFilter = -1
+end
+
+function filterApplyByIdx(idx)
+	if idx == 0 then
+		filterDebugOnly()
+	elseif idx == 1 then
+		filterReleaseOnly()
+	elseif idx == 2 then
+		filterMonolithicOnly()
+	elseif idx == 3 then
+		filterModularOnly()
+	elseif idx == 4 then
+		filterDebugModularOnly()
+	elseif idx == 5 then
+		filterReleaseModularOnly()
+	elseif idx == 6 then
+		filterDebugMonolithicOnly()
+	elseif idx == 7 then
+		filterReleaseMonolithicOnly()
+	else
+		filterReset()
+	end 
+end
+
+function appendTables(t1, t2) 
+	local t1size = #t1
+	for k, v in pairs(t2) do 
+		t1[t1size + k] = v 
+	end
+end
+
+-- Declare a module
+
+local currentModule = nil
+
+function Module:new(name, modKind)
+	-- Initialize module class
+	local mod = {}
+	setmetatable(mod, Module)
+	-- Set values
+	mod.name = name
+	mod.kind = modKind or "SharedLib"
+	mod.deps = {}
+	mod.includeDirs = {}
+	mod.libDirs = {}
+	mod.libs = {}
+	
+	-- Used by monolithic builds
+	mod.debugLibDirs = {}
+	mod.debugLibs = {}
+	mod.releaseLibDirs = {}
+	mod.releaseLibs = {}
+	mod.bothLibDirs = {}
+	mod.bothLibs = {}
+	
+	-- Initialize project
+	
+	-- Base configuration
+	project(name)
+	
+	kind(mod.kind)
+	
+	filterMonolithicOnly()
+		if mod.kind == "SharedLib" then
+			kind("StaticLib")
+		else
+			kind(mod.kind)
+		end
+		defines(string.upper(mod.name).."_API=")
+		defines("ZE_MONOLITHIC")
+	filterModularOnly()
+		defines(string.upper(mod.name).."_API=__declspec(dllexport)")
+	filterReset()
+	
+	-- Add a define for each configurations
+	filter "Debug"
+		defines("ZE_CONFIGURATION_NAME=\"Debug\"")
+	filter "Debug Editor"
+		defines("ZE_CONFIGURATION_NAME=\"Debug Editor\"")
+	filter "Debug Monolithic"
+		defines("ZE_CONFIGURATION_NAME=\"Debug Monolithic\"")
+	filter "Release"
+		defines("ZE_CONFIGURATION_NAME=\"Release\"")
+		defines("NDEBUG")
+	filter "Release Editor"
+		defines("ZE_CONFIGURATION_NAME=\"Release Editor\"")
+		defines("NDEBUG")
+	filter "Release Monolithic"
+		defines("ZE_CONFIGURATION_NAME=\"Release Monolithic\"")
+		defines("NDEBUG")
+	filter {}
+	
 	language "C++"
 	cppdialect "C++17"
-	if type(consoleApp) == "boolean" then
-		kind "ConsoleApp"
-	else
-		kind "SharedLib"
-	end
-	files { "**.h", "**.cpp", "**.hpp", "**.cxx" }
+	files { "**.h", "**.cpp", "**.hpp", "**.cxx", "**.inl" }
 	
-	defines("%{prj.name:upper()}_API=__declspec(dllexport)")
-
 	targetdir (BinDir.."%{cfg.longname}")
-	
 	objdir (IntermediateDir.."%{prj.name}/".."%{cfg.longname}")
+	debugdir(SrcDir.."/../")
 	
+	-- Default includes & libs
 	includedirs "Public"
 	includedirs "Private"
+	libdirs(BinDir.."/%{cfg.longname}")
 	
+	-- Compiler
 	exceptionhandling("Off")
 	rtti("Off")
-	debugdir(SrcDir.."/../")
-	-- prebuildcommands { "call \""..SrcDir.."/GenerateReflectionData.bat\" "..os.getcwd().." "..IntermediateDir.."%{prj.name}/".."%{cfg.longname}/Generated"  }
-end
-
--- Include a module
-function includeModule(path)
-	local explodedPath = string.explode(path, "/")
-	local moduleName = explodedPath[#explodedPath]
-
-	includedirs(SrcDir.."/"..path.."/Public")
-	libdirs(BinDir.."/%{cfg.longname}")
-	dependson(moduleName)
-	defines(string.upper(moduleName).."_API=__declspec(dllimport)")
-	links("ZinoEngine-"..moduleName)
-end
-
--- Include a module that will be accessed dynamicaly
-function includeModuleDynamic(path)
-	local explodedPath = string.explode(path, "/")
-	local moduleName = explodedPath[#explodedPath]
 	
-	-- No dependson
-	-- No lib linking
+	-- Add required inc/libs
+	mod:addIncludeDirs(RequiredIncludes)
+	mod:addLibDirs(RequiredLibDirs)
+	mod:addLibs(RequiredLibs)
 	
-	includedirs(SrcDir.."/"..path.."/Public")
-	defines(string.upper(moduleName).."_API=__declspec(dllimport)")
+	currentModule = mod
+	
+	table.insert(Modules, mod)
+	
+	return mod
 end
 
-function includeLib(path, libPath)
-	includedirs(LibDir..path)
-	if type(libPath) == "string" then
-		libdirs(LibDir..libPath)
+function Module:addModules(deps)
+	appendTables(self.deps, deps)
+	
+	for k, v in pairs(deps) do
+		local path = searchModulePath(v)
+		if path then
+			includedirs(path.."/Public")
+			dependson(v)
+			filterModularOnly()
+				defines(string.upper(v).."_API=__declspec(dllimport)")
+				links("ZinoEngine-"..v)
+			filterMonolithicOnly()
+				defines(string.upper(v).."_API=")
+			filterReset()
+		else
+			print("Can't find module "..v)
+		end
 	end
 end
 
-function includeMinimalModules()
-	includeCoreModules()
-	includeRenderModules()
-end
-
-function includeCoreModules()
-	-- Base Core Engine module
-	includeModule("Engine/Core/EngineCore")
-	includeModule("Engine/Core/Reflection")
+function Module:addIncludeDirs(includeDirs)
+	appendTables(self.includeDirs, includeDirs)
 	
-	includeCoreLibs()
+	for k, v in pairs(includeDirs) do
+		includedirs(v)
+	end
 end
 
-function includeRenderModules()
-	includeModule("Engine/Render/Render")
-	includeModule("Engine/Render/Renderer")
-end
-
-function includeCoreLibs()
-	-- Basic libs
-	includeLib("glm")
-	includeLib("stb_image")
-	includeLib("SDL2/include", "SDL2/lib")
-	includeLib("boost")
-	includeLib("rapidjson-1.1.0/include")
+function Module:addLibDirs(libDirs)
+	appendTables(self.libDirs, libDirs)
 	
-	links("SDL2")
+	local oldFilter = currentFilter
+	
+	--[[if currentFilter == 0 or currentFilter == -1 or currentFilter == 2 or currentFilter == 3 then
+		appendTables(self.debugLibDirs, libDirs)
+	end
+	
+	if currentFilter == 1 or currentFilter == -1 or currentFilter == 2 or currentFilter == 3 then
+		appendTables(self.releaseLibDirs, libDirs)
+	end--]]
+
+	if currentFilter == 0 then
+		filterDebugModularOnly()
+		appendTables(self.debugLibDirs, libDirs)
+	elseif currentFilter == 1 then
+		appendTables(self.releaseLibDirs, libDirs)
+		filterReleaseModularOnly()
+	else
+		filterModularOnly()
+		appendTables(self.bothLibDirs, libDirs)
+	end
+
+	for k, v in pairs(libDirs) do
+		libdirs(v)
+	end
+	
+	filterApplyByIdx(oldFilter)
 end
 
-function includeVulkan()
-	includeLib("Vulkan/Include", "Vulkan/Lib")
-	includeLib("VulkanMemoryAllocator")
+function Module:addLibs(libs)
+	appendTables(self.libs, libs)
+	
+	local oldFilter = currentFilter
+	
+	if currentFilter == 0 then
+		filterDebugModularOnly()
+		appendTables(self.debugLibs, libs)
+	elseif currentFilter == 1 then
+		appendTables(self.releaseLibs, libs)
+		filterReleaseModularOnly()
+	else
+		filterModularOnly()
+		appendTables(self.bothLibs, libs)
+	end
+	
+	for k, v in pairs(libs) do
+		links(v)
+	end
+
+	filterApplyByIdx(oldFilter)
+end
+
+-- Search the specified module
+-- Return the path if found or else nil
+function searchModulePath(name)
+	return os.pathsearch(name..".lua", SrcEnginePathStr)
+end
+
+local function executeModule(name)
+	local path = searchModulePath(name)
+	
+	if path then
+		include(path.."/"..name..".lua")
+		currentModule = nil
+		filterReset()
+	else
+		print("Can't find module "..name)
+	end
 end
 
 workspace "ZinoEngine"
 	location ("../Build/ProjectFiles")
-	configurations { "Debug", "Release" }
+	configurations { "Debug", "Release", "Debug Monolithic", "Release Monolithic" }
 	language "C++"
 	architecture "x86_64"
-	filter { "configurations:Debug" }
+	filter { "Debug or Release Editor or Debug Monolithic" }
 		symbols "On"
-	filter { "configurations:Release" }
+	filter { "Release or Release Editor or Release Monolithic" }
 		optimize "On"
 	filter { }
 	startproject "Main"
 	
 	targetprefix ("ZinoEngine-")
-	
-	include("Engine/Core/Main")
 	group "Engine/Core"
-		include("Engine/Core/Engine")
-		include("Engine/Core/EngineCore")
-		include("Engine/Core/Reflection")
+		executeModule("EngineCore")
+		executeModule("Engine")
+		executeModule("Reflection")
 	group "Engine/Rendering"
-		include("Engine/Render/RenderCore")
-		include("Engine/Render/RenderSystem")
-		include("Engine/Render/VulkanRenderSystem")
-		include("Engine/Render/Renderer")
+		executeModule("RenderCore")
+		executeModule("RenderSystem")
+		executeModule("VulkanRenderSystem")
+		executeModule("Renderer")
 	group "Engine/Rendering/Shaders"
-		include("Engine/Render/Shaders")
-		include("Engine/Render/ShaderCore")
-		include("Engine/Render/ShaderCompiler")
-		include("Engine/Render/VulkanShaderCompiler")
+		executeModule("Shaders")
+		executeModule("ShaderCore")
+		executeModule("ShaderCompiler")
+		executeModule("VulkanShaderCompiler")
+	group ""
+		executeModule("Main")
+	print("Total of "..#Modules.." module(s)")
 	

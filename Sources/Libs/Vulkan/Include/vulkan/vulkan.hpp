@@ -12175,7 +12175,7 @@ namespace std
 }
 #endif
 
-namespace vk
+namespace VULKAN_HPP_NAMESPACE
 {
 #ifndef VULKAN_HPP_NO_EXCEPTIONS
   class ErrorCategoryImpl : public std::error_category

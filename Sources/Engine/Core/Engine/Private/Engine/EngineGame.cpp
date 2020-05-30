@@ -9,7 +9,7 @@
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
-#include "Engine/StaticMesh.h"
+#include "Engine/Assets/StaticMesh.h"
 #include <SDL2/SDL.h>
 #include "Engine/World.h"
 #include "Engine/ECS.h"
@@ -20,7 +20,7 @@
 namespace ZE
 {
 
-CEngineGame::~CEngineGame() { delete Window; }
+CEngineGame::~CEngineGame() { testSM.reset(); delete Window; }
 
 void LoadModelUsingAssimp(const std::string_view& InPath,
 	std::vector<SStaticMeshVertex>& OutVertices,
@@ -28,17 +28,15 @@ void LoadModelUsingAssimp(const std::string_view& InPath,
 {
 	static std::vector<Math::SVector3Float> Colors = 
 	{
-		{ { 1, 0, 0 } },
-		{ { 0, 1, 0 } },
-		{ { 0, 0, 1 } }
+		Math::SVector3Float(1, 0, 0),
+		Math::SVector3Float(0, 1, 0),
+		Math::SVector3Float(0, 0, 1)
 	};
 	static size_t CurrentColor = 0;
 	static size_t CurrentVtx = 0;
 
 	Assimp::Importer Importer;
-	const aiScene* Scene = Importer.ReadFile(InPath.data(), aiProcess_FlipUVs |
-		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices);
+	const aiScene* Scene = Importer.ReadFile(InPath.data(), aiProcess_FlipUVs);
 	if(!Scene)
 		LOG(ELogSeverity::Fatal, None, "Failed to load model %s", InPath.data());
 
@@ -102,8 +100,8 @@ void CEngineGame::Initialize()
 
 	World->GetEntityManager()->AddComponent(
 		Test, Refl::CStruct::Get<Components::STransformComponent>());
-	World->GetEntityManager()->AddComponent(
-		Test, Refl::CStruct::Get<Components::SStaticMeshComponent>());
+	Components::SStaticMeshComponent* 
+		C = World->GetEntityManager()->AddComponent<Components::SStaticMeshComponent>(Test);
 
 	World->GetEntityManager()->AddComponent(
 		Test, Refl::CStruct::Get<ECS::SHierarchyComponent>());
@@ -139,95 +137,16 @@ void CEngineGame::Initialize()
 	/**
 	 * Read merger sponger
 	 */
-	std::vector<SStaticMeshVertex> Vertices;/* = 
-	{
-		{ {-1, 1, 0}, {} },
-		{ {1, 1, 0}, {} },
-		{ {-1, -1, 0}, {} },
-		{ {1, -1, 0}, {} },
-	};*/
-	std::vector<uint32_t> Indices;/*= 
-	{ 
-		2, 1, 1,
-		3, 2, 1,
-		1, 3, 1,
-		2, 1, 1,
-		4, 4, 1,
-		3, 2, 1
-	};*/
+	std::vector<SStaticMeshVertex> Vertices;
+	std::vector<uint32_t> Indices;
 	LoadModelUsingAssimp("Assets/MergerSponge.obj", Vertices, Indices);
 
-	testSM = std::make_unique<CStaticMesh>();
+	testSM = std::make_shared<CStaticMesh>();
 	testSM->UpdateData(Vertices, Indices);
 
-	ubo = GRenderSystem->CreateBuffer(
-		ERSBufferUsage::UniformBuffer,
-		ERSMemoryUsage::HostVisible,
-		sizeof(test),
-		SRSResourceCreateInfo());
+	ViewDataUBO.InitResource();
 
-	/*Vertex = CGlobalShaderCompiler::Get().CompileShader(
-		EShaderStage::Vertex,
-		"Shaders/main.vert",
-		"main",
-		EShaderCompilerTarget::VulkanSpirV);
-
-	Frag = CGlobalShaderCompiler::Get().CompileShader(
-		EShaderStage::Fragment,
-		"Shaders/main.frag",
-		"main",
-		EShaderCompilerTarget::VulkanSpirV);*/
-
-	TestRenderPass = {
-		/** Color attachments */
-		{
-			/** 0 */
-			{
-				Viewport->GetSurface()->GetSwapChainFormat(),
-				ESampleCount::Sample1,
-				ERSRenderPassAttachmentLoadOp::Clear,
-				ERSRenderPassAttachmentStoreOp::Store,
-				ERSRenderPassAttachmentLayout::Undefined,
-				ERSRenderPassAttachmentLayout::Present
-			}
-		},
-
-		/** Depth attachments */
-		{
-			/** 0 */
-			{
-				Viewport->GetDepthBuffer()->GetFormat(),
-				ESampleCount::Sample1,
-				ERSRenderPassAttachmentLoadOp::Clear,
-				ERSRenderPassAttachmentStoreOp::Store,
-				ERSRenderPassAttachmentLayout::Undefined,
-				ERSRenderPassAttachmentLayout::DepthStencilAttachment
-			}
-		},
-
-		/** Subpasses */
-		{
-			/** 0 */
-			{
-				/** Color attachment refs */
-				{
-					/** 0 */
-					{
-						0,
-						ERSRenderPassAttachmentLayout::ColorAttachment
-					}
-				},
-
-				/** Depth attachment refs */
-				{
-					{
-						1,
-						ERSRenderPassAttachmentLayout::DepthStencilAttachment
-					}
-				}
-			}
-		}
-	};
+	C->SetStaticMesh(testSM);
 }
 
 glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -237,8 +156,19 @@ glm::vec3 CameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 CameraDirection = glm::normalize(CameraPos - CameraTarget);
 glm::vec3 CameraRight = glm::normalize(glm::cross(Up, CameraDirection));
 glm::vec3 CameraUp = glm::cross(CameraDirection, CameraRight);
-glm::vec3 CameraFront = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 CameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	float CamYaw = 0.f, CamPitch = 0.f;
+
+	/** https://nlguillemot.wordpress.com/2016/12/07/reversed-z-in-opengl/ */
+	glm::mat4 MakeInfReversedZProjRH(float fovY_radians, float aspectWbyH, float zNear)
+	{
+		float f = 1.0f / tan(fovY_radians / 2.0f);
+		return glm::mat4(
+			f / aspectWbyH, 0.0f, 0.0f, 0.0f,
+			0.0f, f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, -1.0f,
+			0.0f, 0.0f, zNear, 0.0f);
+	}
 
 
 void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
@@ -319,103 +249,28 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 	EnqueueRenderCommand("CEngineGame::DrawWorld",
 		[this, time]()
 	{
+		{
+		ZE::Renderer::SViewData VD;
+		glm::mat4 View = glm::lookAt(CameraPos, CameraPos
+			+ CameraFront,
+			CameraUp);
+		glm::mat4 Proj = glm::perspective(glm::radians(90.f), (float) 1280 / 720,
+			1000.f, 0.1f);
+		VD.ViewProj = Proj * View;
+		ViewDataUBO.Copy(&VD);
+		}
+		
 		ZE::Renderer::SWorldRendererView View;
 		View.Width = 1280;
 		View.Height = 720;
 		View.Surface = Viewport->GetSurface();
+		View.ViewDataUBO = ViewDataUBO.GetBuffer();
 		ZE::Renderer::CClusteredForwardWorldRenderer Renderer;
 		Viewport->Begin();
 
 		/** Renderer */
 
-		//if (Vertex._Is_ready())
-		//{
-		//	SShaderCompilerOutput& Output = Vertex.get();
-		//	shaderV = GRenderSystem->CreateShader(
-		//		EShaderStage::Vertex,
-		//		Output.Bytecode.size(),
-		//		Output.Bytecode.data(),
-		//		Output.ReflectionData.ParameterMap);
-
-		//	if (shaderV && shaderF) bshouldrendertri = true;
-		//}
-
-		//if (Frag._Is_ready())
-		//{
-		//	SShaderCompilerOutput& Output = Frag.get();
-		//	shaderF = GRenderSystem->CreateShader(
-		//		EShaderStage::Fragment,
-		//		Output.Bytecode.size(),
-		//		Output.Bytecode.data(),
-		//		Output.ReflectionData.ParameterMap);
-
-		//	if (shaderV && shaderF) bshouldrendertri = true;
-		//}
-
-		//if (bshouldrendertri)
-		//{
-		//	if (!pipeline)
-		//	{
-		//		pipeline = GRenderSystem->CreateGraphicsPipeline(
-		//			{
-		//				/** Vertex */
-		//				{
-		//					EShaderStage::Vertex,
-		//					shaderV.get(),
-		//					"main"
-		//				},
-		//				{
-		//					EShaderStage::Fragment,
-		//					shaderF.get(),
-		//					"main"
-		//				}
-		//			},
-		//			SStaticMeshVertex::GetBindingDescriptions(), 
-		//			SStaticMeshVertex::GetAttributeDescriptions(), 
-		//			TestRenderPass,
-		//			SRSBlendState(),
-		//			SRSRasterizerState(
-		//				EPolygonMode::Fill,
-		//				ECullMode::Back,
-		//				EFrontFace::Clockwise),
-		//			SRSDepthStencilState(
-		//				true,
-		//				true,
-		//				ERSComparisonOp::GreaterOrEqual));
-		//	}
-		//}
-
 		Renderer.Render(World->GetProxy(), View);
-	
-		//if(pipeline)
-		//{
-		//	//GRSContext->BindGraphicsPipeline(pipeline.get());
-		//	//GRSContext->BindVertexBuffers({ testSM->GetRenderData()->GetVertexBuffer() });
-		//	//GRSContext->BindIndexBuffer(testSM->GetRenderData()->GetIndexBuffer(),
-		//	//	0, testSM->GetRenderData()->GetIndexFormat());
-		//	//
-		//	//		test WVP;
-		//	//		glm::mat4 World = glm::scale(glm::mat4(1.0f), glm::vec3(1));
-		//	//		glm::mat4 View = glm::lookAt(CameraPos, /*CameraPos
-		//	//			+ */CameraFront,
-		//	//			CameraUp);
-		//	//		glm::mat4 Proj = glm::perspective(glm::radians(45.0f),
-		//	//			1280 / (float) 720, 1000.f, 0.1f);
-		//	//		Proj[1][1] *= -1;
-
-		//	//		WVP.View = View;
-		//	//		WVP.CameraPos = CameraPos;
-		//	//		WVP.CameraFront = CameraFront;
-		//	//		WVP.CameraUp = CameraUp;
-
-		//	//		void* Dst = ubo->Map(ERSBufferMapMode::WriteOnly);
-		//	//		memcpy(Dst, &WVP, sizeof(test));
-		//	//		ubo->Unmap();
-
-		//	//GRSContext->SetShaderUniformBuffer(0, 0, ubo.get());
-
-		//	//GRSContext->DrawIndexed(testSM->GetIndexCount(), 1, 0, 0, 0);
-		//}
 
 		Viewport->End();
 	});

@@ -7,7 +7,7 @@
 #include <SDL2/SDL_vulkan.h>
 #include <set>
 
-DEFINE_MODULE(CDefaultModule, "VulkanRenderSystem")
+DEFINE_MODULE(CDefaultModule, VulkanRenderSystem)
 
 extern class CVulkanRenderSystem* GVulkanRenderSystem = nullptr;
 extern class CVulkanRenderSystemContext* GRenderSystemContext = nullptr;
@@ -87,6 +87,9 @@ void CVulkanRenderSystem::Initialize()
 	{
 		vk::ApplicationInfo ApplicationInfos(nullptr,
 			0, nullptr, 0, VK_API_VERSION_1_1);
+
+		LOG(ELogSeverity::Info, VulkanRS, "Validation layers: %s",
+			GVulkanEnableValidationLayers ? "Yes": "No");
 
 		/** Get required extensions */
 		std::vector<const char*> RequiredExtensions = GetRequiredExtensions();

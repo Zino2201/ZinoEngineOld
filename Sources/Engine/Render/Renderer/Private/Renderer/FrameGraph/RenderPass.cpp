@@ -5,18 +5,33 @@
 namespace ZE::Renderer
 {
 
-void CRenderPass::Read(const SRenderPassResource& InResource)
+void CRenderPass::SetLoadOp(const RenderPassResourceID& InResource, 
+	ERSRenderPassAttachmentLoadOp InLoadOp)
 {
-	ReadInfos.emplace_back(SRenderPassReadInfos(InResource));
+	for(auto& Texture : Textures)
+	{
+		if(Texture == InResource)
+			Texture.TextureInfos.LoadOp = InLoadOp;
+	}
 }
 
-void CRenderPass::Write(const SRenderPassResource& InResource, 
-	ERSRenderPassAttachmentLayout InFinalLayout)
+void CRenderPass::Read(const RenderPassResourceID& InResource,
+	 ERSRenderPassAttachmentLoadOp InLoadOp)
 {
-	WriteInfosMap.emplace_back(SRenderPassWriteInfos(InResource, InFinalLayout));
+	ReadInfos.emplace_back(SRenderPassReadInfos(InResource, InLoadOp));
+	Attachments.insert(InResource);
 }
 
-SRenderPassResource& CRenderPass::CreateTexture(const SRenderPassTextureInfos& InInfos)
+void CRenderPass::Write(const RenderPassResourceID& InResource, 
+	ERenderPassResourceLayout InFinalLayout)
+{
+	WriteInfosMap.emplace_back(SRenderPassWriteInfos(InResource, InFinalLayout,
+		ERSRenderPassAttachmentStoreOp::Store));
+
+	Attachments.insert(InResource);
+}
+
+RenderPassResourceID& CRenderPass::CreateTexture(const SRenderPassTextureInfos& InInfos)
 {
 	SRenderPassResource& Tex = Graph.CreateResource(ERenderPassResourceType::Texture);
 	Tex.TextureInfos = InInfos;
@@ -36,10 +51,10 @@ SRenderPassResource& CRenderPass::CreateTexture(const SRenderPassTextureInfos& I
 
 	Textures.push_back(Tex);
 
-	return Tex;
+	return Tex.ID;
 }
 
-SRenderPassResource& CRenderPass::CreateRetainedTexture(CRSTexture* InTexture)
+RenderPassResourceID& CRenderPass::CreateRetainedTexture(CRSTexture* InTexture)
 {
 	SRenderPassResource& Tex = Graph.CreateResource(ERenderPassResourceType::Texture);
 	SRenderPassTextureInfos Infos;
@@ -53,7 +68,7 @@ SRenderPassResource& CRenderPass::CreateRetainedTexture(CRSTexture* InTexture)
 	Textures.push_back(Tex);
 	Graph.TextureResourceMap[Tex.ID] = InTexture;
 
-	return Tex;
+	return Tex.ID;
 }
 
 std::optional<SRenderPassWriteInfos> CRenderPass::GetWriteInfos(
@@ -61,8 +76,20 @@ std::optional<SRenderPassWriteInfos> CRenderPass::GetWriteInfos(
 {
 	for (const auto& WriteInfo : WriteInfosMap)
 	{
-		if (WriteInfo.Target == InResource)
+		if (WriteInfo.Target == InResource.ID)
 			return std::make_optional(WriteInfo);
+	}
+
+	return std::nullopt;
+}
+
+std::optional<SRenderPassReadInfos> CRenderPass::GetReadInfos(
+	const SRenderPassResource& InResource) const
+{
+	for (const auto& ReadInfo : ReadInfos)
+	{
+		if (ReadInfo.Target == InResource.ID)
+			return std::make_optional(ReadInfo);
 	}
 
 	return std::nullopt;
@@ -72,7 +99,7 @@ bool CRenderPass::IsInput(const SRenderPassResource& InResource) const
 {
 	for(const auto& ReadInfo : ReadInfos)
 	{
-		if(ReadInfo.Target == InResource)
+		if(ReadInfo.Target == InResource.ID)
 			return true;
 	}
 
@@ -83,7 +110,7 @@ bool CRenderPass::IsOutput(const SRenderPassResource& InResource) const
 {
 	for (const auto& WriteInfo : WriteInfosMap)
 	{
-		if (WriteInfo.Target == InResource)
+		if (WriteInfo.Target == InResource.ID)
 			return true;
 	}
 
@@ -117,6 +144,7 @@ CRSTexture* CRenderPassPersistentResourceManager::GetOrCreateTexture(
 
 			Entry.Infos = InInfos;
 			Entry.Texture = Texture;
+			Entry.InactiveCounter = 0;
 
 			TextureMap[InID] = Entry;
 			
@@ -145,6 +173,7 @@ CRSTexture* CRenderPassPersistentResourceManager::GetOrCreateTexture(
 
 	Entry.Infos = InInfos;
 	Entry.Texture = Texture;
+	Entry.InactiveCounter = 0;
 
 	TextureMap.insert({ InID, Entry });
 

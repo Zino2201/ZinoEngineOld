@@ -1,5 +1,6 @@
 #include "Engine/Components/EventSystem.h"
 #include "Reflection/Builders.h"
+#include "Reflection/Type.h"
 
 namespace ZE
 {

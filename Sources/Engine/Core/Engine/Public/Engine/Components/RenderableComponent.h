@@ -52,13 +52,21 @@ public:
     }
     bool ShouldTick() const override { return true; }
     uint32_t GetPriority() const override { return 0; }
+    void AddRenderableComponentToUpdate(SRenderableComponent* InComponent);
+    ETickOrder GetOrder() const override { return ETickOrder::EndOfFrame; }
 private:
     void OnComponentAdded(ECS::CEntityManager& InEntityManager, const ECS::EntityID& InEntityID, 
         ECS::SEntityComponent* InComponent);
 	void OnComponentRemoved(ECS::CEntityManager& InEntityManager, const ECS::EntityID& InEntityID,
 		ECS::SEntityComponent* InComponent);
+    void CreateProxy(ECS::CEntityManager& InEntityManager, 
+        const ECS::EntityID& InEntityID, SRenderableComponent* InComponent);
+    void DeleteProxy(ECS::CEntityManager& InEntityManager, 
+        SRenderableComponent* InComponent);
 public:
     TMulticastDelegate<> OnRenderableComponentUpdated;
+private:
+    std::vector<SRenderableComponent*> ComponentsToUpdate;
 };
 DECLARE_REFL_TYPE(CRenderableComponentSystem);
 

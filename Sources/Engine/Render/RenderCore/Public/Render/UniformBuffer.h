@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include <any>
+#include <algorithm>
 #include "RenderThreadResource.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "Render/RenderSystem/RenderSystem.h"
@@ -12,14 +13,18 @@ namespace ZE
 /**
  * Wrapper around a CRSBuffer
  */
-template<typename T, bool bUsePersistantMapping = false>
+template<typename T, bool bUsePersistantMapping = true>
 struct TUniformBuffer : public CRenderThreadResource
 {
     void InitResource_RenderThread() override
     {
+        ERSMemoryUsage MemoryUsage = ERSMemoryUsage::HostVisible;
+        if(bUsePersistantMapping)
+            MemoryUsage |= ERSMemoryUsage::UsePersistentMapping;
+
         Buffer = GRenderSystem->CreateBuffer(
             ERSBufferUsage::UniformBuffer,
-            ERSMemoryUsage::HostVisible,
+            MemoryUsage,
             sizeof(T),
             SRSResourceCreateInfo(nullptr, "TUniformBuffer"));
     }
@@ -33,14 +38,14 @@ struct TUniformBuffer : public CRenderThreadResource
      * Copy InData to the buffer
      * If InSize == 0 then copy sizeof(T)
      */
-    void Copy(const std::any& InData, uint64_t InSize = 0)
+    void Copy(void* RESTRICT InData, uint64_t InSize = 0)
     {
         must(IsInRenderThread());
 
         if(InSize == 0)
             InSize = sizeof(T);
 
-        void* Dst = Buffer->GetMappedData();
+        void* RESTRICT Dst = Buffer->GetMappedData();
 
         if(!bUsePersistantMapping)
             Dst = Buffer->Map(ERSBufferMapMode::WriteOnly);
@@ -50,6 +55,8 @@ struct TUniformBuffer : public CRenderThreadResource
         if(!bUsePersistantMapping)
             Buffer->Unmap();
     }
+
+    CRSBuffer* GetBuffer() const { return Buffer.get(); }
 private:
 	CRSBufferPtr Buffer;
 };

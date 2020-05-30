@@ -1,4 +1,8 @@
 #include "Render/Shader/Shader.h"
+#include "Render/RenderSystem/RenderSystem.h"
+#include "Render/RenderSystem/RenderSystemResources.h"
+
+DECLARE_LOG_CATEGORY(Shader);
 
 namespace ZE
 {
@@ -15,13 +19,19 @@ CShaderType::CShaderType(const char* InName, const char* InFilename, const char*
 
 CShader* CShaderType::InstantiateShader(const SShaderCompilerOutput& InOutput) const
 {
-	return InstantiateFunc(InOutput);
+	return InstantiateFunc(this, InOutput);
 }
 
 /** Shader */
 
-CShader::CShader(const SShaderCompilerOutput& InOutput)
+CShader::CShader(const CShaderType* InShaderType, const SShaderCompilerOutput& InOutput)
 {
+	Shader = GRenderSystem->CreateShader(InShaderType->GetStage(),
+		InOutput.Bytecode.size(),
+		InOutput.Bytecode.data(),
+		InOutput.ReflectionData.ParameterMap);
+	if(!Shader)
+		LOG(ELogSeverity::Error, Shader, "Failed to create RS shader");
 }
 
 /** SHADER MANAGER */

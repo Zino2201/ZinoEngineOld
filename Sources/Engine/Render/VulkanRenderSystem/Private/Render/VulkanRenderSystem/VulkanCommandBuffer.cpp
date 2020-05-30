@@ -33,6 +33,7 @@ void CVulkanCommandBuffer::Begin()
 void CVulkanCommandBuffer::End()
 {
 	CommandBuffer->end();
+	bHasBegun = false;
 }
 
 void CVulkanCommandBuffer::AddWaitSemaphore(const vk::PipelineStageFlags& InStageFlags,

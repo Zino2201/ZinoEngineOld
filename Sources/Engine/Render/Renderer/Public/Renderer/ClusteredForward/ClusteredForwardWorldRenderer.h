@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Renderer/WorldRenderer.h"
+#include "Renderer/MeshRenderPass.h"
+
+namespace ZE { class IRenderSystemContext; }
 
 namespace ZE::Renderer
 {
@@ -11,11 +14,13 @@ namespace ZE::Renderer
 class RENDERER_API CClusteredForwardWorldRenderer final : public IWorldRenderer
 {
 public:
-    CClusteredForwardWorldRenderer() = default;
+    CClusteredForwardWorldRenderer();
 
     void Render(CWorldProxy* InWorld, const SWorldRendererView& InView) override;
 private:
-    void RenderWorld(CWorldProxy* InWorld);
+    void RenderWorld(IRenderSystemContext* InContext, CWorldProxy* InWorld, 
+        const SWorldRendererView& InView,
+        EMeshRenderPass InRenderPass);
 };
 
 }

@@ -4,6 +4,7 @@
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "NonCopyable.h"
 #include <optional>
+#include <unordered_set>
 
 namespace ZE { class IRenderSystemContext; }
 
@@ -27,13 +28,15 @@ struct SRenderPassTextureInfos
     uint32_t ArraySize;
     uint32_t MipLevels;
     ESampleCount SampleCount;
+    ERSRenderPassAttachmentLoadOp LoadOp;
 
 	SRenderPassTextureInfos() :
 		Type(ERSTextureType::Tex2D),
         Usage(ERSTextureUsage::None),
         MemoryUsage(ERSMemoryUsage::DeviceLocal),
         Format(EFormat::R8G8B8A8UNorm), Width(1), Height(1), Depth(1), ArraySize(1),
-        MipLevels(1), SampleCount(ESampleCount::Sample1) {}
+        MipLevels(1), SampleCount(ESampleCount::Sample1), 
+        LoadOp(ERSRenderPassAttachmentLoadOp::Clear) {}
 };
 
 struct SRenderPassTextureInfosHash
@@ -54,9 +57,11 @@ enum class ERenderPassResourceType
     Texture
 };
 
+using RenderPassResourceID = uint32_t;
+
 struct SRenderPassResource
 {
-    uint32_t ID;
+    RenderPassResourceID ID;
     ERenderPassResourceType Type;
     SRenderPassTextureInfos TextureInfos;
     ERSRenderPassAttachmentLayout Layout;
@@ -65,7 +70,7 @@ struct SRenderPassResource
     SRenderPassResource() : ID(-1),
         Layout(ERSRenderPassAttachmentLayout::Undefined), bIsRetained(false) {}
     
-    SRenderPassResource(const uint32_t& InID, const ERenderPassResourceType& InType) :
+    SRenderPassResource(const RenderPassResourceID& InID, const ERenderPassResourceType& InType) :
         ID(InID), Type(InType),
         Layout(ERSRenderPassAttachmentLayout::Undefined), bIsRetained(false) {}
 
@@ -73,23 +78,47 @@ struct SRenderPassResource
     {
         return ID == InOther.ID;
     }
+
+    bool operator==(const RenderPassResourceID& InID) const
+    {
+        return ID == InID;
+    }
+};
+
+/**
+ * Layout of the resource
+ */
+enum class ERenderPassResourceLayout
+{
+    /** Optimal for shader read */
+    ShaderReadOnlyOptimal,
+
+    /** Optimal for being written to */
+    RenderTarget,
+
+    /** Optimal for presentation */
+    Present
 };
 
 struct SRenderPassWriteInfos
 {
-    const SRenderPassResource& Target;
-    ERSRenderPassAttachmentLayout FinalLayout;
+    RenderPassResourceID Target;
+    ERenderPassResourceLayout FinalLayout;
+    ERSRenderPassAttachmentStoreOp StoreOp;
 
-    SRenderPassWriteInfos(const SRenderPassResource& InResource,
-        ERSRenderPassAttachmentLayout InFinalLayout) : Target(InResource), 
-        FinalLayout(InFinalLayout) {}
+    SRenderPassWriteInfos(const RenderPassResourceID& InResource,
+        ERenderPassResourceLayout InFinalLayout,
+        ERSRenderPassAttachmentStoreOp InStoreOp) : Target(InResource), 
+        FinalLayout(InFinalLayout), StoreOp(InStoreOp) {}
 };
 
 struct SRenderPassReadInfos
 {
-	const SRenderPassResource& Target;
+	RenderPassResourceID Target;
+    ERSRenderPassAttachmentLoadOp LoadOp;
 
-	SRenderPassReadInfos(const SRenderPassResource& InResource) : Target(InResource) {}
+	SRenderPassReadInfos(const RenderPassResourceID& InResource,
+        ERSRenderPassAttachmentLoadOp InLoadOp) : Target(InResource), LoadOp(InLoadOp) {}
 };
 
 /**
@@ -105,17 +134,21 @@ public:
 
     virtual void Execute(IRenderSystemContext* InContext) {}
 
-    SRenderPassResource& CreateTexture(const SRenderPassTextureInfos& InInfos);
-    SRenderPassResource& CreateRetainedTexture(CRSTexture* InTexture);
+    RenderPassResourceID& CreateTexture(const SRenderPassTextureInfos& InInfos);
+    RenderPassResourceID& CreateRetainedTexture(CRSTexture* InTexture);
 
-    void Read(const SRenderPassResource& InResource);
-    void Write(const SRenderPassResource& InResource, 
-        ERSRenderPassAttachmentLayout InFinalLayout = ERSRenderPassAttachmentLayout::ColorAttachment);
+    void SetLoadOp(const RenderPassResourceID& InResource, ERSRenderPassAttachmentLoadOp InLoadOp);
+
+    void Read(const RenderPassResourceID& InResource,
+        ERSRenderPassAttachmentLoadOp InLoadOp = ERSRenderPassAttachmentLoadOp::Clear);
+    void Write(const RenderPassResourceID& InResource, 
+        ERenderPassResourceLayout InFinalLayout = ERenderPassResourceLayout::ShaderReadOnlyOptimal);
 
     bool IsInput(const SRenderPassResource& InResource) const;
     bool IsOutput(const SRenderPassResource& InResource) const;
 
     std::optional<SRenderPassWriteInfos> GetWriteInfos(const SRenderPassResource& InResource) const;
+    std::optional<SRenderPassReadInfos> GetReadInfos(const SRenderPassResource& InResource) const;
 private:
     SRenderPassResource CreateResource(ERenderPassResourceType InType);
 protected:
@@ -126,6 +159,7 @@ protected:
     std::vector<SRenderPassWriteInfos> WriteInfosMap;
     std::vector<SRenderPassReadInfos> ReadInfos;
     std::vector<CRenderPass*> Dependencies;
+    std::unordered_set<RenderPassResourceID> Attachments;
     SRSRenderPass PhysRenderPass;
 };
 
@@ -165,12 +199,14 @@ private:
  * Render pass class for a lambda-based render pass
  */
 template<typename T>
+using RenderPassLambdaSetupFunc = void(*)(CRenderPass& InRenderPass, T& InData);
+template<typename T>
+using RenderPassLambdaExecFunc = void(*)(IRenderSystemContext* InContext, const T& InData);
+
+template<typename T, typename SetupFunc, typename ExecFunc>
 class CRenderPassLambda final : public CRenderPass
 {
     friend class CFrameGraph;
-
-    using SetupFunc = std::function<void(CRenderPass& InRenderPass, T& InData)>;
-    using ExecFunc = std::function<void(IRenderSystemContext* InContext, const T& InData)>;
 
 public:
     CRenderPassLambda(const uint32_t& InID,

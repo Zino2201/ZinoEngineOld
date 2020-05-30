@@ -8,6 +8,7 @@ void CRenderThreadResource::InitResource()
 {
 	if(IsInRenderThread())
 	{
+		bIsInitialized = true;
 		InitResource_RenderThread();
 	}
 	else
@@ -15,6 +16,7 @@ void CRenderThreadResource::InitResource()
 		EnqueueRenderCommand("CRenderThreadResource::InitResource",
 			[this]()
 			{
+				bIsInitialized = true;
 				InitResource_RenderThread();
 			});
 
@@ -27,6 +29,7 @@ void CRenderThreadResource::DestroyResource()
 {
 	if (IsInRenderThread())
 	{
+		bIsInitialized = false;
 		DestroyResource_RenderThread();
 	}
 	else
@@ -34,6 +37,7 @@ void CRenderThreadResource::DestroyResource()
 		EnqueueRenderCommand("CRenderThreadResource::DestroyResource",
 			[this]()
 		{
+			bIsInitialized = false;
 			DestroyResource_RenderThread();
 		});
 
