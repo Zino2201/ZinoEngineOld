@@ -16,15 +16,15 @@ IF NOT %errorLevel% == 0 (
 )
 
 if not exist Sources/Libs/ShaderConductor git submodule init
+git submodule update
 
 echo Building 3rd party libs for VS2019 x64... (requires CMake, Python 3 and Git)
 
 REM Shader Conductor
 echo Building Shader Conductor
-cd Sources/Libs/ShaderConductor/
 echo Debug
-py BuildAll.py vs2019 vc150 x64 Debug
+py Sources/Libs/ShaderConductor/BuildAll.py vs2019 vc150 x64 Debug
 echo Release 
-py BuildAll.py vs2019 vc150 x64 Release
+py Sources/Libs/ShaderConductor/BuildAll.py vs2019 vc150 x64 Release
 pause
 exit
