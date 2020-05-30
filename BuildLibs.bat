@@ -15,8 +15,8 @@ IF NOT %errorLevel% == 0 (
 	cls
 )
 
-if not exist Sources/Libs/ShaderConductor git submodule init
-git submodule update
+echo Updating submodules
+git submodule update --init --recursive
 
 echo Building 3rd party libs for VS2019 x64... (requires CMake, Python 3 and Git)
 
