@@ -21,10 +21,11 @@ git submodule update --init --recursive
 echo Building 3rd party libs for VS2019 x64... (requires CMake, Python 3 and Git)
 
 REM Shader Conductor
+cd Sources/Libs/ShaderConductor/
 echo Building Shader Conductor
 echo Debug
-py Sources/Libs/ShaderConductor/BuildAll.py vs2019 vc150 x64 Debug
+py BuildAll.py vs2019 vc150 x64 Debug
 echo Release 
-py Sources/Libs/ShaderConductor/BuildAll.py vs2019 vc150 x64 Release
+py BuildAll.py vs2019 vc150 x64 Release
 pause
 exit
