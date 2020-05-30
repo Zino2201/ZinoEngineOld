@@ -1,11 +1,11 @@
 version: 2.1
 orbs:
-  windows: circleci/windows@2.4.0
+  win: circleci/windows@2.4.0
 jobs:
-  build-windows:
+  build:
     executor: win/default
+    working_directory: C:/ZE
     steps:
       - checkout
-      - run:
-        command: echo Test
-        shell: cmd.exe
+      - run: ./BuildLibs.bat
+      - run: ./GenerateVS2019.bat
