@@ -1,15 +1,11 @@
 version: 2.1
 orbs:
-  welcome: circleci/windows@2.4.0
+  windows: circleci/windows@2.4.0
 jobs:
   build-windows:
-    executor: win/2019
+    executor: win/default
     steps:
       - checkout
       - run:
         command: echo Test
         shell: cmd.exe
-workflows:
-  build:
-    jobs:
-      - build-windows
