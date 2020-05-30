@@ -1,6 +1,6 @@
 @echo off
 
-cd %~dp0
+cd /d "%~dp0"
 set ROOT=%CD%
 
 color A
