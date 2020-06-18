@@ -277,7 +277,7 @@ vk::Framebuffer CVulkanRenderPassManager::GetFramebuffer(const SRSFramebuffer& I
 
 		LOG(ELogSeverity::Debug, VulkanRS, "new vk::Framebuffer");
 
-		Framebuffers.insert(std::make_pair(InFramebuffer, Framebuffer));
+		Framebuffers[InFramebuffer] = Framebuffer;
 
 		return Framebuffer;
 	}
@@ -360,13 +360,15 @@ void CVulkanRenderSystemContext::EndRenderPass()
 	CurrentRenderPass = vk::RenderPass();
 }
 
-void CVulkanRenderSystemContext::BeginSurface(CRSSurface* InSurface)
+bool CVulkanRenderSystemContext::BeginSurface(CRSSurface* InSurface)
 {
 	must(InSurface);
 
 	CVulkanSurface* Surface = static_cast<CVulkanSurface*>(InSurface);
 
-	Surface->GetSwapChain()->AcquireImage();
+	CurrentSurface = Surface;
+
+	return CurrentSurface->AcquireImage();
 }
 
 void CVulkanRenderSystemContext::PresentSurface(CRSSurface* InSurface)
@@ -374,6 +376,7 @@ void CVulkanRenderSystemContext::PresentSurface(CRSSurface* InSurface)
 	must(InSurface);
 
 	CVulkanSurface* Surface = static_cast<CVulkanSurface*>(InSurface);
+	must(Surface == CurrentSurface);
 
 	/**
 	 * Submit render queue if we have commands
@@ -390,8 +393,10 @@ void CVulkanRenderSystemContext::PresentSurface(CRSSurface* InSurface)
 		/**
 		 * Present the surface
 		 */
-		Surface->GetSwapChain()->Present(Device->GetPresentQueue());
+		Surface->Present(Device->GetPresentQueue());
 	}
+
+	CurrentSurface = nullptr;
 }
 
 void CVulkanRenderSystemContext::BindGraphicsPipeline(
@@ -664,8 +669,8 @@ void CVulkanRenderSystemContext::FlushWrites()
 				{});
 	}
 
-	WriteSetMap.clear();
-	ResourceSetHashMap.clear();
+	//WriteSetMap.clear();
+	//ResourceSetHashMap.clear();
 }
 
 void CVulkanRenderSystemContext::Draw(const uint32_t& InVertexCount,
@@ -687,6 +692,9 @@ void CVulkanRenderSystemContext::DrawIndexed(const uint32_t& InIndexCount,
 	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
 		.drawIndexed(InIndexCount, InInstanceCount, InFirstIndex, InVertexOffset,
 			InFirstInstance);
+
+	WriteSetMap.clear();
+	ResourceSetHashMap.clear();
 }
 
 vk::AttachmentLoadOp VulkanUtil::RenderPass::AttachmentLoadOpToVkAttachmentLoadOp(

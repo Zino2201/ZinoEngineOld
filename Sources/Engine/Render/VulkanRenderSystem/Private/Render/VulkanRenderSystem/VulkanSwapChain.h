@@ -3,6 +3,7 @@
 #include "VulkanCore.h"
 
 class CVulkanQueue;
+class CVulkanSurface;
 
 /**
  * Vulkan swap chain
@@ -13,16 +14,25 @@ public:
     CVulkanSwapChain(CVulkanDevice* InDevice,
         const uint32_t& InWidth,
         const uint32_t& InHeight,
-        const vk::SurfaceKHR& InSurface);
+        CVulkanSurface* InSurface,
+        const vk::SwapchainKHR& InOldSwapchain = vk::SwapchainKHR());
     ~CVulkanSwapChain();
 
-    void AcquireImage();
-    void Present(CVulkanQueue* InPresentQueue);
+    vk::Result AcquireImage();
+    vk::Result Present(CVulkanQueue* InPresentQueue);
+
+    /**
+     * Acquire ownership of swap chain handle
+     * Used for recreation of swap chain
+     */
+    vk::SwapchainKHR AcquireHandle() { return Swapchain.release(); }
 
     const vk::Semaphore& GetImageAcquiredSemaphore() const { return *ImageAcquired; }
     const vk::Semaphore& GetRenderFinishedSemaphore() const { return *RenderFinished; }
     const vk::SurfaceFormatKHR& GetSurfaceFormat() const { return SurfaceFormat; }
     CRSTexture* GetBackbufferTexture() const { return ImageViews[CurrentImageIdx].get(); }
+    const vk::SwapchainKHR& GetSwapChain() const { return Swapchain.get(); }
+    const uint32_t& GetCurrentImageIdx() const { return CurrentImageIdx; }
 private:
 	vk::SurfaceFormatKHR ChooseSwapChainFormat(const std::vector<vk::SurfaceFormatKHR>& InFormats) const;
 	vk::PresentModeKHR ChooseSwapChainPresentMode(const std::vector<vk::PresentModeKHR>& InModes) const;
@@ -34,6 +44,9 @@ private:
 
     vk::SurfaceKHR Surface;
     
+    uint32_t Width;
+    uint32_t Height;
+
     /** Image count */
     uint32_t ImageCount;
 

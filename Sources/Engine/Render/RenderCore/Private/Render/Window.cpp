@@ -11,7 +11,7 @@ CWindow::CWindow(const char* InName, const uint32_t& InWidth, const uint32_t& In
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
 		InWidth, InHeight,
-		SDL_WINDOW_VULKAN);
+		SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 }
 
 CWindow::~CWindow()

@@ -23,9 +23,8 @@ public:
 
     virtual void EndRenderPass() = 0;
 
-    virtual void BeginSurface(CRSSurface* InSurface) = 0;
-
-    /** Present a surface */
+    /** Surfaces */
+    virtual bool BeginSurface(CRSSurface* InSurface) = 0;
     virtual void PresentSurface(CRSSurface* InSurface) = 0;
 
     /** States commands */

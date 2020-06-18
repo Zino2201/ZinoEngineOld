@@ -1,13 +1,20 @@
 #include "Module/Module.h"
 #include "Shader/ShaderCompiler.h"
-#include "IO/IOUtils.h"
 #include <spirv_glsl.hpp>
 #include "ShaderConductor/ShaderConductor.hpp"
 #include <array>
+#include "FileSystem/FileUtils.h"
+#include "FileSystem/ZFS.h"
+#include "FileSystem/FileSystem.h"
 
 using namespace ZE;
 
 DECLARE_LOG_CATEGORY(VulkanShaderCompiler);
+
+static constexpr std::array<const char*, 1> GIncludeDirs =
+{
+	"/Shaders"
+};
 
 /**
  * Vulkan shader compiler
@@ -29,7 +36,8 @@ public:
 		/**
 		 * Read shader data
 		 */
-		std::string ShaderData = IOUtils::ReadTextFile(InShaderFilename);
+		std::string ShaderData;
+		ZE::FileUtils::ReadTextFile(InShaderFilename, ShaderData);
 		if(ShaderData.empty())
 		{
 			Output.ErrMsg = "Can't open shader file";
@@ -53,13 +61,53 @@ public:
 		SourceDesc.stage = Stage;
 		SourceDesc.numDefines = 0;
 		SourceDesc.defines = nullptr;
+		SourceDesc.loadIncludeCallback = 
+			[](const char* InIncludeName) -> ShaderConductor::Blob*
+			{	
+				std::string Filename = ZE::PathUtils::GetFilename(InIncludeName);
+				std::string Path = InIncludeName;
+
+				if(!ZE::FileSystem::Exists(InIncludeName))
+				{
+					bool bHasFoundFile = false;
+
+					for (const auto& IncludeDir : GIncludeDirs)
+					{
+						Path = IncludeDir;
+						Path += "/";
+						Path += Filename;
+						
+						if(ZE::FileSystem::Exists(Path))
+						{
+							bHasFoundFile = true;
+							break;
+						}
+					}
+
+					if(!bHasFoundFile)
+						return nullptr;
+				}
+
+				TOwnerPtr<ZE::FileSystem::IFile> File = ZE::FileSystem::Read(Path);
+
+				std::vector<uint8_t> Array;
+				Array.resize(File->GetSize() / sizeof(uint8_t));
+
+				File->Read(Array.data(), File->GetSize());
+
+				ShaderConductor::Blob* Blob = ShaderConductor::CreateBlob(Array.data(),
+					static_cast<uint32_t>(File->GetSize()));
+
+				return Blob;
+			};
 
 		ShaderConductor::Compiler::Options Options;
 		Options.disableOptimizations = bInShouldOptimize;
 #ifdef _DEBUG
+		Options.enableDebugInfo = true;
 		Options.optimizationLevel = 1;
 #else
-		Options.optimizationLevel = 3;
+		Options.optimizationLevel = 1;
 #endif
 
 		std::array<ShaderConductor::Compiler::TargetDesc, 1> Targets = 
@@ -98,15 +146,15 @@ public:
 	{
 		SShaderCompilerReflectionDataOutput Output;
 
-		spirv_cross::Compiler Compiler(std::move(InSpv));
+		spirv_cross::Compiler Compiler(InSpv);
 
 		spirv_cross::ShaderResources Resources = Compiler.get_shader_resources();
 		for (auto& UniformBuffer : Resources.uniform_buffers)
 		{
 			const auto& Type = Compiler.get_type(UniformBuffer.base_type_id);
 
-			unsigned Set = Compiler.get_decoration(UniformBuffer.id, spv::DecorationDescriptorSet);
-			unsigned Binding = Compiler.get_decoration(UniformBuffer.id, spv::DecorationBinding);
+			uint32_t Set = Compiler.get_decoration(UniformBuffer.id, spv::DecorationDescriptorSet);
+			uint32_t Binding = Compiler.get_decoration(UniformBuffer.id, spv::DecorationBinding);
 			std::string Name = Compiler.get_name(UniformBuffer.id);
 			if (Name.empty())
 				Name = Compiler.get_name(UniformBuffer.base_type_id);
@@ -130,8 +178,8 @@ public:
 
 		for (auto& Texture : Resources.separate_images)
 		{
-			unsigned Set = Compiler.get_decoration(Texture.id, spv::DecorationDescriptorSet);
-			unsigned Binding = Compiler.get_decoration(Texture.id, spv::DecorationBinding);
+			uint32_t Set = Compiler.get_decoration(Texture.id, spv::DecorationDescriptorSet);
+			uint32_t Binding = Compiler.get_decoration(Texture.id, spv::DecorationBinding);
 			std::string Name = Compiler.get_name(Texture.id);
 
 			Output.ParameterMap.AddParameter(Name.c_str(), 
@@ -145,8 +193,8 @@ public:
 
 		for (auto& Sampler : Resources.separate_samplers)
 		{
-			unsigned Set = Compiler.get_decoration(Sampler.id, spv::DecorationDescriptorSet);
-			unsigned Binding = Compiler.get_decoration(Sampler.id, spv::DecorationBinding);
+			uint32_t Set = Compiler.get_decoration(Sampler.id, spv::DecorationDescriptorSet);
+			uint32_t Binding = Compiler.get_decoration(Sampler.id, spv::DecorationBinding);
 			std::string Name = Compiler.get_name(Sampler.id);
 
 			Output.ParameterMap.AddParameter(Name.c_str(),

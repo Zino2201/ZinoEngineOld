@@ -113,8 +113,9 @@ public:
         WindowHandle(InWindowHandle),
         Width(InWidth), Height(InHeight) {}
 
+    virtual void Resize(const uint32_t& InWidth, const uint32_t& InHeight) = 0;
     virtual EFormat GetSwapChainFormat() const = 0;
-    virtual CRSTexture* GetBackbufferTexture() const = 0;
+    virtual CRSTexture* GetBackbufferTexture() = 0;
 protected:
     void* WindowHandle;
 	uint32_t Width;
@@ -175,7 +176,7 @@ public:
 		const uint32_t& InMipLevels,
 		const ESampleCount& InSampleCount,
         const SRSResourceCreateInfo& InInfo) : 
-        CRSResource(InInfo), 
+        CRSResource(InInfo), Type(InTextureType),
         TextureUsage(InTextureUsage), MemoryUsage(InMemoryUsage),
         Format(InFormat), Width(InWidth), Height(InHeight){}
 
@@ -325,9 +326,13 @@ enum class ERSRenderPassAttachmentLayout
 	/** Used for color attachment */
 	ColorAttachment,
 
+    /** Used for depth attachment */
     DepthStencilAttachment,
 
+    /** Optimal for shader read */
     ShaderReadOnlyOptimal,
+
+    /** Optimal for shader read */
     DepthStencilReadOnlyOptimal,
 
 	/** Used for present */
@@ -488,32 +493,20 @@ constexpr uint32_t GMaxRenderTargetPerFramebuffer = 8;
 struct SRSFramebuffer
 {
     /** Color render targets */
-    CRSTexture* ColorRTs[GMaxRenderTargetPerFramebuffer];
+    std::array<CRSTexture*, GMaxRenderTargetPerFramebuffer> ColorRTs;
 
     /** Depth render targets */
-    CRSTexture* DepthRTs[GMaxRenderTargetPerFramebuffer];
+    std::array<CRSTexture*, GMaxRenderTargetPerFramebuffer> DepthRTs;
 
     SRSFramebuffer() 
     {
-        for(size_t i = 0; i < GMaxRenderTargetPerFramebuffer; ++i)
-        {
-            ColorRTs[i] = nullptr;
-            DepthRTs[i] = nullptr;
-        }
+        memset(ColorRTs.data(), 0, sizeof(ColorRTs));
+        memset(DepthRTs.data(), 0, sizeof(DepthRTs));
     }
 
 	bool operator==(const SRSFramebuffer& InFramebuffer) const
 	{
-		for (int i = 0; i < GMaxRenderTargetPerFramebuffer; ++i)
-		{
-			if (ColorRTs[i] != InFramebuffer.ColorRTs[i])
-                return false;
-
-			if (DepthRTs[i] != InFramebuffer.DepthRTs[i])
-				return false;
-		}
-
-        return true;
+        return ColorRTs == InFramebuffer.ColorRTs && DepthRTs == InFramebuffer.DepthRTs;
 	}
 };
 
@@ -525,14 +518,7 @@ struct SRSFramebufferHash
 
 		for (int i = 0; i < GMaxRenderTargetPerFramebuffer; ++i)
 		{
-			if (!InFramebuffer.ColorRTs[i])
-				continue;
-
 			HashCombine(Seed, InFramebuffer.ColorRTs[i]);
-
-			if (!InFramebuffer.DepthRTs[i])
-				continue;
-
 			HashCombine(Seed, InFramebuffer.DepthRTs[i]);
 		}
 

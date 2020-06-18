@@ -3,15 +3,18 @@
 #include "Render/VulkanRenderSystem/VulkanRenderSystem.h"
 #include "Render/VulkanRenderSystem/VulkanQueue.h"
 #include "Render/VulkanRenderSystem/VulkanTexture.h"
+#include "Render/VulkanRenderSystem/VulkanSurface.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
 
 CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 	const uint32_t& InWidth,
 	const uint32_t& InHeight,
-	const vk::SurfaceKHR& InSurface)
+	CVulkanSurface* InSurface,
+	const vk::SwapchainKHR& InOldSwapchain)
 	: CVulkanDeviceResource(InDevice),
-	Surface(InSurface), CurrentImageIdx(0), CurrentFrame(0)
+	Surface(InSurface->GetSurface()), Width(InWidth), Height(InHeight), 
+	CurrentImageIdx(-1), CurrentFrame(0)
 {
 	/**
 	 * Query details about swap chain
@@ -27,7 +30,7 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 
 	SurfaceFormat = ChooseSwapChainFormat(Details.Formats);
 	vk::PresentModeKHR PresentMode = ChooseSwapChainPresentMode(Details.PresentModes);
-	Extent = ChooseSwapChainExtent(Details.Capabilities, InWidth, InHeight);
+	Extent = ChooseSwapChainExtent(Details.Capabilities, Width, Height);
 
 	ImageCount = Details.Capabilities.minImageCount + 1;
 	if (Details.Capabilities.maxImageCount > 0 &&
@@ -50,14 +53,15 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 		Extent,
 		1,
 		vk::ImageUsageFlagBits::eColorAttachment,
-		Device->GetGraphicsQueue() != Device->GetPresentQueue() ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive,
+		Device->GetGraphicsQueue() != Device->GetPresentQueue() ? vk::SharingMode::eConcurrent 
+			: vk::SharingMode::eExclusive,
 		Device->GetGraphicsQueue() != Device->GetPresentQueue() ? 2 : 0,
 		Device->GetGraphicsQueue() != Device->GetPresentQueue() ? QueueFamilyIndices : nullptr,
 		Details.Capabilities.currentTransform,
 		vk::CompositeAlphaFlagBitsKHR::eOpaque,
 		PresentMode,
 		VK_TRUE,
-		vk::SwapchainKHR() /* Old swapchain */);
+		InOldSwapchain);
 	Swapchain = Device->GetDevice().createSwapchainKHRUnique(CreateInfos).value;
 	if (!Swapchain)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create swap chain");
@@ -70,19 +74,19 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 
 	for (int i = 0; i < Images.size(); ++i)
 	{
-		ImageViews[i] = new CVulkanTexture(InDevice,
+		ImageViews[i] = new CVulkanTexture(Device,
 			ERSTextureType::Tex2D,
 			ERSTextureUsage::RenderTarget,
 			ERSMemoryUsage::DeviceLocal,
 			VulkanUtil::VkFormatToFormat(SurfaceFormat.format),
-			InWidth,
-			InHeight,
+			Width,
+			Height,
 			1,
 			1,
 			1,
 			ESampleCount::Sample1,
 			Images[i],
-			{});
+			SRSResourceCreateInfo(nullptr, "Swapchain Backbuffer"));
 
 		if(!ImageViews[i])
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create swap chain image view for image %i", i);
@@ -104,25 +108,21 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 
 CVulkanSwapChain::~CVulkanSwapChain() = default;
 
-void CVulkanSwapChain::AcquireImage()
+vk::Result CVulkanSwapChain::AcquireImage()
 {
 	/** Acquire new image */
 	auto [Result, ImageIdx] = Device->GetDevice().acquireNextImageKHR(
 		*Swapchain,
 		std::numeric_limits<uint64_t>::max(),
-		*ImageAcquired,		
+		*ImageAcquired,
 		nullptr);
 
 	CurrentImageIdx = ImageIdx;
-	
-	/** If swap chain if out of date, recreate it */
-	if(Result == vk::Result::eErrorOutOfDateKHR)
-	{
 
-	}
+	return Result;
 }
 
-void CVulkanSwapChain::Present(CVulkanQueue* InPresentQueue)
+vk::Result CVulkanSwapChain::Present(CVulkanQueue* InPresentQueue)
 {
 	/** Present to the present queue */
 	vk::PresentInfoKHR PresentInfo(
@@ -132,13 +132,7 @@ void CVulkanSwapChain::Present(CVulkanQueue* InPresentQueue)
 		&*Swapchain,
 		&CurrentImageIdx);
 
-	vk::Result Result = InPresentQueue->GetQueue().presentKHR(PresentInfo);
-
-	/** If swap chain is out of date or suboptimal, recreate it */
-	if (Result == vk::Result::eErrorOutOfDateKHR ||
-		Result == vk::Result::eSuboptimalKHR)
-	{
-	}
+	return InPresentQueue->GetQueue().presentKHR(PresentInfo);
 }
 
 SVulkanSwapChainSupportDetails VulkanUtil::QuerySwapChainDetails(

@@ -2,13 +2,15 @@
 #include "Render/VulkanRenderSystem/VulkanRenderSystem.h"
 #include "Render/VulkanRenderSystem/VulkanSwapChain.h"
 #include "Render/VulkanRenderSystem/VulkanDevice.h"
+#include "VulkanRenderSystemContext.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
 
 CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice, 
 	void* InWindowHandle, const uint32_t& InWidth, const uint32_t& InHeight,
 	const SRSResourceCreateInfo& InInfo)
-	: CRSSurface(InWindowHandle, InWidth, InHeight, InInfo), CVulkanDeviceResource(InDevice)
+	: CRSSurface(InWindowHandle, InWidth, InHeight, InInfo), 
+	CVulkanDeviceResource(InDevice), WindowHandle(InWindowHandle), bHasBeenResized(false)
 {
 	/**
 	 * Create vulkan surface
@@ -35,8 +37,68 @@ CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice,
 	 */
 	{
 		SwapChain = std::make_unique<CVulkanSwapChain>(Device,
-			InWidth, InHeight, *Surface);
+			InWidth, 
+			InHeight, 
+			this);
 	}
+}
+
+bool CVulkanSurface::AcquireImage()
+{
+	vk::Result Result = SwapChain->AcquireImage();
+
+	/** If swap chain if out of date or suboptimal, recreate it */
+	if (Result == vk::Result::eErrorOutOfDateKHR ||
+		Result == vk::Result::eSuboptimalKHR)
+	{
+		RecreateSwapChain();
+		return true;
+	}
+	else if(Result != vk::Result::eSuccess)
+	{
+		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to acquire swap chain image");
+	}
+
+	return true;
+}
+
+void CVulkanSurface::Present(CVulkanQueue* InPresentQueue)
+{
+	SwapChain->Present(InPresentQueue);
+}
+
+void CVulkanSurface::RecreateSwapChain()
+{
+	LOG(ELogSeverity::Debug, VulkanRS, "Recreated swap chain");
+
+	/**
+	 * Submit all commands and wait
+	 */
+	Device->WaitIdle();
+
+	/**
+	 * Acquire old swap chain handle to give to new swap chain
+	 */
+	vk::SwapchainKHR Handle = SwapChain->AcquireHandle();
+	SwapChain = std::make_unique<CVulkanSwapChain>(Device,
+		Width,
+		Height,
+		this,
+		Handle);
+	Device->GetDevice().destroySwapchainKHR(Handle);
+
+	/**
+	 * Clear all resources
+	 */
+	Device->GetDeferredDestructionMgr().DestroyResources();
+}
+
+void CVulkanSurface::Resize(const uint32_t& InWidth, const uint32_t& InHeight)
+{
+	Width = InWidth;
+	Height = InHeight;
+
+	RecreateSwapChain();
 }
 
 EFormat CVulkanSurface::GetSwapChainFormat() const
@@ -44,7 +106,7 @@ EFormat CVulkanSurface::GetSwapChainFormat() const
 	return VulkanUtil::VkFormatToFormat(SwapChain->GetSurfaceFormat().format);
 }
 
-CRSTexture* CVulkanSurface::GetBackbufferTexture() const
+CRSTexture* CVulkanSurface::GetBackbufferTexture()
 { 
 	return SwapChain->GetBackbufferTexture();
 }

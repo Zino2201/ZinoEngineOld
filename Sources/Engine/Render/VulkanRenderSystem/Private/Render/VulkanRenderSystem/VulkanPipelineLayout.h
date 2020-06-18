@@ -168,7 +168,7 @@ public:
 	vk::DescriptorSet AllocateDescriptorSet(const uint32_t& InSet,
 		vk::DescriptorPool& OutPool);
 private:
-	const SDescriptorPoolEntry& GetPool();
+	SDescriptorPoolEntry& GetPool();
 private:
 	CVulkanDevice* Device;
 	CVulkanPipelineLayout* Layout;

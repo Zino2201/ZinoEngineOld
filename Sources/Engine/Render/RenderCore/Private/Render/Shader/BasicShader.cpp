@@ -61,6 +61,11 @@ void CBasicShaderManager::CompileShaders()
 	}
 }
 
+void CBasicShaderManager::DestroyAll()
+{
+	ShaderMap.clear();
+}
+
 void CBasicShaderManager::RemoveShaderType(CBasicShaderType* InShaderType)
 {
 	ShaderMap.erase(InShaderType->GetName());

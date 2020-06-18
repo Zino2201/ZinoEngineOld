@@ -6,6 +6,7 @@
 class CVulkanDevice;
 class CVulkanCommandBuffer;
 class CVulkanPipelineLayout;
+class CVulkanSurface;
 
 /**
  * Command buffer manager
@@ -82,7 +83,7 @@ public:
 
 	virtual void EndRenderPass() override;
 
-    virtual void BeginSurface(CRSSurface* InSurface) override;
+    virtual bool BeginSurface(CRSSurface* InSurface) override;
     virtual void PresentSurface(CRSSurface* InSurface) override;
 
 	/** States commands */
@@ -112,6 +113,7 @@ public:
 
     CVulkanCommandBufferManager& GetCmdBufferMgr() { return CmdBufferMgr; }
     CVulkanRenderPassManager& GetRenderPassMgr() { return RenderPassMgr; }
+    CVulkanSurface* GetCurrentSurface() const { return CurrentSurface; }
 private:
     void FlushWrites();
 private:
@@ -121,6 +123,7 @@ private:
     CVulkanPipelineLayout* CurrentLayout;
     vk::RenderPass CurrentRenderPass;
     uint32_t ColorAttachmentsCount;
+    CVulkanSurface* CurrentSurface;
     
     /**
      * Represents a descriptor set

@@ -15,6 +15,8 @@ public:
         const uint32_t& InHeight);
     ~CWindow();
 
+    void SetWidth(const uint32_t& InWidth) { Width = InWidth; }
+    void SetHeight(const uint32_t& InHeight) { Height = InHeight; }
     void* GetHandle() const { return Handle; }
     const uint32_t& GetWidth() const { return Width; }
     const uint32_t& GetHeight() const { return Height; }

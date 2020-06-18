@@ -48,7 +48,7 @@ CVulkanDescriptorCacheManager::~CVulkanDescriptorCacheManager()
 vk::DescriptorSet CVulkanDescriptorCacheManager::AllocateDescriptorSet(const uint32_t& InSet,
 	vk::DescriptorPool& OutPool)
 {
-	const SDescriptorPoolEntry& Pool = GetPool();
+	SDescriptorPoolEntry& Pool = GetPool();
 
 	OutPool = Pool.Pool;
 
@@ -57,15 +57,19 @@ vk::DescriptorSet CVulkanDescriptorCacheManager::AllocateDescriptorSet(const uin
 			Pool.Pool,
 			1,
 			&Layout->GetLayoutForSet(InSet))).value;
+	if(!Sets.front())
+		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to allocate descriptor set");
 
 	LOG(ELogSeverity::Debug, VulkanRS, "new vk::DescriptorSet");
+
+	Pool.Allocations++;
 
 	return Sets.front();
 }
 
-const CVulkanDescriptorCacheManager::SDescriptorPoolEntry& CVulkanDescriptorCacheManager::GetPool()
+CVulkanDescriptorCacheManager::SDescriptorPoolEntry& CVulkanDescriptorCacheManager::GetPool()
 {
-	for(const auto& Entry : Pools)
+	for(auto& Entry : Pools)
 	{
 		if(Entry.Allocations < MaxAllocationsPerPool - 1)
 			return Entry;
@@ -133,7 +137,7 @@ CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* Device,
 		static_cast<uint32_t>(Layouts.size()),
 		SetLayouts.data());
 
-	PipelineLayout = Device->GetDevice().createPipelineLayoutUnique(CreateInfo).value;
+ 	PipelineLayout = Device->GetDevice().createPipelineLayoutUnique(CreateInfo).value;
 	if (!PipelineLayout)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan pipeline layout");
 
