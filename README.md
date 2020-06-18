@@ -12,8 +12,6 @@ For now only VS2019 is supported, but if you want you can try to build it for ot
 - Run GenerateVS2019.bat to generate the solution and project files
 - Open the solution in Build/ProjectFiles and build it
 
-Only Debug is implemented for now.
-
 ## My coding standard
 
 I personally love explicit code. So don't except too much `auto` for example. But I hate very verbose code.

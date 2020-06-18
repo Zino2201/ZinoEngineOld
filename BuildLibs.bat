@@ -24,8 +24,8 @@ REM Shader Conductor
 cd Sources/Libs/ShaderConductor/
 echo Building Shader Conductor
 echo Debug
-py BuildAll.py vs2019 vc150 x64 Debug
+py BuildAll.py vs2019 vc142 x64 Debug
 echo Release 
-py BuildAll.py vs2019 vc150 x64 Release
+py BuildAll.py vs2019 vc142 x64 Release
 pause
 exit

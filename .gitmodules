@@ -4,3 +4,6 @@
 [submodule "Sources/Libs/ShaderConductor"]
 	path = Sources/Libs/ShaderConductor
 	url = https://github.com/microsoft/ShaderConductor
+[submodule "Sources/Libs/tinyobjloader"]
+	path = Sources/Libs/tinyobjloader
+	url = https://github.com/tinyobjloader/tinyobjloader.git
