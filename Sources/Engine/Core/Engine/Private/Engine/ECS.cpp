@@ -4,22 +4,7 @@
 
 DECLARE_LOG_CATEGORY(ECS);
 
-namespace ZE
-{
-
-namespace Refl
-{
-REFL_INIT_BUILDERS_FUNC(ECS)
-{
-	Refl::Builders::TStructBuilder<ECS::SEntityComponent>("SEntityComponent");
-	Refl::Builders::TClassBuilder<ECS::IEntityComponentSystem>("IEntityComponentSystem")
-		.MarkAsInterface();
-	Refl::Builders::TStructBuilder<ECS::SHierarchyComponent>("SHierarchyComponent")
-		.Ctor<>();
-}
-} /** namespace Refl */
-
-namespace ECS
+namespace ZE::ECS
 {
 
 void CECSManager::Initialize()
@@ -56,7 +41,7 @@ void CECSManager::OnModuleLoaded(const std::string_view& InName)
 		GroupMap[System->GetOrder()].push_back(System);
 
 		LOG(ELogSeverity::Info, ECS, "Instanciating entity component system %s for component %s", 
-			SystemClass->GetName(), System->GetStruct()->GetName());
+			SystemClass->GetName(), System->GetStaticClass()->GetName());
 	}
 
 	/** Sort */
@@ -209,7 +194,7 @@ SEntityComponent* CEntityManager::CreateComponent(ZE::Refl::CStruct* InStruct)
 {
 	if(!ComponentPoolMap.count(InStruct))
 		ComponentPoolMap.insert(std::make_pair(InStruct, 
-			TPool<TComponentPool>(100, InStruct->GetSize())));
+			TDynamicPool<TComponentPool>(100, InStruct->GetSize())));
 
 	SEntityComponent* Component = ComponentPoolMap[InStruct].Allocate();
 	InStruct->PlacementNew(Component);
@@ -280,6 +265,4 @@ EntityID CEntityManager::GetFreeID()
 	return AvailableEntityID++;
 }
 
-} /** namespace ECS */
-
-} /** namespace ZE */
+} /** namespace ZE::ECS */

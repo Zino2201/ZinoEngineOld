@@ -2,21 +2,7 @@
 #include "Reflection/Builders.h"
 #include "Engine/Assets/StaticMesh.h"
 
-namespace ZE
-{
-
-namespace Refl
-{
-
-REFL_INIT_BUILDERS_FUNC(StaticMeshComponent)
-{
-	Builders::TStructBuilder<Components::SStaticMeshComponent>("SStaticMeshComponent")
-		.Ctor<>();
-}
-
-} /** namespace Refl */
-
-namespace Components
+namespace ZE::Components
 {
 
 /** Component */
@@ -71,5 +57,3 @@ TOwnerPtr<Renderer::CRenderableComponentProxy> SStaticMeshComponent::Instantiate
 }
 
 } /** namespace Components */
-
-}

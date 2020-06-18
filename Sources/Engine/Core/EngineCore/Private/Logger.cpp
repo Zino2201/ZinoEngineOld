@@ -50,7 +50,7 @@ void CLogger::Log(const ELogSeverity& InSeverity,
 		<< InCategory << ") ";
 	vsprintf_s(PrintfBuffer, InMessage.c_str(), InArgs);
 	std::cout << PrintfBuffer;
-	std::cout << std::endl;
+	std::cout << "\n";
 
 	if (InSeverity >= ELogSeverity::Fatal)
 	{

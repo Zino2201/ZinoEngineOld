@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Type.h"
+#include "Struct.gen.h"
 
 namespace ZE::Refl
 {
@@ -8,8 +9,11 @@ namespace ZE::Refl
 /**
  * A property
  */
+ZCLASS()
 class REFLECTION_API CProperty
 {
+    REFL_BODY()
+
 public:
 	CProperty(const char* InName,
 		const uint64_t& InSize,
@@ -37,9 +41,10 @@ private:
  * A C++ struct
  * Can hold properties and have oop
  */
+ZCLASS()
 class CStruct : public CType
 {
-    DECLARE_REFL_STRUCT_OR_CLASS1(CStruct, CType)
+	REFL_BODY()
 
 	class IInstantiateFunc {};
 
@@ -147,6 +152,5 @@ protected:
 public:
     std::vector<const char*> Refl_ParentsWaitingAdd;
 };
-DECLARE_REFL_TYPE(CStruct);
 
 }

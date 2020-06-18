@@ -8,9 +8,7 @@ namespace Internal
 
 CClass* GetClassByName(const char* InName)
 {
-	// TODO: implement
-	must(false);
-	return nullptr;
+	return CClass::Get(InName);
 }
 }
 

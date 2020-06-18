@@ -44,11 +44,15 @@ struct SHADERCORE_API SShaderParameter
     uint32_t Count;
     std::vector<SShaderParameterMember> Members;
 
+	SShaderParameter() : Name(), Type(EShaderParameterType::UniformBuffer),
+		Set(0), Binding(0), Size(0), Count(0) {}
+
 	SShaderParameter(const std::string& InName,
 		const EShaderParameterType& InType,
 		const uint32_t& InSet,
 		const uint32_t& InBinding,
-		const uint32_t& InCount);
+		const uint32_t& InCount) :
+		Name(InName), Type(InType), Set(InSet), Binding(InBinding), Size(0), Count(InCount) {}
 
 	SShaderParameter(const std::string& InName,
 		const EShaderParameterType& InType,
@@ -56,7 +60,9 @@ struct SHADERCORE_API SShaderParameter
 		const uint32_t& InBinding,
 		const uint64_t& InSize,
 		const uint32_t& InCount,
-		const std::vector<SShaderParameterMember>& InMembers);
+		const std::vector<SShaderParameterMember>& InMembers) :
+		Name(InName), Type(InType), Set(InSet), Binding(InBinding), Size(InSize), Count(InCount),
+		Members(InMembers) {}
 };
 
 struct SShaderParameterHash

@@ -1,5 +1,6 @@
 #include "Module/Module.h"
 #include "Render/RenderThread.h"
+#include <SDL2/SDL.h>
 
 namespace ZE
 {
@@ -8,8 +9,9 @@ DEFINE_MODULE(CDefaultModule, RenderCore)
 
 CRenderThread::CRenderThread() = default;
 
-void CRenderThread::Run()
+void CRenderThread::Run(CSemaphore* InGameThreadSemaphore)
 {
+	GameThreadSemaphore = InGameThreadSemaphore;
 	bRun = true;
 
 	while(bRun)
@@ -18,7 +20,6 @@ void CRenderThread::Run()
 		if(!Commands.empty())
 		{
 			CommandsMutex.lock();
-
 			while(!Commands.empty())
 			{
 				auto& Command = Commands.front();
@@ -31,7 +32,6 @@ void CRenderThread::Run()
 			}
 
 			CommandsMutex.unlock();
-
 			CommandsExecutedSemaphore.Notify();
 		}
 

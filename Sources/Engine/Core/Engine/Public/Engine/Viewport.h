@@ -18,21 +18,20 @@ public:
     CViewport(void* InWindowHandle, const uint32_t& InWidth,
         const uint32_t& InHeight);
 
-	virtual void InitResource_RenderThread() override;
-	virtual void DestroyResource_RenderThread() override;
+	void InitResource_RenderThread() override;
+	void DestroyResource_RenderThread() override;
 
     /** Render-thread only */
-    void Begin();
+    bool Begin();
     void End();
+    void Resize(const uint32_t& InWidth, const uint32_t& InHeight);
 
     CRSSurface* GetSurface() const { return Surface.get(); }
-    CRSTexture* GetDepthBuffer() const { return DepthBuffer.get(); }
 private:
     CRSSurfacePtr Surface;
     void* WindowHandle;
     uint32_t Width;
     uint32_t Height;
-    CRSTexturePtr DepthBuffer;
 };
 
 } /* namespace ZE */

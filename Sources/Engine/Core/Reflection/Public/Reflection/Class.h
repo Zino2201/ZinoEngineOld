@@ -1,14 +1,16 @@
 #pragma once
 
 #include "Struct.h"
+#include "Class.gen.h"
 
 namespace ZE::Refl
 {
 
 // A C++ class
+ZCLASS()
 class CClass : public CStruct
 {
-	DECLARE_REFL_STRUCT_OR_CLASS1(CClass, CStruct)
+	REFL_BODY()
 
 public:
 	CClass(const char* InName,
@@ -38,6 +40,5 @@ private:
 
 	REFLECTION_API inline static std::vector<CClass*> Classes;
 };
-DECLARE_REFL_TYPE(CClass);
 
 }

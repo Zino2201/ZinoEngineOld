@@ -42,8 +42,6 @@ REFL_INIT_BUILDERS_FUNC(Reflection)
 	{
 		/** Register basic types */
 		Builders::TTypeBuilder<bool>("bool");
-		Builders::TTypeBuilder<int>("int");
-		Builders::TTypeBuilder<long>("long");
 		Builders::TTypeBuilder<float>("float");
 		Builders::TTypeBuilder<double>("double");
 
@@ -56,21 +54,8 @@ REFL_INIT_BUILDERS_FUNC(Reflection)
 		/** Signed types */
 		Builders::TTypeBuilder<int8_t>("int8_t");
 		Builders::TTypeBuilder<int16_t>("int16_t");
-		//Builders::TTypeBuilder<int32_t>("int32_t");
+		Builders::TTypeBuilder<int32_t>("int32_t");
 		Builders::TTypeBuilder<int64_t>("int64_t");
-
-		/** Reflection classes */
-		Builders::TClassBuilder<CType>("CType")
-			.Ctor<const char*,
-			const uint64_t&>();
-
-		Builders::TClassBuilder<CStruct>("CStruct")
-			.Ctor<const char*,
-			const uint64_t&>();
-
-		Builders::TClassBuilder<CClass>("CClass")
-			.Ctor<const char*,
-			const uint64_t&>();
 	}
 }
 

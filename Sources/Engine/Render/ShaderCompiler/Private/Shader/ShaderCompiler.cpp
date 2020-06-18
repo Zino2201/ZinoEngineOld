@@ -34,7 +34,7 @@ std::future<SShaderCompilerOutput> CGlobalShaderCompiler::CompileShader(
 		// TODO: SET DEFINES
 
 		std::string Path;
-		Path += "Shaders/";
+		Path += "/Shaders";
 		Path += InShaderFilename;
 
 		return std::async(std::launch::async,

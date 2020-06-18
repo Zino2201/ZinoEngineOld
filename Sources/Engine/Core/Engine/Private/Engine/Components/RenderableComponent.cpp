@@ -5,23 +5,7 @@
 #include "Renderer/WorldProxy.h"
 #include "Engine/Components/TransformComponent.h"
 
-namespace ZE
-{
-namespace Refl
-{
-
-REFL_INIT_BUILDERS_FUNC(RenderableComponent)
-{
-	Builders::TStructBuilder<Components::SRenderableComponent>("SRenderableComponent")
-		.Ctor<>();
-	Builders::TClassBuilder<Components::CRenderableComponentSystem>("CRenderableComponentSystem")
-		.Ctor<>();
-}
-
-
-} /** namespace Refl */
-
-namespace Components
+namespace ZE::Components
 {
 
 void CRenderableComponentSystem::Initialize(ECS::CEntityManager& InEntityManager)
@@ -46,6 +30,16 @@ void CRenderableComponentSystem::Tick(ECS::CEntityManager& InEntityManager,
 	}
 
 	ComponentsToUpdate.clear();
+
+	auto Trs = InEntityManager.GetComponents(STransformComponent::GetStaticStruct());
+
+	for(const auto& Component : *Trs)
+	{
+		if(STransformComponent* Transform = Cast<STransformComponent>(Component))
+		{
+			Transform->Transform.Position.Z += 0.002f;
+		}
+	}
 }
 
 void CRenderableComponentSystem::AddRenderableComponentToUpdate(SRenderableComponent* InComponent)
@@ -117,5 +111,3 @@ void CRenderableComponentSystem::OnComponentRemoved(ECS::CEntityManager& InEntit
 }
 
 } /** namespace Components */
-
-}

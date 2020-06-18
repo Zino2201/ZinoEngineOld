@@ -5,8 +5,6 @@
 namespace ZE::Refl::Builders
 {
 
-#define CONCAT_(x,y) x##y
-#define CONCAT(x,y) CONCAT_(x,y)
 /**
  * Helpers utilites to build types
  */
@@ -51,30 +49,38 @@ public:
         Struct = static_cast<CStruct*>(Type);
 
         CStruct::AddStruct(Struct);
-
-        for(const auto& ParentClass : T::GetParentClasses())
-        {
-            auto PotentialParent = CStruct::Get(ParentClass);
-
-            if(PotentialParent)
-                Struct->AddParent(PotentialParent);
-            else
-            {
-                Struct->Refl_ParentsWaitingAdd.push_back(ParentClass);
-            }
-        }
     }
 
 	template<typename... Args>
 	TStructBuilder<T, U>& Ctor()
 	{
-        std::function<void*(Args...)> Functor = &T::Refl_InternalInstantiate<Args...>;
-		Struct->AddInstantiateFunc<Args...>(Functor);
+        if constexpr(!std::is_abstract_v<T>)
+        {
+			std::function<void* (Args...)> Functor = &T::Refl_InternalInstantiate<Args...>;
+			Struct->AddInstantiateFunc<Args...>(Functor);
 
-        std::function<void(void*, Args...)> Functor2 = &T::Refl_InternalPlacementNew<Args...>;
-		Struct->AddPlacementNewFunc<Args...>(Functor2);
+			std::function<void(void*, Args...)> Functor2 = &T::Refl_InternalPlacementNew<Args...>;
+			Struct->AddPlacementNewFunc<Args...>(Functor2);
+        }
+
 		return *this;
 	}
+
+    TStructBuilder<T, U>& Parent(const char* InParent)
+    {
+		auto PotentialParent = CStruct::Get(InParent);
+
+		if (PotentialParent)
+        {
+			Struct->AddParent(PotentialParent);
+        }
+		else
+		{
+			Struct->Refl_ParentsWaitingAdd.push_back(InParent);
+		}
+
+        return *this;
+    }
 
     template<typename P>
     TStructBuilder<T, U>& Property(const char* InName, P&& InPtr)
@@ -83,6 +89,8 @@ public:
         Struct->AddProperty(CProperty(InName, sizeof(P), Offset));
         return *this;
     }
+
+    CStruct* GetStruct() const { return Struct; }
 protected:
     CStruct* Struct;
 };
@@ -106,6 +114,8 @@ public:
         Class->SetIsInterface(true);
         return *this;
     }
+
+    CClass* GetClass() const { return Class; }
 private:
     CClass* Class;
 };

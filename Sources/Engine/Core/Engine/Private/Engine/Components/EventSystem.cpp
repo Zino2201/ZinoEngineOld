@@ -2,19 +2,7 @@
 #include "Reflection/Builders.h"
 #include "Reflection/Type.h"
 
-namespace ZE
-{
-namespace Refl
-{
-
-REFL_INIT_BUILDERS_FUNC(EventSystem)
-{
-	Builders::TClassBuilder<Components::CEventSystem>("CEventSystem")
-		.Ctor<>();
-}
-}
-
-namespace Components
+namespace ZE::Components
 {
 
 void CEventSystem::Initialize(ECS::CEntityManager& InEntityManager)
@@ -28,5 +16,3 @@ void CEventSystem::Tick(ECS::CEntityManager& InEntityManager, const float& InDel
 }
 
 } /** namespace Components */
-
-}

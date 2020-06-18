@@ -44,6 +44,7 @@ public:
 
     void AddShaderType(CBasicShaderType* InShaderType);
     void RemoveShaderType(CBasicShaderType* InShaderType);
+    void DestroyAll();
 
     /**
      * Compile basic shaders (blocking)

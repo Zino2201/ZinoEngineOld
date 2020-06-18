@@ -9,6 +9,11 @@
 #include "Engine/Engine.h"
 #include "Shader/ShaderCompiler.h"
 #include "Render/Shader/BasicShader.h"
+#include <ios>
+#include "FileSystem/ZFS.h"
+#include "FileSystem/StdFileSystem.h"
+#include "FileSystem/FileUtils.h"
+#include "Serialization/FileArchive.h"
 
 DECLARE_LOG_CATEGORY(EngineInit);
 
@@ -25,19 +30,60 @@ int main(int argc, char** argv)
 void StartRenderThread()
 {
 	ZE::RenderThreadID = std::this_thread::get_id();
-	ZE::CRenderThread::Get().Run();
+	ZE::CRenderThread::Get().Run(&CZinoEngineMain::GTSemaphore);
 }
 
 #include "Shader/ShaderCore.h"
 
+namespace FS = ZE::FileSystem;
+
 void CZinoEngineMain::PreInit()
 {
+	std::ios::sync_with_stdio(false);
+
 	/** INITIALIZE BASE MODULES */
 	{
 		/** Ensure the EngineCore module is loaded */
 		ZE::CModuleManager::LoadModule("EngineCore");
 		LOG(ZE::ELogSeverity::Info, EngineInit, "=== ZinoEngine %s Build ===", ZE_CONFIGURATION_NAME);
 		
+		/** Mount std file system to current working dir */
+		FS::IFileSystem* Root = FS::CFileSystemManager::Get()
+			.AddFileSystem<ZE::FileSystem::CStdFileSystem>("Root", "/", 0,
+			ZE::FileUtils::GetCurrentWorkingDirectory());
+		FS::SetWriteFS(Root);
+
+		/** Check if required directories/files are presents */
+		const std::array<const char*, 2> RequiredObjects = 
+		{
+			"/Shaders",
+			"/Assets"
+		};
+
+		for(const auto& Obj : RequiredObjects)
+		{
+			if(!FS::Exists(Obj))
+				LOG(ZE::ELogSeverity::Fatal, EngineInit, 
+					"Can't find \"%s\" ! Can't continue", Obj);
+		}
+
+		//{
+		//	std::vector<std::string> test = { "ONE", "TWO", "THREE" };
+		//	TOwnerPtr<ZE::FileSystem::IFile> File = ZE::FileSystem::Write("/Build/test.txt",
+		//		ZE::FileSystem::EFileWriteFlags::ReplaceExisting);
+		//	ZE::Serialization::CFileArchive FileArchive(File);
+		//	FileArchive << test;
+		//}
+
+		//
+		//	std::vector<std::string> test;
+		//	TOwnerPtr<ZE::FileSystem::IFile> File = ZE::FileSystem::Read("/Build/test.txt");
+		//	ZE::Serialization::CFileArchive FileArchive(File);
+		//	FileArchive >> test;
+		//
+
+		//__debugbreak();
+
 		ZE::CModuleManager::LoadModule("Reflection");
 
 		ZE::GameThreadID = std::this_thread::get_id();
@@ -113,7 +159,7 @@ void CZinoEngineMain::Loop()
 		Last = Now;
 		Now = SDL_GetPerformanceCounter();
 
-		DeltaTime = (((Now - Last) * 1000 / (float)SDL_GetPerformanceFrequency()))
+		DeltaTime = (((Now - Last) * 1000 / (double) SDL_GetPerformanceFrequency()))
 			* 0.001f;
 
 		while(SDL_PollEvent(&Event))
@@ -133,6 +179,8 @@ void CZinoEngineMain::Loop()
 		 * Reset event at the end
 		 */
 		Event = {};
+
+		ZE::FlushRenderThread(true);
 	}
 
 	Exit();
@@ -150,16 +198,20 @@ void CZinoEngineMain::Exit()
 	ZE::FlushRenderThread(true);
 
 	/** Delete engine */
+	Engine->Exit();
 	Engine.reset();
 
 	ZE::FlushRenderThread(true);
 	RenderSystem->WaitGPU();
 
 	/** Stopping render thread */
+	LOG(ZE::ELogSeverity::Info, EngineInit, "Stopping render thread");
 	ZE::CRenderThread::Get().bRun = false;
 	RenderThreadHandle.join();
 
 	ZE::CModuleManager::UnloadModule("Renderer");
+
+	ZE::CBasicShaderManager::Get().DestroyAll();
 
 	/** Delete render system */
 	RenderSystem->Destroy();

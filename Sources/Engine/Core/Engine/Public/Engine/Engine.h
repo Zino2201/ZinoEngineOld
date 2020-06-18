@@ -23,6 +23,8 @@ public:
 
     /** Tick */
     virtual void Tick(SDL_Event* InEvent, const float& InDeltaTime);
+
+    virtual void Exit() {}
 protected:
     //std::unique_ptr<CEntityComponentSystemManager> ECSManager;
 };

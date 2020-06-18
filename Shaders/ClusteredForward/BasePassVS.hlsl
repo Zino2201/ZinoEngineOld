@@ -3,7 +3,7 @@
 struct VSInput
 {
 	float4 Position : POSITION;
-	float4 Color : COLOR;
+	float3 Normal : NORMAL;
 };
 
 VSOutput Main(VSInput Input)
@@ -14,6 +14,13 @@ VSOutput Main(VSInput Input)
 
 	VSOutput Out;
 	Out.Position = mul(Input.Position, WVP);
-	Out.Color = Input.Color;
+	Out.WorldNormal = mul(Input.Normal, World);
+
+	// Fresnel
+	float3 I = normalize(ViewPos);
+	float FresnelScale = 1;
+	float FresnelPower = 0.6;
+	Out.Fresnel = FresnelScale * pow(1.0 + dot(I, Out.WorldNormal), FresnelPower);
+
 	return Out;
 }

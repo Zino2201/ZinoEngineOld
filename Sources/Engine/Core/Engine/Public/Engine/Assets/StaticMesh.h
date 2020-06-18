@@ -15,12 +15,12 @@ class CStaticMesh;
 struct SStaticMeshVertex
 {
     Math::SVector3Float Position;
-    Math::SVector3Float Color;
+    Math::SVector3Float Normal;
 
     bool operator==(const SStaticMeshVertex& InOther) const
     {
         return Position == InOther.Position &&
-            Color == InOther.Color;
+            Normal == InOther.Normal;
     }
 
 	static std::vector<SVertexInputBindingDescription> GetBindingDescriptions()
@@ -39,7 +39,7 @@ struct SStaticMeshVertex
 			SVertexInputAttributeDescription(0, 0, EFormat::R32G32B32Sfloat,
 				offsetof(SStaticMeshVertex, Position)),
 			SVertexInputAttributeDescription(0, 1, EFormat::R32G32B32Sfloat,
-			    offsetof(SStaticMeshVertex, Color)),
+			    offsetof(SStaticMeshVertex, Normal)),
 		};
 	}
 };
@@ -51,7 +51,7 @@ struct SStaticMeshVertexHash
 		std::size_t Seed = 0;
 
 		HashCombine<Math::SVector3Float, Math::SVector3FloatHash>(Seed, InVertex.Position);
-		HashCombine<Math::SVector3Float, Math::SVector3FloatHash>(Seed, InVertex.Color);
+		HashCombine<Math::SVector3Float, Math::SVector3FloatHash>(Seed, InVertex.Normal);
 
 		return Seed;
 	}

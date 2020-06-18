@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/ECS.h"
+#include "RenderableComponent.gen.h"
 
 namespace ZE::Renderer
 {
@@ -14,9 +15,10 @@ namespace ZE::Components
 /**
  * Base struct for component with render data that can be rendered by the renderer
  */
+ZSTRUCT()
 struct SRenderableComponent : public ECS::SEntityComponent
 {
-    DECLARE_REFL_STRUCT_OR_CLASS1(SRenderableComponent, SEntityComponent)
+    REFL_BODY()
 
     Renderer::CRenderableComponentProxy* Proxy;
 
@@ -31,17 +33,15 @@ struct SRenderableComponent : public ECS::SEntityComponent
 
     SRenderableComponent() : Proxy(nullptr), bHasBeenUpdated(false) {}
 };
-DECLARE_REFL_TYPE(SRenderableComponent);
-
 /**
  * System for SRenderableComponent
  * This system interact with the renderer to inform it when a new renderable component
  * has been added, or updated
  */
-
+ZCLASS()
 class CRenderableComponentSystem : public ECS::IEntityComponentSystem
 {
-    DECLARE_REFL_STRUCT_OR_CLASS1(CRenderableComponentSystem, IEntityComponentSystem)
+    REFL_BODY()
 
 public:
     void Initialize(ECS::CEntityManager& InEntityManager) override;
@@ -68,6 +68,5 @@ public:
 private:
     std::vector<SRenderableComponent*> ComponentsToUpdate;
 };
-DECLARE_REFL_TYPE(CRenderableComponentSystem);
 
 }

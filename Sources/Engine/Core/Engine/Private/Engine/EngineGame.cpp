@@ -16,11 +16,54 @@
 #include "Engine/Components/TransformComponent.h"
 #include "Engine/Components/StaticMeshComponent.h"
 #include "Renderer/ClusteredForward/ClusteredForwardWorldRenderer.h"
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+#include "Pool.h"
+#include <sstream>
+//s
 
 namespace ZE
 {
 
 CEngineGame::~CEngineGame() { testSM.reset(); delete Window; }
+
+void LoadModelUsingTinyObjLoader(const std::string_view& InPath,
+	std::vector<SStaticMeshVertex>& OutVertices,
+	std::vector<uint32_t>& OutIndices)
+{
+	tinyobj::attrib_t Attrib;
+	std::vector<tinyobj::shape_t> Shapes;
+	std::vector<tinyobj::material_t> Materials;
+	std::string Warn, Err;
+
+	if (!tinyobj::LoadObj(&Attrib, &Shapes, &Materials, &Warn, &Err, InPath.data()))
+		return;
+
+	std::unordered_map<SStaticMeshVertex, uint32_t, SStaticMeshVertexHash> UniqueVertices;
+
+	for (const auto& Shape : Shapes)
+	{
+		for (const auto& Index : Shape.mesh.indices)
+		{
+			SStaticMeshVertex Vertex;
+			Vertex.Position.X = Attrib.vertices[3 * Index.vertex_index + 0];
+			Vertex.Position.Y = Attrib.vertices[3 * Index.vertex_index + 1];
+			Vertex.Position.Z = Attrib.vertices[3 * Index.vertex_index + 2];
+
+			Vertex.Normal.X = Attrib.normals[3 * Index.normal_index + 0];
+			Vertex.Normal.Y = Attrib.normals[3 * Index.normal_index + 1];
+			Vertex.Normal.Z = Attrib.normals[3 * Index.normal_index + 2];
+
+			if (UniqueVertices.count(Vertex) == 0)
+			{
+				UniqueVertices[Vertex] = static_cast<uint32_t>(OutVertices.size());
+				OutVertices.push_back(Vertex);
+			}
+
+			OutIndices.push_back(UniqueVertices[Vertex]);
+		}
+	}
+}
 
 void LoadModelUsingAssimp(const std::string_view& InPath,
 	std::vector<SStaticMeshVertex>& OutVertices,
@@ -36,7 +79,10 @@ void LoadModelUsingAssimp(const std::string_view& InPath,
 	static size_t CurrentVtx = 0;
 
 	Assimp::Importer Importer;
-	const aiScene* Scene = Importer.ReadFile(InPath.data(), aiProcess_FlipUVs);
+	const aiScene* Scene = Importer.ReadFile(InPath.data(), aiProcess_CalcTangentSpace |
+		aiProcess_Triangulate |
+		aiProcess_JoinIdenticalVertices |
+		aiProcess_SortByPType);
 	if(!Scene)
 		LOG(ELogSeverity::Fatal, None, "Failed to load model %s", InPath.data());
 
@@ -49,10 +95,11 @@ void LoadModelUsingAssimp(const std::string_view& InPath,
 	for(uint32_t i = 0; i < Mesh->mNumVertices; ++i)
 	{
 		aiVector3D& Position = Mesh->mVertices[i];
+		aiVector3D& Normal = Mesh->mNormals[i];
 
 		SStaticMeshVertex Vertex;
 		Vertex.Position = { Position.x, Position.y, Position.z };
-		Vertex.Color = Colors[CurrentColor];
+		Vertex.Normal = { Normal.x, Normal.y, Normal.z };
 
 		if(UniqueVertices.count(Vertex) == 0)
 		{
@@ -79,74 +126,66 @@ struct test
 	alignas(16) glm::vec3 CameraUp;
 };
 
+int StaticOnWindowResized(void* InUserData, SDL_Event* InEvent)
+{
+	must(InUserData);
+
+	return reinterpret_cast<CEngineGame*>(InUserData)->OnWindowResized(InEvent);
+}
+
+#include <cstdlib>
+#include <chrono>
+#define RAND_1_0 (static_cast<double>(rand()) / static_cast <double> (RAND_MAX))
+
 void CEngineGame::Initialize()
 {
 	CEngine::Initialize();
+
+	srand(2201);
 
 	using namespace ZE::Components;
 
 	/** Create main game window */
 	Window = new CWindow("ZinoEngine", 1280, 720);
-	Viewport = std::make_unique<CViewport>(Window->GetHandle(), 1280, 720);
+
+	/** Event on resize */
+	SDL_AddEventWatch(&StaticOnWindowResized, this);
+
+	Viewport = std::make_unique<CViewport>(Window->GetHandle(), Window->GetWidth(), 
+		Window->GetHeight());
 	Viewport->InitResource();
 
 	World = std::make_unique<CWorld>();
-
-	ECS::EntityID Test = World->GetEntityManager()->CreateEntity();
-	ECS::EntityID Test2 = World->GetEntityManager()->CreateEntity();
-	ECS::EntityID Test3 = World->GetEntityManager()->CreateEntity();
-	ECS::EntityID Test4 = World->GetEntityManager()->CreateEntity();
-	ECS::EntityID Test5 = World->GetEntityManager()->CreateEntity();
-
-	World->GetEntityManager()->AddComponent(
-		Test, Refl::CStruct::Get<Components::STransformComponent>());
-	Components::SStaticMeshComponent* 
-		C = World->GetEntityManager()->AddComponent<Components::SStaticMeshComponent>(Test);
-
-	World->GetEntityManager()->AddComponent(
-		Test, Refl::CStruct::Get<ECS::SHierarchyComponent>());
-	World->GetEntityManager()->AddComponent(
-		Test2, Refl::CStruct::Get<ECS::SHierarchyComponent>());
-	World->GetEntityManager()->AddComponent(
-		Test3, Refl::CStruct::Get<ECS::SHierarchyComponent>());
-	World->GetEntityManager()->AddComponent(
-		Test4, Refl::CStruct::Get<ECS::SHierarchyComponent>());
-	World->GetEntityManager()->AddComponent(
-		Test5, Refl::CStruct::Get<ECS::SHierarchyComponent>());
-
-	World->GetEntityManager()->AttachEntity(Test2, Test);
-	World->GetEntityManager()->AttachEntity(Test3, Test);
-	World->GetEntityManager()->AttachEntity(Test4, Test);
-	World->GetEntityManager()->AttachEntity(Test5, Test);
-	
-	ECS::SEntityComponent* Transform = World->GetEntityManager()->GetComponent(
-		Test, Refl::CStruct::Get<ECS::SHierarchyComponent>());
-
-	ECS::SEntityComponent* Hiera2 = World->GetEntityManager()->GetComponent(
-		Test2, Refl::CStruct::Get<ECS::SHierarchyComponent>());
-
-	ECS::SEntityComponent* Hiera3 = World->GetEntityManager()->GetComponent(
-		Test3, Refl::CStruct::Get<ECS::SHierarchyComponent>());
-
-	ECS::SEntityComponent* Hiera4 = World->GetEntityManager()->GetComponent(
-		Test4, Refl::CStruct::Get<ECS::SHierarchyComponent>());
-
-	ECS::SEntityComponent* Hiera5 = World->GetEntityManager()->GetComponent(
-		Test5, Refl::CStruct::Get<ECS::SHierarchyComponent>());
 
 	/**
 	 * Read merger sponger
 	 */
 	std::vector<SStaticMeshVertex> Vertices;
 	std::vector<uint32_t> Indices;
-	LoadModelUsingAssimp("Assets/MergerSponge.obj", Vertices, Indices);
+	LoadModelUsingTinyObjLoader("Assets/sphere.obj", Vertices, Indices);
 
 	testSM = std::make_shared<CStaticMesh>();
 	testSM->UpdateData(Vertices, Indices);
 
-	ViewDataUBO.InitResource();
+	for(int i = 0; i < 105; ++i)
+	{
+		double X = RAND_1_0 * 100 - 50;
+		double Y = RAND_1_0 * 100 - 50;
+		double Z = RAND_1_0 * -300;
 
-	C->SetStaticMesh(testSM);
+		ECS::EntityID Entity = World->GetEntityManager()->CreateEntity();
+		Components::STransformComponent* T = 
+			World->GetEntityManager()->AddComponent<Components::STransformComponent>(Entity);
+		T->Transform.Position.X = X;
+		T->Transform.Position.Y = Y;
+		T->Transform.Position.Z = Z;
+
+		Components::SStaticMeshComponent* SM = 
+			World->GetEntityManager()->AddComponent<Components::SStaticMeshComponent>(Entity);
+		SM->SetStaticMesh(testSM);
+	}
+
+	ViewDataUBO.InitResource();
 }
 
 glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -159,33 +198,46 @@ glm::vec3 CameraUp = glm::cross(CameraDirection, CameraRight);
 glm::vec3 CameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	float CamYaw = 0.f, CamPitch = 0.f;
 
-	/** https://nlguillemot.wordpress.com/2016/12/07/reversed-z-in-opengl/ */
-	glm::mat4 MakeInfReversedZProjRH(float fovY_radians, float aspectWbyH, float zNear)
+int CEngineGame::OnWindowResized(SDL_Event* InEvent)
+{
+	switch(InEvent->window.event)
 	{
-		float f = 1.0f / tan(fovY_radians / 2.0f);
-		return glm::mat4(
-			f / aspectWbyH, 0.0f, 0.0f, 0.0f,
-			0.0f, f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, -1.0f,
-			0.0f, 0.0f, zNear, 0.0f);
+	case SDL_WINDOWEVENT_SIZE_CHANGED:
+	case SDL_WINDOWEVENT_RESIZED:
+		Window->SetWidth(static_cast<uint32_t>(InEvent->window.data1));
+		Window->SetHeight(static_cast<uint32_t>(InEvent->window.data2));
+		
+		// Resize viewport
+		EnqueueRenderCommand("ResizeWindow",
+			[this]()
+		{
+			Viewport->Resize(Window->GetWidth(), Window->GetHeight());
+		});
+
+		return SDL_TRUE;
 	}
 
+	return SDL_FALSE;
+}
 
 void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 {
 	CEngine::Tick(InEvent, InDeltaTime);
 
-	static auto startTime = std::chrono::high_resolution_clock::now();
+	static Uint64 Now = SDL_GetPerformanceCounter();
+	static Uint64 Last = 0;
 
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float time = std::chrono::duration<float, std::chrono::seconds::period>(
-		currentTime - startTime).count();
+	Last = Now;
+	Now = SDL_GetPerformanceCounter();
+
+	float DeltaTime = (((Now - Last) * 1000 / (float)SDL_GetPerformanceFrequency()))
+		* 0.001f;
 
 	/** Update camera */
 	const Uint8* KeyState = SDL_GetKeyboardState(nullptr);
 	Uint32 MouseState = SDL_GetMouseState(nullptr, nullptr);
 	static bool bIsMouseGrabbed = false;
-	const float CameraSpeed = 0.0025f;
+	const float CameraSpeed = 5.f * DeltaTime;
 
 	if (MouseState & SDL_BUTTON_LMASK
 		&& !bIsMouseGrabbed)
@@ -222,8 +274,8 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 	{
 		if (bIsMouseGrabbed)
 		{
-			float DeltaX = InEvent->motion.xrel * 0.25f;
-			float DeltaY = InEvent->motion.yrel * 0.25f;
+			float DeltaX = InEvent->motion.xrel * 0.5f;
+			float DeltaY = InEvent->motion.yrel * 0.5f;
 
 			CamYaw += DeltaX;
 			CamPitch += -DeltaY;
@@ -247,33 +299,56 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 
 	/** Draw the scene */
 	EnqueueRenderCommand("CEngineGame::DrawWorld",
-		[this, time]()
+		[this, DeltaTime]()
 	{
+		/**
+		 * Don't render if begin fail (swapchain recreated)
+		 */
+		if(Viewport->Begin())
 		{
-		ZE::Renderer::SViewData VD;
-		glm::mat4 View = glm::lookAt(CameraPos, CameraPos
-			+ CameraFront,
-			CameraUp);
-		glm::mat4 Proj = glm::perspective(glm::radians(90.f), (float) 1280 / 720,
-			1000.f, 0.1f);
-		VD.ViewProj = Proj * View;
-		ViewDataUBO.Copy(&VD);
+			{
+				ZE::Renderer::SViewData VD;
+				glm::mat4 View = glm::lookAt(CameraPos, CameraPos
+					+ CameraFront,
+					CameraUp);
+				glm::mat4 Proj = glm::perspective(glm::radians(90.f),
+					(float)Window->GetWidth() / Window->GetHeight(),
+					100000.F, 0.01f);
+				VD.ViewProj = Proj * View;
+				VD.ViewPos = CameraPos;
+				VD.ViewForward = CameraFront;
+				ViewDataUBO.Copy(&VD);
+			}
+
+			ZE::Renderer::SWorldRendererView View;
+			View.Width = Window->GetWidth();
+			View.Height = Window->GetHeight();
+			View.Surface = Viewport->GetSurface();
+			View.ViewDataUBO = ViewDataUBO.GetBuffer();
+			ZE::Renderer::CClusteredForwardWorldRenderer Renderer;
+
+			Renderer.Render(World->GetProxy(), View);
+			Viewport->End();
 		}
-		
-		ZE::Renderer::SWorldRendererView View;
-		View.Width = 1280;
-		View.Height = 720;
-		View.Surface = Viewport->GetSurface();
-		View.ViewDataUBO = ViewDataUBO.GetBuffer();
-		ZE::Renderer::CClusteredForwardWorldRenderer Renderer;
-		Viewport->Begin();
-
-		/** Renderer */
-
-		Renderer.Render(World->GetProxy(), View);
-
-		Viewport->End();
 	});
+
+	static float fpsC = 0;
+	if(fpsC >= 0.15f)
+	{
+		std::stringstream NewTitle;
+		NewTitle << std::fixed;
+		NewTitle << "ZinoEngine | FPS: " << (int)1.f / DeltaTime << " (" << DeltaTime << " ms)";
+		SDL_SetWindowTitle(reinterpret_cast<SDL_Window*>(Window->GetHandle()),
+			NewTitle.str().c_str());
+		fpsC = 0;
+	}
+	fpsC += DeltaTime;
+
+}
+
+void CEngineGame::Exit()
+{
+	testSM->GetRenderData()->DestroyResource();
 }
 
 CEngine* CreateEngine()

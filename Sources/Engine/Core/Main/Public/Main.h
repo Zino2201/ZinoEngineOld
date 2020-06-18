@@ -2,6 +2,7 @@
 
 #include "Render/RenderThread.h"
 #include <SDL2/SDL.h>
+#include "EngineCore.h"
 
 namespace ZE
 {
@@ -49,4 +50,6 @@ private:
     inline static SDL_Event Event;
 
     inline static std::thread RenderThreadHandle;
+public:
+    inline static ZE::CSemaphore GTSemaphore;
 };

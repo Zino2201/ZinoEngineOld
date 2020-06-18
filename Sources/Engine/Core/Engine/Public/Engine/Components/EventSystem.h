@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/ECS.h"
+#include "EventSystem.gen.h"
 
 namespace ZE::Components
 {
@@ -8,9 +9,10 @@ namespace ZE::Components
 /**
  *
  */
+ZCLASS()
 class CEventSystem : public ECS::IEntityComponentSystem
 {
-	DECLARE_REFL_STRUCT_OR_CLASS1(CEventSystem, IEntityComponentSystem)
+	REFL_BODY()
 
 public:
 	void Initialize(ECS::CEntityManager& InEntityManager) override;
@@ -22,6 +24,5 @@ public:
 	bool ShouldTick() const override { return true; }
 	uint32_t GetPriority() const override { return 0; }
 };
-DECLARE_REFL_TYPE(CEventSystem);
 
 }

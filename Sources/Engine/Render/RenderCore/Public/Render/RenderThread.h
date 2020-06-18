@@ -46,25 +46,25 @@ private:
 /**
  * Render class thread
  */
-class CRenderThread : public CNonCopyable
+class RENDERCORE_API CRenderThread : public CNonCopyable
 {
 public:
-    RENDERCORE_API static CRenderThread& Get()
+    static CRenderThread& Get()
     {
         static CRenderThread Instance;
         return Instance;
     }
 
-    RENDERCORE_API void Run();
+    void Run(CSemaphore* InGameThreadSemaphore);
 
     /**
      * Enqueue a command to the render thread
      */
-	RENDERCORE_API void EnqueueCommand(IRenderThreadCommand* InCommand);
+	void EnqueueCommand(IRenderThreadCommand* InCommand);
 
-    bool HasCommands() const { return !Commands.empty(); }
+    FORCEINLINE bool HasCommands() const { return !Commands.empty(); }
 private:
-    RENDERCORE_API CRenderThread();
+    CRenderThread();
 public:
     std::atomic_bool bRun;
     CSemaphore CommandsExecutedSemaphore;
@@ -75,6 +75,8 @@ private:
 
     /** Mutex to protect commands queue when render thread is executing them */
     std::mutex CommandsMutex;
+
+    CSemaphore* GameThreadSemaphore;
 };
 
 /** Helper macro to enqueue render command */

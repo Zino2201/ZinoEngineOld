@@ -23,6 +23,8 @@ public:
 
     ENGINE_API virtual void Initialize() override;
     ENGINE_API virtual void Tick(SDL_Event* InEvent, const float& InDeltaTime) override;
+    ENGINE_API void Exit() override;
+    int OnWindowResized(SDL_Event* InEvent);
 private:
     std::unique_ptr<class CWorld> World;
     CWindow* Window;

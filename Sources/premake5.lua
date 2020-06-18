@@ -137,6 +137,8 @@ function Module:new(name, modKind)
 	mod.includeDirs = {}
 	mod.libDirs = {}
 	mod.libs = {}
+	mod.publicHeaders = {}
+	mod.root = os.getcwd()
 	
 	-- Used by monolithic builds
 	mod.debugLibDirs = {}
@@ -186,6 +188,8 @@ function Module:new(name, modKind)
 	language "C++"
 	cppdialect "C++17"
 	files { "**.h", "**.cpp", "**.hpp", "**.cxx", "**.inl" }
+	vpaths { ["Sources/*"] = "**.h" }
+	vpaths { ["Sources/*"] = "**.cpp" }
 	
 	targetdir (BinDir.."%{cfg.longname}")
 	objdir (IntermediateDir.."%{prj.name}/".."%{cfg.longname}")
@@ -205,6 +209,44 @@ function Module:new(name, modKind)
 	mod:addLibDirs(RequiredLibDirs)
 	mod:addLibs(RequiredLibs)
 	
+	-- Public headers
+	mod.publicHeaders = os.matchfiles("Public/**.h")
+	
+	-- Generate ZRT file + pre-create .gen.cpp to includes them into vs sln
+	local ReflDir = BuildDir.."Reflection/"
+	local modFile = io.open(ReflDir..mod.name..".zrt", "w+")
+	
+	configs = { "Debug", "Debug Monolithic", "Release", "Release Monolithic" }
+	
+	-- Parse all public headers and add them to the .zrt file
+	for _, h in pairs(mod.publicHeaders) do
+		local fullHeaderPath = mod.root.."/"..h
+		local header = io.open(fullHeaderPath, "r")
+		local content = header:read("*all")
+		if string.find(content, "ZENUM") or string.find(content, "ZSTRUCT") or string.find(content, "ZCLASS") then
+			modFile:write(fullHeaderPath.."\n")
+			
+			-- Precreate .gen.cpp if it doesn't exist so VS can detect it
+			for _, c in pairs(configs) do
+				local headerName = fullHeaderPath:match("^.+/(.+)$")
+				local headerNameNoExt = headerName:match("^.+(%..+)$")
+				local genCppPath = IntermediateDir..mod.name.."/"..c.."/Reflection/"..headerName:sub(1, -3)..".gen.cpp"
+				if not os.isfile(genCppPath) then
+					local genCpp = io.open(genCppPath, "w+")
+					genCpp:write("/** DON'T MODIFY! */")
+					genCpp:close()
+				end
+			end
+		end
+		header:close()
+	end
+
+	modFile:close()
+	
+	-- Reflection related
+	includedirs { IntermediateDir..mod.name.."/%{cfg.longname}/Reflection/" }
+	files { IntermediateDir..mod.name.."/%{cfg.longname}/Reflection/*.gen.cpp" }
+
 	currentModule = mod
 	
 	table.insert(Modules, mod)
@@ -219,6 +261,7 @@ function Module:addModules(deps)
 		local path = searchModulePath(v)
 		if path then
 			includedirs(path.."/Public")
+			includedirs { IntermediateDir..v.."/%{cfg.longname}/Reflection/" }
 			dependson(v)
 			filterModularOnly()
 				defines(string.upper(v).."_API=__declspec(dllimport)")
@@ -245,14 +288,6 @@ function Module:addLibDirs(libDirs)
 	
 	local oldFilter = currentFilter
 	
-	--[[if currentFilter == 0 or currentFilter == -1 or currentFilter == 2 or currentFilter == 3 then
-		appendTables(self.debugLibDirs, libDirs)
-	end
-	
-	if currentFilter == 1 or currentFilter == -1 or currentFilter == 2 or currentFilter == 3 then
-		appendTables(self.releaseLibDirs, libDirs)
-	end--]]
-
 	if currentFilter == 0 then
 		filterDebugModularOnly()
 		appendTables(self.debugLibDirs, libDirs)
@@ -300,11 +335,21 @@ function searchModulePath(name)
 	return os.pathsearch(name..".lua", SrcEnginePathStr)
 end
 
+local function finishModule()
+	if currentModule.kind == "SharedLib" then
+		-- Reflection command for this module
+		zrtFileString = BuildDir.."Reflection/"..currentModule.name..".zrt "
+		prebuildcommands { 
+			BinDir.."%{cfg.longname}/ZinoEngine-ZinoReflectionTool.exe -Module="..currentModule.name.." -SrcDir="..currentModule.root.." -OutDir="..IntermediateDir..currentModule.name.."/%{cfg.longname}/Reflection/ "..zrtFileString }
+	end
+end
+
 local function executeModule(name)
 	local path = searchModulePath(name)
 	
 	if path then
 		include(path.."/"..name..".lua")
+		finishModule()
 		currentModule = nil
 		filterReset()
 	else
@@ -341,5 +386,7 @@ workspace "ZinoEngine"
 		executeModule("VulkanShaderCompiler")
 	group ""
 		executeModule("Main")
+	group "Tools"
+		executeModule("ZinoReflectionTool")
 	print("Total of "..#Modules.." module(s)")
 	

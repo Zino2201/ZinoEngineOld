@@ -2,6 +2,8 @@
 
 #include <optional>
 #include <functional>
+// Prank for ZinoReflectionTool:
+// Macros.gen.h
 
 /**
  * Macros to use for the reflection system
@@ -25,6 +27,28 @@ class CType;
 class CStruct;
 class CClass;
 
+
+/** Type traits */
+
+/**
+ * Is the type a CStruct
+ */
+template<typename T>
+struct TIsReflStruct
+{
+    static constexpr bool Value = false;
+};
+
+/**
+ * Is the type a CClass
+ */
+template<typename T>
+struct TIsReflClass
+{
+	static constexpr bool Value = false;
+};
+
+
 /** For macros only */
 namespace Internal
 {
@@ -34,39 +58,47 @@ namespace Internal
 }
 
 /**
- * Declare a reflected type
+ * Macros parsed by the reflection tool
  */
-#define DECLARE_REFL_TYPE(Type) \
+#define ZSTRUCT(...)
+#define ZCLASS(...)
+#define ZPROPERTY(...)
+#define ZFUNCTION(...)
+
+/** Macro used for ZRT to generate a body */
+#define REFL_BODY() CONCAT(CONCAT(CONCAT(_Refl_Body_, CURRENT_FILE_UNIQUE_ID), _), __LINE__)
+
+/**
+ * Specialize TTypeName
+ */
+#define REFL_SPECIALIZE_TYPE_NAME(Type, TypeName) \
     template<> struct TTypeName<Type> \
     { \
-        inline static const char* Name = #Type; \
+        inline static const char* Name = TypeName; \
     }
 
 /**
- * Declare a class with reflection data
- * This macro just add some required functions for the reflection/RTTI system
+ * ZRT ONLY MACROS
  */
-#define DECLARE_REFL_STRUCT_OR_CLASS_INTERNAL(Class) \
+#define DECLARE_STRUCT(Struct, StructName) \
     public: \
-    friend void ZE::Refl::Refl_InitReflectedClassesAndStructs(); \
     friend ZE::Refl::CType; \
+    friend void ZE::Refl::Refl_InitReflectedClassesAndStructs(); \
+    template<typename... Args> \
+    static void* Refl_InternalInstantiate(Args&&... InArgs) { return new Struct(std::forward<Args>(InArgs)...); } \
+    template<typename... Args> \
+    static void Refl_InternalPlacementNew(void* InPtr, Args&&... InArgs) { new (InPtr) Struct(std::forward<Args>(InArgs)...); } \
+    static ZE::Refl::CStruct* GetStaticStruct(); \
+    virtual ZE::Refl::CStruct* GetStruct() const { return ZE::Refl::Internal::GetStructByName(StructName); }
+
+#define DECLARE_CLASS(Class, ClassName) \
+    public: \
+    friend ZE::Refl::CType; \
+    friend void ZE::Refl::Refl_InitReflectedClassesAndStructs(); \
     template<typename... Args> \
     static void* Refl_InternalInstantiate(Args&&... InArgs) { return new Class(std::forward<Args>(InArgs)...); } \
     template<typename... Args> \
     static void Refl_InternalPlacementNew(void* InPtr, Args&&... InArgs) { new (InPtr) Class(std::forward<Args>(InArgs)...); } \
-    static ZE::Refl::CStruct* GetStaticStruct() { return ZE::Refl::Internal::GetStructByName(#Class); } \
-    static ZE::Refl::CClass* GetStaticClass() { return ZE::Refl::Internal::GetClassByName(#Class); } \
-
-#define DECLARE_REFL_STRUCT_OR_CLASS(Class) \
-    DECLARE_REFL_STRUCT_OR_CLASS_INTERNAL(Class) \
-    static const std::vector<const char*> GetParentClasses() { return {}; } \
-    virtual ZE::Refl::CStruct* GetStruct() { return ZE::Refl::Internal::GetStructByName(#Class); }
-
-
-#define DECLARE_REFL_STRUCT_OR_CLASS1(Class, A) \
-    DECLARE_REFL_STRUCT_OR_CLASS_INTERNAL(Class) \
-    static const std::vector<const char*> GetParentClasses() \
-    { \
-        return { #A }; \
-    } \
-    ZE::Refl::CStruct* GetStruct() override { return ZE::Refl::Internal::GetStructByName(#Class); }
+    static ZE::Refl::CClass* GetStaticClass(); \
+    virtual ZE::Refl::CClass* GetClass() const { return ZE::Refl::Internal::GetClassByName(ClassName); } \
+    private:

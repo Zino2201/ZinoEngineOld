@@ -1,15 +1,22 @@
+#include "ZE.hlsl"
+
 struct VSOutput
 {
 	float4 Position : SV_POSITION;
-	float4 Color : COLOR;
+	float3 WorldNormal : NORMAL;
+	float Fresnel : COLOR;
 };
 
-cbuffer ViewData
+[[vk::binding(0, ZE_GLOBAL_SET)]]
+cbuffer ViewData : register(b0)
 {
 	float4x4 ViewProj;
+	float3 ViewPos;
+	float3 ViewForward;
 };
 
-cbuffer PerInstance
+[[vk::binding(1, ZE_INSTANCE_SET)]]
+cbuffer PerInstance : register(b1)
 {
     float4x4 World;
 };

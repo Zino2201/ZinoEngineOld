@@ -11,8 +11,7 @@ void CStaticMeshRenderData::InitResource_RenderThread()
 	const std::vector<SStaticMeshVertex>& Vertices = StaticMesh->Vertices;
 	const std::vector<uint32_t>& Indices = StaticMesh->Indices;
 
-	IndexFormat = Indices.size() > std::numeric_limits<uint16_t>::max()
-		? EIndexFormat::Uint32 : EIndexFormat::Uint16;
+	IndexFormat = EIndexFormat::Uint32;
 
 	VertexBuffer = GRenderSystem->CreateBuffer(
 		ERSBufferUsage::VertexBuffer,
@@ -21,6 +20,9 @@ void CStaticMeshRenderData::InitResource_RenderThread()
 		SRSResourceCreateInfo(Vertices.data(), "StaticMeshVertexBuffer"));
 	if(!VertexBuffer)
 		LOG(ELogSeverity::Fatal, StaticMesh, "Failed to create a vertex buffer");
+
+	uint64_t IndexBufferTypeSize = IndexFormat == EIndexFormat::Uint16 ? sizeof(uint16_t) :
+		sizeof(uint32_t);
 
 	IndexBuffer = GRenderSystem->CreateBuffer(
 		ERSBufferUsage::IndexBuffer,
@@ -43,6 +45,9 @@ void CStaticMesh::UpdateData(const std::vector<SStaticMeshVertex>& InVertices,
 	Vertices = InVertices;
 	Indices = InIndices;
 	IndexCount = static_cast<uint32_t>(Indices.size());
+
+	if(RenderData)
+		RenderData->DestroyResource();
 
 	RenderData = std::make_unique<CStaticMeshRenderData>(this);
 	RenderData->InitResource();

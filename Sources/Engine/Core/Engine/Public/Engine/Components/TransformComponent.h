@@ -3,6 +3,7 @@
 #include "EngineCore.h"
 #include "Engine/ECS.h"
 #include "Reflection/Reflection.h"
+#include "TransformComponent.gen.h"
 
 namespace ZE::Components
 {
@@ -10,12 +11,12 @@ namespace ZE::Components
 /**
  * A component storing transform data
  */
+ZSTRUCT()
 struct STransformComponent : public ECS::SEntityComponent
 {
-    DECLARE_REFL_STRUCT_OR_CLASS1(STransformComponent, SEntityComponent)
+    REFL_BODY()
 
     Math::STransform Transform;
 };
-DECLARE_REFL_TYPE(STransformComponent);
 
 }

@@ -26,19 +26,18 @@ REFLECTION_API std::vector<CClass*> GetDerivedClassesFrom(CClass* InParent);
 
 }
 
-/** Basic types */
-DECLARE_REFL_TYPE(bool);
-DECLARE_REFL_TYPE(int);
-DECLARE_REFL_TYPE(long);
-DECLARE_REFL_TYPE(float);
-DECLARE_REFL_TYPE(double);
+/** Basic types specializations */
+REFL_SPECIALIZE_TYPE_NAME(bool, "bool");
+REFL_SPECIALIZE_TYPE_NAME(long, "long");
+REFL_SPECIALIZE_TYPE_NAME(float, "float");
+REFL_SPECIALIZE_TYPE_NAME(double, "double");
 
-DECLARE_REFL_TYPE(uint8_t);
-DECLARE_REFL_TYPE(uint16_t);
-DECLARE_REFL_TYPE(uint32_t);
-DECLARE_REFL_TYPE(uint64_t);
+REFL_SPECIALIZE_TYPE_NAME(uint8_t, "uint8_t");
+REFL_SPECIALIZE_TYPE_NAME(uint16_t, "uint16_t");
+REFL_SPECIALIZE_TYPE_NAME(uint32_t, "uint32_t");
+REFL_SPECIALIZE_TYPE_NAME(uint64_t, "uint64_t");
 
-DECLARE_REFL_TYPE(int8_t);
-DECLARE_REFL_TYPE(int16_t);
-//DECLARE_REFL_TYPE(int32_t); (already defined as int)
-DECLARE_REFL_TYPE(int64_t);
+REFL_SPECIALIZE_TYPE_NAME(int8_t, "int8_t");
+REFL_SPECIALIZE_TYPE_NAME(int16_t, "int16_t");
+REFL_SPECIALIZE_TYPE_NAME(int32_t, "int32_t");
+REFL_SPECIALIZE_TYPE_NAME(int64_t, "int64_t");

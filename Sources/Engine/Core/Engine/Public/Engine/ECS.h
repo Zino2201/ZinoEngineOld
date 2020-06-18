@@ -7,6 +7,7 @@
 #include "Pool.h"
 #include "TickSystem.h"
 #include "NonCopyable.h"
+#include "ECS.gen.h"
 
 /**
  * ZinoEngine Entity Component System implementation
@@ -22,10 +23,10 @@ class IEntityComponentSystem;
  * ECS Manager
  * Manage systems
  */
-class CECSManager final : public CNonCopyable
+class ENGINE_API CECSManager final : public CNonCopyable
 {
 public:
-	ENGINE_API static CECSManager& Get()
+	static CECSManager& Get()
 	{
         static CECSManager Instance;
 		return Instance;
@@ -49,14 +50,14 @@ public:
     {
         for(auto& System : Systems)
         {
-            if(System->GetStruct() == Refl::CStruct::Get<T>())
-                return Cast<T>(System.get());
+            if(T* SystemPtr = Cast<T>(System.get()))
+                return SystemPtr;
         }
 
         return nullptr;
     }
 private:
-    ENGINE_API void OnModuleLoaded(const std::string_view& InName);
+    void OnModuleLoaded(const std::string_view& InName);
 private:
     std::vector<std::unique_ptr<ECS::IEntityComponentSystem>> Systems;
     std::unordered_map<ETickOrder, std::vector<ECS::IEntityComponentSystem*>> GroupMap;
@@ -95,9 +96,10 @@ private:
 /**
  * A entity component
  */
+ZSTRUCT()
 struct SEntityComponent
 {
-    DECLARE_REFL_STRUCT_OR_CLASS(SEntityComponent)
+    REFL_BODY()
 
     virtual ~SEntityComponent() = default;
 
@@ -107,9 +109,10 @@ struct SEntityComponent
 /**
  * Component storing hierarchy data
  */
+ZSTRUCT()
 struct SHierarchyComponent : public ECS::SEntityComponent
 {
-    DECLARE_REFL_STRUCT_OR_CLASS1(SHierarchyComponent, SEntityComponent)
+    REFL_BODY()
 
     uint32_t ChildrenCount;
 
@@ -136,14 +139,14 @@ struct SHierarchyComponent : public ECS::SEntityComponent
         Last(ECS::Null) {}
 
 };
-DECLARE_REFL_TYPE(SHierarchyComponent);
 
 /**
  * Base interface for entity component system
  */
+ZCLASS()
 class IEntityComponentSystem
 {
-    DECLARE_REFL_STRUCT_OR_CLASS(IEntityComponentSystem)
+    REFL_BODY()
 
 public:
     /**
@@ -260,6 +263,7 @@ public:
         else
             return nullptr;
     }
+
 private:
 	ENGINE_API EntityID GetFreeID();
     ENGINE_API SEntityComponent* CreateComponent(ZE::Refl::CStruct* InStruct);
@@ -270,7 +274,7 @@ private:
 
     /** Pools of components */
     std::unordered_map<ZE::Refl::CStruct*, 
-        TPool<TComponentPool>> ComponentPoolMap;
+        TDynamicPool<TComponentPool>> ComponentPoolMap;
 
     /** Map to a set of components */
     std::unordered_map<ZE::Refl::CStruct*, std::vector<ECS::SEntityComponent*>> ComponentVecMap;
@@ -281,8 +285,5 @@ private:
     TMulticastDelegate<CEntityManager&, const ECS::EntityID&, ECS::SEntityComponent*> OnComponentAdded;
     TMulticastDelegate<CEntityManager&, const ECS::EntityID&, ECS::SEntityComponent*> OnComponentRemoved;
 };
-
-DECLARE_REFL_TYPE(SEntityComponent);
-DECLARE_REFL_TYPE(IEntityComponentSystem);
 
 }

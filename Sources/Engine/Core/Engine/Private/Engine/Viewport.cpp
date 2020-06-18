@@ -16,19 +16,6 @@ void CViewport::InitResource_RenderThread()
 		Height, {});
 	if(!Surface)
 		LOG(ELogSeverity::Fatal, Viewport, "Failed to create viewport");
-
-	/** Create depth buffer */
-	DepthBuffer = GRenderSystem->CreateTexture(
-		ERSTextureType::Tex2D,
-		ERSTextureUsage::DepthStencil,
-		ERSMemoryUsage::DeviceLocal,
-		EFormat::D32SfloatS8Uint,
-		Width,
-		Height,
-		1,
-		1,
-		1,
-		ESampleCount::Sample1);
 }
 
 void CViewport::DestroyResource_RenderThread()
@@ -36,11 +23,11 @@ void CViewport::DestroyResource_RenderThread()
 	Surface.reset(nullptr);
 }
 
-void CViewport::Begin()
+bool CViewport::Begin()
 {
 	must(IsInRenderThread());
 
-	GRSContext->BeginSurface(Surface.get());
+	return GRSContext->BeginSurface(Surface.get());
 }
 
 void CViewport::End()
@@ -49,6 +36,16 @@ void CViewport::End()
 
 	/** Present viewport surface */
 	GRSContext->PresentSurface(Surface.get());
+}
+
+void CViewport::Resize(const uint32_t& InWidth, const uint32_t& InHeight)
+{
+	must(IsInRenderThread());
+	
+	Width = InWidth;
+	Height = InHeight;
+
+	Surface->Resize(InWidth, InHeight);
 }
 
 } /* namespace ZE */

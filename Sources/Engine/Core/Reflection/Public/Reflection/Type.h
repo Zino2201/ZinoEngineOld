@@ -4,6 +4,7 @@
 #include "Reflection/Macros.h"
 #include <optional>
 #include "NonCopyable.h"
+#include "Type.gen.h"
 
 namespace ZE::Refl
 {
@@ -11,9 +12,10 @@ namespace ZE::Refl
 /**
  * Represents a simple C++ type
  */
+ZCLASS()
 class REFLECTION_API CType : public CNonCopyable
 {
-    DECLARE_REFL_STRUCT_OR_CLASS(CType)
+    REFL_BODY()
 
 public:
     CType(const char* InName,
@@ -29,7 +31,12 @@ public:
     static CType* RegisterType(const char* InName,
         const uint64_t& InSize)
     {
-        must(!Get(InName)); // Duplicated type
+        auto& _types = Types;
+        bool bDoesTypeExist = Get(InName);
+        must(!bDoesTypeExist); // Duplicated type
+        if(bDoesTypeExist)
+            LOG(ELogSeverity::Fatal, None, "Error! Type %s (%d) is already registred",
+                InName, InSize);
 
         T* Type = new T(InName, InSize);
 		Types.push_back(std::unique_ptr<CType>(Type));
@@ -59,6 +66,5 @@ protected:
 public:
     inline static std::vector<std::unique_ptr<CType>> Types;
 };
-DECLARE_REFL_TYPE(CType);
 
 }

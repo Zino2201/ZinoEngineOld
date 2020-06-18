@@ -2,6 +2,7 @@
 
 #include "RenderableComponent.h"
 #include "Renderer/RenderableComponentProxy.h"
+#include "StaticMeshComponent.gen.h"
 
 namespace ZE { class CStaticMesh; }
 
@@ -13,9 +14,10 @@ struct SStaticMeshComponent;
 /**
  * A static mesh component
  */
+ZSTRUCT()
 struct SStaticMeshComponent : public SRenderableComponent
 {
-	DECLARE_REFL_STRUCT_OR_CLASS1(SStaticMeshComponent, SRenderableComponent)
+	REFL_BODY()
 
 	std::shared_ptr<CStaticMesh> StaticMesh;
 
@@ -24,6 +26,4 @@ struct SStaticMeshComponent : public SRenderableComponent
     TOwnerPtr<Renderer::CRenderableComponentProxy> InstantiateProxy(
         Renderer::CWorldProxy* InWorld) const override;
 };
-DECLARE_REFL_TYPE(SStaticMeshComponent);
-
 }
