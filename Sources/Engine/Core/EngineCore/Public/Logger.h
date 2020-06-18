@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include <cstdarg>
+#include <string>
 
 namespace ZE
 {
@@ -61,8 +62,4 @@ private:
 
 } /* namespace ZE */
 
-#ifdef _DEBUG
-#define LOG(Severity, Category, Message, ...) ZE::CLogger::Get().LogMacroImpl(Severity, LogCategory_##Category + "/" + __FUNCTION__, Message, __VA_ARGS__)
-#else
 #define LOG(Severity, Category, Message, ...) ZE::CLogger::Get().LogMacroImpl(Severity, LogCategory_##Category, Message, __VA_ARGS__)
-#endif

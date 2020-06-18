@@ -54,7 +54,7 @@ struct SVector3 : public TVector3<double>
  */
 struct SVector3Float : public TVector3<float>
 {
-	SVector3Float() {}
+	SVector3Float() : TVector3<float>() {}
 	SVector3Float(float InX, float InY, float InZ) : TVector3<float>(InX, InY, InZ) {}
 };
 
