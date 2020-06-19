@@ -101,10 +101,13 @@ void WriteGenHeader(const std::string_view& InOutDir, const CHeader& InHeader)
 	File.close();
 }
 
-void ProcessProperty(std::ofstream& File, const std::string& InType, const SProperty& InProperty)
+void ProcessProperty(std::ofstream& File, const std::string& InType, 
+	const CStruct& InStruct, const SProperty& InProperty)
 {
-	File << "\n\t\t.Property(\"" << InProperty.Name << "\", &" << InType << "::" << InProperty.Name
-		<< ")";
+	std::string BuilderName = "Builder_" + InStruct.GetName();
+
+	File << "\n\t" << BuilderName << ".Property(\"" << InProperty.Name << "\", &" << InType << "::" << InProperty.Name
+		<< ");";
 }
 
 void ProcessParents(std::ofstream& InFile, const CStruct& InStruct)
@@ -114,7 +117,7 @@ void ProcessParents(std::ofstream& InFile, const CStruct& InStruct)
 	for(const auto& Parent : InStruct.GetParents())
 	{
 		if(CTypeDatabase::Get().HasType(Parent))
-			InFile << "\n\t" << BuilderName << ".Parent(\"" << Parent << "\")";
+			InFile << "\n\t" << BuilderName << ".Parent(\"" << Parent << "\");";
 	}
 }
 
@@ -124,12 +127,12 @@ void ProcessCtors(std::ofstream& InFile, const CStruct& InStruct)
 	
 	for(const auto& Ctor : InStruct.GetCtors())
 	{
-		InFile << "\n\t" << BuilderName << ".Ctor<" << Ctor << ">();";
+		InFile << "\t" << BuilderName << ".Ctor<" << Ctor << ">();";
 	}
 
 	if(InStruct.GetCtors().empty())
 	{
-		InFile << "\n\t" << BuilderName << ".Ctor<>();";
+		InFile << "\t" << BuilderName << ".Ctor<>();";
 	}
 }
 
@@ -142,7 +145,7 @@ void ProcessCppStruct(std::ofstream& File, const CStruct& InStruct)
 		<< "(\"" << InStruct.GetName() << "\");\n";
 	ProcessCtors(File, InStruct);
 	for(const auto& Property : InStruct.GetProperties())
-		ProcessProperty(File, Type, Property);
+		ProcessProperty(File, Type, InStruct, Property);
 	ProcessParents(File, InStruct);
 	File << ";\n";
 	File << "\tStaticStruct_" << InStruct.GetName() << " = "
@@ -159,7 +162,7 @@ void ProcessCppClass(std::ofstream& File, const CClass& InClass)
 		<< "(\"" << InClass.GetName() << "\");\n";
 	ProcessCtors(File, InClass);
 	for (const auto& Property : InClass.GetProperties())
-		ProcessProperty(File, Type, Property);
+		ProcessProperty(File, Type, InClass, Property);
 	ProcessParents(File, InClass);
 	File << ";\n";
 	if (InClass.GetName().rfind("I", 0) == 0)

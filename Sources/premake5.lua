@@ -340,7 +340,7 @@ local function finishModule()
 		-- Reflection command for this module
 		zrtFileString = BuildDir.."Reflection/"..currentModule.name..".zrt "
 		prebuildcommands { 
-			BinDir.."%{cfg.longname}/ZinoEngine-ZinoReflectionTool.exe -Module="..currentModule.name.." -SrcDir="..currentModule.root.." -OutDir="..IntermediateDir..currentModule.name.."/%{cfg.longname}/Reflection/ "..zrtFileString }
+			"\""..BinDir.."%{cfg.longname}/ZinoEngine-ZinoReflectionTool.exe\" -Module="..currentModule.name.." -SrcDir=\""..currentModule.root.."\" -OutDir=\""..IntermediateDir..currentModule.name.."/%{cfg.longname}/Reflection/\" "..zrtFileString }
 	end
 end
 
