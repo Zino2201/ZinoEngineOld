@@ -7,20 +7,10 @@ namespace ZE::Renderer
 
 /** DRAW COMMAND MGR */
 
-CProxyDrawCommand* CProxyDrawCommandManager::AddCommand(EMeshRenderPass InRenderPass, 
-	const CProxyDrawCommand& InDrawCommand)
-{
-	// TODO: Merge draw commands
-	auto& Vector = DrawCommands[InRenderPass];
-
-	Vector.push_back(InDrawCommand);
-	return &Vector.back();
-}
-
 void CProxyDrawCommandManager::RemoveCommand(const CProxyDrawCommand& InDrawCommand)
 {
-	for(auto& [Pass, Vec] : DrawCommands)
-		Vec.erase(std::remove(Vec.begin(), Vec.end(), InDrawCommand));
+	/*for(auto& [Pass, Vec] : DrawCommands)
+		Vec.erase(std::remove(Vec.begin(), Vec.end(), InDrawCommand));*/
 }
 
 /** WORLD PROXY */

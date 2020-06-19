@@ -124,6 +124,7 @@ CRSTexture* CRenderPassPersistentResourceManager::GetOrCreateTexture(
 	auto& Find = TextureMap.find(InID);
 	if(Find != TextureMap.end())
 	{
+		/** If the texture infos has changed, delete the old one and recreate a new */
 		if(SRenderPassTextureInfosHash()(Find->second.Infos) 
 			!= SRenderPassTextureInfosHash()(InInfos))
 		{
@@ -194,6 +195,11 @@ void CRenderPassPersistentResourceManager::UpdateLifetimes()
 
 	for(const auto& Texture : TexturesToDelete)
 		TextureMap.erase(Texture);
+
+#ifdef _DEBUG
+	if(!TexturesToDelete.empty())
+		LOG(ELogSeverity::Debug, FrameGraph, "Cleared %d unused textures", TexturesToDelete.size());
+#endif
 }
 
 }

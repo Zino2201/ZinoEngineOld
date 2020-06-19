@@ -55,7 +55,7 @@ private:
     CRSBufferPtr IndexBuffer;
     EIndexFormat IndexFormat;
     std::vector<SMeshCollectionInstance> Instances;
-    mutable std::unordered_map<EMeshRenderPass, std::unordered_set<CProxyDrawCommand*>> DrawCommands;
+    mutable std::unordered_map<EMeshRenderPass, std::vector<CProxyDrawCommand*>> DrawCommands;
 };
 
 }

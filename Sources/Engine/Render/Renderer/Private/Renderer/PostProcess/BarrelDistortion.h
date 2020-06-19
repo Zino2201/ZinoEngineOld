@@ -7,7 +7,7 @@ namespace ZE::Renderer
 
 struct SBarrelDistortionData
 {
-	RenderPassResourceID Target;
+	RenderPassResourceID Color;
 };
 
 const SBarrelDistortionData& AddBarrelDistortionPass(CFrameGraph& InFrameGraph, 

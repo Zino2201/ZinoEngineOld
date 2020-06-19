@@ -2,9 +2,67 @@
 
 #include "EngineCore.h"
 #include "RenderPass.h"
+#include "Renderer/RendererModule.h"
 
 namespace ZE::Renderer
 {
+
+/**
+ * Quad render pass
+ */
+template<typename T, typename SetupFunc, typename ExecFunc>
+class CRenderPassQuad final : public CRenderPass
+{
+    friend class CFrameGraph;
+
+public:
+    CRenderPassQuad(const uint32_t& InID,
+        const std::string_view& InName,
+        CFrameGraph& InFrameGraph,
+		const SetupFunc& InSetupFunc,
+		const ExecFunc& InExecutionFunc,
+		const SRSPipelineShaderStage& InVertexStage,
+		const SRSPipelineShaderStage& InFragmentStage) : 
+        CRenderPass(InID, InName, InFrameGraph),
+        Setup(InSetupFunc), Exec(InExecutionFunc), FrameGraph(InFrameGraph),
+        VertexStage(InVertexStage), FragmentStage(InFragmentStage)
+    {
+        Setup(*this, Data);
+    }
+
+    void Execute(IRenderSystemContext* InContext) override
+    {
+		InContext->BindGraphicsPipeline(
+			SRSGraphicsPipeline(
+				{ VertexStage, FragmentStage },
+				{ SVertexInputBindingDescription(0,
+					sizeof(SQuadVertex), EVertexInputRate::Vertex) },
+			{
+				SVertexInputAttributeDescription(0, 0, EFormat::R32G32Sfloat,
+					offsetof(SQuadVertex, Position)),
+				SVertexInputAttributeDescription(0, 1, EFormat::R32G32Sfloat,
+					offsetof(SQuadVertex, TexCoord)),
+			},
+			SRSBlendState({}),
+			SRSRasterizerState(
+				EPolygonMode::Fill,
+				ECullMode::None,
+				EFrontFace::Clockwise),
+				SRSDepthStencilState()));
+        Exec(InContext, Data);
+		InContext->BindVertexBuffers({ CRendererModule::QuadVBuffer.get() });
+		InContext->BindIndexBuffer(CRendererModule::QuadIBuffer.get(), 0,
+			EIndexFormat::Uint16);
+		InContext->DrawIndexed(6, 1, 0, 0, 0);
+    }
+private:
+    T Data;
+    SetupFunc Setup;
+    ExecFunc Exec;
+    CFrameGraph& FrameGraph;
+    SRSPipelineShaderStage VertexStage;
+    SRSPipelineShaderStage FragmentStage;
+};
 
 /**
  * Represents a frame graph, that consists of CRenderPass-es
@@ -50,25 +108,20 @@ public:
      * Helper function, add a render pass with a quad filling the screen
      * Useful for post process passes
      */
-    template<typename Data>
+    template<typename Data, typename Setup, typename Exec>
 	const Data& AddQuadRenderPass(const std::string_view& InName,
-		const std::function<void(CRenderPass& InRenderPass, Data& InData)>& InSetupFunc,
-		const std::function<void(IRenderSystemContext* InContext, 
-            const Data& InData)>& InExecutionFunc,
+		const Setup& InSetupFunc,
+		const Exec& InExecutionFunc,
 		const SRSPipelineShaderStage& InVertexStage,
 		const SRSPipelineShaderStage& InFragmentStage)
     {
-		return AddRenderPass<Data>(InName,
-            [=](CRenderPass& InRenderPass, Data& InData)
-            {
-                InSetupFunc(InRenderPass, InData);
-            },
-			[=](IRenderSystemContext* InContext, const Data& InData)
-            {
-                BeginDrawQuadFillingScreen(InContext, InVertexStage, InFragmentStage);
-                InExecutionFunc(InContext, InData);
-                EndDrawQuadFillingScreen(InContext);
-            });
+		RenderPasses.push_back(std::make_unique<CRenderPassQuad<Data, Setup, Exec>>(
+			AvailableRenderPassID++,
+			InName,
+			*this,
+			InSetupFunc, InExecutionFunc, InVertexStage, InFragmentStage));
+
+		return static_cast<CRenderPassQuad<Data, Setup, Exec>*>(RenderPasses.back().get())->Data;
     }
 
 	SRenderPassResource& CreateResource(ERenderPassResourceType InType);
@@ -82,10 +135,6 @@ private:
     bool DependOn(const CRenderPass& InLeft, const CRenderPass& InRight);
     void BuildPhysicalResources(const CRenderPass& InRenderPass);
     void BuildPhysicalRenderPass(CRenderPass& InRenderPass);
-    void BeginDrawQuadFillingScreen(IRenderSystemContext* InContext,
-        const SRSPipelineShaderStage& InVertexStage,
-        const SRSPipelineShaderStage& InFragmentStage);
-	void EndDrawQuadFillingScreen(IRenderSystemContext* InContext);
     ERSRenderPassAttachmentLayout TexLayoutToRSLayout(
         const SRenderPassTextureInfos& InInfos, ERenderPassResourceLayout InLayout) const;
 private:

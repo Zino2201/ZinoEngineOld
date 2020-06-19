@@ -11,10 +11,10 @@ CBasePassShaderFS::CBasePassShaderFS(const CShaderType* InType, const SShaderCom
 	: CBasicShader(InType, InOutput) {}
 
 IMPLEMENT_SHADER(CBasePassShaderVS, "BasePassVS", 
-	"ClusteredForward/BasePassVS.hlsl", "Main", EShaderStage::Vertex);
+	"/ClusteredForward/BasePassVS.hlsl", "Main", EShaderStage::Vertex);
 
 IMPLEMENT_SHADER(CBasePassShaderFS, "BasePassFS",
-	"ClusteredForward/BasePassFS.hlsl", "Main", EShaderStage::Fragment);
+	"/ClusteredForward/BasePassFS.hlsl", "Main", EShaderStage::Fragment);
 
 void CBasePass::Process(CWorldProxy* InWorldProxy,
 	CRenderableComponentProxy* InProxy,

@@ -32,7 +32,8 @@ void CRenderableComponentProxy::DestroyResource_RenderThread()
 
 void CRenderableComponentProxy::CopyTransformToUBO()
 {
-	glm::mat4 World = glm::mat4(1.0f);
+	glm::mat4 World = glm::translate(glm::mat4(1.0f), 
+		glm::vec3(Transform.Position.X, Transform.Position.Y, Transform.Position.Z));
 
 	SRenderableComponentPerInstanceData Data;
 	Data.World = World;

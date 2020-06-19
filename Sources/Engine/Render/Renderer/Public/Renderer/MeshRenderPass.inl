@@ -16,19 +16,21 @@ void CMeshRenderPass::BuildDrawCommand(CWorldProxy* InWorldProxy,
 {
 	const auto& Instance = InCollection.GetInstance(InInstanceIdx);
 
-	CProxyDrawCommand DrawCommand(
-		InCollection.GetPipeline(),
-		InCollection.GetVertexBuffer(),
-		InCollection.GetIndexBuffer(),
-		Instance.IndexCount);
+	/** 
+	 * Generate draw command 
+	 * Allocate to the scene global mesh draw commands and also add a pointer to the proxy
+	 * for deleting the command when required 
+	 */
+	CProxyDrawCommand& DrawCommand = InWorldProxy->GetDrawCommandManager().AddCommand(RenderPass,
+			InCollection.GetPipeline(),
+			InCollection.GetVertexBuffer(),
+			InCollection.GetIndexBuffer(),
+			InCollection.GetIndexFormat(),
+			Instance.IndexCount);
 
 	DrawCommand.AddBinding(0, 1, InProxy->PerInstanceDataUBO.GetBuffer());
 
-	CProxyDrawCommand* Command = InWorldProxy->GetDrawCommandManager().AddCommand(RenderPass,
-		DrawCommand);
-
-	InProxy->DrawCommands[RenderPass].insert(Command);
-	InCollection.DrawCommands[RenderPass].insert(Command);
+	InProxy->DrawCommands[RenderPass].insert(&DrawCommand);
 }
 
 }

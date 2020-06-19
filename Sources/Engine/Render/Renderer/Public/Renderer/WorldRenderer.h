@@ -27,6 +27,8 @@ struct SWorldRendererView
 struct SViewData
 {
     alignas(16) glm::mat4 ViewProj;
+    alignas(16) glm::vec3 ViewPos;
+    alignas(16) glm::vec3 ViewForward;
 };
 
 /**

@@ -6,8 +6,6 @@
 #include "Render/RenderSystem/RenderSystemContext.h"
 #include "Renderer/RendererModule.h"
 
-DECLARE_LOG_CATEGORY(FrameGraph);
-
 namespace ZE::Renderer
 {
 
@@ -304,37 +302,6 @@ SRenderPassResource& CFrameGraph::CreateResource(ERenderPassResourceType InType)
 	Resource = SRenderPassResource(AvailableResourceID, InType);
 	AvailableResourceID++;
 	return Resource;
-}
-
-void CFrameGraph::BeginDrawQuadFillingScreen(IRenderSystemContext* InContext,
-	const SRSPipelineShaderStage& InVertexStage,
-	const SRSPipelineShaderStage& InFragmentStage)
-{
-	InContext->BindGraphicsPipeline(
-		SRSGraphicsPipeline(
-			{ InVertexStage, InFragmentStage },
-			{ SVertexInputBindingDescription(0, 
-				sizeof(SQuadVertex), EVertexInputRate::Vertex) },
-			{ 
-				SVertexInputAttributeDescription(0, 0, EFormat::R32G32Sfloat, 
-					offsetof(SQuadVertex, Position)),
-				SVertexInputAttributeDescription(0, 1, EFormat::R32G32Sfloat, 
-					offsetof(SQuadVertex, TexCoord)),
-			},
-			SRSBlendState({}),
-			SRSRasterizerState(
-				EPolygonMode::Fill,
-				ECullMode::None,
-				EFrontFace::Clockwise),
-			SRSDepthStencilState()));
-}
-
-void CFrameGraph::EndDrawQuadFillingScreen(IRenderSystemContext* InContext)
-{
-	InContext->BindVertexBuffers({ CRendererModule::QuadVBuffer.get() });
-	InContext->BindIndexBuffer(CRendererModule::QuadIBuffer.get(), 0,
-		EIndexFormat::Uint16);
-	InContext->DrawIndexed(6, 1, 0, 0, 0);
 }
 
 ERSRenderPassAttachmentLayout CFrameGraph::TexLayoutToRSLayout(

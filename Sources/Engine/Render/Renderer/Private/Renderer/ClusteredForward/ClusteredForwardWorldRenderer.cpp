@@ -88,7 +88,7 @@ void CClusteredForwardWorldRenderer::Render(CWorldProxy* InWorld, const SWorldRe
 		ColorInfos.Usage = ERSTextureUsage::RenderTarget | ERSTextureUsage::Sampled;
 
 		SRenderPassTextureInfos DepthInfos;
-		DepthInfos.Format = EFormat::D24UnormS8Uint;
+		DepthInfos.Format = EFormat::D32SfloatS8Uint;
 		DepthInfos.Width = InView.Width;
 		DepthInfos.Height = InView.Height;
 
@@ -134,33 +134,31 @@ void CClusteredForwardWorldRenderer::RenderWorld(IRenderSystemContext* InContext
 	const SWorldRendererView& InView,
 	EMeshRenderPass InRenderPass)
 {
-	for(const auto& MeshCollection : InWorld->GetCachedMeshCollections())
+	// TODO: Optimize to reduce v/i buffer binding
+	for(const auto& DrawCommand : InWorld->GetDrawCommandManager().GetDrawCommandPool(InRenderPass))
 	{
 		/** Bind pipeline and v/i buffers */
 		InContext->BindGraphicsPipeline(Test);
-		InContext->BindVertexBuffers({ MeshCollection.GetVertexBuffer() });
-		InContext->BindIndexBuffer({ MeshCollection.GetIndexBuffer() }, 0,
-			MeshCollection.GetIndexFormat());
+		InContext->BindVertexBuffers({ DrawCommand.GetVertexBuffer() });
+		InContext->BindIndexBuffer({ DrawCommand.GetIndexBuffer() }, 0,
+			DrawCommand.GetIndexFormat());
 
-		for(const auto& DrawCommand : MeshCollection.GetDrawCommands(InRenderPass))
+		InContext->SetShaderUniformBuffer(0, 0, InView.ViewDataUBO.get());
+
+		/** Apply draw command shader bindings */
+		for (const auto& Binding : DrawCommand.GetBindings())
 		{
-			InContext->SetShaderUniformBuffer(0, 0, InView.ViewDataUBO.get());
-
-			/** Apply draw command shader bindings */
-			for(const auto& Binding : DrawCommand->GetBindings())
-			{
-				InContext->SetShaderUniformBuffer(Binding.Set,
-					Binding.Binding,
-					Binding.Buffer.get());
-			}
-
-			/** Do the actual draw call */
-			InContext->DrawIndexed(DrawCommand->GetIndexCount(),
-				1,
-				0,
-				0,
-				0);
+			InContext->SetShaderUniformBuffer(Binding.Set,
+				Binding.Binding,
+				Binding.Buffer.get());
 		}
+
+		/** Do the actual draw call */
+		InContext->DrawIndexed(DrawCommand.GetIndexCount(),
+			1,
+			0,
+			0,
+			0);
 	}
 }
 

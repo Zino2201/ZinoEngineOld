@@ -29,15 +29,15 @@ class CProxyDrawCommand
 public:
     CProxyDrawCommand() : Pipeline(nullptr), VertexBuffer(nullptr),
         IndexBuffer(nullptr), bDrawIndexed(false), IndexFormat(EIndexFormat::Uint16),
-        IndexCount(0), VertexCount(0) {}
+        IndexCount(0), VertexCount(0), InstanceCount(1) {}
 
 	CProxyDrawCommand(CRSGraphicsPipeline* InPipeline,
 		CRSBuffer* InVertexBuffer,
 		CRSBuffer* InIndexBuffer,
+        EIndexFormat InIndexFormat,
 		const uint32_t& InIndexCount) : Pipeline(InPipeline),
         VertexBuffer(InVertexBuffer), IndexBuffer(InIndexBuffer),
-		IndexCount(InIndexCount), IndexFormat(InIndexCount > std::numeric_limits<uint16_t>::max() ?
-			EIndexFormat::Uint32 : EIndexFormat::Uint16) {}
+		IndexCount(InIndexCount), IndexFormat(InIndexFormat), InstanceCount(1) {}
 
 	void AddBinding(const uint32_t& InSet,
 		const uint32_t& InBinding,
@@ -48,6 +48,8 @@ public:
         return Pipeline == InDrawCommand.Pipeline;
     }
 
+    CRSBuffer* GetVertexBuffer() const { return VertexBuffer.get(); }
+    CRSBuffer* GetIndexBuffer() const { return IndexBuffer.get(); }
     uint32_t GetIndexCount() const { return IndexCount; }
     EIndexFormat GetIndexFormat() const { return IndexFormat; }
     const std::vector<SProxyDrawCommandShaderBinding>& GetBindings() const { return Bindings; }

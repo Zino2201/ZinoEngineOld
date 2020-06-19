@@ -23,6 +23,7 @@ struct SRenderableComponent : public ECS::SEntityComponent
     Renderer::CRenderableComponentProxy* Proxy;
 
     /** Notify the renderable system if the component proxy should be updated */
+    ZPROPERTY()
     bool bHasBeenUpdated;
 
     /**

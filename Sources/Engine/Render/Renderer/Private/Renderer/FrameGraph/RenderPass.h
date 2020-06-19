@@ -11,6 +11,8 @@ namespace ZE { class IRenderSystemContext; }
 namespace ZE::Renderer
 {
 
+    DECLARE_LOG_CATEGORY(FrameGraph);
+
 class CFrameGraph;
 
 /**

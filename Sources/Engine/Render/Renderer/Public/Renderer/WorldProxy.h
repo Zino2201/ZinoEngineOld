@@ -6,6 +6,7 @@
 #include "MeshRenderPass.h"
 #include <unordered_set>
 #include "MeshCollection.h"
+#include "Pool.h"
 
 namespace ZE::Renderer
 {
@@ -19,13 +20,16 @@ struct SStaticProxyData;
 class CProxyDrawCommandManager
 {
 public:
-    CProxyDrawCommand* AddCommand(EMeshRenderPass InRenderPass, 
-        const CProxyDrawCommand& InDrawCommand);
+    template<typename... Args>
+    CProxyDrawCommand& AddCommand(EMeshRenderPass InRenderPass, Args&&... InArgs)
+    {
+        return DrawCommands[InRenderPass].Allocate(std::forward<Args>(InArgs)...);
+    }
     void RemoveCommand(const CProxyDrawCommand& InDrawCommand);
 
-    auto& GetDrawCommands(const EMeshRenderPass& InRenderPass) { return DrawCommands[InRenderPass]; }
+    FORCEINLINE auto& GetDrawCommandPool(const EMeshRenderPass& InRenderPass) { return DrawCommands[InRenderPass]; }
 private:
-    std::unordered_map<EMeshRenderPass, std::vector<CProxyDrawCommand>> DrawCommands;
+    std::unordered_map<EMeshRenderPass, TPool<CProxyDrawCommand>> DrawCommands;
 };
 
 /**

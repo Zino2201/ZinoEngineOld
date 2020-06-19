@@ -106,13 +106,16 @@ CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* Device,
 		uint32_t Set = 0;
 		for (const auto& SetBindings : InDesc.SetLayoutBindings)
 		{
-			vk::DescriptorSetLayoutCreateInfo CreateInfo(
+			vk::DescriptorSetLayoutCreateInfo LayoutCreateInfo(
 				vk::DescriptorSetLayoutCreateFlags(),
 				static_cast<uint32_t>(SetBindings.Bindings.size()),
 				SetBindings.Bindings.data());
 
-			Layouts.insert(std::make_pair(Set, 
-				Device->GetDevice().createDescriptorSetLayoutUnique(CreateInfo).value));
+			//vk::DescriptorSetLayout Layout = Device->GetDevice().createDescriptorSetLayout(LayoutCreateInfo).value;
+			//if(!Layout)
+			//	LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create descriptor set layout");
+				
+			Layouts.insert(std::make_pair(Set, Device->GetDevice().createDescriptorSetLayoutUnique(LayoutCreateInfo).value));
 
 			SetLayouts.push_back(*Layouts[Set]);
 
