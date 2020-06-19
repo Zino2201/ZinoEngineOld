@@ -190,6 +190,9 @@ function Module:new(name, modKind)
 	files { "**.h", "**.cpp", "**.hpp", "**.cxx", "**.inl" }
 	vpaths { ["Sources/*"] = "**.h" }
 	vpaths { ["Sources/*"] = "**.cpp" }
+	vpaths { ["Sources/*"] = "**.inl" }
+	vpaths { ["Sources/*"] = "**.hpp" }
+	vpaths { ["Sources/*"] = "**.cxx" }
 	
 	targetdir (BinDir.."%{cfg.longname}")
 	objdir (IntermediateDir.."%{prj.name}/".."%{cfg.longname}")
