@@ -13,8 +13,7 @@ class CVulkanRenderSystem : public IRenderSystem
 public:
 	virtual void Initialize() override;
 	virtual void Destroy() override;
-	virtual void PrepareFrame() override;
-	virtual void Present() override;
+	void NewFrame() override;
 	virtual void WaitGPU() override;
 
 	virtual CRSSurface* CreateSurface(void* InWindowHandle,

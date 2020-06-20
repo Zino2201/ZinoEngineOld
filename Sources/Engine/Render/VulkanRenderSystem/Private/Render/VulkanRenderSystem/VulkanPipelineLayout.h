@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VulkanCore.h"
+#include <queue>
 
 /** Fwd declares */
 class CVulkanPipelineLayout;
@@ -133,47 +134,109 @@ public:
 	 * Get a pipeline layout from a layout entry, create it if not found
 	 */
 	CVulkanPipelineLayout* GetPipelineLayout(const SVulkanPipelineLayoutDesc& InEntry);
+
+	auto& GetLayoutMap() { return Layouts; }
 private:
 	CVulkanDevice* Device;
     std::unordered_map<SVulkanPipelineLayoutDesc, CVulkanPipelineLayoutPtr> Layouts;
 };
 
+/** Lifetime of a unused descriptor set (in frames) */
+static constexpr uint8_t GMaxLifetimeDescriptorSet = 10;
+
+/** Max descriptor set per pools */
+static constexpr uint8_t GMaxDescriptorSetPerPool = 32;
+
 /**
- * Class that manages descriptor pool and descriptor sets
- * 
- * TODO: For now, it doesn't keep track of descriptor set that are not used anymore,
- * but in the near future, there are going to be recycled
+ * Vulkan descriptor set & pool manager
+ * Works by storing descriptor set and reuse them when possible to not do useless updates,
+ * it also sets that are not used anymore
  */
-class CVulkanDescriptorCacheManager
+class CVulkanDescriptorSetManager
 {
 	struct SDescriptorPoolEntry
 	{
+		uint8_t Allocations;
 		vk::DescriptorPool Pool;
-		uint32_t Allocations;
 
 		SDescriptorPoolEntry() : Allocations(0) {}
-		SDescriptorPoolEntry(const vk::DescriptorPool& InPoolHandle) : Pool(InPoolHandle),
-			Allocations(0) {}
+		SDescriptorPoolEntry(const vk::DescriptorPool& InPool) : Pool(InPool) {}
 	};
 
+	struct SDescriptorSetEntry
+	{
+		uint32_t Set;
+		uint8_t LifetimeCounter;
+		std::array<uint64_t, GMaxBindingsPerSet> Handles;
+		vk::DescriptorSet SetHandle;
+
+		SDescriptorSetEntry() : Set(0), LifetimeCounter(0) {}
+		SDescriptorSetEntry(const uint32_t& InSet,
+			const std::array<uint64_t, GMaxBindingsPerSet>& InHandles,
+			const vk::DescriptorSet& InSetHandle) : 
+			Set(InSet), LifetimeCounter(0), Handles(InHandles), SetHandle(InSetHandle) {}
+
+		bool operator==(const SDescriptorSetEntry& InOther) const
+		{
+			/** Simply compare stored handles */
+
+			uint8_t FoundHandles = 0;
+
+			for (const auto& OtherHandle : InOther.Handles)
+			{
+				for (const auto& MyHandle : Handles)
+				{
+					if (OtherHandle == MyHandle)
+						FoundHandles++;
+				}
+			}
+
+			return FoundHandles == Handles.size();
+		}
+	};
+
+	struct SDescriptorSetEntryHash
+	{
+		uint64_t operator()(const SDescriptorSetEntry& InEntry) const
+		{
+			uint64_t Hash = 0;
+
+			HashCombine(Hash, InEntry.LifetimeCounter);
+			HashCombine(Hash, InEntry.Set);
+			for(const auto& Handle : InEntry.Handles)
+				HashCombine(Hash, Handle);
+
+			return Hash;
+		}
+	};
 public:
-	CVulkanDescriptorCacheManager(CVulkanDevice* InDevice,
-		CVulkanPipelineLayout* InLayout,
-		const uint32_t& InMaxAllocationsPerPool);
-	~CVulkanDescriptorCacheManager();
+	CVulkanDescriptorSetManager(CVulkanDevice& InDevice,
+		CVulkanPipelineLayout& InPipelineLayout);
+	~CVulkanDescriptorSetManager();
+
+	void NewFrame();
 
 	/**
-	 * Allocate a descriptor set for given set
+	 * Get a descriptor set from the specified Set
+	 * Return true if the set needs a update (recycled or allocated)
 	 */
-	vk::DescriptorSet AllocateDescriptorSet(const uint32_t& InSet,
-		vk::DescriptorPool& OutPool);
+	std::pair<vk::DescriptorSet, bool> GetSet(const uint32_t& InSet,
+		const std::array<uint64_t, GMaxBindingsPerSet>& InHandles);
 private:
-	SDescriptorPoolEntry& GetPool();
+	SDescriptorPoolEntry* CreatePool();
 private:
-	CVulkanDevice* Device;
-	CVulkanPipelineLayout* Layout;
+	CVulkanDevice& Device;
+	CVulkanPipelineLayout& PipelineLayout;
+
+	/** Used descriptor sets */
+	//std::unordered_map<SDescriptorSetEntry, vk::DescriptorSet, SDescriptorSetEntryHash> SetMap;
+	std::vector<SDescriptorSetEntry> Sets;
+
+	/** Available descriptor sets that have been recycled */
+	std::unordered_map<uint32_t, std::queue<vk::DescriptorSet>> AvailableDescriptorSets;
+
+	/** Pools */
 	std::vector<SDescriptorPoolEntry> Pools;
-	uint32_t MaxAllocationsPerPool;
 };
 
 /**
@@ -195,10 +258,10 @@ public:
 
 	const vk::PipelineLayout& GetPipelineLayout() const { return *PipelineLayout; }
 	const std::vector<vk::DescriptorPoolSize>& GetPoolSizes() const { return PoolSizes; }
-	CVulkanDescriptorCacheManager* GetCacheMgr() { return CacheMgr.get(); }
+	CVulkanDescriptorSetManager& GetSetManager() { return SetManager; }
 private:
+	CVulkanDescriptorSetManager SetManager;
 	std::unordered_map<uint32_t, vk::UniqueDescriptorSetLayout> Layouts;
 	vk::UniquePipelineLayout PipelineLayout;
 	std::vector<vk::DescriptorPoolSize> PoolSizes;
-	std::unique_ptr<CVulkanDescriptorCacheManager> CacheMgr;
 };

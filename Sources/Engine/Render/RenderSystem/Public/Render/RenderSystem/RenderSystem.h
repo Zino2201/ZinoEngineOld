@@ -21,8 +21,7 @@ public:
 
 	virtual void Initialize() = 0;
 	virtual void Destroy() = 0;
-    virtual void PrepareFrame() = 0;
-    virtual void Present() = 0;
+    virtual void NewFrame() = 0;
     virtual void WaitGPU() = 0;
 
 	virtual CRSSurface* CreateSurface(void* InWindowHandle,

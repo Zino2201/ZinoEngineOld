@@ -517,7 +517,7 @@ void CVulkanRenderSystemContext::SetShaderUniformBuffer(const uint32_t& InSet,
 	SDescriptorSetWrite WriteSet(vk::DescriptorType::eUniformBuffer,
 		BufferInfo, InBinding, 1);
 	
-	AddWrite(InSet, WriteSet, 
+	AddWrite(InSet, InBinding, WriteSet, 
 		reinterpret_cast<uint64_t>(static_cast<VkBuffer>(Buffer->GetBuffer())));
 }
 
@@ -544,7 +544,7 @@ void CVulkanRenderSystemContext::SetShaderTexture(const uint32_t& InSet, const u
 	SDescriptorSetWrite WriteSet(vk::DescriptorType::eSampledImage,
 		ImageInfo, InBinding, 1);
 
-	AddWrite(InSet, WriteSet, 
+	AddWrite(InSet, InBinding, WriteSet, 
 		reinterpret_cast<uint64_t>(static_cast<VkImageView>(Texture->GetImageView())));
 }
 
@@ -563,105 +563,56 @@ void CVulkanRenderSystemContext::SetShaderSampler(const uint32_t& InSet, const u
 	SDescriptorSetWrite WriteSet(vk::DescriptorType::eSampler,
 		ImageInfo, InBinding, 1);
 
-	AddWrite(InSet, WriteSet, 
+	AddWrite(InSet, InBinding, WriteSet, 
 		reinterpret_cast<uint64_t>(static_cast<VkSampler>(Sampler->GetSampler())));
 }
 
-void CVulkanRenderSystemContext::AddWrite(const uint32_t& InSet, const SDescriptorSetWrite& InWrite,
-	const uint64_t& InResourceHash)
+void CVulkanRenderSystemContext::AddWrite(const uint32_t& InSet, const uint32_t& InBinding,
+	const SDescriptorSetWrite& InWrite, const uint64_t& InHandle)
 {
-	{
-		auto& Result = WriteSetMap.find(InSet);
+	must(InBinding < GMaxBindingsPerSet);
 
-		if (Result == WriteSetMap.end())
-			WriteSetMap.insert({ InSet, {} });
-
-		WriteSetMap[InSet].push_back(InWrite);
-	}
-
-	{
-		auto& Result = ResourceSetHashMap.find(InSet);
-
-		if (Result == ResourceSetHashMap.end())
-			ResourceSetHashMap.insert({ InSet, {} });
-
-		ResourceSetHashMap[InSet].push_back(InResourceHash);
-	}
+	WriteMap[InSet][InBinding] = std::move(InWrite);
+	HandleMap[InSet][InBinding] = InHandle;
 }
 
-void CVulkanRenderSystemContext::FlushWrites()
+void CVulkanRenderSystemContext::BindDescriptorSets()
 {
 	must(CurrentLayout);
 
-	/**
-	 * Find descriptor sets compatible with the writes
-	 */
-
-	/**
-	 * Sets to allocate
-	 */
-	std::vector<uint32_t> SetsToAllocate;
-	SetsToAllocate.reserve(ResourceSetHashMap.size());
-
-	for(const auto& [Set, Hashes] : ResourceSetHashMap)
+	for(const auto& [Set, Writes] : WriteMap)
 	{
-		SDescriptorSetEntry Entry;
-		Entry.Hashes = Hashes;
+		const auto& Handles = HandleMap[Set];
 
-		auto& Result = DescriptorSetMap.find(Entry);
-		if(Result != DescriptorSetMap.end())
+		auto [Set, bMustUpdate] = CurrentLayout->GetSetManager().GetSet(Set,
+			Handles);
+
+		if(bMustUpdate)
 		{
-			CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
-				.bindDescriptorSets(
-				vk::PipelineBindPoint::eGraphics,
-				CurrentLayout->GetPipelineLayout(),
+			std::vector<vk::WriteDescriptorSet> FinalWrites;
+			FinalWrites.reserve(Writes.size());
+
+			for (auto& Write : Writes)
+			{
+				if(Write.Binding == -1)
+					continue;
+
+				FinalWrites.emplace_back(
+					Set,
+					Write.Binding,
 					0,
-					{ Result->second },
-					{});
-		}
-		else
-		{
-			SetsToAllocate.push_back(Set);
-		}
-	}
+					Write.Count,
+					Write.Type,
+					&Write.ImageInfo,
+					&Write.BufferInfo);
+			}
 
-	for(const auto& SetToAllocate : SetsToAllocate)
-	{
-		LOG(ELogSeverity::Debug, VulkanRS, "Allocated a new set !");
-
-		vk::DescriptorPool Pool;
-
-		vk::DescriptorSet Set = CurrentLayout->GetCacheMgr()
-			->AllocateDescriptorSet(SetToAllocate, Pool);
-
-		/** Update descriptor set */
-		auto& Writes = WriteSetMap[SetToAllocate];
-
-		std::vector<vk::WriteDescriptorSet> FinalWrites;
-		FinalWrites.reserve(Writes.size());
-
-		for(auto& Write : Writes)
-		{
-			FinalWrites.emplace_back(
-				Set,
-				Write.Binding,
+			Device->GetDevice().updateDescriptorSets(
+				static_cast<uint32_t>(FinalWrites.size()),
+				FinalWrites.data(),
 				0,
-				Write.Count,
-				Write.Type,
-				&Write.ImageInfo,
-				&Write.BufferInfo);
+				nullptr);
 		}
-
-		Device->GetDevice().updateDescriptorSets(
-			static_cast<uint32_t>(FinalWrites.size()),
-			FinalWrites.data(),
-			0,
-			nullptr);
-
-		SDescriptorSetEntry Entry;
-		Entry.Hashes = ResourceSetHashMap[SetToAllocate];
-		Entry.Pool = Pool;
-		DescriptorSetMap.insert(std::make_pair(Entry, Set));
 
 		CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
 			.bindDescriptorSets(
@@ -671,33 +622,30 @@ void CVulkanRenderSystemContext::FlushWrites()
 				{ Set },
 				{});
 	}
+
+	WriteMap.clear();
+	HandleMap.clear();
 }
 
 void CVulkanRenderSystemContext::Draw(const uint32_t& InVertexCount,
 	const uint32_t& InInstanceCount,
 	const uint32_t& InFirstVertex, const uint32_t& InFirstInstance)
 {
-	FlushWrites();
+	BindDescriptorSets();
 
 	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
 		.draw(InVertexCount, InInstanceCount, InFirstVertex, InFirstInstance);
-
-	WriteSetMap.clear();
-	ResourceSetHashMap.clear();
 }
 
 void CVulkanRenderSystemContext::DrawIndexed(const uint32_t& InIndexCount,
 	const uint32_t& InInstanceCount, const uint32_t& InFirstIndex,
 	const int32_t& InVertexOffset, const uint32_t& InFirstInstance)
 {
-	FlushWrites();
+	BindDescriptorSets();
 
 	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
 		.drawIndexed(InIndexCount, InInstanceCount, InFirstIndex, InVertexOffset,
 			InFirstInstance);
-
-	WriteSetMap.clear();
-	ResourceSetHashMap.clear();
 }
 
 vk::AttachmentLoadOp VulkanUtil::RenderPass::AttachmentLoadOpToVkAttachmentLoadOp(

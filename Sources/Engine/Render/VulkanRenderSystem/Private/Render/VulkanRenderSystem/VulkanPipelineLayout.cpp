@@ -27,74 +27,169 @@ CVulkanPipelineLayout* CVulkanPipelineLayoutManager::GetPipelineLayout(
 	}
 }
 
-/** Cache manager */
-
-CVulkanDescriptorCacheManager::CVulkanDescriptorCacheManager(CVulkanDevice* InDevice, 
-	CVulkanPipelineLayout* InLayout,
-	const uint32_t& InMaxAllocationsPerPool) : Device(InDevice), 
-	Layout(InLayout),
-	MaxAllocationsPerPool(InMaxAllocationsPerPool) {}
-
-CVulkanDescriptorCacheManager::~CVulkanDescriptorCacheManager()
+/**
+ * Vulkan descriptor set manager
+ */
+CVulkanDescriptorSetManager::CVulkanDescriptorSetManager(CVulkanDevice& InDevice,
+	CVulkanPipelineLayout& InPipelineLayout)
+	: Device(InDevice), PipelineLayout(InPipelineLayout)
 {
-	for (const auto& Pool : Pools)
-	{
-		Device->GetDevice().destroyDescriptorPool(Pool.Pool);
-	}
 
-	Pools.clear();
 }
 
-vk::DescriptorSet CVulkanDescriptorCacheManager::AllocateDescriptorSet(const uint32_t& InSet,
-	vk::DescriptorPool& OutPool)
+CVulkanDescriptorSetManager::~CVulkanDescriptorSetManager()
 {
-	SDescriptorPoolEntry& Pool = GetPool();
-
-	OutPool = Pool.Pool;
-
-	auto& Sets = Device->GetDevice().allocateDescriptorSets(
-		vk::DescriptorSetAllocateInfo(
-			Pool.Pool,
-			1,
-			&Layout->GetLayoutForSet(InSet))).value;
-	if(!Sets.front())
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to allocate descriptor set");
-
-	LOG(ELogSeverity::Debug, VulkanRS, "new vk::DescriptorSet");
-
-	Pool.Allocations++;
-
-	return Sets.front();
+	for(const auto& Pool : Pools)
+		Device.GetDevice().destroyDescriptorPool(Pool.Pool);
 }
 
-CVulkanDescriptorCacheManager::SDescriptorPoolEntry& CVulkanDescriptorCacheManager::GetPool()
+void CVulkanDescriptorSetManager::NewFrame()
 {
-	for(auto& Entry : Pools)
+	std::vector<size_t> EntriesToFree;
+	EntriesToFree.reserve(10);
+
+	size_t Idx = 0;
+	for(auto& Entry : Sets)
 	{
-		if(Entry.Allocations < MaxAllocationsPerPool - 1)
-			return Entry;
+		if (Entry.LifetimeCounter + 1 > GMaxLifetimeDescriptorSet)
+		{
+			EntriesToFree.emplace_back(Idx);
+		}
+		else
+		{
+			Entry.LifetimeCounter++;
+		}
+
+		Idx++;
 	}
+
+	for(const auto& Idx : EntriesToFree)
+	{
+		const auto& Entry = Sets[Idx];
+
+		AvailableDescriptorSets[Entry.Set].push(std::move(Entry.SetHandle));
+		Sets.erase(Sets.begin() + Idx);
+	}
+}
+
+std::pair<vk::DescriptorSet, bool> CVulkanDescriptorSetManager::GetSet(const uint32_t& InSet,
+	const std::array<uint64_t, GMaxBindingsPerSet>& InHandles)
+{
+	/**
+	 * First search if there is already a set with the same handles
+	 */
+	 /*for(const auto& [Entry, Set] : SetMap)
+	 {
+		 if(Entry.Set == InSet &&
+			 Entry.Handles == InHandles)
+		 {
+			 return { Set, false };
+		 }
+	 }*/
+
+	for(auto& Entry : Sets)
+	{
+		if (Entry.Set == InSet &&
+			Entry.Handles == InHandles)
+		{
+			Entry.LifetimeCounter = 0;
+
+			return { Entry.SetHandle, false };
+		}
+	}
+
+	vk::DescriptorSet Set;
 
 	/**
-	 * No pool found, allocate new one
+	 * If not, try to recycle a descriptor set or allocate a new one
+	 * At this point, the set must be updated using vkUpdateDescriptorSets
 	 */
-	Pools.emplace_back(Device->GetDevice().createDescriptorPool(
-		vk::DescriptorPoolCreateInfo(
-			vk::DescriptorPoolCreateFlags(),
-			MaxAllocationsPerPool,
-			static_cast<uint32_t>(Layout->GetPoolSizes().size()),
-			Layout->GetPoolSizes().data())).value);
+	if(!AvailableDescriptorSets[InSet].empty())
+	{
+		Set = AvailableDescriptorSets[InSet].front();
+		AvailableDescriptorSets[InSet].pop();
+	}
+	else
+	{
+		/**
+		 * Search a free pool and allocate from it
+		 */
+		bool bHasFoundFreePool = false;
+		for(auto& Pool : Pools)
+		{
+			if(Pool.Allocations < GMaxDescriptorSetPerPool)
+			{
+				Set = Device.GetDevice().allocateDescriptorSets(
+					vk::DescriptorSetAllocateInfo(
+						Pool.Pool,
+						1,
+						&PipelineLayout.GetLayoutForSet(InSet))).value.front();
+				if(!Set)
+				{
+					LOG(ELogSeverity::Error, VulkanRS, "VulkanDescSetManager: Failed to allocate set");
+					return { Set, false };
+				}
+				Pool.Allocations++;
 
-	LOG(ELogSeverity::Debug, VulkanRS, "new vk::DescriptorPool");
+				bHasFoundFreePool = true;
 
-	return Pools.back();
+				break;
+			}
+		}
+
+		if(!bHasFoundFreePool)
+		{
+			SDescriptorPoolEntry* Pool = CreatePool();
+			if(!Pool)
+				return { Set, false };
+
+			Set = Device.GetDevice().allocateDescriptorSets(
+				vk::DescriptorSetAllocateInfo(
+					Pool->Pool,
+					1,
+					&PipelineLayout.GetLayoutForSet(InSet))).value.front();
+			if (!Set)
+			{
+				LOG(ELogSeverity::Error, VulkanRS, "VulkanDescSetManager: Failed to allocate set");
+				return { Set, false };
+			}
+			Pool->Allocations++;
+		}
+	}
+
+	Sets.emplace_back(InSet, InHandles, Set);
+
+	return { Set, true };
 }
 
+CVulkanDescriptorSetManager::SDescriptorPoolEntry* CVulkanDescriptorSetManager::CreatePool()
+{
+	vk::DescriptorPool Pool = Device.GetDevice().createDescriptorPool(
+		vk::DescriptorPoolCreateInfo(
+			vk::DescriptorPoolCreateFlags(),
+			GMaxDescriptorSetPerPool,
+			static_cast<uint32_t>(PipelineLayout.GetPoolSizes().size()),
+			PipelineLayout.GetPoolSizes().data())).value;
+
+	if(!Pool)
+	{
+		LOG(ELogSeverity::Error, VulkanRS, "VulkanDescSetManager: Failed to create pool");
+		return nullptr;
+	}
+
+	Pools.emplace_back(SDescriptorPoolEntry(Pool));
+
+	return &Pools.back();
+}
+
+/*
+ * Vulkan pipeline layout
+ */
 constexpr uint32_t GMaxAllocationsPerPool = 42;
 
 CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* Device,
 	const SVulkanPipelineLayoutDesc& InDesc) :
-	CVulkanDeviceResource(Device)
+	CVulkanDeviceResource(Device), SetManager(*Device, *this)
 {
 	std::vector<vk::DescriptorSetLayout> SetLayouts;
 	Layouts.reserve(InDesc.SetLayoutBindings.size());
@@ -111,10 +206,6 @@ CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* Device,
 				static_cast<uint32_t>(SetBindings.Bindings.size()),
 				SetBindings.Bindings.data());
 
-			//vk::DescriptorSetLayout Layout = Device->GetDevice().createDescriptorSetLayout(LayoutCreateInfo).value;
-			//if(!Layout)
-			//	LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create descriptor set layout");
-				
 			Layouts.insert(std::make_pair(Set, Device->GetDevice().createDescriptorSetLayoutUnique(LayoutCreateInfo).value));
 
 			SetLayouts.push_back(*Layouts[Set]);
@@ -143,11 +234,6 @@ CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* Device,
  	PipelineLayout = Device->GetDevice().createPipelineLayoutUnique(CreateInfo).value;
 	if (!PipelineLayout)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan pipeline layout");
-
-	LOG(ELogSeverity::Debug, VulkanRS, "new vk::PipelineLayout");
-
-	CacheMgr = std::make_unique<CVulkanDescriptorCacheManager>(Device, 
-		this, GMaxAllocationsPerPool);
 }
 
 CVulkanPipelineLayout::~CVulkanPipelineLayout() {}

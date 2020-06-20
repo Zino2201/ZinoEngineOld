@@ -116,6 +116,7 @@ public:
     CVulkanSurface* GetCurrentSurface() const { return CurrentSurface; }
 private:
     void FlushWrites();
+    void BindDescriptorSets();
 private:
     CVulkanDevice* Device;
     CVulkanRenderPassManager RenderPassMgr;
@@ -124,56 +125,6 @@ private:
     vk::RenderPass CurrentRenderPass;
     uint32_t ColorAttachmentsCount;
     CVulkanSurface* CurrentSurface;
-    
-    /**
-     * Represents a descriptor set
-     */
-    struct SDescriptorSetEntry
-    {
-        /** Pool from the set was allocated */
-        vk::DescriptorPool Pool;
-
-        /** Vector of hashed resources */
-        std::vector<uint64_t> Hashes;
-
-        bool operator==(const SDescriptorSetEntry& InOther) const
-        {
-            uint64_t FoundValues = 0;
-
-            for(const auto& OtherValue : InOther.Hashes)
-            {
-				for (const auto& MyValue : Hashes)
-				{
-                    if(OtherValue == MyValue)
-                        FoundValues++;
-				}
-            }
-
-            return FoundValues == Hashes.size();
-        }
-    };
-
-	struct SDescriptorSetEntryHash 
-    {
-        std::size_t operator()(const SDescriptorSetEntry& InEntry) const 
-        { 
-			std::size_t Seed = 0;
-
-			/** Don't hash the pool, only hash the hashes */
-            for(const auto& Hash : InEntry.Hashes)
-			    HashCombine(Seed, Hash);
-
-			return Seed;
-        } 
-    };
-
-	struct SDescriptorSetEntryEqual 
-    { 
-        bool operator()(const SDescriptorSetEntry& InLHS, const SDescriptorSetEntry& InRHS) const 
-        { 
-            return InLHS == InRHS; 
-        } 
-    };
 
     struct SDescriptorSetWrite
     {
@@ -185,6 +136,8 @@ private:
         };
         uint32_t Binding;
         uint32_t Count;
+
+        SDescriptorSetWrite() : Binding(-1) {}
 
         SDescriptorSetWrite(const vk::DescriptorType& InType,
             const vk::DescriptorBufferInfo& InBufferInfos,
@@ -201,12 +154,10 @@ private:
 			Count(InCount) {}
     };
 
-    void AddWrite(const uint32_t& InSet, const SDescriptorSetWrite& InWrite, 
-		const uint64_t& InResourceHash);
+    void AddWrite(const uint32_t& InSet, const uint32_t& InBinding, 
+        const SDescriptorSetWrite& InWrite, const uint64_t& InHandle);
 
-    /** Map of writes for each sets */
-    std::unordered_map<uint32_t, std::vector<SDescriptorSetWrite>> WriteSetMap;
-    std::unordered_map<uint32_t, std::vector<uint64_t>> ResourceSetHashMap;
-    std::unordered_map<SDescriptorSetEntry, vk::DescriptorSet, 
-        SDescriptorSetEntryHash, SDescriptorSetEntryEqual> DescriptorSetMap;
+    /** Writes & handles collected before a draw call for each set */
+    std::unordered_map<uint32_t, std::array<SDescriptorSetWrite, GMaxBindingsPerSet>> WriteMap;
+    std::unordered_map<uint32_t, std::array<uint64_t, GMaxBindingsPerSet>> HandleMap;
 };

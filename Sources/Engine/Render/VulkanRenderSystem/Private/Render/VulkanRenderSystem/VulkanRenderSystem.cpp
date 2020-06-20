@@ -3,6 +3,7 @@
 #include "Module/Module.h"
 #include "Render/VulkanRenderSystem/VulkanCore.h"
 #include "Render/VulkanRenderSystem/VulkanDevice.h"
+#include "Render/VulkanRenderSystem/VulkanPipelineLayout.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
 #include <set>
@@ -198,14 +199,12 @@ void CVulkanRenderSystem::Destroy()
 		DestroyDebugUtilsMessengerEXT(*Instance, Callback, nullptr);
 }
 
-void CVulkanRenderSystem::PrepareFrame()
+void CVulkanRenderSystem::NewFrame()
 {
-
-}
-
-void CVulkanRenderSystem::Present()
-{
-
+	for(auto& [Unused, Layout] : Device->GetPipelineLayoutMgr()->GetLayoutMap())
+	{
+		Layout->GetSetManager().NewFrame();
+	}
 }
 
 void CVulkanRenderSystem::WaitGPU()

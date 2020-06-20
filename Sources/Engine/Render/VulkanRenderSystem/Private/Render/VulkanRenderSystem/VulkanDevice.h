@@ -92,6 +92,14 @@ private:
 
 class CVulkanDevice
 {
+    struct SVMADestructor
+    {
+        CVulkanDevice& Device;
+
+        SVMADestructor(CVulkanDevice& InDevice) : Device(InDevice) {}
+        ~SVMADestructor();
+    };
+
 public:
     CVulkanDevice(const vk::PhysicalDevice& InPhysicalDevice);
     ~CVulkanDevice();
@@ -122,4 +130,5 @@ private:
     CVulkanQueue* PresentQueue;
     std::unique_ptr<CVulkanPipelineLayoutManager> PipelineLayoutMgr;
     CVulkanPipelineManager PipelineManager;
+    std::unique_ptr<SVMADestructor> VmaDestructor;
 };

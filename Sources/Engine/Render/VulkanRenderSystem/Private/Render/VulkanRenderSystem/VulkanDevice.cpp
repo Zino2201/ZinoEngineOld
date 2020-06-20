@@ -133,6 +133,7 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysicalDevice) :
 	AllocatorInfo.device = static_cast<VkDevice>(*Device);
 
 	vmaCreateAllocator(&AllocatorInfo, &Allocator);
+	VmaDestructor = std::make_unique<SVMADestructor>(*this);
 
 	StagingBufferMgr = std::make_unique<CVulkanStagingBufferManager>(this);
 	PipelineLayoutMgr = std::make_unique<CVulkanPipelineLayoutManager>(this);
@@ -145,14 +146,18 @@ CVulkanDevice::~CVulkanDevice()
 {
 	DeferredDestructionManager.DestroyResources();
 
+}
+
+CVulkanDevice::SVMADestructor::~SVMADestructor()
+{
 #ifdef _DEBUG
 	/** Print a output to check for any uncleared resources */
 	char* Output;
-	vmaBuildStatsString(Allocator, &Output, VK_TRUE);
+	vmaBuildStatsString(Device.GetAllocator(), &Output, VK_TRUE);
 	std::cout << Output << std::endl;
-	vmaFreeStatsString(Allocator, Output);
+	vmaFreeStatsString(Device.GetAllocator(), Output);
 #endif
-	vmaDestroyAllocator(Allocator);
+	vmaDestroyAllocator(Device.GetAllocator());
 }
 
 void CVulkanDevice::WaitIdle()

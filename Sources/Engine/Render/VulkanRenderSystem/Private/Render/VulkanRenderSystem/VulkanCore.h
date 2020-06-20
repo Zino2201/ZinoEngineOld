@@ -39,10 +39,14 @@ const std::vector<const char*> GVulkanRequiredDeviceExtensions =
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
 
-/**
- * Max frames in flight
- */
-const uint32_t GMaxFramesInFlight = 2;
+/** Max frames in flight */
+static constexpr uint32_t GMaxFramesInFlight = 2;
+
+/** Max descriptor sets count */
+static constexpr uint8_t GMaxDescriptorSets = 4;
+
+/** Max bindings per set */
+static constexpr uint8_t GMaxBindingsPerSet = 16;
 
 class CVulkanDevice;
 

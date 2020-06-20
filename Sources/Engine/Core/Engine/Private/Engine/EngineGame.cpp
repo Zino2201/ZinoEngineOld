@@ -330,6 +330,8 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 	EnqueueRenderCommand("CEngineGame::DrawWorld",
 		[this, DeltaTime]()
 	{
+		GRenderSystem->NewFrame();
+
 		/**
 		 * Don't render if begin fail (swapchain recreated)
 		 */

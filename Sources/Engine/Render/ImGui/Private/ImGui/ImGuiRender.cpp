@@ -194,7 +194,9 @@ void CImGuiRender::Update()
 
 void CImGuiRender::Draw(IRenderSystemContext* InContext)
 {
-	if (!Sampler || !GlobalData || !Font || !VertexBuffer || !IndexBuffer)
+	ImDrawData* DrawData = ImGui::GetDrawData();
+
+	if (!DrawData || !Sampler || !GlobalData || !Font || !VertexBuffer || !IndexBuffer)
 		return;
 
 	ImGuiIO& IO = ImGui::GetIO();
@@ -211,7 +213,6 @@ void CImGuiRender::Draw(IRenderSystemContext* InContext)
 	InContext->SetShaderTexture(0, 1, Font.get());
 	InContext->SetShaderSampler(0, 2, Sampler.get());
 
-	ImDrawData* DrawData = ImGui::GetDrawData();
 	uint32_t VertexOffset = 0;
 	uint32_t IndexOffset = 0;
 	uint64_t VertexSize = DrawData->TotalVtxCount * sizeof(ImDrawVert);
