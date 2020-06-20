@@ -201,7 +201,8 @@ private:
 			Count(InCount) {}
     };
 
-    void AddWrite(const uint32_t& InSet, const SDescriptorSetWrite& InWrite, const uint64_t& InResourceHash);
+    void AddWrite(const uint32_t& InSet, const SDescriptorSetWrite& InWrite, 
+		const uint64_t& InResourceHash);
 
     /** Map of writes for each sets */
     std::unordered_map<uint32_t, std::vector<SDescriptorSetWrite>> WriteSetMap;

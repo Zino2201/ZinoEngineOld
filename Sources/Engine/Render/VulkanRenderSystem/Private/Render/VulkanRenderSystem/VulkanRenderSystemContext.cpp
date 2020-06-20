@@ -517,7 +517,8 @@ void CVulkanRenderSystemContext::SetShaderUniformBuffer(const uint32_t& InSet,
 	SDescriptorSetWrite WriteSet(vk::DescriptorType::eUniformBuffer,
 		BufferInfo, InBinding, 1);
 	
-	AddWrite(InSet, WriteSet, std::hash<CRSBuffer*>()(InBuffer));
+	AddWrite(InSet, WriteSet, 
+		reinterpret_cast<uint64_t>(static_cast<VkBuffer>(Buffer->GetBuffer())));
 }
 
 void CVulkanRenderSystemContext::SetShaderTexture(const uint32_t& InSet, const uint32_t& InBinding,
@@ -543,7 +544,8 @@ void CVulkanRenderSystemContext::SetShaderTexture(const uint32_t& InSet, const u
 	SDescriptorSetWrite WriteSet(vk::DescriptorType::eSampledImage,
 		ImageInfo, InBinding, 1);
 
-	AddWrite(InSet, WriteSet, std::hash<CRSTexture*>()(InTexture));
+	AddWrite(InSet, WriteSet, 
+		reinterpret_cast<uint64_t>(static_cast<VkImageView>(Texture->GetImageView())));
 }
 
 void CVulkanRenderSystemContext::SetShaderSampler(const uint32_t& InSet, const uint32_t& InBinding,
@@ -561,7 +563,8 @@ void CVulkanRenderSystemContext::SetShaderSampler(const uint32_t& InSet, const u
 	SDescriptorSetWrite WriteSet(vk::DescriptorType::eSampler,
 		ImageInfo, InBinding, 1);
 
-	AddWrite(InSet, WriteSet, std::hash<CRSSampler*>()(InSampler));
+	AddWrite(InSet, WriteSet, 
+		reinterpret_cast<uint64_t>(static_cast<VkSampler>(Sampler->GetSampler())));
 }
 
 void CVulkanRenderSystemContext::AddWrite(const uint32_t& InSet, const SDescriptorSetWrite& InWrite,
@@ -668,9 +671,6 @@ void CVulkanRenderSystemContext::FlushWrites()
 				{ Set },
 				{});
 	}
-
-	//WriteSetMap.clear();
-	//ResourceSetHashMap.clear();
 }
 
 void CVulkanRenderSystemContext::Draw(const uint32_t& InVertexCount,
@@ -681,6 +681,9 @@ void CVulkanRenderSystemContext::Draw(const uint32_t& InVertexCount,
 
 	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
 		.draw(InVertexCount, InInstanceCount, InFirstVertex, InFirstInstance);
+
+	WriteSetMap.clear();
+	ResourceSetHashMap.clear();
 }
 
 void CVulkanRenderSystemContext::DrawIndexed(const uint32_t& InIndexCount,
