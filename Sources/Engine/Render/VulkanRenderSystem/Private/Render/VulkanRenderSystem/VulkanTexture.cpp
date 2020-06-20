@@ -119,16 +119,21 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 			break;
 		}
 
-		ImageView = Device->GetDevice().createImageView(
-			vk::ImageViewCreateInfo(vk::ImageViewCreateFlags(),
-				Image,
-				ImageType,
-				VulkanUtil::FormatToVkFormat(InFormat),
-				vk::ComponentMapping(),
-				vk::ImageSubresourceRange(
-				VulkanUtil::GetImageAspectFromFormat(InFormat), 0, InMipLevels, 0, 1))).value;
+		vk::ImageViewCreateInfo ViewCreateInfo(vk::ImageViewCreateFlags(),
+			Image,
+			ImageType,
+			VulkanUtil::FormatToVkFormat(InFormat),
+			vk::ComponentMapping(),
+			vk::ImageSubresourceRange(
+				VulkanUtil::GetImageAspectFromFormat(InFormat), 0, InMipLevels, 0, 1));
+
+		vk::Result ResView = Device->GetDevice().createImageView(
+			&ViewCreateInfo,
+			nullptr,
+			&ImageView);
 		if (!ImageView)
-			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image view");
+			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image view: %s",
+				vk::to_string(ResView).c_str());
 	}
 
 	/** Copy initial data */
@@ -180,16 +185,21 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 		break;
 	}
 
-	ImageView = Device->GetDevice().createImageView(
-		vk::ImageViewCreateInfo(vk::ImageViewCreateFlags(),
-			Image,
-			ImageType,
-			VulkanUtil::FormatToVkFormat(InFormat),
-			vk::ComponentMapping(),
-			vk::ImageSubresourceRange(
-				VulkanUtil::GetImageAspectFromFormat(InFormat), 0, InMipLevels, 0, 1))).value;
+	vk::ImageViewCreateInfo ViewCreateInfo(vk::ImageViewCreateFlags(),
+		Image,
+		ImageType,
+		VulkanUtil::FormatToVkFormat(InFormat),
+		vk::ComponentMapping(),
+		vk::ImageSubresourceRange(
+			VulkanUtil::GetImageAspectFromFormat(InFormat), 0, InMipLevels, 0, 1));
+
+	vk::Result ResView = Device->GetDevice().createImageView(
+		&ViewCreateInfo,
+		nullptr,
+		&ImageView);
 	if (!ImageView)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image view");
+		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image view: %s",
+			vk::to_string(ResView).c_str());
 
 #ifndef NDEBUG
 	PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectName = (PFN_vkSetDebugUtilsObjectNameEXT) 

@@ -35,7 +35,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
 		LOG(ELogSeverity::Error, VulkanRS, InCallbackData->pMessage);
 		__debugbreak();
-		break;
+		return VK_TRUE;
 	}
 
 	return VK_FALSE;
@@ -92,6 +92,11 @@ void CVulkanRenderSystem::Initialize()
 		LOG(ELogSeverity::Info, VulkanRS, "Validation layers: %s",
 			GVulkanEnableValidationLayers ? "Yes": "No");
 
+		if constexpr(GVulkanEnableValidationLayers)
+		{
+			LOG(ELogSeverity::Warn, VulkanRS, "Validation layers are enabled! Except bad performances !");
+		}
+
 		/** Get required extensions */
 		std::vector<const char*> RequiredExtensions = GetRequiredExtensions();
 
@@ -144,9 +149,15 @@ void CVulkanRenderSystem::Initialize()
 			GVulkanEnableValidationLayers ? GVulkanValidationLayers.data() : 0,
 			static_cast<uint32_t>(RequiredExtensions.size()),
 			RequiredExtensions.data());
-		Instance = vk::createInstanceUnique(CreateInfos).value;
-		if (!Instance)
-			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan instance");
+		vk::Instance CInstance;
+		vk::Result Result = vk::createInstance(
+			&CreateInfos,
+			nullptr,
+			&CInstance);
+		if (!CInstance)
+			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan instance: %s",
+				vk::to_string(Result).c_str());
+		Instance.reset(CInstance);
 	}
 
 	/** Create debug callback */

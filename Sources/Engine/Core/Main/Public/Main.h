@@ -3,6 +3,7 @@
 #include "Render/RenderThread.h"
 #include <SDL2/SDL.h>
 #include "EngineCore.h"
+#include <mutex>
 
 namespace ZE
 {
@@ -50,6 +51,8 @@ private:
     inline static SDL_Event Event;
 
     inline static std::thread RenderThreadHandle;
+
+    inline static std::mutex RunMutx;
 public:
     inline static ZE::CSemaphore GTSemaphore;
 };

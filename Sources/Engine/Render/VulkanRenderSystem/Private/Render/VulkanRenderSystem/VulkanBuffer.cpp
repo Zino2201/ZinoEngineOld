@@ -76,13 +76,16 @@ CVulkanBuffer::CVulkanBuffer(
 	AllocInfo.usage = VulkanUtil::BufferUsageFlagsToMemoryUsage(InMemUsage);
 	AllocInfo.pUserData = reinterpret_cast<void*>(const_cast<char*>(InInfo.DebugName));
 
-	if (vmaCreateBuffer(Device->GetAllocator(),
+	vk::Result Result = static_cast<vk::Result>(vmaCreateBuffer(Device->GetAllocator(),
 		reinterpret_cast<VkBufferCreateInfo*>(&BufferCreateInfo),
 		&AllocInfo,
 		reinterpret_cast<VkBuffer*>(&Buffer),
 		&Allocation,
-		&AllocationInfo) != VK_SUCCESS)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan buffer");
+		&AllocationInfo));
+
+	if (Result != vk::Result::eSuccess)
+		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan buffer: %s",
+			vk::to_string(Result).c_str());
 
 	/** Copy initial data to buffer */
 	if (InInfo.InitialData)

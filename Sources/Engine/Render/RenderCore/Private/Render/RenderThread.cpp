@@ -14,6 +14,7 @@ void CRenderThread::Run(CSemaphore* InGameThreadSemaphore)
 	GameThreadSemaphore = InGameThreadSemaphore;
 	bRun = true;
 
+	size_t CommandsNotifyCounter = 0;
 	while(bRun)
 	{
 		/** Execute commands */
@@ -33,6 +34,18 @@ void CRenderThread::Run(CSemaphore* InGameThreadSemaphore)
 
 			CommandsMutex.unlock();
 			CommandsExecutedSemaphore.Notify();
+		}
+
+		/** If there is waiters for more than 100 render-frames, notify */
+		if(CommandsExecutedSemaphore.HasWaiter())
+		{
+			CommandsNotifyCounter++;
+
+			if(CommandsNotifyCounter > 100)
+			{
+				CommandsExecutedSemaphore.Notify();
+				CommandsNotifyCounter = 0;
+			}
 		}
 
 		RenderThreadFrameFinishedSemaphore.Notify();

@@ -208,6 +208,7 @@ void CZinoEngineMain::Exit()
 	/** Stopping render thread */
 	LOG(ZE::ELogSeverity::Info, EngineInit, "Stopping render thread");
 	ZE::CRenderThread::Get().bRun = false;
+	ZE::FlushRenderThread(true);
 	RenderThreadHandle.join();
 
 	ZE::CModuleManager::UnloadModule("Renderer");
