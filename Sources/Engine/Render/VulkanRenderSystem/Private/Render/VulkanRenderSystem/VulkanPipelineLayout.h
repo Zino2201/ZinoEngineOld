@@ -229,7 +229,6 @@ private:
 	CVulkanPipelineLayout& PipelineLayout;
 
 	/** Used descriptor sets */
-	//std::unordered_map<SDescriptorSetEntry, vk::DescriptorSet, SDescriptorSetEntryHash> SetMap;
 	std::vector<SDescriptorSetEntry> Sets;
 
 	/** Available descriptor sets that have been recycled */

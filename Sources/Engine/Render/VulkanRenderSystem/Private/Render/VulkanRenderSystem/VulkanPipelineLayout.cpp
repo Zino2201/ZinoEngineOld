@@ -78,14 +78,6 @@ std::pair<vk::DescriptorSet, bool> CVulkanDescriptorSetManager::GetSet(const uin
 	/**
 	 * First search if there is already a set with the same handles
 	 */
-	 /*for(const auto& [Entry, Set] : SetMap)
-	 {
-		 if(Entry.Set == InSet &&
-			 Entry.Handles == InHandles)
-		 {
-			 return { Set, false };
-		 }
-	 }*/
 
 	for(auto& Entry : Sets)
 	{
