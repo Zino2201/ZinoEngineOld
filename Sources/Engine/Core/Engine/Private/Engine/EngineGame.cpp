@@ -20,7 +20,8 @@
 #include <tiny_obj_loader.h>
 #include "Pool.h"
 #include <sstream>
-//s
+#include "ImGui/ImGui.h"
+#include <examples/imgui_impl_sdl.h>
 
 namespace ZE
 {
@@ -146,10 +147,21 @@ void CEngineGame::Initialize()
 	using namespace ZE::Components;
 
 	/** Create main game window */
-	Window = new CWindow("ZinoEngine", 1280, 720);
+	Window = new CWindow("ZinoEngine | Loading...", 1600, 900);
 
 	/** Event on resize */
 	SDL_AddEventWatch(&StaticOnWindowResized, this);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+	ImGui_ImplSDL2_InitForVulkan(reinterpret_cast<SDL_Window*>(Window->GetHandle()));
+
+	ImGuiIO& IO = ImGui::GetIO();
+	IO.DisplaySize = ImVec2(Window->GetWidth(), Window->GetHeight());
+	IO.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+	IO.WantCaptureKeyboard = true;
+	IO.WantCaptureMouse = true;
 
 	Viewport = std::make_unique<CViewport>(Window->GetHandle(), Window->GetWidth(), 
 		Window->GetHeight());
@@ -186,6 +198,7 @@ void CEngineGame::Initialize()
 	}
 
 	ViewDataUBO.InitResource();
+	ImGuiRenderer.InitResource();
 }
 
 glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -233,6 +246,12 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 	float DeltaTime = (((Now - Last) * 1000 / (float)SDL_GetPerformanceFrequency()))
 		* 0.001f;
 
+	ImGuiIO& IO = ImGui::GetIO();
+
+	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(Window->GetHandle()));
+	ImGui::NewFrame();
+	ImGui_ImplSDL2_ProcessEvent(InEvent);
+
 	/** Update camera */
 	const Uint8* KeyState = SDL_GetKeyboardState(nullptr);
 	Uint32 MouseState = SDL_GetMouseState(nullptr, nullptr);
@@ -240,10 +259,16 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 	const float CameraSpeed = 5.f * DeltaTime;
 
 	if (MouseState & SDL_BUTTON_LMASK
-		&& !bIsMouseGrabbed)
+		&& !bIsMouseGrabbed
+		&& !ImGui::IsAnyItemHovered()
+		&& !ImGui::IsAnyWindowHovered()
+		&& !ImGui::IsAnyItemActive()
+		&& !ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 	{
 		SDL_SetRelativeMouseMode(SDL_TRUE);
 		bIsMouseGrabbed = true;
+		IO.WantCaptureKeyboard = false;
+		IO.WantCaptureMouse = false;
 	}
 	if (KeyState[SDL_SCANCODE_W])
 	{
@@ -267,6 +292,8 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 		{
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 			bIsMouseGrabbed = false;
+			IO.WantCaptureKeyboard = true;
+			IO.WantCaptureMouse = true;
 		}
 	}
 
@@ -297,6 +324,8 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 		}
 	}
 
+	ImGui::ShowDemoWindow();
+
 	/** Draw the scene */
 	EnqueueRenderCommand("CEngineGame::DrawWorld",
 		[this, DeltaTime]()
@@ -320,14 +349,15 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 				ViewDataUBO.Copy(&VD);
 			}
 
+			/** Render world */
 			ZE::Renderer::SWorldRendererView View;
 			View.Width = Window->GetWidth();
 			View.Height = Window->GetHeight();
 			View.Surface = Viewport->GetSurface();
 			View.ViewDataUBO = ViewDataUBO.GetBuffer();
-			ZE::Renderer::CClusteredForwardWorldRenderer Renderer;
-
+			ZE::Renderer::CClusteredForwardWorldRenderer Renderer(ImGuiRenderer);
 			Renderer.Render(World->GetProxy(), View);
+
 			Viewport->End();
 		}
 	});
@@ -337,18 +367,24 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 	{
 		std::stringstream NewTitle;
 		NewTitle << std::fixed;
-		NewTitle << "ZinoEngine | FPS: " << (int)1.f / DeltaTime << " (" << DeltaTime << " ms)";
+		NewTitle << "ZinoEngine | FPS: " << (int)1.f / DeltaTime << " (" 
+			<< DeltaTime * 1000 << " ms)";
 		SDL_SetWindowTitle(reinterpret_cast<SDL_Window*>(Window->GetHandle()),
 			NewTitle.str().c_str());
 		fpsC = 0;
 	}
 	fpsC += DeltaTime;
 
+	ImGui::Render();
 }
 
 void CEngineGame::Exit()
 {
 	testSM->GetRenderData()->DestroyResource();
+	ImGuiRenderer.DestroyResource();
+	ViewDataUBO.DestroyResource();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
 }
 
 CEngine* CreateEngine()

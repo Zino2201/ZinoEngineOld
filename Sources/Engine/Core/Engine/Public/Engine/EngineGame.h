@@ -6,6 +6,7 @@
 #include "Shader/ShaderCompiler.h"
 #include "Render/UniformBuffer.h"
 #include "Renderer/WorldRenderer.h"
+#include "ImGui/ImGuiRender.h"
 
 namespace ZE
 {
@@ -39,6 +40,7 @@ private:
     CRSBufferPtr ubo = nullptr;
     std::shared_ptr<class CStaticMesh> testSM;
     TUniformBuffer<ZE::Renderer::SViewData> ViewDataUBO;
+    ZE::UI::CImGuiRender ImGuiRenderer;
 };
 
 } /* namespace ZE */

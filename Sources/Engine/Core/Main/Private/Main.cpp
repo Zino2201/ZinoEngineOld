@@ -96,6 +96,7 @@ void CZinoEngineMain::PreInit()
 		ZE::CModuleManager::LoadModule("ShaderCore");
 		ZE::CModuleManager::LoadModule("RenderCore");
 		ZE::CModuleManager::LoadModule("RenderSystem");
+		ZE::CModuleManager::LoadModule("ImGui");
 		ZE::CModuleManager::LoadModule("ShaderCompiler");
 	}
 

@@ -21,6 +21,8 @@ public:
         EShaderStage InStage,
         InstantiateFunctionType InFunc);
     ~CBasicShaderType();
+public:
+    inline static bool bBasicShadersCompiled = false;
 };
 
 /**

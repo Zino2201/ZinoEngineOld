@@ -15,7 +15,8 @@ struct TVector2
 	T Y;
 
 	TVector2() : X(0), Y(0) {}
-	TVector2(T InX, T InY) : X(InX), Y(InY) {}
+	TVector2(const T& InX) : X(InX), Y(InX) {}
+	TVector2(const T& InX, const T& InY) : X(InX), Y(InY) {}
 };
 
 using SVector2f = TVector2<float>;
@@ -31,7 +32,7 @@ struct TVector3
 	T Z;
 
 	TVector3() : X(0), Y(0), Z(0) {}
-	TVector3(T InX, T InY, T InZ) : X(InX), Y(InY), Z(InZ) {}
+	TVector3(const T& InX, const T& InY, const T& InZ) : X(InX), Y(InY), Z(InZ) {}
 
 	bool operator==(const TVector3<T>& InOther) const
 	{

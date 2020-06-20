@@ -45,7 +45,13 @@ public:
         const SRSResourceCreateInfo& InCreateInfo);
     virtual ~CVulkanTexture();
 
+
     const vk::ImageView& GetImageView() const { return ImageView; }
+private:
+    void CopyFromBuffer(const vk::Buffer& InBuffer);
+    void GenerateMipmaps();
+    void TransitionImageLayout(const vk::ImageLayout& InOldLayout, 
+        const vk::ImageLayout& InNewLayout);
 protected:
     bool bShouldDestroyImage;
     vk::Image Image;

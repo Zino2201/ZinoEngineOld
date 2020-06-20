@@ -15,8 +15,6 @@ CVulkanInternalStagingBuffer* CVulkanStagingBufferManager::CreateStagingBuffer(u
 		InSize, InUsageFlags);
 	StagingBuffers.Add(Buffer);
 
-	LOG(ELogSeverity::Debug, VulkanRS, "new CVulkanInternalStagingBuffer");
-
 	return Buffer;
 }
 

@@ -11,7 +11,13 @@ CWindow::CWindow(const char* InName, const uint32_t& InWidth, const uint32_t& In
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
 		InWidth, InHeight,
-		SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+		SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
+
+	/** Set the width & height because SDL_WINDOW_MAXIMIZED may changed them */
+	int W, H;
+	SDL_GetWindowSize(reinterpret_cast<SDL_Window*>(Handle), &W, &H);
+	SetWidth(W);
+	SetHeight(H);
 }
 
 CWindow::~CWindow()

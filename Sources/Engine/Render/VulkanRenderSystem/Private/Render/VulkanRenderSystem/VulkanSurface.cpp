@@ -52,7 +52,7 @@ bool CVulkanSurface::AcquireImage()
 		Result == vk::Result::eSuboptimalKHR)
 	{
 		RecreateSwapChain();
-		return true;
+		return false;
 	}
 	else if(Result != vk::Result::eSuccess)
 	{

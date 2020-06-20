@@ -13,6 +13,10 @@ CBasicShaderType::CBasicShaderType(const char* InName, const char* InFilename,
 	InstantiateFunctionType InFunc) :
 	CShaderType(InName, InFilename, InEntryPoint, InStage, InFunc)
 {
+	if (bBasicShadersCompiled)
+		LOG(ELogSeverity::Fatal, None,
+			"Basic shader type created after basic shaders compilation ! Aborting.");
+
 	CBasicShaderManager::Get().AddShaderType(this);
 }
 
@@ -28,6 +32,8 @@ void CBasicShaderManager::AddShaderType(CBasicShaderType* InShaderType)
 
 void CBasicShaderManager::CompileShaders()
 {
+	CBasicShaderType::bBasicShadersCompiled = false;
+
 	ShaderMap.clear();
 
 	for(const auto& ShaderType : ShaderTypes)

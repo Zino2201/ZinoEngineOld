@@ -7,13 +7,15 @@
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Renderer/ProxyDrawCommand.h"
 #include "Renderer/PostProcess/BarrelDistortion.h"
+#include "ImGui/ImGuiRender.h"
 
 namespace ZE::Renderer
 {
 
 SRSGraphicsPipeline Test;
 
-CClusteredForwardWorldRenderer::CClusteredForwardWorldRenderer()
+CClusteredForwardWorldRenderer::CClusteredForwardWorldRenderer(ZE::UI::CImGuiRender& InImGuiRenderer) :
+	ImGuiRenderer(InImGuiRenderer)
 {
 	std::vector<SVertexInputBindingDescription> BindingDescriptions = 
 	{
@@ -120,6 +122,10 @@ void CClusteredForwardWorldRenderer::Render(CWorldProxy* InWorld, const SWorldRe
 			});
 
 		RenderWorld(InContext, InWorld, InView, EMeshRenderPass::BasePass);
+
+		/** Render UI */
+		ImGuiRenderer.Update();
+		ImGuiRenderer.Draw(GRSContext);
 	});
 
 	/** POST PROCESS */

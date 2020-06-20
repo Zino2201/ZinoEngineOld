@@ -25,7 +25,8 @@ RequiredIncludes =
 		LibDir.."glm",
 		LibDir.."stb_image",
 		LibDir.."SDL2/include",
-		LibDir.."boost"
+		LibDir.."boost",
+		LibDir.."imgui"
 	}
 RequiredLibDirs = 
 	{
@@ -382,6 +383,8 @@ workspace "ZinoEngine"
 		executeModule("RenderSystem")
 		executeModule("VulkanRenderSystem")
 		executeModule("Renderer")
+	group "Engine/Rendering/UI"
+		executeModule("ImGui")
 	group "Engine/Rendering/Shaders"
 		executeModule("Shaders")
 		executeModule("ShaderCore")

@@ -75,6 +75,7 @@ enum class EFormat
 	R32G32Sfloat, /** vec2*/
 	R32G32B32Sfloat, /** vec3 */
 	R32G32B32A32Sfloat,	/** vec4 */
+    R32G32B32A32Uint,
 	R64Uint	/** uint64 */
 };
 

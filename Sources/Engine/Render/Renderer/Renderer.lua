@@ -1,2 +1,2 @@
 local Mod = Module:new("Renderer")
-Mod:addModules({ "EngineCore", "RenderCore", "RenderSystem", "ShaderCore", "ShaderCompiler" })
+Mod:addModules({ "EngineCore", "RenderCore", "RenderSystem", "ShaderCore", "ShaderCompiler", "ImGui" })

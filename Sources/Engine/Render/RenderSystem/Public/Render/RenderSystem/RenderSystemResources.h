@@ -178,7 +178,8 @@ public:
         const SRSResourceCreateInfo& InInfo) : 
         CRSResource(InInfo), Type(InTextureType),
         TextureUsage(InTextureUsage), MemoryUsage(InMemoryUsage),
-        Format(InFormat), Width(InWidth), Height(InHeight){}
+        Format(InFormat), Width(InWidth), Height(InHeight), Depth(InDepth),
+        MipLevels(InMipLevels) {}
 
     const uint32_t& GetWidth() const { return Width; }
     const uint32_t& GetHeight() const { return Height; }
@@ -192,6 +193,8 @@ protected:
     ERSMemoryUsage MemoryUsage;
 	uint32_t Width;
 	uint32_t Height;
+    uint32_t Depth;
+    uint32_t MipLevels;
 };
 
 /**
@@ -1044,6 +1047,7 @@ using CRSSurfacePtr = boost::intrusive_ptr<CRSSurface>;
 using CRSBufferPtr = boost::intrusive_ptr<CRSBuffer>;
 using CRSTexturePtr = boost::intrusive_ptr<CRSTexture>;
 using CRSShaderPtr = boost::intrusive_ptr<CRSShader>;
+using CRSSamplerPtr = boost::intrusive_ptr<CRSSampler>;
 using CRSGraphicsPipelinePtr = boost::intrusive_ptr<CRSGraphicsPipeline>;
 
 }

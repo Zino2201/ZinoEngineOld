@@ -297,6 +297,8 @@ vk::Format VulkanUtil::FormatToVkFormat(const EFormat& InFormat)
 		return vk::Format::eR32G32B32Sfloat;
 	case EFormat::R32G32B32A32Sfloat:
 		return vk::Format::eR32G32B32A32Sfloat;
+	case EFormat::R32G32B32A32Uint:
+		return vk::Format::eR32G32B32A32Uint;
 	case EFormat::R64Uint:
 		return vk::Format::eR64Uint;
 	case EFormat::R32Uint:
@@ -326,6 +328,8 @@ EFormat VulkanUtil::VkFormatToFormat(const vk::Format& InFormat)
 		return EFormat::R32G32B32Sfloat;
 	case vk::Format::eR32G32B32A32Sfloat:
 		return EFormat::R32G32B32A32Sfloat;
+	case vk::Format::eR32G32B32A32Uint:
+		return EFormat::R32G32B32A32Uint;
 	case vk::Format::eR64Uint:
 		return EFormat::R64Uint;
 	case vk::Format::eR32Uint:
