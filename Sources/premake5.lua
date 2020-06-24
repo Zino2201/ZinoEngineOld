@@ -187,7 +187,7 @@ function Module:new(name, modKind)
 	filter {}
 	
 	language "C++"
-	cppdialect "C++17"
+	cppdialect "C++latest"
 	files { "**.h", "**.cpp", "**.hpp", "**.cxx", "**.inl" }
 	vpaths { ["Sources/*"] = "**.h" }
 	vpaths { ["Sources/*"] = "**.cpp" }
