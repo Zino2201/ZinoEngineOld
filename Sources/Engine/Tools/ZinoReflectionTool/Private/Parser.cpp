@@ -67,11 +67,16 @@ CParser::CParser(CHeader* InHeader, const std::string_view& InPathHeader,
 			bFoundGen = true;
 		}
 
-		if (Lines[i].find("ZCLASS") != std::string::npos ||
-			Lines[i].find("ZSTRUCT") != std::string::npos ||
-			Lines[i].find("ZENUM") != std::string::npos)
+		if (Lines[i].rfind("/*", 0) != std::string::npos ||
+			Lines[i].rfind("*", 0) != std::string::npos ||
+			Lines[i].rfind("#define", 0) != std::string::npos) 
 		{
-			bShouldPrintErr = true;
+			if (Lines[i].find("ZCLASS") != std::string::npos ||
+				Lines[i].find("ZSTRUCT") != std::string::npos ||
+				Lines[i].find("ZENUM") != std::string::npos)
+			{
+				bShouldPrintErr = true;
+			}
 		}
 	}
 
