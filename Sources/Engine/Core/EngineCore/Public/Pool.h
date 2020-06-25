@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <array>
+#include <mutex>
 
 template<typename ChunkType, typename BlockType, typename DataType>
 struct TPoolIterator
@@ -55,7 +56,7 @@ struct TPoolIterator
 /**
  * Simple object pool implementation
  */
-template<typename T, uint32_t BlockPerChunk = 100>
+template<typename T, uint32_t BlockPerChunk = 100, bool bLocks = false>
 struct TPool
 {
     struct SBlock
@@ -141,6 +142,9 @@ struct TPool
      */
 	T* Allocate()
 	{
+		if constexpr (bLocks)
+			std::lock_guard<std::mutex> Guard(Mutex);
+
 		/** Check if chunk is full */
 		if (!FreeBlock)
 		{
@@ -168,6 +172,10 @@ struct TPool
     T& Allocate(Args&&... InArgs)
     {
         T* Data = Allocate();
+
+		if constexpr (bLocks)
+			std::lock_guard<std::mutex> Guard(Mutex);
+
         new (Data) T(std::forward<Args>(InArgs)...);
 
         return *Data;
@@ -175,6 +183,9 @@ struct TPool
 
     void Free(T& InElem)
     {
+        if constexpr(bLocks)
+            std::lock_guard<std::mutex> Guard(Mutex);
+
         /** Call the dtor, then mark the block as free */
 		InElem.T::~T();
 
@@ -189,6 +200,7 @@ private:
     SChunk* FirstChunk;
     SChunk* LastChunk;
     SBlock* FreeBlock;
+    std::mutex Mutex;
 };
 
 /**

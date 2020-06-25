@@ -1,6 +1,7 @@
 #include "Module/Module.h"
 #include "Render/RenderThread.h"
 #include <SDL2/SDL.h>
+#include "Profiling/Profiling.h"
 
 namespace ZE
 {
@@ -17,6 +18,7 @@ void CRenderThread::Run(CSemaphore* InGameThreadSemaphore)
 	size_t CommandsNotifyCounter = 0;
 	while(bRun)
 	{
+
 		/** Execute commands */
 		if(!Commands.empty())
 		{

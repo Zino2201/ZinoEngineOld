@@ -8,6 +8,8 @@
 #include "Renderer/WorldRenderer.h"
 #include "ImGui/ImGuiRender.h"
 
+struct ImFont;
+
 namespace ZE
 {
 
@@ -41,6 +43,8 @@ private:
     std::shared_ptr<class CStaticMesh> testSM;
     TUniformBuffer<ZE::Renderer::SViewData> ViewDataUBO;
     ZE::UI::CImGuiRender ImGuiRenderer;
+    ImFont* Font;
+    std::mutex ProfilingMutex;
 };
 
 } /* namespace ZE */

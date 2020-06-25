@@ -9,11 +9,12 @@
 #include "Engine/Engine.h"
 #include "Shader/ShaderCompiler.h"
 #include "Render/Shader/BasicShader.h"
-#include <ios>
 #include "FileSystem/ZFS.h"
 #include "FileSystem/StdFileSystem.h"
 #include "FileSystem/FileUtils.h"
-#include "Serialization/FileArchive.h"
+#include "Threading/JobSystem/JobSystem.h"
+#include <chrono>
+#include "Threading/JobSystem/WorkerThread.h"
 
 DECLARE_LOG_CATEGORY(EngineInit);
 
@@ -67,24 +68,11 @@ void CZinoEngineMain::PreInit()
 					"Can't find \"%s\" ! Can't continue", Obj);
 		}
 
-		//{
-		//	std::vector<std::string> test = { "ONE", "TWO", "THREE" };
-		//	TOwnerPtr<ZE::FileSystem::IFile> File = ZE::FileSystem::Write("/Build/test.txt",
-		//		ZE::FileSystem::EFileWriteFlags::ReplaceExisting);
-		//	ZE::Serialization::CFileArchive FileArchive(File);
-		//	FileArchive << test;
-		//}
-
-		//
-		//	std::vector<std::string> test;
-		//	TOwnerPtr<ZE::FileSystem::IFile> File = ZE::FileSystem::Read("/Build/test.txt");
-		//	ZE::Serialization::CFileArchive FileArchive(File);
-		//	FileArchive >> test;
-		//
-
-		//__debugbreak();
-
 		ZE::CModuleManager::LoadModule("Reflection");
+
+		/** JOB SYSTEM */
+		LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing job system");
+		ZE::JobSystem::Initialize();
 
 		ZE::GameThreadID = std::this_thread::get_id();
 		SDL_InitSubSystem(SDL_INIT_VIDEO);
@@ -175,6 +163,11 @@ void CZinoEngineMain::Loop()
 		 * Tick engine
 		 */
 		Tick(DeltaTime);
+
+		/** 
+		 * Execute jobs of the main thread
+		 */
+		ZE::JobSystem::GetWorker().Flush();
 
 		/**
 		 * Reset event at the end

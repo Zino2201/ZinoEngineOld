@@ -7,6 +7,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
 #include <set>
+#include <assert.h>
 
 DEFINE_MODULE(CDefaultModule, VulkanRenderSystem)
 
@@ -33,7 +34,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 		LOG(ELogSeverity::Warn, VulkanRS, InCallbackData->pMessage);
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-		LOG(ELogSeverity::Error, VulkanRS, InCallbackData->pMessage);
+		LOG(ELogSeverity::Fatal, VulkanRS, InCallbackData->pMessage);
 		__debugbreak();
 		return VK_TRUE;
 	}
@@ -149,15 +150,11 @@ void CVulkanRenderSystem::Initialize()
 			GVulkanEnableValidationLayers ? GVulkanValidationLayers.data() : 0,
 			static_cast<uint32_t>(RequiredExtensions.size()),
 			RequiredExtensions.data());
-		vk::Instance CInstance;
-		vk::Result Result = vk::createInstance(
-			&CreateInfos,
-			nullptr,
-			&CInstance);
-		if (!CInstance)
+		auto [Result, InstanceHandle] = vk::createInstance(CreateInfos);
+		if (Result != vk::Result::eSuccess)
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan instance: %s",
 				vk::to_string(Result).c_str());
-		Instance.reset(CInstance);
+		Instance.reset(InstanceHandle);
 	}
 
 	/** Create debug callback */

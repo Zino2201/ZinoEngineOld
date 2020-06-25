@@ -3,6 +3,7 @@
 #include "Module/ModuleManager.h"
 #include "Engine/TickSystem.h"
 #include "Engine/ECS.h"
+#include "Profiling/Profiling.h"
 
 namespace ZE
 {

@@ -171,10 +171,13 @@ function Module:new(name, modKind)
 	-- Add a define for each configurations
 	filter "Debug"
 		defines("ZE_CONFIGURATION_NAME=\"Debug\"")
+		defines("ZE_DEBUG")
 	filter "Debug Editor"
 		defines("ZE_CONFIGURATION_NAME=\"Debug Editor\"")
+		defines("ZE_DEBUG")
 	filter "Debug Monolithic"
 		defines("ZE_CONFIGURATION_NAME=\"Debug Monolithic\"")
+		defines("ZE_DEBUG")
 	filter "Release"
 		defines("ZE_CONFIGURATION_NAME=\"Release\"")
 		defines("NDEBUG")

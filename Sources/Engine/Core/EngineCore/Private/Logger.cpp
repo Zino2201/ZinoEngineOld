@@ -1,6 +1,7 @@
 #include "EngineCore.h"
 #include "Logger.h"
 #include <iostream>
+#include <mutex>
 #include "Module/Module.h"
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -45,6 +46,9 @@ void CLogger::Log(const ELogSeverity& InSeverity,
 	{
 		ThreadName = "UnknownThread";
 	}
+
+	static std::mutex Mutex;
+	std::lock_guard<std::mutex> Guard(Mutex);
 
 	std::cout << "[" << SeverityToString(InSeverity) << "/" << ThreadName << "] ("
 		<< InCategory << ") ";

@@ -22,6 +22,10 @@
 #include <sstream>
 #include "ImGui/ImGui.h"
 #include <examples/imgui_impl_sdl.h>
+#include "Profiling/Profiling.h"
+#include "Threading/JobSystem/JobSystem.h"
+#include <iostream>
+#include <chrono>
 
 namespace ZE
 {
@@ -80,10 +84,10 @@ void LoadModelUsingAssimp(const std::string_view& InPath,
 	static size_t CurrentVtx = 0;
 
 	Assimp::Importer Importer;
-	const aiScene* Scene = Importer.ReadFile(InPath.data(), aiProcess_CalcTangentSpace |
-		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices |
-		aiProcess_SortByPType);
+	const aiScene* Scene = Importer.ReadFile(InPath.data(), aiProcess_Triangulate
+		| aiProcess_FlipUVs
+		| aiProcess_CalcTangentSpace
+		| aiProcess_GenNormals);
 	if(!Scene)
 		LOG(ELogSeverity::Fatal, None, "Failed to load model %s", InPath.data());
 
@@ -162,6 +166,7 @@ void CEngineGame::Initialize()
 	IO.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 	IO.WantCaptureKeyboard = true;
 	IO.WantCaptureMouse = true;
+	Font = IO.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 16.f);
 
 	Viewport = std::make_unique<CViewport>(Window->GetHandle(), Window->GetWidth(), 
 		Window->GetHeight());
@@ -174,7 +179,7 @@ void CEngineGame::Initialize()
 	 */
 	std::vector<SStaticMeshVertex> Vertices;
 	std::vector<uint32_t> Indices;
-	LoadModelUsingTinyObjLoader("Assets/sphere.obj", Vertices, Indices);
+	LoadModelUsingTinyObjLoader("Assets/Earth.obj", Vertices, Indices);
 
 	testSM = std::make_shared<CStaticMesh>();
 	testSM->UpdateData(Vertices, Indices);
@@ -324,7 +329,23 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 		}
 	}
 
-	ImGui::ShowDemoWindow();
+	/** UI */
+	ImGui::PushFont(Font);
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+	ImGui::Begin("TopLeftText", nullptr, ImGuiWindowFlags_NoInputs |
+		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground |
+		ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::TextColored(ImVec4(0.75f, 0.75f, 0.75f, 0.75f), 
+		"ZinoEngine %s v%s", ZE_CONFIGURATION_NAME, "0.1.0");
+	ImGui::End();
+
+	/** Print last profiling data */
+	ImGui::Begin("Profiler");
+	ImGui::Text("Console: ");
+	ImGui::Text("FPS: %f (%f ms)", 1.f / DeltaTime, DeltaTime * 1000);
+	ImGui::Separator();
+	ImGui::End();
+	ImGui::PopFont();
 
 	/** Draw the scene */
 	EnqueueRenderCommand("CEngineGame::DrawWorld",

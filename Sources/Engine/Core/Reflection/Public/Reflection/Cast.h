@@ -6,7 +6,7 @@ namespace ZE
 {
     
 /**
- * Safe cast (only works with DECLARE_REFL_STRUCT_OR_CLASS types)
+ * Safe cast (only works with ZSTRUCT or ZCLASS types)
  */
 template<typename To, typename From>
 inline To* Cast(From* In)

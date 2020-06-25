@@ -31,11 +31,10 @@ public:
     static CType* RegisterType(const char* InName,
         const uint64_t& InSize)
     {
-        auto& _types = Types;
         bool bDoesTypeExist = Get(InName);
         must(!bDoesTypeExist); // Duplicated type
         if(bDoesTypeExist)
-            LOG(ELogSeverity::Fatal, None, "Error! Type %s (%d) is already registred",
+            LOG(ELogSeverity::Fatal, None, "Error! Type %s (%d) is already registered",
                 InName, InSize);
 
         T* Type = new T(InName, InSize);
@@ -54,14 +53,15 @@ public:
     
     static CType* Get(const std::string_view& InName);
 
-    static const std::vector<std::unique_ptr<CType>>& GetTypes() { return Types; }
 
     const char* GetName() const { return Name; }
+    static const std::vector<std::unique_ptr<CType>>& GetTypes() { return Types; }
     uint64_t GetSize() const { return Size; }
 protected:
     /** Pretty name */
     const char* Name;
 
+    /** Type size */
     uint64_t Size;
 public:
     inline static std::vector<std::unique_ptr<CType>> Types;
