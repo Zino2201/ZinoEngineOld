@@ -19,7 +19,8 @@ enum class EWorkerThreadType
 	Full,
 
 	/** A worker that is inside a thread 
-	 * can run jobs but do other stuff (typically the main thread for example) */
+	 * can run jobs but do other stuff (typically the main thread for example) 
+	 * Partial threads never yield and doesn't steal jobs */
 	Partial
 };
 

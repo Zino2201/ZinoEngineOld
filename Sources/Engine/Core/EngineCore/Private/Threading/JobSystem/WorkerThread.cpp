@@ -17,7 +17,7 @@ CWorkerThread::CWorkerThread(EWorkerThreadType InType,
 const SJob* CWorkerThread::TryGetOrStealJob()
 {
 	const SJob* Job = JobQueue.Pop();
-	if(!Job)
+	if(!Job && Type != EWorkerThreadType::Partial)
 	{
 		/** 
 		 * Try to steal it from another worker

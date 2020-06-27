@@ -184,7 +184,7 @@ void CEngineGame::Initialize()
 	testSM = std::make_shared<CStaticMesh>();
 	testSM->UpdateData(Vertices, Indices);
 
-	for(int i = 0; i < 105; ++i)
+	for(int i = 0; i < 15; ++i)
 	{
 		double X = RAND_1_0 * 100 - 50;
 		double Y = RAND_1_0 * 100 - 50;

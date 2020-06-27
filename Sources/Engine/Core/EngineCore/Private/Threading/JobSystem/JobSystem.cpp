@@ -40,10 +40,10 @@ void Initialize()
 	uint32_t NumCores = std::thread::hardware_concurrency();
 	uint32_t WorkerThreadCount = std::max<uint32_t>(1, NumCores);
 	WorkerCount = WorkerThreadCount;
-
+	
 	LOG(ZE::ELogSeverity::Info, JobSystem, 
-		"%d hardware cores detected, spawning %d workers (max %d) + 1 partial (main thread)", 
-		NumCores, Workers.size(), WorkerThreadCount - 1);
+		"%d hardware cores detected, spawning %d workers (engine limit: %d) + 1 partial (main thread)", 
+		NumCores, WorkerThreadCount - 1, Workers.size());
 
 	/** Add main thread */
 	InitThreadLocalIdx();
