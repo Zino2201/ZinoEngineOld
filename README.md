@@ -44,8 +44,8 @@ Type names are prefixed with a letter:
 - `I` for interfaces : `IMyInterface`
 - `T` for templated structs/classes : `template<typename T> class TMyTemplatedClass`
 
-
 Prefix all booleans with `b`: `bool bMyBool`.
+Suffix using/typedefs with `Type` when a prefix isn't possible: `using DrawcallListDrawcallListType = std::vector<SMeshDrawcall>;`, `using SVector3 = TVector<double>;`
 
 For macros, write them `LIKE_THAT`
 
