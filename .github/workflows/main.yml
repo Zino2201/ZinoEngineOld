@@ -31,9 +31,9 @@ jobs:
     # Download and extract precompiled shader conductor lib
     - name: download-extract-shaderconductor
       run: | 
+        cd ${{ github.workspace }}
         curl https://dl.dropboxusercontent.com/s/vn0js0up6hujz8m/Build.zip?dl=1 --output Build.zip
-        powershell Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/ShaderConductor/
-        shell: cmd
+        Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/ShaderConductor/
     
     # Generate and build sln
     - name: build-sln
