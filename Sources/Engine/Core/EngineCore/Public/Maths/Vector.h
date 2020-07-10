@@ -47,7 +47,14 @@ struct TVector3
  */
 struct SVector3 : public TVector3<double>
 {
-   
+	SVector3& operator=(const glm::vec3& InVec)
+	{
+		X = InVec.x;
+		Y = InVec.x;
+		Z = InVec.z;
+
+		return *this;
+	}
 };
 
 /**

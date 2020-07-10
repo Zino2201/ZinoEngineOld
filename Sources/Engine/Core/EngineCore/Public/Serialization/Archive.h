@@ -27,7 +27,7 @@ protected:
 template<typename T>
 FORCEINLINE IArchive& operator<<(IArchive& InArchive, const T& InValue)
 {
-	static_assert(std::is_standard_layout_v<T>, "No operator<< found which can use T");
+	static_assert(std::is_trivially_copyable_v<T>, "No operator<< found which can use T");
 	if (!InArchive.IsSaving())
 		return InArchive;
 
@@ -42,7 +42,7 @@ FORCEINLINE IArchive& operator<<(IArchive& InArchive, const T& InValue)
 template<typename T>
 FORCEINLINE IArchive& operator>>(IArchive& InArchive, T& InValue)
 {
-	static_assert(std::is_standard_layout_v<T>, "No operator>> found which can use T");
+	static_assert(std::is_trivially_copyable_v<T>, "No operator>> found which can use T");
 	if (InArchive.IsSaving())
 		return InArchive;
 

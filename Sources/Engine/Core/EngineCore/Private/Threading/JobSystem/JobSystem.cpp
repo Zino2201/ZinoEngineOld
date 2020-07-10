@@ -70,8 +70,6 @@ void Initialize()
 template<typename... Args>
 const SJob& AllocateJob(Args&&... InArgs)
 {
-	must(AllocatedJobs < GMaxJobCountPerFrame);
-
 	SJob& Job = JobPool[++AllocatedJobs & (GMaxJobCountPerFrame - 1)];
 	Job.~SJob();
 	new (&Job) SJob(std::forward<Args>(InArgs)...);
