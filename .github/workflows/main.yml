@@ -33,9 +33,11 @@ jobs:
       run: | 
         curl https://dl.dropboxusercontent.com/s/vn0js0up6hujz8m/Build.zip?dl=1 --output Build.zip
         powershell Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/ShaderConductor/
+        shell: cmd
     
     # Generate and build sln
     - name: build-sln
       run: |
         @echo | call GenerateVS2019.bat
         msbuild Build/ProjectFiles/ZinoEngine.sln /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
+        shell: cmd
