@@ -3,7 +3,7 @@
 /**
  * Base class for non copyable objects
  */
-class CNonCopyable
+class ENGINECORE_API CNonCopyable
 {
 public:
 	CNonCopyable() = default;
