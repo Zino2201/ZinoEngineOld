@@ -2,6 +2,9 @@
 #include "Renderer/FrameGraph/RenderPass.h"
 #include "Render/RenderSystem/RenderSystem.h"
 #include <array>
+#include "Threading/JobSystem/JobSystem.h"
+#include "Renderer/WorldRenderer.h"
+#include "ImGui/ImGuiRender.h"
 
 DEFINE_MODULE(ZE::Renderer::CRendererModule, Renderer);
 
@@ -37,11 +40,77 @@ void CRendererModule::Initialize()
 		SRSResourceCreateInfo(QuadIndices.data()));
 }
 
+void CRendererModule::CreateImGuiRenderer()
+{
+	ImGuiRenderer = std::make_unique<UI::CImGuiRender>();
+}
+
 void CRendererModule::Destroy()
 {
 	QuadVBuffer.reset();
 	QuadIBuffer.reset();
 	CRenderPassPersistentResourceManager::Get().Destroy();
+}
+
+void CRendererModule::EnqueueView(const SWorldView& InView)
+{
+	Views.emplace_back(std::move(InView));
+}
+
+void CRendererModule::FlushViews()
+{
+	WaitRendering();
+
+	TransientFrameDataMap.clear();
+
+	ImGuiRenderer->CopyDrawdata();
+
+	for(const auto& View : Views)
+		BeginDrawView(View);
+
+	Views.clear();
+}
+
+void CRendererModule::WaitRendering()
+{
+	/** Wait any rendering jobs if they are not finished */
+	for (const auto& Job : RenderingJobs)
+		ZE::JobSystem::WaitJob(*Job);
+
+	RenderingJobs.clear();
+}
+
+void CRendererModule::BeginDrawView(const SWorldView& InView)
+{
+	/** Start rendering of this view 
+	 * Rendering in ZinoEngine is made of 3 phases:
+	 * 
+	 * - Game state copy phase, this is the phase that fill the transient data structures
+	 *	it must be executed as fast as possible to be able to tick frame N + 1
+	 * - Preparation phase, this is the phase where all transient data is used to prepare the actual
+	 *	rendering, e.g: transformations calculations
+	 * - Draw phase phase, this is the phase where the renderer submit drawcalls
+	 */
+
+	/** Instantiate a world renderer, this will be moved later to the main rendering job 
+	* once copying is finished */
+	std::unique_ptr<CWorldRenderer> WorldRenderer = std::make_unique<CWorldRenderer>(InView);
+	
+	/** Compute a list of visible proxies */
+	WorldRenderer->CheckVisibility();
+
+	/** Copy the game state */
+	WorldRenderer->CopyGameState(TransientFrameDataMap);
+
+	/** Queue the rendering */
+	const JobSystem::SJob& Job = JobSystem::CreateJob(JobSystem::EJobType::Normal,
+		[WorldRenderer = std::move(WorldRenderer)](const JobSystem::SJob& InJob)
+	{
+		WorldRenderer->Prepare();
+		WorldRenderer->Draw();
+	});
+	RenderingJobs.emplace_back(&Job);
+	JobSystem::ScheduleJob(Job);
 }
 
 }

@@ -3,7 +3,6 @@
 #include "EngineCore.h"
 #include <any>
 #include <algorithm>
-#include "RenderThreadResource.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "Render/RenderSystem/RenderSystem.h"
 
@@ -14,12 +13,12 @@ namespace ZE
  * Wrapper around a CRSBuffer
  */
 template<typename T, bool bUsePersistantMapping = true>
-struct TUniformBuffer : public CRenderThreadResource
+struct TUniformBuffer
 {
-    void InitResource_RenderThread() override
+    TUniformBuffer()
     {
         ERSMemoryUsage MemoryUsage = ERSMemoryUsage::HostVisible;
-        if(bUsePersistantMapping)
+        if constexpr(bUsePersistantMapping)
             MemoryUsage |= ERSMemoryUsage::UsePersistentMapping;
 
         Buffer = GRenderSystem->CreateBuffer(
@@ -29,7 +28,7 @@ struct TUniformBuffer : public CRenderThreadResource
             SRSResourceCreateInfo(nullptr, "TUniformBuffer"));
     }
 
-    void DestroyResource_RenderThread() override
+    ~TUniformBuffer()
     {
         Buffer.reset();
     }
@@ -38,23 +37,26 @@ struct TUniformBuffer : public CRenderThreadResource
      * Copy InData to the buffer
      * If InSize == 0 then copy sizeof(T)
      */
-    void Copy(void* RESTRICT InData, uint64_t InSize = 0)
+    void Copy(const void* RESTRICT InData, uint64_t InSize = 0)
     {
-        must(IsInRenderThread());
-
         if(InSize == 0)
             InSize = sizeof(T);
 
         void* RESTRICT Dst = Buffer->GetMappedData();
 
-        if(!bUsePersistantMapping)
+        if constexpr(!bUsePersistantMapping)
             Dst = Buffer->Map(ERSBufferMapMode::WriteOnly);
 
         memcpy(Dst, InData, InSize);
 
-        if(!bUsePersistantMapping)
+        if constexpr(!bUsePersistantMapping)
             Buffer->Unmap();
     }
+
+	void Copy(const T& InData)
+	{
+		Copy(reinterpret_cast<const void*>(&InData));
+	}
 
     CRSBuffer* GetBuffer() const { return Buffer.get(); }
 private:

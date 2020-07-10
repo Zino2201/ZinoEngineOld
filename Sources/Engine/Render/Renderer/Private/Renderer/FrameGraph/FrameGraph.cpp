@@ -230,10 +230,9 @@ bool CFrameGraph::Compile()
 	{
 		if(!ValidateRenderPass(*RenderPass.get()))
 		{
-			LOG(ELogSeverity::Error, FrameGraph, 
+			LOG(ELogSeverity::Fatal, FrameGraph, 
 				"Validation of render pass %s failed ! Frame will be skipped !",
 				RenderPass->Name.c_str());
-			__debugbreak();
 			return false;
 		}
 	}

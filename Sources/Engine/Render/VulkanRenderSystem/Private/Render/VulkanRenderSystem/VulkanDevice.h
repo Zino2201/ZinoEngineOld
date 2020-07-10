@@ -79,6 +79,14 @@ public:
 		InHandle = CPPType();
     }
 
+	template<typename CPPType, typename CType>
+	void Enqueue(EHandleType InHandleType, const VmaAllocation& InAllocation, CPPType& InHandle)
+	{
+		EnqueueResource(InHandleType, InAllocation, 
+            reinterpret_cast<uint64_t>(static_cast<CType>(InHandle)));
+		InHandle = CPPType();
+	}
+
     void DestroyResources();
 private:    
     void EnqueueResource(EHandleType InHandleType, 

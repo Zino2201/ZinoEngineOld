@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Render/RenderThreadResource.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "ImGui/ImGui.h"
 
 namespace ZE { class IRenderSystemContext; }
 
@@ -11,15 +11,15 @@ namespace ZE::UI
 /**
  * ImGui render object to render imgui uis
  */
-class IMGUI_API CImGuiRender : public CRenderThreadResource
+class IMGUI_API CImGuiRender
 {
 public:
-	void InitResource_RenderThread() override;
-	void DestroyResource_RenderThread() override;
+	CImGuiRender();
 
 	/**
 	 * Update buffers
 	 */
+	void CopyDrawdata();
 	void Update();
 	void Draw(IRenderSystemContext* InContext);
 private:
@@ -33,6 +33,7 @@ private:
 	uint64_t IndexCount;
 	uint64_t LastVertexSize;
 	uint64_t LastIndexSize;
+	std::unique_ptr<ImDrawData> DrawData;
 };
 
 }

@@ -1,46 +1,48 @@
 #pragma once
 
 #include "EngineCore.h"
-
-namespace ZE { class CRSSurface; class CRSBuffer; }
+#include "WorldView.h"
+#include "RendererTransientData.h"
 
 namespace ZE::Renderer
 {
 
-class CWorldProxy;
+class CClusteredForwardRenderingPath;
+class CRenderPassDrawcallFactory;
 
 /**
- * Informations about the view
+ * Per view object that manage the whole world rendering
  */
-struct SWorldRendererView
-{
-    boost::intrusive_ptr<CRSSurface> Surface;
-    uint32_t Width;
-    uint32_t Height;
-    Math::STransform Position;
-    float FOV;
-    float NearPlane;
-    float FarPlane;
-    boost::intrusive_ptr<CRSBuffer> ViewDataUBO;
-};
-
-struct SViewData
-{
-    alignas(16) glm::mat4 ViewProj;
-    alignas(16) glm::vec3 ViewPos;
-    alignas(16) glm::vec3 ViewForward;
-};
-
-/**
- * Base interface for a world renderer
- */
-class RENDERER_API IWorldRenderer
+class CWorldRenderer 
 {
 public:
+    CWorldRenderer(const SWorldView& InView);
+    ~CWorldRenderer();
+
+    void CheckVisibility();
+
     /**
-     * Render a world
+     * Copy game state to render transient data
+     * Once finished, it is safe to modify game data
      */
-    virtual void Render(CWorldProxy* InWorld, const SWorldRendererView& InView) = 0;
+    void CopyGameState(TransientPerFrameDataMap& InPerFrameMap);
+
+    /**
+     * Prepare the renderer data for rendering
+     */
+    void Prepare();
+
+    /**
+     * Draw the world
+     */
+    void Draw();
+private:
+private:
+    std::unique_ptr<CClusteredForwardRenderingPath> RenderingPath;
+    std::vector<CRenderableComponentProxy*> VisibleProxies;
+    std::vector<STransientProxyDataPerView> PerViewData;
+    SWorldView View;
+    std::vector<std::unique_ptr<CRenderPassDrawcallFactory>> Factories;
 };
 
 }

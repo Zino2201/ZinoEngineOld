@@ -28,12 +28,6 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-void StartRenderThread()
-{
-	ZE::RenderThreadID = std::this_thread::get_id();
-	ZE::CRenderThread::Get().Run(&CZinoEngineMain::GTSemaphore);
-}
-
 #include "Shader/ShaderCore.h"
 
 namespace FS = ZE::FileSystem;
@@ -74,7 +68,6 @@ void CZinoEngineMain::PreInit()
 		LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing job system");
 		ZE::JobSystem::Initialize();
 
-		ZE::GameThreadID = std::this_thread::get_id();
 		SDL_InitSubSystem(SDL_INIT_VIDEO);
 
 		/** Load core modules */
@@ -104,13 +97,6 @@ void CZinoEngineMain::PreInit()
 
 		LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing & compiling basic shaders");
 		ZE::CBasicShaderManager::Get().CompileShaders();
-	}
-
-	/** START RENDER THREAD */
-	{
-		LOG(ZE::ELogSeverity::Info, EngineInit, "Starting render thread");
-		ZE::CRenderThread::Get();
-		RenderThreadHandle = std::thread(&StartRenderThread);
 	}
 }
 
@@ -173,8 +159,6 @@ void CZinoEngineMain::Loop()
 		 * Reset event at the end
 		 */
 		Event = {};
-
-		ZE::FlushRenderThread(true);
 	}
 
 	Exit();
@@ -189,20 +173,11 @@ void CZinoEngineMain::Exit()
 {
 	LOG(ZE::ELogSeverity::Info, EngineInit, "Exiting engine");
 
-	ZE::FlushRenderThread(true);
-
 	/** Delete engine */
 	Engine->Exit();
 	Engine.reset();
 
-	ZE::FlushRenderThread(true);
 	RenderSystem->WaitGPU();
-
-	/** Stopping render thread */
-	LOG(ZE::ELogSeverity::Info, EngineInit, "Stopping render thread");
-	ZE::CRenderThread::Get().bRun = false;
-	ZE::FlushRenderThread(true);
-	RenderThreadHandle.join();
 
 	ZE::CModuleManager::UnloadModule("Renderer");
 

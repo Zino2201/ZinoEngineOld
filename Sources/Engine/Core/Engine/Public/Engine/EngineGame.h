@@ -41,8 +41,7 @@ private:
     std::future<SShaderCompilerOutput> Frag;
     CRSBufferPtr ubo = nullptr;
     std::shared_ptr<class CStaticMesh> testSM;
-    TUniformBuffer<ZE::Renderer::SViewData> ViewDataUBO;
-    ZE::UI::CImGuiRender ImGuiRenderer;
+    std::unique_ptr<ZE::UI::CImGuiRender> ImGuiRenderer;
     ImFont* Font;
     std::mutex ProfilingMutex;
 };

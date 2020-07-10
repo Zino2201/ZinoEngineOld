@@ -50,18 +50,6 @@
 namespace ZE
 {
 
-/**
- * Thread IDs
- */
-ENGINECORE_API extern std::thread::id GameThreadID;
-ENGINECORE_API extern std::thread::id RenderThreadID;
-ENGINECORE_API extern std::thread::id StatThreadID;
-
-FORCEINLINE bool IsInRenderThread()
-{
-	return std::this_thread::get_id() == RenderThreadID;
-}
-
 /** Format */
 enum class EFormat
 {

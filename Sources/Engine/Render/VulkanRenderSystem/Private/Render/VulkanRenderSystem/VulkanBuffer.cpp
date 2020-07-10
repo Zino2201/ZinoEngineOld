@@ -98,9 +98,10 @@ CVulkanBuffer::CVulkanBuffer(
 
 CVulkanBuffer::~CVulkanBuffer() 
 {
-	vmaDestroyBuffer(Device->GetAllocator(),
-		Buffer,
-		Allocation);
+	Device->GetDeferredDestructionMgr().Enqueue<vk::Buffer, VkBuffer>(
+		CVulkanDeferredDestructionManager::EHandleType::Buffer,
+		Allocation,
+		Buffer);
 }
 
 void* CVulkanBuffer::Map(ERSBufferMapMode InMapMode)

@@ -1,8 +1,11 @@
 #include "Render/Window.h"
 #include <SDL2/SDL.h>
+#include "Module/Module.h"
 
 namespace ZE
 {
+
+DEFINE_MODULE(ZE::CDefaultModule, RenderCore);
 
 CWindow::CWindow(const char* InName, const uint32_t& InWidth, const uint32_t& InHeight)
 	: Name(InName), Width(InWidth), Height(InHeight), Handle(nullptr)

@@ -1,5 +1,5 @@
 #include "BasePass.h"
-#include "Renderer/MeshRenderPass.inl"
+#include "Render/RenderSystem/RenderSystemResources.h"
 
 namespace ZE::Renderer
 {
@@ -15,27 +15,5 @@ IMPLEMENT_SHADER(CBasePassShaderVS, "BasePassVS",
 
 IMPLEMENT_SHADER(CBasePassShaderFS, "BasePassFS",
 	"/ClusteredForward/BasePassFS.hlsl", "Main", EShaderStage::Fragment);
-
-void CBasePass::Process(CWorldProxy* InWorldProxy,
-	CRenderableComponentProxy* InProxy,
-	const CMeshCollection& InCollection,
-	const size_t& InInstanceIdx)
-{
-	/**
-	 * Get shaders
-	 */
-	SShaderArray<CBasePassShaderVS, CBasePassShaderFS> Shaders;
-
-	/**
-	 * Build mesh draw command
-	 */
-	BuildDrawCommand(InWorldProxy,
-		InProxy,
-		InCollection,
-		InInstanceIdx,
-		Shaders);
-}
-
-IMPLEMENT_MESH_RENDER_PASS(CBasePass, EMeshRenderPass::BasePass);
 
 }

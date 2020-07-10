@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/ECS.h"
+#include "Renderer/RenderableComponentInterface.h"
 #include "RenderableComponent.gen.h"
 
 namespace ZE::Renderer
@@ -12,15 +13,19 @@ class CWorldProxy;
 namespace ZE::Components
 {
 
+struct STransformComponent;
+
 /**
  * Base struct for component with render data that can be rendered by the renderer
  */
 ZSTRUCT()
-struct SRenderableComponent : public ECS::SEntityComponent
+struct SRenderableComponent : public ECS::SEntityComponent,
+    public Renderer::IRenderableComponent
 {
     REFL_BODY()
 
     Renderer::CRenderableComponentProxy* Proxy;
+    STransformComponent* TransformComponent;
 
     /** Notify the renderable system if the component proxy should be updated */
     ZPROPERTY()
@@ -29,10 +34,11 @@ struct SRenderableComponent : public ECS::SEntityComponent
     /**
      * Utility function for instanciating a proxy
      */
-    virtual TOwnerPtr<Renderer::CRenderableComponentProxy> InstantiateProxy(Renderer::CWorldProxy* InWorld) 
-        const { return nullptr; }
+    virtual TOwnerPtr<Renderer::CRenderableComponentProxy> InstantiateProxy() const { return nullptr; }
 
-    SRenderableComponent() : Proxy(nullptr), bHasBeenUpdated(false) {}
+	Math::STransform& GetTransform() const override;
+
+    SRenderableComponent() : Proxy(nullptr), TransformComponent(nullptr), bHasBeenUpdated(false) {}
 };
 /**
  * System for SRenderableComponent

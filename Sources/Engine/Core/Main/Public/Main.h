@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Render/RenderThread.h"
 #include <SDL2/SDL.h>
 #include "EngineCore.h"
 #include <mutex>
@@ -49,8 +48,6 @@ private:
     inline static std::unique_ptr<ZE::CEngine> Engine;
 
     inline static SDL_Event Event;
-
-    inline static std::thread RenderThreadHandle;
 
     inline static std::mutex RunMutx;
 public:

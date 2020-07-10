@@ -23,7 +23,6 @@ struct SStaticMeshComponent : public SRenderableComponent
 
     void SetStaticMesh(const std::shared_ptr<CStaticMesh>& InSM);
 
-    TOwnerPtr<Renderer::CRenderableComponentProxy> InstantiateProxy(
-        Renderer::CWorldProxy* InWorld) const override;
+    TOwnerPtr<Renderer::CRenderableComponentProxy> InstantiateProxy() const override;
 };
 }

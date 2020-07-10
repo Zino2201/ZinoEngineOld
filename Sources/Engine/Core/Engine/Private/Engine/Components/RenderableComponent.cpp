@@ -8,6 +8,11 @@
 namespace ZE::Components
 {
 
+Math::STransform& SRenderableComponent::GetTransform() const
+{
+	return TransformComponent->Transform;
+}
+
 void CRenderableComponentSystem::Initialize(ECS::CEntityManager& InEntityManager)
 {
 	InEntityManager.GetOnComponentAdded().Bind(std::bind(
@@ -57,18 +62,18 @@ void CRenderableComponentSystem::CreateProxy(ECS::CEntityManager& InEntityManage
 	if(STransformComponent* Transform = 
 		InEntityManager.GetComponent<STransformComponent>(InEntityID))
 	{
+		InComponent->TransformComponent = Transform;
+
 		/**
 		 * Instantiate a proxy for the render thread
 		 */
-		TOwnerPtr<Renderer::CRenderableComponentProxy> Proxy = InComponent->InstantiateProxy(
-			InEntityManager.GetWorld().GetProxy());
+		TOwnerPtr<Renderer::CRenderableComponentProxy> Proxy = InComponent->InstantiateProxy();
 		if(!Proxy)
 			return;
 
 		InComponent->Proxy = Proxy;
-		Proxy->SetTransform(Transform->Transform);
 
-		InEntityManager.GetWorld().GetProxy()->AddComponent(Proxy);
+		InEntityManager.GetWorld().GetProxy()->AddProxy(Proxy);
 	}
 	else
 	{
@@ -85,7 +90,7 @@ void CRenderableComponentSystem::DeleteProxy(ECS::CEntityManager& InEntityManage
 	if (!InComponent->Proxy)
 		return;
 
-	InEntityManager.GetWorld().GetProxy()->RemoveComponent(InComponent->Proxy);
+	InEntityManager.GetWorld().GetProxy()->RemoveProxy(InComponent->Proxy);
 	InComponent->Proxy = nullptr;
 }
 

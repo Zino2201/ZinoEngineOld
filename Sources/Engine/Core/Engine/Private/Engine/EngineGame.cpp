@@ -4,7 +4,6 @@
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "Render/RenderSystem/RenderSystemContext.h"
 #include "Engine/Viewport.h"
-#include "Render/RenderThread.h"
 #include <array>
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
@@ -15,7 +14,6 @@
 #include "Engine/ECS.h"
 #include "Engine/Components/TransformComponent.h"
 #include "Engine/Components/StaticMeshComponent.h"
-#include "Renderer/ClusteredForward/ClusteredForwardWorldRenderer.h"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #include "Pool.h"
@@ -26,6 +24,7 @@
 #include "Threading/JobSystem/JobSystem.h"
 #include <iostream>
 #include <chrono>
+#include "Renderer/RendererModule.h"
 
 namespace ZE
 {
@@ -151,14 +150,11 @@ void CEngineGame::Initialize()
 	using namespace ZE::Components;
 
 	/** Create main game window */
-	Window = new CWindow("ZinoEngine | Loading...", 1600, 900);
+	Window = new CWindow("ZinoEngine", 1600, 900);
 
 	/** Event on resize */
 	SDL_AddEventWatch(&StaticOnWindowResized, this);
 
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui::StyleColorsDark();
 	ImGui_ImplSDL2_InitForVulkan(reinterpret_cast<SDL_Window*>(Window->GetHandle()));
 
 	ImGuiIO& IO = ImGui::GetIO();
@@ -167,10 +163,9 @@ void CEngineGame::Initialize()
 	IO.WantCaptureKeyboard = true;
 	IO.WantCaptureMouse = true;
 	Font = IO.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 16.f);
-
+	
 	Viewport = std::make_unique<CViewport>(Window->GetHandle(), Window->GetWidth(), 
 		Window->GetHeight());
-	Viewport->InitResource();
 
 	World = std::make_unique<CWorld>();
 
@@ -179,12 +174,12 @@ void CEngineGame::Initialize()
 	 */
 	std::vector<SStaticMeshVertex> Vertices;
 	std::vector<uint32_t> Indices;
-	LoadModelUsingTinyObjLoader("Assets/Earth.obj", Vertices, Indices);
+	LoadModelUsingTinyObjLoader("Assets/sphere.obj", Vertices, Indices);
 
 	testSM = std::make_shared<CStaticMesh>();
 	testSM->UpdateData(Vertices, Indices);
 
-	for(int i = 0; i < 15; ++i)
+	for(int i = 0; i < 105; ++i)
 	{
 		double X = RAND_1_0 * 100 - 50;
 		double Y = RAND_1_0 * 100 - 50;
@@ -202,8 +197,9 @@ void CEngineGame::Initialize()
 		SM->SetStaticMesh(testSM);
 	}
 
-	ViewDataUBO.InitResource();
-	ImGuiRenderer.InitResource();
+	Renderer::CRendererModule::Get().CreateImGuiRenderer();
+
+	ImGuiRenderer = std::make_unique<ZE::UI::CImGuiRender>();
 }
 
 glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -226,11 +222,7 @@ int CEngineGame::OnWindowResized(SDL_Event* InEvent)
 		Window->SetHeight(static_cast<uint32_t>(InEvent->window.data2));
 		
 		// Resize viewport
-		EnqueueRenderCommand("ResizeWindow",
-			[this]()
-		{
-			Viewport->Resize(Window->GetWidth(), Window->GetHeight());
-		});
+		Viewport->Resize(Window->GetWidth(), Window->GetHeight());
 
 		return SDL_TRUE;
 	}
@@ -241,6 +233,8 @@ int CEngineGame::OnWindowResized(SDL_Event* InEvent)
 void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 {
 	CEngine::Tick(InEvent, InDeltaTime);
+
+	LOG(ELogSeverity::Debug, None, "Game tick");
 
 	static Uint64 Now = SDL_GetPerformanceCounter();
 	static Uint64 Last = 0;
@@ -347,67 +341,45 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 	ImGui::End();
 	ImGui::PopFont();
 
-	/** Draw the scene */
-	EnqueueRenderCommand("CEngineGame::DrawWorld",
-		[this, DeltaTime]()
-	{
-		GRenderSystem->NewFrame();
+	/** Ensure all rendering is finished */
+	Renderer::CRendererModule::Get().WaitRendering();
+	
+	static bool bHasBegun = false;
 
-		/**
-		 * Don't render if begin fail (swapchain recreated)
-		 */
-		if(Viewport->Begin())
-		{
-			{
-				ZE::Renderer::SViewData VD;
-				glm::mat4 View = glm::lookAt(CameraPos, CameraPos
-					+ CameraFront,
-					CameraUp);
-				glm::mat4 Proj = glm::perspective(glm::radians(90.f),
-					(float)Window->GetWidth() / Window->GetHeight(),
-					100000.F, 0.01f);
-				VD.ViewProj = Proj * View;
-				VD.ViewPos = CameraPos;
-				VD.ViewForward = CameraFront;
-				ViewDataUBO.Copy(&VD);
-			}
+	/** Present */
 
-			/** Render world */
-			ZE::Renderer::SWorldRendererView View;
-			View.Width = Window->GetWidth();
-			View.Height = Window->GetHeight();
-			View.Surface = Viewport->GetSurface();
-			View.ViewDataUBO = ViewDataUBO.GetBuffer();
-			ZE::Renderer::CClusteredForwardWorldRenderer Renderer(ImGuiRenderer);
-			Renderer.Render(World->GetProxy(), View);
-
-			Viewport->End();
-		}
-	});
-
-	static float fpsC = 0;
-	if(fpsC >= 0.15f)
-	{
-		std::stringstream NewTitle;
-		NewTitle << std::fixed;
-		NewTitle << "ZinoEngine | FPS: " << (int)1.f / DeltaTime << " (" 
-			<< DeltaTime * 1000 << " ms)";
-		SDL_SetWindowTitle(reinterpret_cast<SDL_Window*>(Window->GetHandle()),
-			NewTitle.str().c_str());
-		fpsC = 0;
-	}
-	fpsC += DeltaTime;
-
+	if(bHasBegun)
+		Viewport->End();
+	
 	ImGui::Render();
+
+	/** Trigger rendering */
+	GRenderSystem->NewFrame();
+
+	if(bHasBegun = Viewport->Begin())
+	{
+		ZE::Renderer::SWorldView WorldView(*World->GetProxy());
+		WorldView.Scissor = { { 0.f, 0.f }, { Window->GetWidth(), Window->GetHeight() } };
+		WorldView.Viewport = { WorldView.Scissor, 0.f, 1.0f };
+		glm::mat4 View = glm::lookAt(CameraPos, CameraPos
+				+ CameraFront,
+				CameraUp);
+		glm::mat4 Proj = glm::perspective(glm::radians(90.f),
+			(float)Window->GetWidth() / Window->GetHeight(),
+			100000.F, 0.01f);
+		WorldView.ViewProj = Proj * View;
+		WorldView.ViewPos = CameraPos;
+		WorldView.ViewForward = CameraFront;
+		WorldView.TargetRT = Viewport->GetSurface()->GetBackbufferTexture();
+		Renderer::CRendererModule::Get().EnqueueView(WorldView);
+	}
+
+	Renderer::CRendererModule::Get().FlushViews();
 }
 
 void CEngineGame::Exit()
 {
-	testSM->GetRenderData()->DestroyResource();
-	ImGuiRenderer.DestroyResource();
-	ViewDataUBO.DestroyResource();
 	ImGui_ImplSDL2_Shutdown();
-	ImGui::DestroyContext();
 }
 
 CEngine* CreateEngine()

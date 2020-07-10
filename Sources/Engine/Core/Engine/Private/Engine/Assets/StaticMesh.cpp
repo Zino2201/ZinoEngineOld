@@ -6,7 +6,7 @@ namespace ZE
 
 DECLARE_LOG_CATEGORY(StaticMesh);
 
-void CStaticMeshRenderData::InitResource_RenderThread()
+CStaticMeshRenderData::CStaticMeshRenderData(CStaticMesh* InStaticMesh) : StaticMesh(InStaticMesh) 
 {
 	const std::vector<SStaticMeshVertex>& Vertices = StaticMesh->Vertices;
 	const std::vector<uint32_t>& Indices = StaticMesh->Indices;
@@ -33,12 +33,6 @@ void CStaticMeshRenderData::InitResource_RenderThread()
 		LOG(ELogSeverity::Fatal, StaticMesh, "Failed to create a index buffer");
 }
 
-void CStaticMeshRenderData::DestroyResource_RenderThread()
-{
-	VertexBuffer.reset();
-	IndexBuffer.reset();
-}
-
 void CStaticMesh::UpdateData(const std::vector<SStaticMeshVertex>& InVertices,
 	const std::vector<uint32_t>& InIndices)
 {
@@ -46,11 +40,7 @@ void CStaticMesh::UpdateData(const std::vector<SStaticMeshVertex>& InVertices,
 	Indices = InIndices;
 	IndexCount = static_cast<uint32_t>(Indices.size());
 
-	if(RenderData)
-		RenderData->DestroyResource();
-
 	RenderData = std::make_unique<CStaticMeshRenderData>(this);
-	RenderData->InitResource();
 }
 
 } /* namespace ZE */

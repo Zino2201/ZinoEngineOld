@@ -1,21 +1,20 @@
-#include "Renderer/ClusteredForward/ClusteredForwardWorldRenderer.h"
+#include "Renderer/ClusteredForward/ClusteredForwardRenderingPath.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "Renderer/FrameGraph/FrameGraph.h"
 #include "Render/RenderSystem/RenderSystemContext.h"
 #include "Renderer/WorldProxy.h"
 #include "Render/Shader/BasicShader.h"
 #include "Render/RenderSystem/RenderSystem.h"
-#include "Renderer/ProxyDrawCommand.h"
 #include "Renderer/PostProcess/BarrelDistortion.h"
 #include "ImGui/ImGuiRender.h"
+#include "Renderer/RendererModule.h"
 
 namespace ZE::Renderer
 {
 
 SRSGraphicsPipeline Test;
 
-CClusteredForwardWorldRenderer::CClusteredForwardWorldRenderer(ZE::UI::CImGuiRender& InImGuiRenderer) :
-	ImGuiRenderer(InImGuiRenderer)
+CClusteredForwardRenderingPath::CClusteredForwardRenderingPath()
 {
 	std::vector<SVertexInputBindingDescription> BindingDescriptions = 
 	{
@@ -60,10 +59,10 @@ CClusteredForwardWorldRenderer::CClusteredForwardWorldRenderer(ZE::UI::CImGuiRen
 	);
 }
 
-void CClusteredForwardWorldRenderer::Render(CWorldProxy* InWorld, const SWorldRendererView& InView)
+void CClusteredForwardRenderingPath::Draw(const SWorldView& InView)
 {
-	must(InView.Surface);
-	if(!InView.Surface)
+	must(InView.TargetRT);
+	if(!InView.TargetRT)
 		return;
 
 	/**
@@ -84,48 +83,32 @@ void CClusteredForwardWorldRenderer::Render(CWorldProxy* InWorld, const SWorldRe
 		[&](CRenderPass& InRenderPass, SBasePass& InData)
 	{
 		SRenderPassTextureInfos ColorInfos;
-		ColorInfos.Format = InView.Surface->GetSwapChainFormat();
-		ColorInfos.Width = InView.Width;
-		ColorInfos.Height = InView.Height;
+		ColorInfos.Format = InView.TargetRT->GetFormat();
+		ColorInfos.Width = InView.TargetRT->GetWidth();
+		ColorInfos.Height = InView.TargetRT->GetHeight();
 		ColorInfos.Usage = ERSTextureUsage::RenderTarget | ERSTextureUsage::Sampled;
 
 		SRenderPassTextureInfos DepthInfos;
 		DepthInfos.Format = EFormat::D32SfloatS8Uint;
-		DepthInfos.Width = InView.Width;
-		DepthInfos.Height = InView.Height;
+		DepthInfos.Width = InView.TargetRT->GetWidth();
+		DepthInfos.Height = InView.TargetRT->GetHeight();
 
 		InData.Color = InRenderPass.CreateTexture(ColorInfos);
 		InData.Depth = InRenderPass.CreateTexture(DepthInfos);
-		InData.Backbuffer = InRenderPass.CreateRetainedTexture(InView.Surface->GetBackbufferTexture());
+		InData.Backbuffer = InRenderPass.CreateRetainedTexture(InView.TargetRT.get());
 
 		InRenderPass.Write(InData.Color);
 		InRenderPass.Write(InData.Depth);
 	},
 	[&](IRenderSystemContext* InContext, const SBasePass& InData)
 	{
-		InContext->SetScissors(
-			{
-				{
-					glm::vec2(0.f, 0.f),
-					glm::vec2(InView.Width, InView.Height)
-				}
-			});
-		InContext->SetViewports(
-			{
-				{
-					{
-						glm::vec2(0.f, 0.f),
-						glm::vec2(InView.Width, InView.Height)
-					},
-					0.0f, 1.0f
-				}
-			});
+		InContext->SetScissors({ InView.Scissor });
+		InContext->SetViewports({ InView.Viewport });
 
-		RenderWorld(InContext, InWorld, InView, EMeshRenderPass::BasePass);
-
+		InView.RenderPassRendererMap.at(ERenderPass::BasePass).Draw(*InContext);
 		/** Render UI */
-		ImGuiRenderer.Update();
-		ImGuiRenderer.Draw(GRSContext);
+		CRendererModule::Get().GetImGuiRenderer()->Update();
+		CRendererModule::Get().GetImGuiRenderer()->Draw(GRSContext);
 	});
 
 	/** POST PROCESS */
@@ -133,39 +116,6 @@ void CClusteredForwardWorldRenderer::Render(CWorldProxy* InWorld, const SWorldRe
 
 	Graph.Compile();
 	Graph.Execute();
-}
-
-void CClusteredForwardWorldRenderer::RenderWorld(IRenderSystemContext* InContext, 
-	CWorldProxy* InWorld,
-	const SWorldRendererView& InView,
-	EMeshRenderPass InRenderPass)
-{
-	// TODO: Optimize to reduce v/i buffer binding
-	for(const auto& DrawCommand : InWorld->GetDrawCommandManager().GetDrawCommandPool(InRenderPass))
-	{
-		/** Bind pipeline and v/i buffers */
-		InContext->BindGraphicsPipeline(Test);
-		InContext->BindVertexBuffers({ DrawCommand.GetVertexBuffer() });
-		InContext->BindIndexBuffer({ DrawCommand.GetIndexBuffer() }, 0,
-			DrawCommand.GetIndexFormat());
-
-		InContext->SetShaderUniformBuffer(0, 0, InView.ViewDataUBO.get());
-
-		/** Apply draw command shader bindings */
-		for (const auto& Binding : DrawCommand.GetBindings())
-		{
-			InContext->SetShaderUniformBuffer(Binding.Set,
-				Binding.Binding,
-				Binding.Buffer.get());
-		}
-
-		/** Do the actual draw call */
-		InContext->DrawIndexed(DrawCommand.GetIndexCount(),
-			1,
-			0,
-			0,
-			0);
-	}
 }
 
 }

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Asset.h"
-#include "Render/RenderThreadResource.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 
 namespace ZE
@@ -60,13 +59,10 @@ struct SStaticMeshVertexHash
 /**
  * Render data of a static mesh
  */
-class CStaticMeshRenderData : public CRenderThreadResource
+class CStaticMeshRenderData
 {
 public:
-    CStaticMeshRenderData(CStaticMesh* InStaticMesh) : StaticMesh(InStaticMesh) {}
-
-    void InitResource_RenderThread() override;
-    void DestroyResource_RenderThread() override;
+    CStaticMeshRenderData(CStaticMesh* InStaticMesh);
 
     CRSBuffer* GetVertexBuffer() const { return VertexBuffer.get(); }
     CRSBuffer* GetIndexBuffer() const { return IndexBuffer.get(); }

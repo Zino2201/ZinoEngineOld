@@ -1,6 +1,7 @@
 #include "Engine/World.h"
 #include "Engine/ECS.h"
 #include "Renderer/WorldProxy.h"
+#include "Renderer/RenderableComponentProxy.h"
 
 namespace ZE
 {

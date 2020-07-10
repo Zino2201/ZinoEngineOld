@@ -2,7 +2,6 @@
 
 #include "EngineCore.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
-#include "Render/RenderThreadResource.h"
 
 namespace ZE
 {
@@ -12,16 +11,12 @@ DECLARE_LOG_CATEGORY(Viewport);
 /**
  * Represents a viewport
  */
-class CViewport : public CRenderThreadResource
+class CViewport
 {
 public:
     CViewport(void* InWindowHandle, const uint32_t& InWidth,
         const uint32_t& InHeight);
 
-	void InitResource_RenderThread() override;
-	void DestroyResource_RenderThread() override;
-
-    /** Render-thread only */
     bool Begin();
     void End();
     void Resize(const uint32_t& InWidth, const uint32_t& InHeight);

@@ -5,7 +5,6 @@
 #include "Render/Shader/BasicShader.h"
 #include "Module/ModuleManager.h"
 
-DEFINE_MODULE(ZE::CDefaultModule, ImGui);
 DECLARE_LOG_CATEGORY(ImGuiRender);
 
 namespace ZE::UI
@@ -41,7 +40,7 @@ struct SGlobalData
 	Math::SVector2f Translate;
 };
 
-void CImGuiRender::InitResource_RenderThread()
+CImGuiRender::CImGuiRender()
 {
 	ImGuiIO& IO = ImGui::GetIO();
 
@@ -51,6 +50,7 @@ void CImGuiRender::InitResource_RenderThread()
 	uint8_t* FontData = nullptr;
 	int FontWidth = 0;
 	int FontHeight = 0;
+
 	IO.Fonts->GetTexDataAsRGBA32(&FontData, &FontWidth, &FontHeight);
 	Font = GRenderSystem->CreateTexture(
 		ERSTextureType::Tex2D,
@@ -120,17 +120,41 @@ void CImGuiRender::InitResource_RenderThread()
 			EBlendFactor::Zero,
 			EBlendOp::Add)
 	};
+
+	DrawData = std::make_unique<ImDrawData>();
 }
 
-void CImGuiRender::DestroyResource_RenderThread()
+void CImGuiRender::CopyDrawdata()
 {
+	ImDrawData* ImGuiDrawData = ImGui::GetDrawData();
+	if(!ImGuiDrawData)
+		return;
 
+	bool bRecreateCmdList = ImGuiDrawData->CmdListsCount != DrawData->CmdListsCount;
+	ImDrawList** DrawList = DrawData->CmdLists;
+
+	for (size_t i = 0; i < DrawData->CmdListsCount; ++i)
+	{
+		IM_DELETE(DrawData->CmdLists[i]);
+	}
+	
+	if(bRecreateCmdList)
+		delete DrawData->CmdLists;
+
+	memcpy(DrawData.get(), ImGuiDrawData, sizeof(ImDrawData));
+	DrawData->CmdLists = DrawList;
+
+	if(bRecreateCmdList)
+		DrawData->CmdLists = new ImDrawList*[DrawData->CmdListsCount];
+
+	for(size_t i = 0; i < DrawData->CmdListsCount; ++i)
+	{
+		DrawData->CmdLists[i] = ImGuiDrawData->CmdLists[i]->CloneOutput();
+	}
 }
 
 void CImGuiRender::Update()
 {
-	ImDrawData* DrawData = ImGui::GetDrawData();
-
 	if (!DrawData)
 		return;
 
@@ -194,8 +218,6 @@ void CImGuiRender::Update()
 
 void CImGuiRender::Draw(IRenderSystemContext* InContext)
 {
-	ImDrawData* DrawData = ImGui::GetDrawData();
-
 	if (!DrawData || !Sampler || !GlobalData || !Font || !VertexBuffer || !IndexBuffer)
 		return;
 

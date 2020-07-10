@@ -54,6 +54,11 @@ void CVulkanDeferredDestructionManager::DestroyResources()
 	{
 		switch(Entry.Type)
 		{
+		case EHandleType::Buffer:
+			vmaDestroyBuffer(Device.GetAllocator(),
+				reinterpret_cast<VkBuffer>(Entry.Handle),
+				Entry.Allocation);
+			break;
 		case EHandleType::Image:
 			vmaDestroyImage(Device.GetAllocator(),
 				reinterpret_cast<VkImage>(Entry.Handle),

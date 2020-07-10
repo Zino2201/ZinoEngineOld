@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Render/Shader/BasicShader.h"
-#include "Renderer/MeshRenderPass.h"
 
 namespace ZE::Renderer
 {
@@ -20,17 +19,6 @@ class CBasePassShaderFS : public CBasicShader
 
 public:
 	CBasePassShaderFS(const CShaderType* InType, const SShaderCompilerOutput& InOutput);
-};
-
-class CBasePass : public CMeshRenderPass
-{
-public:
-	CBasePass(EMeshRenderPass InRenderPass) : CMeshRenderPass(InRenderPass) {}
-
-	void Process(CWorldProxy* InWorldProxy,
-		CRenderableComponentProxy* InProxy,
-		const CMeshCollection& InCollection,
-		const size_t& InInstanceIdx) override;
 };
 
 }
