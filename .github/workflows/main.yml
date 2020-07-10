@@ -39,5 +39,5 @@ jobs:
     - name: build-sln
       run: |
         @echo | call GenerateVS2019.bat
-        msbuild Build/ProjectFiles/ZinoEngine.sln /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
+        msbuild -m Build/ProjectFiles/ZinoEngine.sln /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
       shell: cmd

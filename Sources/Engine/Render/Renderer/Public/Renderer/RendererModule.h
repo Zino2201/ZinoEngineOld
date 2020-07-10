@@ -23,37 +23,35 @@ struct SQuadVertex
 class CRendererModule : public CModule
 {
 public:
-	static CRendererModule& Get()
-	{
-		static CRendererModule& Module = *CModuleManager::LoadModule<CRendererModule>("Renderer");
-		return Module;
-	}
+	virtual ~CRendererModule();
 
-	void Initialize() override;
-	void Destroy() override;
+	RENDERER_API static CRendererModule& Get();
 
-	void CreateImGuiRenderer();
+	RENDERER_API void Initialize() override;
+	RENDERER_API void Destroy() override;
+
+	RENDERER_API void CreateImGuiRenderer();
 
 	/**
 	 * Enqueue a view for rendering
 	 */
-	void EnqueueView(const SWorldView& InView);
+	RENDERER_API void EnqueueView(const SWorldView& InView);
 
 	/**
 	 * Wait for rendering
 	 */
-	void WaitRendering();
+	RENDERER_API void WaitRendering();
 
 	/**
 	 * Flush views
 	 * Returns when game state copy is finished for all views
 	 */
-	void FlushViews();
+	RENDERER_API void FlushViews();
 
-	static inline CRSBufferPtr QuadVBuffer;
-	static inline CRSBufferPtr QuadIBuffer;
+	RENDERER_API static inline CRSBufferPtr QuadVBuffer;
+	RENDERER_API static inline CRSBufferPtr QuadIBuffer;
 
-	UI::CImGuiRender* GetImGuiRenderer() { return ImGuiRenderer.get(); }
+	RENDERER_API UI::CImGuiRender* GetImGuiRenderer() { return ImGuiRenderer.get(); }
 private:
 	void BeginDrawView(const SWorldView& InView);
 private:

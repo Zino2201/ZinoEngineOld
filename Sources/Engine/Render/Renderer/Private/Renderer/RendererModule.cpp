@@ -25,6 +25,15 @@ const std::array<uint16_t, 6> QuadIndices =
 	 2, 3, 0
 };
 
+CRendererModule::~CRendererModule() = default;
+
+
+CRendererModule& CRendererModule::Get()
+{
+	static CRendererModule& Module = *CModuleManager::LoadModule<CRendererModule>("Renderer");
+	return Module;
+}
+
 void CRendererModule::Initialize()
 {
 	QuadVBuffer = GRenderSystem->CreateBuffer(

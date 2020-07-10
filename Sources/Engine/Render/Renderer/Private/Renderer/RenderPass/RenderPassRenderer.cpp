@@ -4,6 +4,7 @@
 #include "Renderer/WorldProxy.h"
 #include "Threading/JobSystem/ParallelFor.h"
 #include "Render/RenderSystem/RenderSystemContext.h"
+#include "Renderer/RenderableComponentProxy.h"
 
 DECLARE_LOG_CATEGORY(RenderPassRenderer);
 

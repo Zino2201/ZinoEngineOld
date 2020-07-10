@@ -199,6 +199,13 @@ public:
 
 		return Elements[InIndex];
 	}
+
+	TCoherentArray& operator=(const TCoherentArray& InOther)
+	{
+		Elements = InOther.Elements;
+		AllocatedBitset = InOther.AllocatedBitset;
+		return *this;
+	}
 private:
 	/**
 	 * Get a free index or grow the vectors

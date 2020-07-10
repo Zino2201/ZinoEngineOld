@@ -3,6 +3,7 @@
 #include "EngineCore.h"
 #include "RenderPass/RenderPassRenderer.h"
 #include "MeshRendering/MeshDrawcall.h"
+#include "NonCopyable.h"
 
 namespace ZE::Renderer
 {
@@ -13,7 +14,7 @@ class CRenderableComponentProxy;
  * Renderer version of CWorld
  * Contains proxies
  */
-class RENDERER_API CWorldProxy final
+class RENDERER_API CWorldProxy final : public CNonCopyable
 {
 public:
 	~CWorldProxy();

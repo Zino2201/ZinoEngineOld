@@ -19,6 +19,8 @@ class ENGINECORE_API CModule : public CNonCopyable
     friend class CModuleManager;
 
 public:
+    virtual ~CModule() = default;
+
     virtual void Initialize();
     virtual void Destroy() {}
     const std::string& GetName() const { return Name; }

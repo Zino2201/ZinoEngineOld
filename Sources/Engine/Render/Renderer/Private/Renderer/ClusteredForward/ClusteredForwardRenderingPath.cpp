@@ -8,6 +8,7 @@
 #include "Renderer/PostProcess/BarrelDistortion.h"
 #include "ImGui/ImGuiRender.h"
 #include "Renderer/RendererModule.h"
+#include "Renderer/RenderableComponentProxy.h"
 
 namespace ZE::Renderer
 {
