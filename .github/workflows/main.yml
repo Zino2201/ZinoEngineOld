@@ -40,4 +40,4 @@ jobs:
       run: |
         @echo | call GenerateVS2019.bat
         msbuild Build/ProjectFiles/ZinoEngine.sln /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
-        shell: cmd
+      shell: cmd
