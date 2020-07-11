@@ -154,7 +154,7 @@ jobs:
         path: Release/
         
     # Make release
-    - uses: github/create-release@v1
+    - uses: actions/create-release@v1
       with:
         release_name: Windows RM Nightly
         tag_name: nightly-win
