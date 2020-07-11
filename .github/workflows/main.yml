@@ -132,7 +132,8 @@ jobs:
 
     # Copy DLLs
     - name: copy-dlls
-      run: @echo | call CopyDLLs.bat
+      run: | 
+        @echo | call CopyDLLs.bat
       shell: cmd
       
     # Generate artifact
