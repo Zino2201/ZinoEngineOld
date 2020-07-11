@@ -154,23 +154,11 @@ jobs:
         path: Release/
         
     # Make release
-    - id: create_release
-      uses: actions/create-release@v1
+    - uses: meeDamian/github-release@2.0
       with:
-        release_name: Windows RM Nightly
-        tag_name: nightly-win
-        body: |
-            Built from latest commit. 
-            Except many bugs and unstability.
-        prerelease: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./Release.zip
-        asset_name: ZinoEngine RM Win64.zip
-        asset_content_type: application/zip
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: nightly-win
+        allow_override: true
+        gzip: folders
+        files: Release.zip
         
