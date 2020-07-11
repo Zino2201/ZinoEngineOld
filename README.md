@@ -1,5 +1,7 @@
 # ZinoEngine
 
+![Windows](https://github.com/Zino2201/ZinoEngine/workflows/Windows/badge.svg)
+
 A custom C++ 3d vulkan only (for now) game engine that I make for fun.
 
 https://trello.com/b/2LhrNkyw/zinoengine
@@ -45,7 +47,8 @@ Type names are prefixed with a letter:
 - `T` for templated structs/classes : `template<typename T> class TMyTemplatedClass`
 
 Prefix all booleans with `b`: `bool bMyBool`.
-Suffix using/typedefs with `Type` when a prefix isn't possible: `using DrawcallListDrawcallListType = std::vector<SMeshDrawcall>;`, `using SVector3 = TVector<double>;`
+
+Suffix using/typedefs with `Type` when a prefix isn't possible: `using DrawcallListType = std::vector<SMeshDrawcall>;`, `using SVector3 = TVector<double>;`
 
 For macros, write them `LIKE_THAT`
 
