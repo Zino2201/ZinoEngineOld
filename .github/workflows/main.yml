@@ -137,7 +137,7 @@ jobs:
       shell: cmd
       
     # Prepare artifact
-    - name: prepare-artifact:
+    - name: prepare-artifact
       run: |
         mkdir Release
         copy "Binaries\Release Monolithic\*.dll" "Release\*.dll"
