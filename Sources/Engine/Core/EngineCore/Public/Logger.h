@@ -4,6 +4,8 @@
 #include <cstdarg>
 #include <string>
 
+namespace ZE::Serialization { class CFileArchive; }
+
 namespace ZE
 {
 
@@ -34,6 +36,8 @@ public:
 		return Instance;
 	}
 
+	void Initialize();
+
 	void Log(const ELogSeverity& InSeverity, const std::string& InCategory, const std::string& InMessage, va_list InArgs) const;
 
 	/**
@@ -58,6 +62,8 @@ public:
 private:
 	CLogger();
 	~CLogger();
+private:
+	std::unique_ptr<Serialization::CFileArchive> FileArchive;
 };
 
 } /* namespace ZE */

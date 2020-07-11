@@ -10,8 +10,8 @@ namespace ZE::Renderer
  */
 struct SMesh
 {
-	CRSBufferPtr VertexBuffer;
-	CRSBufferPtr IndexBuffer;
+	CRSBuffer* VertexBuffer;
+	CRSBuffer* IndexBuffer;
 	EIndexFormat IndexFormat;
 	union
 	{

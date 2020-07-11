@@ -11,13 +11,18 @@ namespace ZE::Serialization
 class ENGINECORE_API IArchive
 {
 public:
-	IArchive() : bIsSaving(false) {}
+	IArchive() : bIsSaving(false), bIsBinary(true) {}
+	IArchive(const bool& bInBinary) : bIsSaving(false), bIsBinary(bInBinary) {}
 
 	virtual void Serialize(const void* InData, const uint64_t& InSize) = 0;
 	virtual void Deserialize(void* InData, const uint64_t& InSize) = 0;
+	virtual void Flush() = 0;
+
 	bool IsSaving() const { return bIsSaving; }
+	bool IsBinary() const { return bIsBinary; }
 protected:
 	bool bIsSaving;
+	bool bIsBinary;
 };
 
 #pragma region Operators
@@ -30,7 +35,7 @@ FORCEINLINE IArchive& operator<<(IArchive& InArchive, const T& InValue)
 	static_assert(std::is_trivially_copyable_v<T>, "No operator<< found which can use T");
 	if (!InArchive.IsSaving())
 		return InArchive;
-
+		
 	InArchive.Serialize(&InValue, sizeof(T));
 
 	return InArchive;
@@ -50,6 +55,8 @@ FORCEINLINE IArchive& operator>>(IArchive& InArchive, T& InValue)
 
 	return InArchive;
 }
+
+#include "Operators/Char.inl"
 
 /**
  * Operators for std::array
@@ -113,35 +120,7 @@ FORCEINLINE IArchive& operator>>(IArchive& InArchive, std::vector<T>& InValue)
 	return InArchive;
 }
 
-/**
- * Operators for std::string
- */
-FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::string& InValue)
-{
-	if (!InArchive.IsSaving())
-		return InArchive;
-
-	InArchive << InValue.size();
-	InArchive.Serialize(InValue.c_str(), InValue.size());
-
-	return InArchive;
-}
-
-FORCEINLINE IArchive& operator>>(IArchive& InArchive, std::string& InValue)
-{
-	if (InArchive.IsSaving())
-		return InArchive;
-
-	/** Resize string */
-	size_t Size = 0;
-	InArchive >> Size;
-	InValue.resize(Size);
-
-	/** Copy to string */
-	InArchive.Deserialize(InValue.data(), InValue.size());
-
-	return InArchive;
-}
+#include "Operators/String.inl"
 
 #pragma endregion
 

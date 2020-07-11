@@ -42,11 +42,17 @@ void CZinoEngineMain::PreInit()
 		ZE::CModuleManager::LoadModule("EngineCore");
 		LOG(ZE::ELogSeverity::Info, EngineInit, "=== ZinoEngine %s Build ===", ZE_CONFIGURATION_NAME);
 		
+#ifdef ZE_DEBUG
+		LOG(ZE::ELogSeverity::Warn, EngineInit, "Using a debug build ! Except very bad performances");
+#endif
+
 		/** Mount std file system to current working dir */
 		FS::IFileSystem* Root = FS::CFileSystemManager::Get()
 			.AddFileSystem<ZE::FileSystem::CStdFileSystem>("Root", "/", 0,
 			ZE::FileUtils::GetCurrentWorkingDirectory());
 		FS::SetWriteFS(Root);
+
+		ZE::CLogger::Get().Initialize();
 
 		/** Check if required directories/files are presents */
 		const std::array<const char*, 2> RequiredObjects = 

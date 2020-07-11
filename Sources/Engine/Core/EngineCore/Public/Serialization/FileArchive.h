@@ -17,6 +17,7 @@ public:
 
 	void Serialize(const void* InData, const uint64_t& InSize) override;
 	void Deserialize(void* InData, const uint64_t& InSize) override;
+	void Flush() override;
 private:
 	std::unique_ptr<ZE::FileSystem::IFile> File;
 };

@@ -8,5 +8,7 @@
 class CAsset
 {
 public:
+    virtual ~CAsset() = default;
+
     //bool LoadByDefault();
 };

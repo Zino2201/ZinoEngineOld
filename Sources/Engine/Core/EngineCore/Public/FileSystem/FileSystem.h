@@ -43,10 +43,14 @@ public:
 	 */
 	virtual void Write(const uint8_t* InData, const uint64_t& InSize) = 0;
 
+	virtual void Flush() = 0;
+
 	/**
 	 * Is this interface reading ?
 	 */
 	virtual bool IsReading() const = 0;
+
+	virtual bool IsBinary() const = 0;
 
 	virtual int64_t GetSize() const = 0;
 	virtual int64_t Tell() = 0;
@@ -61,8 +65,8 @@ public:
 	IFileSystem(const std::string& InAlias,
 		const uint8_t& InPriority) {}
 	
-	virtual TOwnerPtr<IFile> Read(const std::string_view& InPath) = 0;
-	virtual TOwnerPtr<IFile> Write(const std::string_view& InPath) = 0;
+	virtual TOwnerPtr<IFile> Read(const std::string_view& InPath, const bool& bIsBinary) = 0;
+	virtual TOwnerPtr<IFile> Write(const std::string_view& InPath, const bool& bIsBinary) = 0;
 	virtual bool IterateDirectories(const std::string_view& InPath, 
 		const TDirectoryIterator& InIt) = 0;
 	virtual bool Exists(const std::string_view& InPath) = 0;

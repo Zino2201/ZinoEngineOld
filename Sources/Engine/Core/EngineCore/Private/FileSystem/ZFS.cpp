@@ -73,7 +73,7 @@ TOwnerPtr<IFile> Read(const std::string_view& InPath,
 	return ExecutePtr<TOwnerPtr<IFile>>(InPath,
 		[InPath, InReadFlags](IFileSystem* InFS) -> TOwnerPtr<IFile>
 	{
-		return InFS->Read(InPath);
+		return InFS->Read(InPath, false);
 	});
 }
 
@@ -93,7 +93,7 @@ TOwnerPtr<IFile> Write(const std::string_view& InPath,
 			}
 		}
 
-		return InFS->Write(InPath);
+		return InFS->Write(InPath, HAS_FLAG(InWriteFlags, EFileWriteFlags::Binary));
 	});
 }
 

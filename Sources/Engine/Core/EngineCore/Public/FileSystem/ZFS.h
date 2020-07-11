@@ -32,7 +32,8 @@ DECLARE_FLAG_ENUM(EFileReadFlags);
 enum class EFileWriteFlags
 {
 	None = 1 << 0,
-	ReplaceExisting = 1 << 1
+	ReplaceExisting = 1 << 1,
+	Binary = 1 << 2,
 };
 DECLARE_FLAG_ENUM(EFileWriteFlags);
 

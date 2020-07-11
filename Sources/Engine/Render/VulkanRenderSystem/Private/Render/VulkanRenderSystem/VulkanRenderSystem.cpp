@@ -192,7 +192,7 @@ void CVulkanRenderSystem::Initialize()
 
 		if (!PhysicalDevice)
 			LOG(ELogSeverity::Fatal, VulkanRS, 
-				"Can't found an compatible GPU. Do you have a Vulkan compatible GPU ?");
+				"Failed to find a Vulkan compatible GPU.");
 
 		Device = std::make_unique<CVulkanDevice>(PhysicalDevice);
 		GRenderSystemContext = Device->GetContext();

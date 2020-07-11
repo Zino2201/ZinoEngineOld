@@ -13,8 +13,8 @@ void CRenderPassDrawcallFactory::ComputeDrawcalls(const SMesh& InMesh,
 	const std::vector<SMeshDrawcallShaderBinding>& InBindings)
 {
 	size_t DrawcallIdx = DrawcallList->Emplace(std::move(InPipeline),
-		InMesh.VertexBuffer.get(),
-		InMesh.IndexBuffer.get(),
+		InMesh.VertexBuffer,
+		InMesh.IndexBuffer,
 		InMesh.IndexFormat,
 		InMesh.VertexCount,
 		InMesh.IndexCount,

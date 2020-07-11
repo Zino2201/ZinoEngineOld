@@ -343,4 +343,5 @@ healthchecksdb
 Binaries/
 Build/
 Releases/
+Logs/
 imgui.ini

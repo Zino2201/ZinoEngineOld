@@ -10,7 +10,7 @@ on:
   pull_request:
     branches: [ master ]
   schedule:
-    - cron:  '0 0 * * *'
+    - cron: '0 0 * * *'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -92,7 +92,7 @@ jobs:
      # Generate artifact
     - uses: actions/upload-artifact@v2
       with:
-        name: ZinoEngine DM Win64
+        name: ZinoEngine Debug Monolithic Win64
         path: Debug/
   build-windows-release:
     # The type of runner that the job will run on
@@ -171,7 +171,7 @@ jobs:
     # Generate artifact
     - uses: actions/upload-artifact@v2
       with:
-        name: ZinoEngine RM Win64
+        name: ZinoEngine Release Monolithic Win64
         path: Release/
   # Release
   release:
@@ -184,12 +184,12 @@ jobs:
     # Download artifact
     - uses: actions/download-artifact@v2
       with:
-        name: ZinoEngine DM Win64
+        name: ZinoEngine Debug Monolithic Win64
         path: Debug/
       
     - uses: actions/download-artifact@v2
       with:
-        name: ZinoEngine RM Win64
+        name: ZinoEngine Release Monolithic Win64
         path: Release/
       
     # Zip

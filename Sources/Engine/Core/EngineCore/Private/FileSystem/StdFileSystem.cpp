@@ -7,12 +7,26 @@ DECLARE_LOG_CATEGORY(StdFileSystem);
 
 /** File */
 CStdFile::CStdFile(const std::string_view& InPath,
-	const bool& bInIsReading) : bIsReading(bInIsReading), Size(0)
+	const bool& bInIsReading,
+	const bool& bInBinary) : bIsReading(bInIsReading), Size(0), bIsBinary(bInBinary)
 {
+	std::ios::openmode OpenMode = std::ios::ate;
+
+	if(bInBinary)
+		OpenMode |= std::ios::binary;
+
 	if(bInIsReading)
-		Stream.open(InPath.data(), std::ios::in | std::ios::ate);
+		OpenMode |= std::ios::in;
 	else
-		Stream.open(InPath.data(), std::ios::out | std::ios::ate);
+		OpenMode |= std::ios::out;
+
+	Stream.open(InPath.data(), OpenMode);
+
+	if(!Stream.is_open())
+	{
+		LOG(ELogSeverity::Error, StdFileSystem, "%s", strerror(errno));
+		return;
+	}
 
 	Size = Stream.tellg();
 	Stream.seekg(0);
@@ -39,6 +53,11 @@ void CStdFile::Read(uint8_t* InData, const uint64_t& InSize)
 	Stream.read(reinterpret_cast<char*>(InData), InSize);
 }
 
+void CStdFile::Flush()
+{
+	Stream.flush();
+}
+
 /** FileSystem */
 
 CStdFileSystem::CStdFileSystem(const std::string& InAlias,
@@ -48,11 +67,11 @@ CStdFileSystem::CStdFileSystem(const std::string& InAlias,
 	LOG(ELogSeverity::Debug, StdFileSystem, "New std file system: %s", InPath.c_str());
 }
 
-TOwnerPtr<IFile> CStdFileSystem::Read(const std::string_view& InPath)
+TOwnerPtr<IFile> CStdFileSystem::Read(const std::string_view& InPath, const bool& bIsBinary)
 {
 	std::filesystem::path Path = GetCorrectPath(InPath);
 
-	TOwnerPtr<CStdFile> File = new CStdFile(Path.string(), true);
+	TOwnerPtr<CStdFile> File = new CStdFile(Path.string(), true, bIsBinary);
 	if (!File->GetStream().is_open())
 	{
 		LOG(ELogSeverity::Error, StdFileSystem, "Failed to open file %s",
@@ -64,11 +83,11 @@ TOwnerPtr<IFile> CStdFileSystem::Read(const std::string_view& InPath)
 	return File;
 }
 
-TOwnerPtr<IFile> CStdFileSystem::Write(const std::string_view& InPath)
+TOwnerPtr<IFile> CStdFileSystem::Write(const std::string_view& InPath, const bool& bIsBinary)
 {
 	std::filesystem::path Path = GetCorrectPath(InPath);
 
-	TOwnerPtr<CStdFile> File = new CStdFile(Path.string(), false);
+	TOwnerPtr<CStdFile> File = new CStdFile(Path.string(), false, bIsBinary);
 	if(!File->GetStream().is_open())
 	{
 		LOG(ELogSeverity::Error, StdFileSystem, "Failed to open file %s", 
