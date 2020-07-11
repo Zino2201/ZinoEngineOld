@@ -144,6 +144,7 @@ jobs:
         copy "Binaries\Release Monolithic\ZinoEngine.exe" "Release\ZinoEngine.exe"
         xcopy "Assets\*" "Release\Assets\" /E /H
         xcopy "Shaders\*" "Release\Shaders\" /E /H
+        powershell Compress-Archive -Path Release\* -DestinationPath Release.zip
       shell: cmd
       
     # Generate artifact
@@ -151,3 +152,25 @@ jobs:
       with:
         name: ZinoEngine RM Win64
         path: Release/
+        
+    # Make release
+    - uses: github/create-release@v1
+      with:
+        release_name: Windows RM Nightly
+        tag_name: nightly-win
+        body: |
+            Built from latest commit. 
+            Except many bugs and unstability.
+        prerelease: true
+        files: Release\**
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./Release.zip
+          asset_name: ZinoEngine RM Win64.zip
+          asset_content_type: application/zip
+        
