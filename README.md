@@ -6,6 +6,10 @@ A custom C++ 3d vulkan only (for now) game engine that I make for fun.
 
 https://trello.com/b/2LhrNkyw/zinoengine
 
+## Download
+
+You can find the nightly build here: https://github.com/Zino2201/ZinoEngine/releases/tag/nightly-win
+
 ## How to build
 
 For now only VS2019 is supported, but if you want you can try to build it for other compilers.

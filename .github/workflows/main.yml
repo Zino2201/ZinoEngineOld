@@ -9,6 +9,8 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  schedule:
+    - cron:  '0 0 * * *'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -80,7 +82,7 @@ jobs:
     # Prepare artifact
     - name: prepare-artifact
       run: |
-        mkdir Release
+        mkdir Debug
         copy "Binaries\Debug Monolithic\*.dll" "Debug\*.dll"
         copy "Binaries\Debug Monolithic\ZinoEngine.exe" "Debug\ZinoEngine.exe"
         xcopy "Assets\*" "Debug\Assets\" /E /H
@@ -173,6 +175,7 @@ jobs:
         path: Release/
   # Release
   release:
+    if: ${{ github.event_name == 'schedule' }}
     runs-on: windows-2019
     needs: [build-windows-debug, build-windows-debug-mono, build-windows-release, build-windows-release-mono]
     
