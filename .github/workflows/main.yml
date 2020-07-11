@@ -70,7 +70,28 @@ jobs:
         @echo | call GenerateVS2019.bat
         msbuild -m Build/ProjectFiles/ZinoEngine.sln /t:build /p:Configuration="Debug Monolithic" /p:Platform="x64" /p:BuildInParallel=true
       shell: cmd
-      # Build for windows X64
+      
+    # Copy DLLs
+    - name: copy-dlls
+      run: | 
+        @echo | call CopyDLLs.bat
+      shell: cmd
+      
+    # Prepare artifact
+    - name: prepare-artifact
+      run: |
+        mkdir Release
+        copy "Binaries\Debug Monolithic\*.dll" "Debug\*.dll"
+        copy "Binaries\Debug Monolithic\ZinoEngine.exe" "Debug\ZinoEngine.exe"
+        xcopy "Assets\*" "Debug\Assets\" /E /H
+        xcopy "Shaders\*" "Debug\Shaders\" /E /H
+      shell: cmd
+      
+     # Generate artifact
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ZinoEngine DM Win64
+        path: Debug/
   build-windows-release:
     # The type of runner that the job will run on
     runs-on: windows-2019
@@ -129,7 +150,6 @@ jobs:
         msbuild -m Build/ProjectFiles/ZinoEngine.sln /t:build /p:Configuration="Release Monolithic" /p:Platform="x64" /p:BuildInParallel=true
       shell: cmd
       
-
     # Copy DLLs
     - name: copy-dlls
       run: | 
@@ -144,7 +164,6 @@ jobs:
         copy "Binaries\Release Monolithic\ZinoEngine.exe" "Release\ZinoEngine.exe"
         xcopy "Assets\*" "Release\Assets\" /E /H
         xcopy "Shaders\*" "Release\Shaders\" /E /H
-        powershell Compress-Archive -Path Release\* -DestinationPath ZinoEngine.zip
       shell: cmd
       
     # Generate artifact
@@ -152,6 +171,29 @@ jobs:
       with:
         name: ZinoEngine RM Win64
         path: Release/
+  # Release
+  release:
+    runs-on: windows-2019
+    needs: [build-windows-debug, build-windows-debug-mono, build-windows-release, build-windows-release-mono]
+    
+    steps:
+    
+    # Download artifact
+    - uses: actions/download-artifact@v2
+      with:
+        name: ZinoEngine DM Win64
+        path: Debug/
+      
+    - uses: actions/download-artifact@v2
+      with:
+        name: ZinoEngine RM Win64
+        path: Release/
+      
+    # Zip
+    - run: |
+        powershell Compress-Archive -Path Debug\* -DestinationPath ZinoEngine-Debug.zip
+        powershell Compress-Archive -Path Release\* -DestinationPath ZinoEngine-Release.zip
+      shell: cmd
     
     # Release
     - uses: "marvinpinto/action-automatic-releases@latest"
@@ -159,5 +201,8 @@ jobs:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "nightly-win"
         prerelease: true
-        title: "ZinoEngine RM Windows Nightly"
-        files: ZinoEngine.zip
+        title: "ZinoEngine Windows Nightly"
+        files: | 
+            ZinoEngine-Debug.zip
+            ZinoEngine-Release.zip
+    
