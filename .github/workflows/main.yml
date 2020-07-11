@@ -162,15 +162,14 @@ jobs:
             Built from latest commit. 
             Except many bugs and unstability.
         prerelease: true
-        files: Release\**
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./Release.zip
-          asset_name: ZinoEngine RM Win64.zip
-          asset_content_type: application/zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./Release.zip
+        asset_name: ZinoEngine RM Win64.zip
+        asset_content_type: application/zip
         
