@@ -144,7 +144,7 @@ jobs:
         copy "Binaries\Release Monolithic\ZinoEngine.exe" "Release\ZinoEngine.exe"
         xcopy "Assets\*" "Release\Assets\" /E /H
         xcopy "Shaders\*" "Release\Shaders\" /E /H
-        powershell Compress-Archive -Path Release\* -DestinationPath Release.zip
+        powershell Compress-Archive -Path Release\* -DestinationPath ZinoEngine.zip
       shell: cmd
       
     # Generate artifact
@@ -152,3 +152,12 @@ jobs:
       with:
         name: ZinoEngine RM Win64
         path: Release/
+    
+    # Release
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "nightly-win"
+        prerelease: true
+        title: "ZinoEngine RM Windows Nightly"
+        files: ZinoEngine.zip
