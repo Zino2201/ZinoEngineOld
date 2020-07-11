@@ -57,69 +57,8 @@ FORCEINLINE IArchive& operator>>(IArchive& InArchive, T& InValue)
 }
 
 #include "Operators/Char.inl"
-
-/**
- * Operators for std::array
- */
-template<typename T, size_t Count>
-FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::array<T, Count>& InValue)
-{
-	if (!InArchive.IsSaving())
-		return InArchive;
-
-	for(const auto& Elem : InValue)
-		InArchive << Elem;
-
-	return InArchive;
-}
-
-template<typename T, size_t Count>
-FORCEINLINE IArchive& operator>>(IArchive& InArchive, std::array<T, Count>& InValue)
-{
-	if (InArchive.IsSaving())
-		return InArchive;
-
-	for (auto& Elem : InValue)
-		InArchive >> Elem;
-
-	return InArchive;
-}
-
-/**
- * Operators for std::vector
- */
-template<typename T>
-FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::vector<T>& InValue)
-{
-	if (!InArchive.IsSaving())
-		return InArchive;
-
-	InArchive << InValue.size();
-
-	for(const auto& Elem : InValue)
-		InArchive << Elem;
-
-	return InArchive;
-}
-
-template<typename T>
-FORCEINLINE IArchive& operator>>(IArchive& InArchive, std::vector<T>& InValue)
-{
-	if (InArchive.IsSaving())
-		return InArchive;
-	
-	/** Resize vector */
-	size_t Size = 0;
-	InArchive >> Size;
-	InValue.resize(Size);
-	
-	/** Copy to vector */
-	for(auto& Elem : InValue)
-		InArchive >> Elem;
-
-	return InArchive;
-}
-
+#include "Operators/Array.inl"
+#include "Operators/Vector.inl"
 #include "Operators/String.inl"
 
 #pragma endregion
