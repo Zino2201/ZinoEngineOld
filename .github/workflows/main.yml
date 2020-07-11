@@ -141,6 +141,7 @@ jobs:
       with:
         name: ZinoEngine RM Win64
         path: | 
-          Binaries/Release Monolithic/ZinoEngine.exe
-          Binaries/Release Monolithic/*.dll
+          Binaries/Release Monolithic/*/ZinoEngine.exe
+          Binaries/Release Monolithic/*/*.dll
           Assets/**
+          Shaders/**
