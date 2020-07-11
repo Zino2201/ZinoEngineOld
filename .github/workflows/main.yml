@@ -136,14 +136,18 @@ jobs:
         @echo | call CopyDLLs.bat
       shell: cmd
       
+    # Prepare artifact
+    - name: prepare-artifact:
+      run: |
+        mkdir Release
+        copy "Binaries\Release Monolithic\*.dll" "Release\*.dll"
+        copy "Binaries\Release Monolithic\ZinoEngine.exe" "Release\ZinoEngine.exe"
+        xcopy "Assets" "Release\Assets" /E /H
+        xcopy "Shaders" "Release\Shaders" /E /H
+      shell: cmd
+      
     # Generate artifact
     - uses: actions/upload-artifact@v2
       with:
         name: ZinoEngine RM Win64
-        path: | 
-          Binaries/Release Monolithic/
-          !ZinoEngine-ZinoReflectionTool.exe
-          !*.pdb
-          !*.lib
-          Assets/**
-          Shaders/**
+        path: Release/
