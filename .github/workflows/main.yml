@@ -152,13 +152,3 @@ jobs:
       with:
         name: ZinoEngine RM Win64
         path: Release/
-        
-    # Make release
-    - uses: meeDamian/github-release@2.0
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        tag: nightly-win
-        allow_override: true
-        gzip: folders
-        files: Release.zip
-        
