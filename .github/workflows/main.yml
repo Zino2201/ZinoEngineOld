@@ -142,8 +142,8 @@ jobs:
         mkdir Release
         copy "Binaries\Release Monolithic\*.dll" "Release\*.dll"
         copy "Binaries\Release Monolithic\ZinoEngine.exe" "Release\ZinoEngine.exe"
-        xcopy "Assets" "Release\Assets" /E /H
-        xcopy "Shaders" "Release\Shaders" /E /H
+        xcopy "Assets\" "Release\Assets" /E /H
+        xcopy "Shaders\" "Release\Shaders" /E /H
       shell: cmd
       
     # Generate artifact
