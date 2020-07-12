@@ -50,7 +50,7 @@ void CLogger::Initialize()
 }
 
 void CLogger::Log(const ELogSeverity& InSeverity, 
-	const std::string& InCategory, const std::string& InMessage, va_list InArgs) const
+	const std::string& InCategory, const std::string& InMessage, va_list InArgs)
 {
 	char PrintfBuffer[2048];
 
@@ -96,14 +96,21 @@ void CLogger::Log(const ELogSeverity& InSeverity,
 	vsprintf_s(PrintfBuffer, InMessage.c_str(), InArgs);
 	FinalString << PrintfBuffer;
 	FinalString << "\n";
-	std::cout << FinalString.str();
+
+	std::string Message = FinalString.str();
+	std::cout << Message;
 	
+#ifdef _WIN32
+	OutputDebugStringA(Message.c_str());
+#endif
+
 	if(FileArchive)
 	{
 		Serialization::CFileArchive& FA = *FileArchive.get();
-		FA << FinalString.str();
+		FA << Message;
 		FA.Flush();
 	}
+	Messages.emplace_back(InSeverity, std::move(PrintfBuffer));
 
 	if (InSeverity >= ELogSeverity::Fatal)
 	{

@@ -218,7 +218,7 @@ private:
 				return i;
 		}
 
-		Elements.reserve(Elements.size() + 1);
+		Elements.reserve(Elements.capacity() + 1);
 		AllocatedBitset.push_back(false);
 
 		return Elements.size();

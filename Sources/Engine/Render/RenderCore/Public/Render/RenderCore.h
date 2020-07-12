@@ -8,6 +8,7 @@ namespace ZE
 
 static constexpr uint32_t GMaxBindings = 16;
 static constexpr uint32_t GMaxDescriptorSets = 4;
+static constexpr uint32_t GMaxFPS = 300;
 
 
 }

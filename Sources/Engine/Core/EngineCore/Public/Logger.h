@@ -24,6 +24,15 @@ enum class ELogSeverity
 DECLARE_LOG_CATEGORY(None);
 DECLARE_LOG_CATEGORY(Engine);
 
+struct SLoggerMessage
+{
+	ELogSeverity Severity;
+	std::string Message;
+
+	SLoggerMessage(const ELogSeverity& InSeverity,
+		const std::string& InMessage) : Severity(InSeverity), Message(InMessage) {}
+};
+
 /**
  * Logger singleton
  */
@@ -38,13 +47,14 @@ public:
 
 	void Initialize();
 
-	void Log(const ELogSeverity& InSeverity, const std::string& InCategory, const std::string& InMessage, va_list InArgs) const;
+	void Log(const ELogSeverity& InSeverity, const std::string& InCategory, 
+		const std::string& InMessage, va_list InArgs);
 
 	/**
 	 * Log macro implementation
 	 */
 	__forceinline void LogMacroImpl(const ELogSeverity& InSeverity, const std::string& InCategory,
-		const std::string InMessage, ...) const
+		const std::string InMessage, ...)
 	{
 		va_list Va;
 		va_start(Va, InMessage);
@@ -56,6 +66,8 @@ public:
 	 * Convert Severity enum to string
 	 */
 	std::string SeverityToString(const ELogSeverity& InSeverity) const;
+
+	const auto& GetMessages() const { return Messages; }
 public:
 	CLogger(const CLogger&) = delete;
 	void operator=(const CLogger&) = delete;
@@ -64,6 +76,7 @@ private:
 	~CLogger();
 private:
 	std::unique_ptr<Serialization::CFileArchive> FileArchive;
+	std::vector<SLoggerMessage> Messages;
 };
 
 } /* namespace ZE */
