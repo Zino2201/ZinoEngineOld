@@ -21,8 +21,6 @@ CVulkanPipelineLayout* CVulkanPipelineLayoutManager::GetPipelineLayout(
 
 		Layouts.insert(std::make_pair(InEntry, Layout));
 
-		LOG(ELogSeverity::Debug, VulkanRS, "new CVulkanPipelineLayout");
-
 		return Layout;
 	}
 }

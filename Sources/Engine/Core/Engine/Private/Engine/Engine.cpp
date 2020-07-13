@@ -18,10 +18,13 @@ void CEngine::Initialize()
 
 void CEngine::Tick(union SDL_Event* InEvent, const float& InDeltaTime)
 {
-	/** Tick CTickables */
-	CTickSystem::Get().Tick(ETickOrder::StartOfFrame, InDeltaTime);
-	CTickSystem::Get().Tick(ETickOrder::PostPhysics, InDeltaTime);
-	CTickSystem::Get().Tick(ETickOrder::EndOfFrame, InDeltaTime);
+
 }
+
+void CEngine::Draw()
+{
+
+}
+
 
 } /* namespace ZE */

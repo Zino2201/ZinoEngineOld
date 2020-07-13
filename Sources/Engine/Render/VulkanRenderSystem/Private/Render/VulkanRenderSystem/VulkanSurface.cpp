@@ -8,9 +8,11 @@
 
 CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice, 
 	void* InWindowHandle, const uint32_t& InWidth, const uint32_t& InHeight,
+	const bool& bInUseVSync,
 	const SRSResourceCreateInfo& InInfo)
-	: CRSSurface(InWindowHandle, InWidth, InHeight, InInfo), 
-	CVulkanDeviceResource(InDevice), WindowHandle(InWindowHandle), bHasBeenResized(false)
+	: CRSSurface(InWindowHandle, InWidth, InHeight, bInUseVSync, InInfo), 
+	CVulkanDeviceResource(InDevice), WindowHandle(InWindowHandle), bHasBeenResized(false),
+	bUseVSync(bInUseVSync)
 {
 	/**
 	 * Create vulkan surface
@@ -38,8 +40,9 @@ CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice,
 	{
 		SwapChain = std::make_unique<CVulkanSwapChain>(Device,
 			InWidth, 
-			InHeight, 
-			this);
+			InHeight,
+			this,
+			bInUseVSync);
 	}
 }
 
@@ -84,6 +87,7 @@ void CVulkanSurface::RecreateSwapChain()
 		Width,
 		Height,
 		this,
+		bUseVSync,
 		Handle);
 	Device->GetDevice().destroySwapchainKHR(Handle);
 
@@ -113,6 +117,7 @@ CRSTexture* CVulkanSurface::GetBackbufferTexture()
 
 CRSSurface* CVulkanRenderSystem::CreateSurface(void* InWindowHandle,
 	const uint32_t& InWidth, const uint32_t& InHeight,
+	const bool& bInUseVSync,
 	const SRSResourceCreateInfo& InInfo) const
 {
 	return new CVulkanSurface(
@@ -120,5 +125,6 @@ CRSSurface* CVulkanRenderSystem::CreateSurface(void* InWindowHandle,
 		InWindowHandle,
 		InWidth,
 		InHeight,
+		bInUseVSync,
 		InInfo);
 }

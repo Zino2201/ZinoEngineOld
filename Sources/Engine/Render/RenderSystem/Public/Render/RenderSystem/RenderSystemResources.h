@@ -109,6 +109,7 @@ class CRSSurface : public CRSResource
 {
 public:
     CRSSurface(void* InWindowHandle, const uint32_t& InWidth, const uint32_t& InHeight,
+        const bool& bInUseVSync,
         const SRSResourceCreateInfo& InInfo) : CRSResource(InInfo),
         WindowHandle(InWindowHandle),
         Width(InWidth), Height(InHeight) {}

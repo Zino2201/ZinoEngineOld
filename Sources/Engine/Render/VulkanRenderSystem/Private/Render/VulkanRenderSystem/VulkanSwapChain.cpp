@@ -11,6 +11,7 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 	const uint32_t& InWidth,
 	const uint32_t& InHeight,
 	CVulkanSurface* InSurface,
+	const bool& bInUseVsync,
 	const vk::SwapchainKHR& InOldSwapchain)
 	: CVulkanDeviceResource(InDevice),
 	Surface(InSurface->GetSurface()), Width(InWidth), Height(InHeight), 
@@ -29,7 +30,8 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 	uint32_t QueueFamilyIndices[] = { Indices.Graphics.value() };
 
 	SurfaceFormat = ChooseSwapChainFormat(Details.Formats);
-	vk::PresentModeKHR PresentMode = ChooseSwapChainPresentMode(Details.PresentModes);
+	vk::PresentModeKHR PresentMode = bInUseVsync ? vk::PresentModeKHR::eFifo 
+		: ChooseSwapChainPresentMode(Details.PresentModes);
 	Extent = ChooseSwapChainExtent(Details.Capabilities, Width, Height);
 
 	ImageCount = Details.Capabilities.minImageCount + 1;

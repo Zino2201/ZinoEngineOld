@@ -21,10 +21,13 @@ enum class ETickOrder
     /** Executed at the beginning of the frame and before physics */
     StartOfFrame,
 
+    /** For physics only */
+    Physics,
+
     /** Executed after physics */
     PostPhysics,
 
-    /** Executed at the end of the frame*/
+    /** Executed at the end of the frame after rendering has been queued */
     EndOfFrame
 };
 

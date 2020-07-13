@@ -211,8 +211,6 @@ vk::RenderPass CVulkanRenderPassManager::GetRenderPass(const SRSRenderPass& InRe
 		if(!RenderPass)
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create render pass");
 
-		LOG(ELogSeverity::Debug, VulkanRS, "new vk::RenderPass");
-
 		RenderPasses.insert(std::make_pair(InRenderPass, RenderPass));
 
 		return RenderPass;
@@ -274,8 +272,6 @@ vk::Framebuffer CVulkanRenderPassManager::GetFramebuffer(const SRSFramebuffer& I
 			CreateInfo).value;
 		if (!Framebuffer)
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create framebuffer");
-
-		LOG(ELogSeverity::Debug, VulkanRS, "new vk::Framebuffer");
 
 		Framebuffers[InFramebuffer] = Framebuffer;
 

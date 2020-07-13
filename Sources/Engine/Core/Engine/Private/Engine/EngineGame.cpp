@@ -25,9 +25,13 @@
 #include <iostream>
 #include <chrono>
 #include "Renderer/RendererModule.h"
+#include "Engine/UI/Console.h"
 
 namespace ZE
 {
+
+static TConVar<int32_t> ConVSync("r_vsync", 1, 
+	"Enable V-SYNC.\n0 = disabled\n1 = enabled\n2 = triple buffering (not implemented)");
 
 CEngineGame::~CEngineGame() { testSM.reset(); delete Window; }
 
@@ -149,6 +153,8 @@ void CEngineGame::Initialize()
 
 	using namespace ZE::Components;
 
+	ConVSync.BindOnChanged(this, &CEngineGame::OnVsyncChanged);
+
 	/** Create main game window */
 	Window = new CWindow("ZinoEngine", 1600, 900);
 
@@ -165,7 +171,7 @@ void CEngineGame::Initialize()
 	Font = IO.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 16.f);
 	
 	Viewport = std::make_unique<CViewport>(Window->GetHandle(), Window->GetWidth(), 
-		Window->GetHeight());
+		Window->GetHeight(), ConVSync.Get());
 
 	World = std::make_unique<CWorld>();
 
@@ -179,7 +185,7 @@ void CEngineGame::Initialize()
 	testSM = std::make_shared<CStaticMesh>();
 	testSM->UpdateData(Vertices, Indices);
 
-	for(int i = 0; i < 105; ++i)
+	for(int i = 0; i < 2; ++i)
 	{
 		double X = RAND_1_0 * 100 - 50;
 		double Y = RAND_1_0 * 100 - 50;
@@ -211,6 +217,12 @@ glm::vec3 CameraRight = glm::normalize(glm::cross(Up, CameraDirection));
 glm::vec3 CameraUp = glm::cross(CameraDirection, CameraRight);
 glm::vec3 CameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	float CamYaw = 0.f, CamPitch = 0.f;
+CConsoleWidget Console;
+
+void CEngineGame::OnVsyncChanged(const int32_t& InData)
+{
+	Viewport->SetVSync(InData);
+}
 
 int CEngineGame::OnWindowResized(SDL_Event* InEvent)
 {
@@ -234,17 +246,6 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 {
 	CEngine::Tick(InEvent, InDeltaTime);
 
-	LOG(ELogSeverity::Debug, None, "Game tick");
-
-	static Uint64 Now = SDL_GetPerformanceCounter();
-	static Uint64 Last = 0;
-
-	Last = Now;
-	Now = SDL_GetPerformanceCounter();
-
-	float DeltaTime = (((Now - Last) * 1000 / (float)SDL_GetPerformanceFrequency()))
-		* 0.001f;
-
 	ImGuiIO& IO = ImGui::GetIO();
 
 	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(Window->GetHandle()));
@@ -255,7 +256,7 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 	const Uint8* KeyState = SDL_GetKeyboardState(nullptr);
 	Uint32 MouseState = SDL_GetMouseState(nullptr, nullptr);
 	static bool bIsMouseGrabbed = false;
-	const float CameraSpeed = 5.f * DeltaTime;
+	const float CameraSpeed = 5.f * InDeltaTime;
 
 	if (MouseState & SDL_BUTTON_LMASK
 		&& !bIsMouseGrabbed
@@ -334,36 +335,44 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 	ImGui::End();
 
 	/** Print last profiling data */
-	ImGui::Begin("Profiler");
-	ImGui::Text("Console: ");
-	ImGui::Text("FPS: %f (%f ms)", 1.f / DeltaTime, DeltaTime * 1000);
+	ImGui::Begin("Debugger");
+	ImGui::Text("FPS: %f (%f ms)", 1.f / InDeltaTime, InDeltaTime * 1000);
+	ImGui::Separator();
+	ImGui::Text("Rendering"); 
+
+	ImGui::Text("VSync: %d", ConVSync.Get());
+
 	ImGui::Separator();
 	ImGui::End();
+	Console.Draw();
 	ImGui::PopFont();
 
+	ImGui::Render();
+}
+
+void CEngineGame::Draw()
+{
 	/** Ensure all rendering is finished */
 	Renderer::CRendererModule::Get().WaitRendering();
-	
+
 	static bool bHasBegun = false;
-
-	/** Present */
-
-	if(bHasBegun)
-		Viewport->End();
 	
-	ImGui::Render();
+	// TODO: Move
+	/** Present */
+	if (bHasBegun)
+		Viewport->End();
 
 	/** Trigger rendering */
 	GRenderSystem->NewFrame();
 
-	if(bHasBegun = Viewport->Begin())
+	if (bHasBegun = Viewport->Begin())
 	{
 		ZE::Renderer::SWorldView WorldView(*World->GetProxy());
 		WorldView.Scissor = { { 0.f, 0.f }, { Window->GetWidth(), Window->GetHeight() } };
 		WorldView.Viewport = { WorldView.Scissor, 0.f, 1.0f };
 		glm::mat4 View = glm::lookAt(CameraPos, CameraPos
-				+ CameraFront,
-				CameraUp);
+			+ CameraFront,
+			CameraUp);
 		glm::mat4 Proj = glm::perspective(glm::radians(90.f),
 			(float)Window->GetWidth() / Window->GetHeight(),
 			100000.F, 0.01f);

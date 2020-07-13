@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "Engine/TickSystem.h"
 
 union SDL_Event;
 
@@ -23,6 +24,9 @@ public:
 
     /** Tick */
     virtual void Tick(SDL_Event* InEvent, const float& InDeltaTime);
+
+    /** Trigger frame rendering */
+    virtual void Draw();
 
     virtual void Exit() {}
 protected:

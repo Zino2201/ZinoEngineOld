@@ -6,12 +6,12 @@ namespace ZE
 {
 
 CViewport::CViewport(void* InWindowHandle, const uint32_t& InWidth,
-	const uint32_t& InHeight) : WindowHandle(InWindowHandle), Width(InWidth),
+	const uint32_t& InHeight, const bool& bInVSync) : WindowHandle(InWindowHandle), Width(InWidth),
 		Height(InHeight) 
 {
 	Surface = GRenderSystem->CreateSurface(
 		WindowHandle, Width,
-		Height, {});
+		Height, bInVSync, {});
 	if (!Surface)
 		LOG(ELogSeverity::Fatal, Viewport, "Failed to create viewport");
 }
@@ -33,6 +33,15 @@ void CViewport::Resize(const uint32_t& InWidth, const uint32_t& InHeight)
 	Height = InHeight;
 
 	Surface->Resize(InWidth, InHeight);
+}
+
+void CViewport::SetVSync(const bool& bInVSync)
+{
+	Surface = GRenderSystem->CreateSurface(
+		WindowHandle, Width,
+		Height, bInVSync, {});
+	if (!Surface)
+		LOG(ELogSeverity::Fatal, Viewport, "Failed to create viewport");
 }
 
 } /* namespace ZE */

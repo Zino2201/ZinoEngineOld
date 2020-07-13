@@ -1,4 +1,4 @@
-local Mod = Module:new("Main", "ConsoleApp")
+local Mod = Module:new("Main", "WindowedApp")
 Mod:addModules({ "EngineCore", "RenderCore", "ShaderCore", "RenderSystem", "VulkanRenderSystem", "ShaderCompiler", "VulkanShaderCompiler", "Engine" })
 targetprefix("")
 targetname("ZinoEngine")

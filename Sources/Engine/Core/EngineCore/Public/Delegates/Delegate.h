@@ -53,4 +53,7 @@ private:
 	std::function<TSignature> Function;
 };
 
+template<typename... Args>
+using TDelegateNoRet = TDelegate<void, Args...>;
+
 }

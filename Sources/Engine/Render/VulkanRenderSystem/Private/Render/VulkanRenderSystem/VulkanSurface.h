@@ -12,6 +12,7 @@ public:
 	CVulkanSurface(CVulkanDevice* InDevice,
 		void* InWindowHandle,
 		const uint32_t& InWidth, const uint32_t& InHeight,
+		const bool& bInUseVSync,
 		const SRSResourceCreateInfo& InInfo);
 
 	/**
@@ -39,4 +40,5 @@ protected:
 	std::unique_ptr<CVulkanSwapChain> SwapChain;
 	void* WindowHandle;
 	bool bHasBeenResized;
+	bool bUseVSync;
 };

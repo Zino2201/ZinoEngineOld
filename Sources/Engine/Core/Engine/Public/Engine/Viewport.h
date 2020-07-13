@@ -15,11 +15,12 @@ class CViewport
 {
 public:
     CViewport(void* InWindowHandle, const uint32_t& InWidth,
-        const uint32_t& InHeight);
+        const uint32_t& InHeight, const bool& bInVSync);
 
     bool Begin();
     void End();
     void Resize(const uint32_t& InWidth, const uint32_t& InHeight);
+    void SetVSync(const bool& bInVSync);
 
     CRSSurface* GetSurface() const { return Surface.get(); }
 private:

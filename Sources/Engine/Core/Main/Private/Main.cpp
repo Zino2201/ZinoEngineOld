@@ -15,6 +15,9 @@
 #include "Threading/JobSystem/JobSystem.h"
 #include <chrono>
 #include "Threading/JobSystem/WorkerThread.h"
+#include "Console/Console.h"
+#include "Render/RenderCore.h"
+#include "Engine/TickSystem.h"
 
 DECLARE_LOG_CATEGORY(EngineInit);
 
@@ -126,45 +129,80 @@ void CZinoEngineMain::Init()
 	Loop();
 }
 
+static ZE::TConVar<int32_t> CVarMaxFPS("r_maxfps", 144,
+	"Max FPS.",
+	1,
+	ZE::GMaxFPS);
+
+static ZE::TConVar<int32_t> CVarPhysFPS("phys_fps", 5,
+	"Physics FPS count.",
+	1,
+	60);
+
+bool bRun = true;
+
 void CZinoEngineMain::Loop()
 {
-	bool bRun = true;
+	using namespace ZE;
 
+	/** In sec */
 	Uint64 Now = SDL_GetPerformanceCounter();
 	Uint64 Last = 0;
-	float DeltaTime = 0.f;
+
+	/** In millisec */
+	double DeltaTime = 0;
+	double AccumSleep = 0;
 
 	while(bRun)
 	{
+		double TargetTime = 1000 / CVarMaxFPS.Get();
+
 		/** Delta time */
 		Last = Now;
 		Now = SDL_GetPerformanceCounter();
 
-		DeltaTime = (((Now - Last) * 1000 / (double) SDL_GetPerformanceFrequency()))
-			* 0.001f;
+		DeltaTime = (((Now - Last) * 1000 / (double) SDL_GetPerformanceFrequency()));
+		float DeltaTimeSec = static_cast<float>(DeltaTime * 0.001f);
 
-		while(SDL_PollEvent(&Event))
-		{
-			if(Event.type == SDL_QUIT)
-			{
-				bRun = false;
-			}
+		/** Tick start of frame */
+		Tick(DeltaTimeSec);
+		CTickSystem::Get().Tick(ETickOrder::StartOfFrame, DeltaTimeSec);
+
+		double PhysDeltaTime = DeltaTime;
+
+		/** Physics */
+		while(PhysDeltaTime > 0)
+		{	
+			double ActualDt = std::min(PhysDeltaTime, 1.0 / CVarPhysFPS.Get());
+			
+			CTickSystem::Get().Tick(ETickOrder::Physics, DeltaTimeSec);
+		
+			PhysDeltaTime -= ActualDt;
 		}
 
-		/**
-		 * Tick engine
-		 */
-		Tick(DeltaTime);
+		CTickSystem::Get().Tick(ETickOrder::PostPhysics, DeltaTimeSec);
+		Engine->Draw();
+		CTickSystem::Get().Tick(ETickOrder::EndOfFrame, DeltaTimeSec);
 
-		/** 
-		 * Execute jobs of the main thread
-		 */
-		ZE::JobSystem::GetWorker().Flush();
-
+		
 		/**
 		 * Reset event at the end
 		 */
 		Event = {};
+
+		/**
+		 * FPS capping
+		 */	
+		 Uint64 EndFrameTime = SDL_GetPerformanceCounter();
+		 DeltaTime = (((EndFrameTime - Now) * 1000 / (double)SDL_GetPerformanceFrequency()));
+		 AccumSleep += (1000 / CVarMaxFPS.Get()) - DeltaTime;
+		 if(AccumSleep > 0)
+		 {
+			 std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(AccumSleep));
+			 Uint64 SleepTime = SDL_GetPerformanceCounter();
+			 DeltaTime = (((SleepTime - EndFrameTime) * 1000 / (double)SDL_GetPerformanceFrequency()));
+			 AccumSleep -= DeltaTime;
+		 }
 	}
 
 	Exit();
@@ -172,6 +210,14 @@ void CZinoEngineMain::Loop()
 
 void CZinoEngineMain::Tick(const float& InDeltaTime)
 {
+	while (SDL_PollEvent(&Event))
+	{
+		if (Event.type == SDL_QUIT)
+		{
+			bRun = false;
+		}
+	}
+
 	Engine->Tick(&Event, InDeltaTime);
 }
 

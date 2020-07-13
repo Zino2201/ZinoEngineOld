@@ -26,6 +26,7 @@ public:
 
 	virtual CRSSurface* CreateSurface(void* InWindowHandle,
 		const uint32_t& InWidth, const uint32_t& InHeight,
+		const bool& bInUseVSync,
 		const SRSResourceCreateInfo& InInfo = {}) const = 0;
 	
 	virtual CRSBuffer* CreateBuffer(
@@ -69,65 +70,6 @@ public:
 
 	/** Utils */
 	virtual const char* GetName() const = 0;
-
- //   /** Factories */
- //   virtual IRenderCommandContext* CreateRenderCommandContext() const = 0;
- //   /**
-	// * Create a shader
-	// */
-	//virtual CRenderSystemShaderPtr CreateShader(void* InData,
-	//	size_t InDataSize,
-	//	const EShaderStage& InShaderStage) = 0;
-
-	///**
-	// * Create a buffer
-	// */
-	//virtual CRenderSystemBufferPtr CreateBuffer(const SRenderSystemBufferInfos& InInfos) = 0;
-
-	///**
-	// * Create a vertex buffer
-	// */
-	//virtual IRenderSystemVertexBufferPtr CreateVertexBuffer(const uint64_t& InSize,
-	//	EBufferMemoryUsage InMemoryUsage = EBufferMemoryUsage::GpuOnly,
-	//	bool bUsePersistentMapping = false,
-	//	const std::string& InDebugName = "VertexBuffer") = 0;
-	//
-	///**
-	// * Create a index buffer
-	// */
-	//virtual IRenderSystemIndexBufferPtr CreateIndexBuffer(const uint64_t& InSize,
-	//	EBufferMemoryUsage InMemoryUsage = EBufferMemoryUsage::GpuOnly,
-	//	bool bUsePersistentMapping = false,
-	//	const std::string& InDebugName = "IndexBuffer") = 0;
-
-	///**
-	// * Create a graphics pipeline
-	// */
-	//virtual IRenderSystemGraphicsPipelinePtr CreateGraphicsPipeline(const SRenderSystemGraphicsPipelineInfos& InInfos) = 0;
-
-	///** 
-	// * Create a uniform buffer 
-	// */
-	//virtual IRenderSystemUniformBufferPtr CreateUniformBuffer(const SRenderSystemUniformBufferInfos& InInfos) = 0;
-
-	///**
-	// * Create a texture
-	// */
-	//virtual CRenderSystemTexturePtr CreateTexture(const SRenderSystemTextureInfo& InInfos) = 0;
-
-	///**
-	// * Create a texture view
-	// */
-	//virtual CRenderSystemTextureViewPtr CreateTextureView(const SRenderSystemTextureViewInfo& InInfos) = 0;
-
-	///*
-	// * Create a sampler
-	// */
-	//virtual CRenderSystemSamplerPtr CreateSampler(const SRenderSystemSamplerInfo& InInfos) = 0;
-
-	//virtual SRenderSystemDetails GetRenderSystemDetails() const = 0;
-
-	//virtual TMulticastDelegate<>& GetFrameCompletedDelegate() = 0;
 };
 
 }

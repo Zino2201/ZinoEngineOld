@@ -18,6 +18,7 @@ public:
 
 	virtual CRSSurface* CreateSurface(void* InWindowHandle,
 		const uint32_t& InWidth, const uint32_t& InHeight,
+		const bool& bInUseVSync,
 		const SRSResourceCreateInfo& InInfo = {}) const override;
 
 	virtual CRSBuffer* CreateBuffer(

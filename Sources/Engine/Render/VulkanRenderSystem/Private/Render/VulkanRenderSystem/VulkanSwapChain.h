@@ -15,6 +15,7 @@ public:
         const uint32_t& InWidth,
         const uint32_t& InHeight,
         CVulkanSurface* InSurface,
+        const bool& bInUseVsync,
         const vk::SwapchainKHR& InOldSwapchain = vk::SwapchainKHR());
     ~CVulkanSwapChain();
 

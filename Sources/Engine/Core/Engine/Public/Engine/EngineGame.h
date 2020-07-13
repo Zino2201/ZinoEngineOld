@@ -7,6 +7,7 @@
 #include "Render/UniformBuffer.h"
 #include "Renderer/WorldRenderer.h"
 #include "ImGui/ImGuiRender.h"
+#include "Console/Console.h"
 
 struct ImFont;
 
@@ -26,8 +27,11 @@ public:
 
     ENGINE_API virtual void Initialize() override;
     ENGINE_API virtual void Tick(SDL_Event* InEvent, const float& InDeltaTime) override;
+    ENGINE_API virtual void Draw() override;
     ENGINE_API void Exit() override;
     int OnWindowResized(SDL_Event* InEvent);
+private:
+    void OnVsyncChanged(const int32_t& InData);
 private:
     std::unique_ptr<class CWorld> World;
     CWindow* Window;
