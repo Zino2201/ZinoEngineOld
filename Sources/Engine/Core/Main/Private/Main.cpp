@@ -24,7 +24,7 @@ DECLARE_LOG_CATEGORY(EngineInit);
 /**
  * ZinoEngine main
  */
-int main(int argc, char** argv)
+int WinMain(int argc, char** argv)
 {
 	CZinoEngineMain::Init();
 
