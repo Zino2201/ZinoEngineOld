@@ -13,7 +13,7 @@ CWorldRenderer::CWorldRenderer(const SWorldView& InView) : View(InView),
 {
 }
 
-CWorldRenderer::~CWorldRenderer() = default;
+CWorldRenderer::~CWorldRenderer() = default; 
 
 void CWorldRenderer::CheckVisibility()
 {

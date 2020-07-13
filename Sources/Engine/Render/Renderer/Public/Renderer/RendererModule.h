@@ -10,6 +10,8 @@ namespace ZE::JobSystem { struct SJob; }
 
 namespace ZE::Renderer
 {
+	
+class CWorldRenderer;
 
 struct SQuadVertex
 {
@@ -64,6 +66,7 @@ private:
 	TransientPerFrameDataMap TransientFrameDataMap;
 
 	std::unique_ptr<UI::CImGuiRender> ImGuiRenderer;
+	std::vector<std::unique_ptr<CWorldRenderer>> WorldRenderers;
 };
 
 }

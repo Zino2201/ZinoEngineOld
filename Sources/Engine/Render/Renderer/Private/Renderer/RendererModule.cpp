@@ -71,6 +71,8 @@ void CRendererModule::FlushViews()
 	WaitRendering();
 
 	TransientFrameDataMap.clear();
+	WorldRenderers.clear();
+	WorldRenderers.reserve(Views.size());
 
 	ImGuiRenderer->CopyDrawdata();
 
@@ -101,9 +103,9 @@ void CRendererModule::BeginDrawView(const SWorldView& InView)
 	 * - Draw phase phase, this is the phase where the renderer submit drawcalls
 	 */
 
-	/** Instantiate a world renderer, this will be moved later to the main rendering job 
-	* once copying is finished */
-	std::unique_ptr<CWorldRenderer> WorldRenderer = std::make_unique<CWorldRenderer>(InView);
+	/** Instantiate a world renderer */
+	WorldRenderers.emplace_back(std::make_unique<CWorldRenderer>(InView));
+	const auto& WorldRenderer = WorldRenderers.back();
 	
 	/** Compute a list of visible proxies */
 	WorldRenderer->CheckVisibility();
@@ -113,11 +115,12 @@ void CRendererModule::BeginDrawView(const SWorldView& InView)
 
 	/** Queue the rendering */
 	const JobSystem::SJob& Job = JobSystem::CreateJob(JobSystem::EJobType::Normal,
-		[WorldRenderer = std::move(WorldRenderer)](const JobSystem::SJob& InJob)
+		[&](const JobSystem::SJob& InJob)
 	{
 		WorldRenderer->Prepare();
 		WorldRenderer->Draw();
 	});
+
 	RenderingJobs.emplace_back(&Job);
 	JobSystem::ScheduleJob(Job);
 }

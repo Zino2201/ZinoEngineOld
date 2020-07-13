@@ -63,7 +63,7 @@ template<typename Lambda>
 	const SJob& Job = CreateJobUserdata<Lambda>(InType,
 		[](const SJob& InJob)
 		{
-			const Lambda& InLambda = *InJob.GetUserdata<Lambda>();
+			Lambda& InLambda = *InJob.GetUserdata<Lambda>();
 			InLambda(InJob);
 			InLambda.~Lambda();
 		},
@@ -77,7 +77,7 @@ template<typename Lambda>
 	const SJob& Job = CreateChildJobUserdata<Lambda>(InType,
 		[](const SJob& InJob)
 	{
-		const Lambda& InLambda = *InJob.GetUserdata<Lambda>();
+		Lambda& InLambda = *InJob.GetUserdata<Lambda>();
 		InLambda(InJob);
 		InLambda.~Lambda();
 	}, 
