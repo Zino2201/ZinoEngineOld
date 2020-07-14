@@ -190,19 +190,11 @@ void CZinoEngineMain::Loop()
 		 */
 		Event = {};
 
-		/**
-		 * FPS capping
-		 */	
-		 Uint64 EndFrameTime = SDL_GetPerformanceCounter();
-		 DeltaTime = (((EndFrameTime - Now) * 1000 / (double)SDL_GetPerformanceFrequency()));
-		 AccumSleep += (1000 / CVarMaxFPS.Get()) - DeltaTime;
-		 if(AccumSleep > 0)
-		 {
-			 std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(AccumSleep));
-			 Uint64 SleepTime = SDL_GetPerformanceCounter();
-			 DeltaTime = (((SleepTime - EndFrameTime) * 1000 / (double)SDL_GetPerformanceFrequency()));
-			 AccumSleep -= DeltaTime;
-		 }
+		/** Fps limiter */
+		double SleepTime = 0.0;
+		SleepTime += (1000.0 / CVarMaxFPS.Get()) - DeltaTime;
+		SleepTime = std::max<double>(SleepTime, 0);
+		std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(SleepTime));
 	}
 
 	Exit();
@@ -216,6 +208,8 @@ void CZinoEngineMain::Tick(const float& InDeltaTime)
 		{
 			bRun = false;
 		}
+
+		/** TODO: Input manager */
 	}
 
 	Engine->Tick(&Event, InDeltaTime);

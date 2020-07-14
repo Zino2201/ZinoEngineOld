@@ -30,7 +30,7 @@
 namespace ZE
 {
 
-static TConVar<int32_t> ConVSync("r_vsync", 1, 
+static TConVar<int32_t> ConVSync("r_vsync", 0, 
 	"Enable V-SYNC.\n0 = disabled\n1 = enabled\n2 = triple buffering (not implemented)");
 
 CEngineGame::~CEngineGame() { testSM.reset(); delete Window; }
