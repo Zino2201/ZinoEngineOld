@@ -26,6 +26,7 @@
 #include <chrono>
 #include "Renderer/RendererModule.h"
 #include "Engine/UI/Console.h"
+#include "Engine/InputSystem.h"
 
 namespace ZE
 {
@@ -185,7 +186,7 @@ void CEngineGame::Initialize()
 	testSM = std::make_shared<CStaticMesh>();
 	testSM->UpdateData(Vertices, Indices);
 
-	for(int i = 0; i < 2; ++i)
+	for(int i = 0; i < 25; ++i)
 	{
 		double X = RAND_1_0 * 100 - 50;
 		double Y = RAND_1_0 * 100 - 50;
@@ -258,35 +259,42 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 	static bool bIsMouseGrabbed = false;
 	const float CameraSpeed = 5.f * InDeltaTime;
 
+	const bool bImGuiInteract = ImGui::IsAnyItemHovered()
+		|| ImGui::IsAnyWindowHovered()
+		|| ImGui::IsAnyItemActive()
+		|| ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+
 	if (MouseState & SDL_BUTTON_LMASK
 		&& !bIsMouseGrabbed
-		&& !ImGui::IsAnyItemHovered()
-		&& !ImGui::IsAnyWindowHovered()
-		&& !ImGui::IsAnyItemActive()
-		&& !ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+		&& !bImGuiInteract)
 	{
 		SDL_SetRelativeMouseMode(SDL_TRUE);
 		bIsMouseGrabbed = true;
 		IO.WantCaptureKeyboard = false;
 		IO.WantCaptureMouse = false;
 	}
-	if (KeyState[SDL_SCANCODE_W])
-	{
-		CameraPos += CameraSpeed * CameraFront;
-	}
-	if (KeyState[SDL_SCANCODE_S])
-	{
-		CameraPos -= CameraSpeed * CameraFront;
-	}
-	if (KeyState[SDL_SCANCODE_A])
-	{
-		CameraPos -= glm::normalize(glm::cross(CameraFront, CameraUp)) * CameraSpeed;
-	}
-	if (KeyState[SDL_SCANCODE_D])
-	{
-		CameraPos += glm::normalize(glm::cross(CameraFront, CameraUp)) * CameraSpeed;
-	}
-	if (KeyState[SDL_SCANCODE_ESCAPE])
+
+	/*if(!bImGuiInteract)
+	{*/
+		if (ZE::Input::IsKeyHeld(SDL_SCANCODE_W))
+		{
+			CameraPos += CameraSpeed * CameraFront;
+		}
+		if (ZE::Input::IsKeyHeld(SDL_SCANCODE_S))
+		{
+			CameraPos -= CameraSpeed * CameraFront;
+		}
+		if (ZE::Input::IsKeyHeld(SDL_SCANCODE_A))
+		{
+			CameraPos -= glm::normalize(glm::cross(CameraFront, CameraUp)) * CameraSpeed;
+		}
+		if (ZE::Input::IsKeyHeld(SDL_SCANCODE_D))
+		{
+			CameraPos += glm::normalize(glm::cross(CameraFront, CameraUp)) * CameraSpeed;
+		}
+	//}
+
+	if (ZE::Input::IsKeyPressed(SDL_SCANCODE_ESCAPE))
 	{
 		if (bIsMouseGrabbed)
 		{

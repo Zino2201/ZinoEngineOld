@@ -18,6 +18,7 @@
 #include "Console/Console.h"
 #include "Render/RenderCore.h"
 #include "Engine/TickSystem.h"
+#include "Engine/InputSystem.h"
 
 DECLARE_LOG_CATEGORY(EngineInit);
 
@@ -189,7 +190,7 @@ void CZinoEngineMain::Loop()
 		 * Reset event at the end
 		 */
 		Event = {};
-
+		
 		/** Fps limiter */
 		double SleepTime = 0.0;
 		SleepTime += (1000.0 / CVarMaxFPS.Get()) - DeltaTime;
@@ -202,6 +203,8 @@ void CZinoEngineMain::Loop()
 
 void CZinoEngineMain::Tick(const float& InDeltaTime)
 {
+	ZE::Input::Clear();
+
 	while (SDL_PollEvent(&Event))
 	{
 		if (Event.type == SDL_QUIT)
@@ -209,7 +212,10 @@ void CZinoEngineMain::Tick(const float& InDeltaTime)
 			bRun = false;
 		}
 
-		/** TODO: Input manager */
+		if(Event.type == SDL_KEYDOWN)
+			ZE::Input::OnKeyPressed(Event);
+		if(Event.type == SDL_KEYUP)
+			ZE::Input::OnKeyReleased(Event);
 	}
 
 	Engine->Tick(&Event, InDeltaTime);
