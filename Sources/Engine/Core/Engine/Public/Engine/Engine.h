@@ -22,8 +22,10 @@ public:
     /** Initialize engine */
     virtual void Initialize();
 
+    virtual void ProcessEvent(SDL_Event* InEvent) {}
+
     /** Tick */
-    virtual void Tick(SDL_Event* InEvent, const float& InDeltaTime);
+    virtual void Tick(const float& InDeltaTime);
 
     /** Trigger frame rendering */
     virtual void Draw();

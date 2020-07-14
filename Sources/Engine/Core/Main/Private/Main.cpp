@@ -3,7 +3,6 @@
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "EngineCore.h"
-#include "Main.h"
 #include "Logger.h"
 #include <SDL2/SDL.h>
 #include "Engine/Engine.h"
@@ -19,24 +18,51 @@
 #include "Render/RenderCore.h"
 #include "Engine/TickSystem.h"
 #include "Engine/InputSystem.h"
+#include "Editor/ZEEditor.h"
+#include "Shader/ShaderCore.h"
 
 DECLARE_LOG_CATEGORY(EngineInit);
+
+namespace FS = ZE::FileSystem;
+
+
+/** Forward decls */
+void Init();
+void Exit();
+void Loop();
+void Tick(const float& InDeltaTime);
+
+/** Global variables */
+
+/** Render system ptr */
+static std::unique_ptr<ZE::IRenderSystem> RenderSystem;
+
+/** Engine ptr */
+static std::unique_ptr<ZE::CEngine> Engine;
+
+static ZE::TConVar<int32_t> CVarMaxFPS("r_maxfps", 144,
+	"Max FPS.",
+	1,
+	ZE::GMaxFPS);
+
+static ZE::TConVar<int32_t> CVarPhysFPS("phys_fps", 5,
+	"Physics FPS count.",
+	1,
+	60);
+
+bool bRun = true;
 
 /**
  * ZinoEngine main
  */
 int WinMain(int argc, char** argv)
 {
-	CZinoEngineMain::Init();
+	Init();
 
 	return 0;
 }
 
-#include "Shader/ShaderCore.h"
-
-namespace FS = ZE::FileSystem;
-
-void CZinoEngineMain::PreInit()
+void PreInit()
 {
 	std::ios::sync_with_stdio(false);
 
@@ -110,14 +136,14 @@ void CZinoEngineMain::PreInit()
 	}
 }
 
-void CZinoEngineMain::Init()
+void Init()
 {
-	CZinoEngineMain::PreInit();
+	PreInit();
 
 	LOG(ZE::ELogSeverity::Info, EngineInit, "Initializing engine class");
 
 	/** INITIALIZE ENGINE CLASS */
-	Engine.reset(ZE::CreateEngine());
+	Engine.reset(ZE::Editor::CreateEditor());
 	Engine->Initialize();
 
 	/** LOAD RENDERER MODULE */
@@ -130,19 +156,7 @@ void CZinoEngineMain::Init()
 	Loop();
 }
 
-static ZE::TConVar<int32_t> CVarMaxFPS("r_maxfps", 144,
-	"Max FPS.",
-	1,
-	ZE::GMaxFPS);
-
-static ZE::TConVar<int32_t> CVarPhysFPS("phys_fps", 5,
-	"Physics FPS count.",
-	1,
-	60);
-
-bool bRun = true;
-
-void CZinoEngineMain::Loop()
+void Loop()
 {
 	using namespace ZE;
 
@@ -184,12 +198,6 @@ void CZinoEngineMain::Loop()
 		CTickSystem::Get().Tick(ETickOrder::PostPhysics, DeltaTimeSec);
 		Engine->Draw();
 		CTickSystem::Get().Tick(ETickOrder::EndOfFrame, DeltaTimeSec);
-
-		
-		/**
-		 * Reset event at the end
-		 */
-		Event = {};
 		
 		/** Fps limiter */
 		double SleepTime = 0.0;
@@ -201,10 +209,11 @@ void CZinoEngineMain::Loop()
 	Exit();
 }
 
-void CZinoEngineMain::Tick(const float& InDeltaTime)
+void Tick(const float& InDeltaTime)
 {
 	ZE::Input::Clear();
 
+	SDL_Event Event;
 	while (SDL_PollEvent(&Event))
 	{
 		if (Event.type == SDL_QUIT)
@@ -216,12 +225,14 @@ void CZinoEngineMain::Tick(const float& InDeltaTime)
 			ZE::Input::OnKeyPressed(Event);
 		if(Event.type == SDL_KEYUP)
 			ZE::Input::OnKeyReleased(Event);
+
+		Engine->ProcessEvent(&Event);
 	}
 
-	Engine->Tick(&Event, InDeltaTime);
+	Engine->Tick(InDeltaTime);
 }
 
-void CZinoEngineMain::Exit()
+void Exit()
 {
 	LOG(ZE::ELogSeverity::Info, EngineInit, "Exiting engine");
 

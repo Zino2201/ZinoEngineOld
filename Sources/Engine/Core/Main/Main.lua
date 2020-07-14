@@ -1,5 +1,5 @@
 local Mod = Module:new("Main", "WindowedApp")
-Mod:addModules({ "EngineCore", "RenderCore", "ShaderCore", "RenderSystem", "VulkanRenderSystem", "ShaderCompiler", "VulkanShaderCompiler", "Engine" })
+Mod:addModules({ "EngineCore", "RenderCore", "ShaderCore", "RenderSystem", "VulkanRenderSystem", "ShaderCompiler", "VulkanShaderCompiler", "Engine", "Editor" })
 targetprefix("")
 targetname("ZinoEngine")
 -- Link all modules if in monolithic mode

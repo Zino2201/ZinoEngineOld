@@ -16,7 +16,7 @@ void CEngine::Initialize()
 	ECS::CECSManager::Get().Initialize();
 }
 
-void CEngine::Tick(union SDL_Event* InEvent, const float& InDeltaTime)
+void CEngine::Tick(const float& InDeltaTime)
 {
 
 }

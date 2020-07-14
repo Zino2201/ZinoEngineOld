@@ -26,8 +26,9 @@ public:
     ~CEngineGame();
 
     ENGINE_API virtual void Initialize() override;
-    ENGINE_API virtual void Tick(SDL_Event* InEvent, const float& InDeltaTime) override;
+    ENGINE_API virtual void Tick(const float& InDeltaTime) override;
     ENGINE_API virtual void Draw() override;
+    ENGINE_API void ProcessEvent(SDL_Event* InEvent) override;
     ENGINE_API void Exit() override;
     int OnWindowResized(SDL_Event* InEvent);
 private:

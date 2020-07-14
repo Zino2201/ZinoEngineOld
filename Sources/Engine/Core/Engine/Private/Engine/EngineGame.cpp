@@ -243,20 +243,54 @@ int CEngineGame::OnWindowResized(SDL_Event* InEvent)
 	return SDL_FALSE;
 }
 
-void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
+static bool bIsMouseGrabbed = false;
+
+void CEngineGame::ProcessEvent(SDL_Event* InEvent)
 {
-	CEngine::Tick(InEvent, InDeltaTime);
+	ImGui_ImplSDL2_ProcessEvent(InEvent);
+
+
+	if (InEvent->type == SDL_MOUSEMOTION)
+	{
+		if (bIsMouseGrabbed)
+		{
+			float DeltaX = InEvent->motion.xrel * 0.5f;
+			float DeltaY = InEvent->motion.yrel * 0.5f;
+
+			CamYaw += DeltaX;
+			CamPitch += -DeltaY;
+
+			if (CamPitch > 89.0f)
+				CamPitch = 89.0f;
+			if (CamPitch < -89.0f)
+				CamPitch = -89.0f;
+
+			glm::vec3 Front;
+			Front.x = cos(glm::radians(CamYaw)) * cos(glm::radians(CamPitch));
+			Front.y = sin(glm::radians(CamPitch));
+			Front.z = sin(glm::radians(CamYaw)) * cos(glm::radians(CamPitch));
+			Front.y *= -1;
+			CameraFront = glm::normalize(Front);
+
+			SDL_WarpMouseInWindow((SDL_Window*)Window->GetHandle(),
+				Window->GetWidth() / 2, Window->GetHeight() / 2);
+		}
+	}
+}
+
+void CEngineGame::Tick(const float& InDeltaTime)
+{
+	CEngine::Tick(InDeltaTime);
 
 	ImGuiIO& IO = ImGui::GetIO();
 
 	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(Window->GetHandle()));
 	ImGui::NewFrame();
-	ImGui_ImplSDL2_ProcessEvent(InEvent);
 
 	/** Update camera */
 	const Uint8* KeyState = SDL_GetKeyboardState(nullptr);
 	Uint32 MouseState = SDL_GetMouseState(nullptr, nullptr);
-	static bool bIsMouseGrabbed = false;
+
 	const float CameraSpeed = 5.f * InDeltaTime;
 
 	const bool bImGuiInteract = ImGui::IsAnyItemHovered()
@@ -302,33 +336,6 @@ void CEngineGame::Tick(SDL_Event* InEvent, const float& InDeltaTime)
 			bIsMouseGrabbed = false;
 			IO.WantCaptureKeyboard = true;
 			IO.WantCaptureMouse = true;
-		}
-	}
-
-	if (InEvent->type == SDL_MOUSEMOTION)
-	{
-		if (bIsMouseGrabbed)
-		{
-			float DeltaX = InEvent->motion.xrel * 0.5f;
-			float DeltaY = InEvent->motion.yrel * 0.5f;
-
-			CamYaw += DeltaX;
-			CamPitch += -DeltaY;
-
-			if (CamPitch > 89.0f)
-				CamPitch = 89.0f;
-			if (CamPitch < -89.0f)
-				CamPitch = -89.0f;
-
-			glm::vec3 Front;
-			Front.x = cos(glm::radians(CamYaw)) * cos(glm::radians(CamPitch));
-			Front.y = sin(glm::radians(CamPitch));
-			Front.z = sin(glm::radians(CamYaw)) * cos(glm::radians(CamPitch));
-			Front.y *= -1;
-			CameraFront = glm::normalize(Front);
-
-			SDL_WarpMouseInWindow((SDL_Window*) Window->GetHandle(),
-				Window->GetWidth() / 2, Window->GetHeight() / 2);
 		}
 	}
 
