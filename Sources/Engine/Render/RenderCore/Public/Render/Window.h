@@ -5,6 +5,16 @@
 namespace ZE
 {
 
+enum class EWindowFlags
+{
+    None = 1 << 0,
+
+    Resizable = 1 << 1,
+    Maximized = 1 << 2,
+    Borderless = 1 << 3,
+};
+DECLARE_FLAG_ENUM(EWindowFlags);
+
 /**
  * A window
  */
@@ -12,7 +22,7 @@ class RENDERCORE_API CWindow
 {
 public:
     CWindow(const char* InName, const uint32_t& InWidth,
-        const uint32_t& InHeight);
+        const uint32_t& InHeight, const EWindowFlags& InFlags = EWindowFlags::None);
     ~CWindow();
 
     void SetWidth(const uint32_t& InWidth) { Width = InWidth; }

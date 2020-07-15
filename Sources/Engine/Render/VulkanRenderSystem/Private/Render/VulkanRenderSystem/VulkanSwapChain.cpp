@@ -15,7 +15,7 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 	const vk::SwapchainKHR& InOldSwapchain)
 	: CVulkanDeviceResource(InDevice),
 	Surface(InSurface->GetSurface()), Width(InWidth), Height(InHeight), 
-	CurrentImageIdx(-1), CurrentFrame(0)
+	CurrentImageIdx(0), CurrentFrame(0)
 {
 	/**
 	 * Query details about swap chain
