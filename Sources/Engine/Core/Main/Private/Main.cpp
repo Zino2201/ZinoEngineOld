@@ -144,6 +144,7 @@ void Init()
 
 	/** INITIALIZE ENGINE CLASS */
 	Engine.reset(ZE::Editor::CreateEditor());
+	//Engine.reset(ZE::CreateEngine());
 	Engine->Initialize();
 
 	/** LOAD RENDERER MODULE */
@@ -170,6 +171,11 @@ void Loop()
 
 	while(bRun)
 	{
+		if(Engine->ShouldExit())
+		{
+			bRun = false;
+		}
+
 		double TargetTime = 1000 / CVarMaxFPS.Get();
 
 		/** Delta time */

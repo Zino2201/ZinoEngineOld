@@ -10,6 +10,10 @@
 #include "FileSystem/ZFS.h"
 #include "Serialization/FileArchive.h"
 #include <filesystem>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
 
 DECLARE_LOG_CATEGORY(Logger);
 
@@ -83,7 +87,7 @@ void CLogger::Log(const ELogSeverity& InSeverity,
 		FA << Message;
 		FA.Flush();
 	}
-	Messages.emplace_back(InSeverity, std::move(PrintfBuffer));
+	Messages.emplace_back(InSeverity, InCategory, std::move(PrintfBuffer));
 
 	if (InSeverity >= ELogSeverity::Fatal)
 	{

@@ -393,6 +393,9 @@ workspace "ZinoEngine"
 		executeModule("ShaderCore")
 		executeModule("ShaderCompiler")
 		executeModule("VulkanShaderCompiler")
+	group "Editor"
+		executeModule("Editor")
+		executeModule("MapEditor")
 	group ""
 		executeModule("Main")
 	group "Tools"

@@ -31,6 +31,8 @@ public:
     virtual void Draw();
 
     virtual void Exit() {}
+
+    virtual bool ShouldExit() const { return false; }
 protected:
     //std::unique_ptr<CEntityComponentSystemManager> ECSManager;
 };

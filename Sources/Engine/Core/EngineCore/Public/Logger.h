@@ -27,10 +27,12 @@ DECLARE_LOG_CATEGORY(Engine);
 struct SLoggerMessage
 {
 	ELogSeverity Severity;
+	std::string_view Category;
 	std::string Message;
 
 	SLoggerMessage(const ELogSeverity& InSeverity,
-		const std::string& InMessage) : Severity(InSeverity), Message(InMessage) {}
+		const std::string_view& InCategory,
+		const std::string& InMessage) : Severity(InSeverity), Category(InCategory), Message(InMessage) {}
 };
 
 /**

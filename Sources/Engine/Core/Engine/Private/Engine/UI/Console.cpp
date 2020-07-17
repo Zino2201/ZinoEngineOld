@@ -7,6 +7,11 @@
 namespace ZE
 {
 
+CConsoleWidget::CConsoleWidget() : CurrentConsoleSize(0)
+{
+	memset(Input.data(), 0, Input.size());
+}
+
 std::vector<std::string> Tokenize(const std::string& InString, 
 	const char& InDelimiter)
 {
@@ -30,7 +35,10 @@ void CConsoleWidget::Draw()
 {
 	ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_Once);
 	if (!ImGui::Begin("Console"))
+	{
+		ImGui::End();
 		return;
+	}
 
 	const float FooterHeight =
 		ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
@@ -61,15 +69,25 @@ void CConsoleWidget::Draw()
 	ImGui::Separator();
 
 	/** Console */
-	ImGui::BeginChild("ScrollingRegion", 
-		ImVec2(0, -FooterHeight), true, ImGuiWindowFlags_HorizontalScrollbar);
+	if(!ImGui::BeginChild("ScrollingRegion", 
+		ImVec2(0, -FooterHeight), true, ImGuiWindowFlags_HorizontalScrollbar))
+	{
+		ImGui::EndChild();
+		return;
+	}
 	
 	const auto& Messages = CLogger::Get().GetMessages();
-
 	for (const auto& Msg : Messages)
 	{
-		ImGui::TextColored(ToColor(Msg.Severity), Msg.Message.c_str());
-		ImGui::SetScrollHere();
+		UI::SImGuiAutoStyleColor TextCol(ImGuiCol_Text, ToColor(Msg.Severity));
+		ImGui::TextWrapped("(%s) %s", Msg.Category.data(), Msg.Message.c_str());
+	}
+
+	if(CurrentConsoleSize != Messages.size() && 
+		ImGui::GetScrollY() == ImGui::GetScrollMaxY())
+	{
+		ImGui::SetScrollHereY();
+		CurrentConsoleSize = Messages.size();
 	}
 
 	ImGui::EndChild();

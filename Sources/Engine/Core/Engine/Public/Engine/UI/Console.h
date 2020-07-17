@@ -12,15 +12,18 @@ namespace ZE
 /**
  * Console widget
  */
-class CConsoleWidget
+class ENGINE_API CConsoleWidget
 {
 public:
+	CConsoleWidget();
+
 	void Draw();
 private:
 	int OnTextEdited(ImGuiInputTextCallbackData* InData);
 	ImVec4 ToColor(const ELogSeverity& InSeverity) const;
 private:
 	std::array<char, 32> Input;
+	size_t CurrentConsoleSize;
 };
 
 }

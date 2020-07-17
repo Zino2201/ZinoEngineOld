@@ -12,6 +12,7 @@ enum class EWindowFlags
     Resizable = 1 << 1,
     Maximized = 1 << 2,
     Borderless = 1 << 3,
+    Centered = 1 << 4,
 };
 DECLARE_FLAG_ENUM(EWindowFlags);
 

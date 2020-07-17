@@ -22,9 +22,13 @@ CWindow::CWindow(const char* InName, const uint32_t& InWidth, const uint32_t& In
 	if (HAS_FLAG(InFlags, EWindowFlags::Borderless))
 		WindowsFlags |= SDL_WINDOW_BORDERLESS;
 
+	int Pos = 0;
+	if (HAS_FLAG(InFlags, EWindowFlags::Centered))
+		Pos = SDL_WINDOWPOS_CENTERED;
+
 	Handle = SDL_CreateWindow(InName, 
-		SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED,
+		Pos,
+		Pos,
 		InWidth, InHeight,
 		WindowsFlags);
 

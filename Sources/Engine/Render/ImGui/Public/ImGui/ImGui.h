@@ -13,4 +13,29 @@ public:
 	void Destroy() override;
 };
 
+struct SImGuiAutoStyleColor
+{
+	SImGuiAutoStyleColor(ImGuiCol InIdx, const ImVec4& InColor)
+	{
+		ImGui::PushStyleColor(InIdx, InColor);
+	}
+
+	~SImGuiAutoStyleColor()
+	{
+		ImGui::PopStyleColor();
+	}
+};
+
+struct SImGuiAutoStyleVar
+{
+	SImGuiAutoStyleVar(ImGuiStyleVar InIdx, const ImVec2& InVal)
+	{
+		ImGui::PushStyleVar(InIdx, InVal);
+	}
+
+	~SImGuiAutoStyleVar()
+	{
+		ImGui::PopStyleVar();
+	}
+};
 }
