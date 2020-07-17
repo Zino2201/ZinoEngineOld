@@ -415,6 +415,7 @@ struct SRSRenderPass
     bool operator==(const SRSRenderPass& InOther) const
     {
         return ColorAttachments == InOther.ColorAttachments &&
+            DepthAttachments == InOther.DepthAttachments &&
             Subpasses == InOther.Subpasses;
     }
 };
