@@ -11,7 +11,7 @@ DECLARE_LOG_CATEGORY(Viewport);
 /**
  * Represents a viewport
  */
-class CViewport
+class ENGINE_API CViewport
 {
 public:
     CViewport(void* InWindowHandle, const uint32_t& InWidth,

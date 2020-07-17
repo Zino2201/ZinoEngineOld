@@ -34,6 +34,6 @@ private:
 	bool bShouldRun;
 };
 
-TOwnerPtr<CEngine> CreateEditor();
+EDITOR_API TOwnerPtr<CEngine> CreateEditor();
 
 }
