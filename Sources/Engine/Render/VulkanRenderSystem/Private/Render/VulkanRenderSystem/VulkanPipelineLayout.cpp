@@ -73,14 +73,19 @@ void CVulkanDescriptorSetManager::NewFrame()
 std::pair<vk::DescriptorSet, bool> CVulkanDescriptorSetManager::GetSet(const uint32_t& InSet,
 	const std::array<uint64_t, GMaxBindingsPerSet>& InHandles)
 {
+	uint64_t HandleHash = 0;
+	for(const auto& Handle : InHandles)
+	{
+		HashCombine(HandleHash, Handle);
+	}
+
 	/**
 	 * First search if there is already a set with the same handles
 	 */
-
 	for(auto& Entry : Sets)
 	{
 		if (Entry.Set == InSet &&
-			Entry.Handles == InHandles)
+			Entry.Hash == HandleHash)
 		{
 			Entry.LifetimeCounter = 0;
 
@@ -147,7 +152,7 @@ std::pair<vk::DescriptorSet, bool> CVulkanDescriptorSetManager::GetSet(const uin
 		}
 	}
 
-	Sets.emplace_back(InSet, InHandles, Set);
+	Sets.emplace_back(InSet, HandleHash, Set);
 
 	return { Set, true };
 }

@@ -167,47 +167,16 @@ class CVulkanDescriptorSetManager
 	{
 		uint32_t Set;
 		uint8_t LifetimeCounter;
-		std::array<uint64_t, GMaxBindingsPerSet> Handles;
+
+		/** Handles hash */
+		uint64_t Hash;
 		vk::DescriptorSet SetHandle;
 
-		SDescriptorSetEntry() : Set(0), LifetimeCounter(0) {}
+		SDescriptorSetEntry() : Set(0), LifetimeCounter(0), Hash(0) {}
 		SDescriptorSetEntry(const uint32_t& InSet,
-			const std::array<uint64_t, GMaxBindingsPerSet>& InHandles,
+			const uint64_t& InHash,
 			const vk::DescriptorSet& InSetHandle) : 
-			Set(InSet), LifetimeCounter(0), Handles(InHandles), SetHandle(InSetHandle) {}
-
-		bool operator==(const SDescriptorSetEntry& InOther) const
-		{
-			/** Simply compare stored handles */
-
-			uint8_t FoundHandles = 0;
-
-			for (const auto& OtherHandle : InOther.Handles)
-			{
-				for (const auto& MyHandle : Handles)
-				{
-					if (OtherHandle == MyHandle)
-						FoundHandles++;
-				}
-			}
-
-			return FoundHandles == Handles.size();
-		}
-	};
-
-	struct SDescriptorSetEntryHash
-	{
-		uint64_t operator()(const SDescriptorSetEntry& InEntry) const
-		{
-			uint64_t Hash = 0;
-
-			HashCombine(Hash, InEntry.LifetimeCounter);
-			HashCombine(Hash, InEntry.Set);
-			for(const auto& Handle : InEntry.Handles)
-				HashCombine(Hash, Handle);
-
-			return Hash;
-		}
+			Set(InSet), LifetimeCounter(0), Hash(InHash), SetHandle(InSetHandle) {}
 	};
 public:
 	CVulkanDescriptorSetManager(CVulkanDevice& InDevice,
