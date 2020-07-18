@@ -168,27 +168,40 @@ class CVulkanDescriptorSetManager
 
 	struct SDescriptorSetEntry
 	{
-		uint32_t Set;
 		uint8_t LifetimeCounter;
-
-		/** Handles hash */
-		uint64_t Hash;
 		vk::DescriptorSet SetHandle;
 
-		SDescriptorSetEntry() : Set(0), LifetimeCounter(0), Hash(0) {}
-		SDescriptorSetEntry(const uint32_t& InSet,
-			const uint64_t& InHash,
-			const vk::DescriptorSet& InSetHandle) : 
-			Set(InSet), LifetimeCounter(0), Hash(InHash), SetHandle(InSetHandle) {}
+		SDescriptorSetEntry() : LifetimeCounter(0) {}
+		SDescriptorSetEntry(const vk::DescriptorSet& InSetHandle) : 
+			LifetimeCounter(0), SetHandle(InSetHandle) {}
+	};
+	
+	/**
+	 * Key for a descriptor set entry
+	 */
+	struct SDescriptorSetEntryKey
+	{
+		uint32_t Set;
+		HandlesArrayType Handles;
+
+		SDescriptorSetEntryKey() : Set(0) {}
+
+		bool operator==(const SDescriptorSetEntryKey& InOther) const
+		{
+			return Set == InOther.Set &&
+				Handles == InOther.Handles;
+		}
 	};
 
-	struct SDescriptorHash
+	struct SDescriptorSetEntryKeyHash
 	{
-		uint64_t operator()(const HandlesArrayType& InHandles) const
+		uint64_t operator()(const SDescriptorSetEntryKey& InKey) const
 		{
 			uint64_t Hash = 0;
 
-			for (const auto& Handle : InHandles)
+			HashCombine<uint32_t, robin_hood::hash<uint32_t>>(Hash, InKey.Set);
+
+			for (const auto& Handle : InKey.Handles)
 			{
 				HashCombine<uint64_t, robin_hood::hash<uint64_t>>(Hash, Handle);
 			}
@@ -216,7 +229,7 @@ private:
 	CVulkanPipelineLayout& PipelineLayout;
 
 	/** Used descriptor sets */
-	robin_hood::unordered_map<HandlesArrayType, SDescriptorSetEntry, SDescriptorHash> Sets;
+	robin_hood::unordered_map<SDescriptorSetEntryKey, SDescriptorSetEntry, SDescriptorSetEntryKeyHash> Sets;
 
 	/** Available descriptor sets that have been recycled */
 	robin_hood::unordered_map<uint32_t, std::queue<vk::DescriptorSet>> AvailableDescriptorSets;

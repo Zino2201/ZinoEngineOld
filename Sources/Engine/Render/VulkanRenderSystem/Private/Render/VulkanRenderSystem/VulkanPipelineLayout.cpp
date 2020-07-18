@@ -48,7 +48,7 @@ void CVulkanDescriptorSetManager::NewFrame()
 	{
 		if(It->second.LifetimeCounter + 1 > GMaxLifetimeDescriptorSet)
 		{
-			AvailableDescriptorSets[It->second.Set].push(std::move(It->second.SetHandle));
+			AvailableDescriptorSets[It->first.Set].push(std::move(It->second.SetHandle));
 			It = Sets.erase(It);
 		}
 		else
@@ -65,7 +65,13 @@ std::pair<vk::DescriptorSet, bool> CVulkanDescriptorSetManager::GetSet(const uin
 	/**
 	 * First search if there is already a set with the same handles
 	 */
-	auto& PossibleSet = Sets.find(InHandles);
+
+	/** Key to search or add */
+	SDescriptorSetEntryKey Key;
+	Key.Handles = std::move(InHandles);
+	Key.Set = InSet;
+
+	auto& PossibleSet = Sets.find(Key);
 	if(PossibleSet != Sets.end())
 		return { PossibleSet->second.SetHandle, false };
 
@@ -128,7 +134,7 @@ std::pair<vk::DescriptorSet, bool> CVulkanDescriptorSetManager::GetSet(const uin
 		}
 	}
 
-	Sets[InHandles] = { InSet, 0, Set } ;
+	Sets.insert({ std::move(Key), { Set } });
 
 	return { Set, true };
 }
