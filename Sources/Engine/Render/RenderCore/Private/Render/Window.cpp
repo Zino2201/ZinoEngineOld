@@ -11,7 +11,7 @@ CWindow::CWindow(const char* InName, const uint32_t& InWidth, const uint32_t& In
 	const EWindowFlags& InFlags)
 	: Name(InName), Width(InWidth), Height(InHeight), Handle(nullptr)
 {
-	Uint32 WindowsFlags = SDL_WINDOW_VULKAN;
+	Uint32 WindowsFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN;
 
 	if(HAS_FLAG(InFlags, EWindowFlags::Resizable))
 		WindowsFlags |= SDL_WINDOW_RESIZABLE;

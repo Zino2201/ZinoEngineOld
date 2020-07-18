@@ -25,6 +25,7 @@ public:
 	void Exit() override;
 	int OnWindowResized(SDL_Event* InEvent);
 	bool ShouldExit() const override { return !bShouldRun; }
+	bool ShouldWaitForEvents() const override { return true; }
 private:
 	void DrawMainTab();
 private:

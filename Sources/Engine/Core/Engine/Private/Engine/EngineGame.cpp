@@ -367,6 +367,8 @@ void CEngineGame::Tick(const float& InDeltaTime)
 
 void CEngineGame::Draw()
 {
+	// TODO: Execute jobs while rendering is processing
+
 	/** Ensure all rendering is finished */
 	Renderer::CRendererModule::Get().WaitRendering();
 

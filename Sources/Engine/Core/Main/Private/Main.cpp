@@ -169,6 +169,9 @@ void Loop()
 	double DeltaTime = 0;
 	double AccumSleep = 0;
 
+	/** Tick before running main loop */
+	Engine->Tick(0.0f);
+
 	while(bRun)
 	{
 		if(Engine->ShouldExit())
@@ -215,24 +218,44 @@ void Loop()
 	Exit();
 }
 
+bool ProcessEvent(SDL_Event& InEvent)
+{
+	if (InEvent.type == SDL_QUIT)
+	{
+		bRun = false;
+		return false;
+	}
+
+	if (InEvent.type == SDL_KEYDOWN)
+		ZE::Input::OnKeyPressed(InEvent);
+	if (InEvent.type == SDL_KEYUP)
+		ZE::Input::OnKeyReleased(InEvent);
+
+	Engine->ProcessEvent(&InEvent);
+
+	return true;
+}
+
 void Tick(const float& InDeltaTime)
 {
 	ZE::Input::Clear();
 
 	SDL_Event Event;
-	while (SDL_PollEvent(&Event))
+	if(Engine->ShouldWaitForEvents())
 	{
-		if (Event.type == SDL_QUIT)
+		if (SDL_WaitEvent(&Event))
 		{
-			bRun = false;
+			if (!ProcessEvent(Event))
+				return;
 		}
-
-		if(Event.type == SDL_KEYDOWN)
-			ZE::Input::OnKeyPressed(Event);
-		if(Event.type == SDL_KEYUP)
-			ZE::Input::OnKeyReleased(Event);
-
-		Engine->ProcessEvent(&Event);
+	}
+	else
+	{
+		while (SDL_PollEvent(&Event))
+		{
+			if(!ProcessEvent(Event))
+				return;
+		}
 	}
 
 	Engine->Tick(InDeltaTime);

@@ -153,7 +153,9 @@ void CZEEditor::Tick(const float& InDeltaTime)
 		if (ImGui::BeginTabBar("MainTabBar", ImGuiTabBarFlags_TabListPopupButton
 			| ImGuiTabBarFlags_Reorderable))
 		{
-			ImGui::SameLine(ImGui::GetColumnWidth() - 20);
+			ImGui::SameLine(ImGui::GetColumnWidth() - 200);
+			ImGui::Text("ZinoEngine");
+			ImGui::SameLine(ImGui::GetColumnWidth() - 40);
 			if (ImGui::Button("X"))
 				bShouldRun = false;
 			DrawMainTab();

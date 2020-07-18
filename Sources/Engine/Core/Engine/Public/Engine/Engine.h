@@ -33,6 +33,8 @@ public:
     virtual void Exit() {}
 
     virtual bool ShouldExit() const { return false; }
+
+    virtual bool ShouldWaitForEvents() const { return false; }
 protected:
     //std::unique_ptr<CEntityComponentSystemManager> ECSManager;
 };
