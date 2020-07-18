@@ -5,7 +5,11 @@
 namespace ZE::JobSystem
 {
 
-/** CWorkerThread */
+/** Global condition_variable for sleeping workers */
+std::condition_variable SleepConditionVariable;
+
+std::condition_variable& CWorkerThread::GetSleepConditionVariable() { return SleepConditionVariable; }
+
 CWorkerThread::CWorkerThread() : Active(false), Type(EWorkerThreadType::Full) {}
 
 CWorkerThread::CWorkerThread(EWorkerThreadType InType,
@@ -50,6 +54,14 @@ void CWorkerThread::Flush()
 	if (Job)
 	{
 		Internal::ExecuteJob(*Job);
+	}
+	else
+	{
+		if(Type != EWorkerThreadType::Partial)
+		{
+			std::unique_lock<std::mutex> Lock(SleepMutex);
+			SleepConditionVariable.wait(Lock);
+		}
 	}
 }
 

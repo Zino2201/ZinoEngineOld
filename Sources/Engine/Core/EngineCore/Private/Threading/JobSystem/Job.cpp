@@ -8,7 +8,12 @@ namespace ZE::JobSystem
 void ScheduleJob(const SJob& InJob)
 {
 	if(InJob.Type != EJobType::Lightweight)
-		GetWorker().GetJobQueue().Push(&InJob);
+	{
+		/** Wake a sleeping worker */
+		GetWorker().GetJobQueue().Push(&InJob);	
+
+		CWorkerThread::GetSleepConditionVariable().notify_one();
+	}
 	else
 		Internal::ExecuteJob(InJob);
 }
@@ -25,6 +30,7 @@ void WaitJob(const SJob& InJob)
 {
 	while (!InJob.IsFinished())
 	{
+		CWorkerThread::GetSleepConditionVariable().notify_one();
 		GetWorker().Flush();
 	}
 }

@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef _WIN32
+#error "ZinoEngine doesn't support this platform yet"
+#endif
+
 /**
  * Minimal include for classes (PCH)
  */
@@ -15,7 +19,6 @@
 
 /** Utils */
 #include "Delegates/MulticastDelegate.h"
-
 
 /** Maths */
 #include "Maths/MathCore.h"

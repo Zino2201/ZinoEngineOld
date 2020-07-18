@@ -1,6 +1,11 @@
 #include "Threading/JobSystem/JobSystem.h"
 #include "Threading/JobSystem/WorkerThread.h"
 #include "Threading/JobSystem/Job.h"
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <sstream>
+#endif
 
 DECLARE_LOG_CATEGORY(JobSystem);
 
@@ -54,10 +59,18 @@ void Initialize()
 	for(size_t i = 1; i < WorkerThreadCount; ++i)
 	{
 		new (Workers.data() + i) CWorkerThread(EWorkerThreadType::Full, 
-			[]()
+			[i]()
 			{
 				InitThreadLocalIdx();
 				auto& Worker = GetWorker();
+
+				/** Set a name to this thread */
+#ifdef _WIN32
+				HANDLE ThreadHandle = reinterpret_cast<HANDLE>(Worker.GetThread().native_handle());
+				std::wstringstream Name;
+				Name << "ZE WorkerThread " << i;
+				must(SUCCEEDED(SetThreadDescription(ThreadHandle, Name.str().c_str())));
+#endif
 
 				while(Worker.IsActive())
 				{
@@ -108,6 +121,11 @@ CWorkerThread& GetWorkerByIdx(const size_t& InIdx)
 CWorkerThread& GetWorker()
 {
 	return Workers[WorkerIdx];
+}
+
+size_t GetWorkerIdx()
+{
+	return WorkerIdx;
 }
 
 size_t GetWorkerCount()

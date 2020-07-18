@@ -20,7 +20,7 @@ enum class EWorkerThreadType
 
 	/** A worker that is inside a thread 
 	 * can run jobs but do other stuff (typically the main thread for example) 
-	 * Partial threads never yield and doesn't steal jobs */
+	 * Partial threads never yield and doesn't steal jobs and should never be waited from */
 	Partial
 };
 
@@ -42,6 +42,10 @@ public:
 	/** Flush the thread queue */
 	void Flush();
 
+	static std::condition_variable& GetSleepConditionVariable();
+
+	FORCEINLINE const EWorkerThreadType& GetType() const { return Type; }
+	FORCEINLINE std::thread& GetThread() { return Thread; }
 	FORCEINLINE const std::thread::id& GetThreadId() const { return ThreadId; }
 	FORCEINLINE TJobDeque& GetJobQueue() { return JobQueue; }
 	FORCEINLINE bool IsActive() const { return Active; }
@@ -64,8 +68,7 @@ private:
 	std::thread Thread;
 	std::thread::id ThreadId;
 	TJobDeque JobQueue;
+	std::mutex SleepMutex;
 };
-
-
 
 }

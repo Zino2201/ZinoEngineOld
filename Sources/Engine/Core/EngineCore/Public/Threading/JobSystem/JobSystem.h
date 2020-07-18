@@ -89,6 +89,7 @@ template<typename Lambda>
 ENGINECORE_API CWorkerThread& GetWorkerByThreadId(const std::thread::id& InThreadId);
 ENGINECORE_API CWorkerThread& GetWorkerByIdx(const size_t& InIdx);
 ENGINECORE_API CWorkerThread& GetWorker();
+ENGINECORE_API size_t GetWorkerIdx();
 ENGINECORE_API size_t GetWorkerCount();
 
 }
