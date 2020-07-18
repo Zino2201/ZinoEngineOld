@@ -42,32 +42,6 @@ private:
     std::unique_ptr<CVulkanCommandBuffer> GraphicsCmdBuffer;
 };
 
-/**
- * Manage render passes and framebuffers by hashing them
- */
-class CVulkanRenderPassManager
-{
-public:
-    CVulkanRenderPassManager(CVulkanDevice* InDevice);
-    ~CVulkanRenderPassManager();
-
-    /**
-     * Get render pass handle from RenderPass structure
-     * If not created, create it
-     */
-    vk::RenderPass GetRenderPass(const SRSRenderPass& InRenderPass);
-
-    /**
-     * Same as GetRenderPass but for framebuffer
-     */
-    vk::Framebuffer GetFramebuffer(const SRSFramebuffer& InFramebuffer,
-        const vk::RenderPass& InRenderPass = nullptr);
-private:
-    CVulkanDevice* Device;
-    std::unordered_map<SRSRenderPass, vk::RenderPass, SRSRenderPassHash> RenderPasses;
-    std::unordered_map<SRSFramebuffer, vk::Framebuffer, SRSFramebufferHash> Framebuffers;
-};
-
 class CVulkanRenderSystemContext : public IRenderSystemContext
 {
     friend class CVulkanPipelineSetManager;
@@ -112,14 +86,12 @@ public:
 		const int32_t& InVertexOffset, const uint32_t& InFirstInstance) override;
 
     CVulkanCommandBufferManager& GetCmdBufferMgr() { return CmdBufferMgr; }
-    CVulkanRenderPassManager& GetRenderPassMgr() { return RenderPassMgr; }
     CVulkanSurface* GetCurrentSurface() const { return CurrentSurface; }
 private:
     void FlushWrites();
     void BindDescriptorSets();
 private:
     CVulkanDevice* Device;
-    CVulkanRenderPassManager RenderPassMgr;
     CVulkanCommandBufferManager CmdBufferMgr;
     CVulkanPipelineLayout* CurrentLayout;
     vk::RenderPass CurrentRenderPass;

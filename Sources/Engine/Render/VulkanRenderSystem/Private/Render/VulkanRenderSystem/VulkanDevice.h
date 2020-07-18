@@ -4,6 +4,7 @@
 #include "VulkanRenderSystemContext.h"
 #include "VulkanPipelineLayout.h"
 #include "VulkanPipeline.h"
+#include <robin_hood.h>
 
 class CVulkanSwapChain;
 class CVulkanQueue;
@@ -98,6 +99,101 @@ private:
     std::vector<SEntry> Entries;
 };
 
+/** Lifetime of a unused renderpass (in frames) */
+static constexpr uint8_t GMaxLifetimeRenderPass = 10;
+
+/** Lifetime of a unused framebuffer (in frames) */
+static constexpr uint8_t GMaxLifetimeFramebuffer = 10;
+
+/**
+ * Render pass/framebuffer manager
+ */
+class CVulkanRenderPassFramebufferManager
+{
+    struct SRenderPassEntry
+    {
+        vk::UniqueRenderPass RenderPass;
+        uint8_t LifetimeCounter;
+
+		SRenderPassEntry() : LifetimeCounter(0) {}
+		SRenderPassEntry(vk::UniqueRenderPass&& InRenderPass) :
+            RenderPass(std::move(InRenderPass)), LifetimeCounter(0) {}
+    };
+
+    /**
+     * A framebuffer entry
+     * Each framebuffer is associated with a specific render pass
+     */
+    struct SFramebufferEntry
+    {
+        vk::UniqueFramebuffer Framebuffer;
+        uint8_t LifetimeCounter;
+
+        SFramebufferEntry() : LifetimeCounter(0) {}
+        SFramebufferEntry(vk::UniqueFramebuffer&& InFramebuffer) :
+            Framebuffer(std::move(InFramebuffer)), LifetimeCounter(0) {}
+    };
+
+    /**
+     * Entry key of a frame buffer
+     */
+	struct SFramebufferEntryKey
+	{
+        vk::RenderPass RenderPass;
+        std::array<uint64_t, GMaxRenderTargetPerFramebuffer> ColorRTs;
+        std::array<uint64_t, GMaxRenderTargetPerFramebuffer> DepthRTs;
+
+        bool operator==(const SFramebufferEntryKey& InOther) const
+        {
+            return RenderPass == InOther.RenderPass &&
+                ColorRTs == InOther.ColorRTs &&
+                DepthRTs == InOther.DepthRTs;
+        }
+	};
+
+    /**
+     * Entry key hash functor
+     */
+	struct SFramebufferEntryKeyHash
+	{
+        uint64_t operator()(const SFramebufferEntryKey& InKey) const
+        {
+            uint64_t Hash = 0;
+
+			HashCombine<uint64_t, robin_hood::hash<uint64_t>>(Hash,
+                reinterpret_cast<uint64_t>(static_cast<VkRenderPass>(InKey.RenderPass)));
+
+			for (const auto& RT : InKey.ColorRTs)
+			{
+				HashCombine<uint64_t, robin_hood::hash<uint64_t>>(Hash, RT);
+			}
+
+			for (const auto& RT : InKey.DepthRTs)
+			{
+				HashCombine<uint64_t, robin_hood::hash<uint64_t>>(Hash, RT);
+			}
+
+            return Hash;
+        }
+	};
+public:
+    CVulkanRenderPassFramebufferManager(CVulkanDevice& InDevice);
+    ~CVulkanRenderPassFramebufferManager();
+
+    /**
+     * Will destroy unused objects
+     */
+    void NewFrame();
+
+    vk::RenderPass GetRenderPass(const SRSRenderPass& InRenderPass);
+    vk::Framebuffer GetFramebuffer(const SRSFramebuffer& InFramebuffer,
+        const vk::RenderPass& InRenderPass);
+private:
+    CVulkanDevice& Device;
+    robin_hood::unordered_map<SRSRenderPass, SRenderPassEntry, SRSRenderPassHash> RenderPasses;
+    robin_hood::unordered_map<SFramebufferEntryKey, SFramebufferEntry, SFramebufferEntryKeyHash> Framebuffers;
+};
+
 class CVulkanDevice
 {
     struct SVMADestructor
@@ -115,10 +211,13 @@ public:
     void WaitIdle();
     void CreatePresentQueue(const vk::SurfaceKHR& InSurface);
 
+    /** Managers */
     CVulkanStagingBufferManager* GetStagingBufferMgr() { return StagingBufferMgr.get(); }
     CVulkanPipelineLayoutManager* GetPipelineLayoutMgr() { return PipelineLayoutMgr.get(); }
     CVulkanDeferredDestructionManager& GetDeferredDestructionMgr() { return DeferredDestructionManager; }
     CVulkanPipelineManager& GetPipelineManager() { return PipelineManager; }
+    CVulkanRenderPassFramebufferManager& GetRenderPassFramebufferMgr() { return RenderPassFramebufferMgr; }
+
     CVulkanRenderSystemContext* GetContext() const { return Context.get(); }
     const VmaAllocator& GetAllocator() const { return Allocator; }
     const vk::Device& GetDevice() const { return *Device; }
@@ -138,5 +237,6 @@ private:
     CVulkanQueue* PresentQueue;
     std::unique_ptr<CVulkanPipelineLayoutManager> PipelineLayoutMgr;
     CVulkanPipelineManager PipelineManager;
+    CVulkanRenderPassFramebufferManager RenderPassFramebufferMgr;
     std::unique_ptr<SVMADestructor> VmaDestructor;
 };

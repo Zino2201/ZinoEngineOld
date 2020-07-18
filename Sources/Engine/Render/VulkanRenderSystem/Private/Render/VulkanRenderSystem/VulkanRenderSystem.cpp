@@ -213,6 +213,8 @@ void CVulkanRenderSystem::NewFrame()
 	{
 		Layout->GetSetManager().NewFrame();
 	}
+
+	Device->GetRenderPassFramebufferMgr().NewFrame();
 }
 
 void CVulkanRenderSystem::WaitGPU()

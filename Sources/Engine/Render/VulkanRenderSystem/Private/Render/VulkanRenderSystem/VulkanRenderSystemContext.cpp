@@ -91,202 +91,13 @@ void CVulkanCommandBufferManager::SubmitCmdBuffer(CVulkanCommandBuffer* InComman
 	/** Reset command buffers */
 }
 
-CVulkanRenderPassManager::CVulkanRenderPassManager(CVulkanDevice* InDevice)
-	: Device(InDevice) {}
-
-CVulkanRenderPassManager::~CVulkanRenderPassManager() 
-{
-	for(const auto& [Framebuffer, Handle] : Framebuffers)
-	{
-		Device->GetDevice().destroyFramebuffer(Handle);
-	}
-
-	for (const auto& [RenderPass, Handle] : RenderPasses)
-	{
-		Device->GetDevice().destroyRenderPass(Handle);
-	}
-}
-
-vk::RenderPass CVulkanRenderPassManager::GetRenderPass(const SRSRenderPass& InRenderPass)
-{
-	auto& FoundRenderPass = RenderPasses.find(InRenderPass);
-
-	if(FoundRenderPass != RenderPasses.end())
-	{
-		return FoundRenderPass->second;
-	}
-	else
-	{
-		/** Create render pass */
-		std::vector<vk::AttachmentDescription> Attachments;
-		Attachments.reserve(InRenderPass.ColorAttachments.size());
-
-		for(const auto& ColorAttachment : InRenderPass.ColorAttachments)
-		{
-			Attachments.emplace_back(
-				vk::AttachmentDescriptionFlags(),
-				VulkanUtil::FormatToVkFormat(ColorAttachment.Format),
-				VulkanUtil::SampleCountToVkSampleCount(ColorAttachment.SampleCount),
-				VulkanUtil::RenderPass::AttachmentLoadOpToVkAttachmentLoadOp(ColorAttachment.Load),
-				VulkanUtil::RenderPass::AttachmentStoreOpToVkAttachmentStoreOp(ColorAttachment.Store),
-				vk::AttachmentLoadOp::eDontCare,
-				vk::AttachmentStoreOp::eDontCare,
-				VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(ColorAttachment.InitialLayout),
-				VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(ColorAttachment.FinalLayout));
-		}
-
-		for (const auto& DepthAttachment : InRenderPass.DepthAttachments)
-		{
-			Attachments.emplace_back(
-				vk::AttachmentDescriptionFlags(),
-				VulkanUtil::FormatToVkFormat(DepthAttachment.Format),
-				VulkanUtil::SampleCountToVkSampleCount(DepthAttachment.SampleCount),
-				VulkanUtil::RenderPass::AttachmentLoadOpToVkAttachmentLoadOp(DepthAttachment.Load),
-				VulkanUtil::RenderPass::AttachmentStoreOpToVkAttachmentStoreOp(DepthAttachment.Store),
-				vk::AttachmentLoadOp::eDontCare,
-				vk::AttachmentStoreOp::eDontCare,
-				VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(DepthAttachment.InitialLayout),
-				VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(DepthAttachment.FinalLayout));
-		}
-
-		std::vector<vk::SubpassDescription> Subpasses;
-		Subpasses.reserve(InRenderPass.Subpasses.size());
-
-		/**
-		 * We need to keep attachment ref alive for createRenderPass
-		 */
-		std::vector<vk::AttachmentReference> ColorAttachments;
-		std::vector<vk::AttachmentReference> DepthAttachments;
-		std::vector<vk::AttachmentReference> InputAttachments;
-		size_t FirstIdx = 0;
-
-		for(const auto& Subpass : InRenderPass.Subpasses)
-		{
-			for(const auto& ColorAttachment : Subpass.ColorAttachmentRefs)
-			{
-				ColorAttachments.emplace_back(
-					ColorAttachment.Index,
-					VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(
-						ColorAttachment.Layout));
-			}
-
-			for (const auto& DepthAttachment : Subpass.DepthAttachmentRefs)
-			{
-				DepthAttachments.emplace_back(
-					DepthAttachment.Index,
-					VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(
-						DepthAttachment.Layout));
-			}
-
-			for (const auto& InputAttachment : Subpass.InputAttachmentRefs)
-			{
-				InputAttachments.emplace_back(
-					InputAttachment.Index,
-					VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(
-						InputAttachment.Layout));
-			}
-
-			Subpasses.emplace_back(
-				vk::SubpassDescriptionFlags(),
-				vk::PipelineBindPoint::eGraphics,
-				static_cast<uint32_t>(InputAttachments.size()),
-				InputAttachments.data(),
-				static_cast<uint32_t>(Subpass.ColorAttachmentRefs.size()),
-				ColorAttachments.empty() ? nullptr : &ColorAttachments[FirstIdx],
-				nullptr,
-				DepthAttachments.empty() ? nullptr : &DepthAttachments[FirstIdx]);
-
-			FirstIdx += Subpass.ColorAttachmentRefs.size();
-		}
-
-		vk::RenderPassCreateInfo CreateInfo = vk::RenderPassCreateInfo(
-			vk::RenderPassCreateFlags(),
-			static_cast<uint32_t>(Attachments.size()),
-			Attachments.data(),
-			static_cast<uint32_t>(Subpasses.size()),
-			Subpasses.data());
-		
-		vk::RenderPass RenderPass = Device->GetDevice().createRenderPass(
-			CreateInfo).value;
-		if(!RenderPass)
-			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create render pass");
-
-		RenderPasses.insert(std::make_pair(InRenderPass, RenderPass));
-
-		return RenderPass;
-	}
-}
-
-vk::Framebuffer CVulkanRenderPassManager::GetFramebuffer(const SRSFramebuffer& InFramebuffer,
-	const vk::RenderPass& InRenderPass)
-{
-	auto& FoundFramebuffer = Framebuffers.find(InFramebuffer);
-
-	if(FoundFramebuffer != Framebuffers.end())
-	{
-		return FoundFramebuffer->second;
-	}
-	else
-	{
-		uint32_t Width = 0;
-		uint32_t Height = 0;
-
-		std::vector<vk::ImageView> Attachments;
-		for(int i = 0; i < GMaxRenderTargetPerFramebuffer; ++i)
-		{
-			CRSTexture* RT = InFramebuffer.ColorRTs[i];
-			if(!RT)
-				continue;
-
-			CVulkanTexture* VkRt =
-				static_cast<CVulkanTexture*>(RT);
-
-			Width = std::max(Width, RT->GetWidth());
-			Height = std::max(Height, RT->GetHeight());
-
-			Attachments.push_back(VkRt->GetImageView());
-		}
-
-		for (int i = 0; i < GMaxRenderTargetPerFramebuffer; ++i)
-		{
-			CRSTexture* RT = InFramebuffer.DepthRTs[i];
-			if (!RT)
-				continue;
-
-			CVulkanTexture* VkRt =
-				static_cast<CVulkanTexture*>(RT);
-
-			Attachments.push_back(VkRt->GetImageView());
-		}
-
-		vk::FramebufferCreateInfo CreateInfo = vk::FramebufferCreateInfo(
-			vk::FramebufferCreateFlags(),
-			InRenderPass,
-			static_cast<uint32_t>(Attachments.size()),
-			Attachments.data(),
-			Width,
-			Height,
-			1);
-
-		vk::Framebuffer Framebuffer = Device->GetDevice().createFramebuffer(
-			CreateInfo).value;
-		if (!Framebuffer)
-			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create framebuffer");
-
-		Framebuffers[InFramebuffer] = Framebuffer;
-
-		return Framebuffer;
-	}
-}
-
 /** RENDER SYSTEM CONTEXT */
 
 PFN_vkCmdBeginDebugUtilsLabelEXT BeginMarker;
 PFN_vkCmdEndDebugUtilsLabelEXT EndMarker;
 
 CVulkanRenderSystemContext::CVulkanRenderSystemContext(CVulkanDevice* InDevice)
-	: Device(InDevice), CmdBufferMgr(InDevice), RenderPassMgr(InDevice), 
-	CurrentLayout(nullptr), ColorAttachmentsCount(0)
+	: Device(InDevice), CmdBufferMgr(InDevice), CurrentLayout(nullptr), ColorAttachmentsCount(0)
 {
 	GRenderSystemContext = this;
 	GRSContext = this;
@@ -308,8 +119,8 @@ void CVulkanRenderSystemContext::BeginRenderPass(const SRSRenderPass& InRenderPa
 	const std::array<float, 4>& InClearColor,
 	const char* InName)
 {
-	vk::RenderPass RenderPass = RenderPassMgr.GetRenderPass(InRenderPass);
-	vk::Framebuffer Framebuffer = RenderPassMgr.GetFramebuffer(InFramebuffer,
+	vk::RenderPass RenderPass = Device->GetRenderPassFramebufferMgr().GetRenderPass(InRenderPass);
+	vk::Framebuffer Framebuffer = Device->GetRenderPassFramebufferMgr().GetFramebuffer(InFramebuffer,
 		RenderPass);
 
 	ColorAttachmentsCount = static_cast<uint32_t>(InRenderPass.ColorAttachments.size());
