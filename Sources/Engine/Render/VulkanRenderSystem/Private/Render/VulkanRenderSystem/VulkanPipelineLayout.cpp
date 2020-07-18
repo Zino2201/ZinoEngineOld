@@ -43,55 +43,31 @@ CVulkanDescriptorSetManager::~CVulkanDescriptorSetManager()
 
 void CVulkanDescriptorSetManager::NewFrame()
 {
-	std::vector<size_t> EntriesToFree;
-	EntriesToFree.reserve(10);
-
-	size_t Idx = 0;
-	for(auto& Entry : Sets)
+	auto It = Sets.begin();
+	while(It != Sets.end())
 	{
-		if (Entry.LifetimeCounter + 1 > GMaxLifetimeDescriptorSet)
+		if(It->second.LifetimeCounter + 1 > GMaxLifetimeDescriptorSet)
 		{
-			EntriesToFree.emplace_back(Idx);
+			AvailableDescriptorSets[It->second.Set].push(std::move(It->second.SetHandle));
+			It = Sets.erase(It);
 		}
 		else
 		{
-			Entry.LifetimeCounter++;
+			It->second.LifetimeCounter++;
+			++It;
 		}
-
-		Idx++;
-	}
-
-	for(const auto& Idx : EntriesToFree)
-	{
-		const auto& Entry = Sets[Idx];
-
-		AvailableDescriptorSets[Entry.Set].push(std::move(Entry.SetHandle));
-		Sets.erase(Sets.begin() + Idx);
 	}
 }
 
 std::pair<vk::DescriptorSet, bool> CVulkanDescriptorSetManager::GetSet(const uint32_t& InSet,
 	const std::array<uint64_t, GMaxBindingsPerSet>& InHandles)
 {
-	uint64_t HandleHash = 0;
-	for(const auto& Handle : InHandles)
-	{
-		HashCombine(HandleHash, Handle);
-	}
-
 	/**
 	 * First search if there is already a set with the same handles
 	 */
-	for(auto& Entry : Sets)
-	{
-		if (Entry.Set == InSet &&
-			Entry.Hash == HandleHash)
-		{
-			Entry.LifetimeCounter = 0;
-
-			return { Entry.SetHandle, false };
-		}
-	}
+	auto& PossibleSet = Sets.find(InHandles);
+	if(PossibleSet != Sets.end())
+		return { PossibleSet->second.SetHandle, false };
 
 	vk::DescriptorSet Set;
 
@@ -152,7 +128,7 @@ std::pair<vk::DescriptorSet, bool> CVulkanDescriptorSetManager::GetSet(const uin
 		}
 	}
 
-	Sets.emplace_back(InSet, HandleHash, Set);
+	Sets[InHandles] = { InSet, 0, Set } ;
 
 	return { Set, true };
 }

@@ -11,3 +11,6 @@
 	path = Sources/Libs/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
+[submodule "Sources/Libs/robin-hood-hashing"]
+	path = Sources/Libs/robin-hood-hashing
+	url = https://github.com/martinus/robin-hood-hashing.git

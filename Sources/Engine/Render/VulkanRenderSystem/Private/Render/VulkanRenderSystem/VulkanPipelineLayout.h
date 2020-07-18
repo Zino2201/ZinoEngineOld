@@ -2,6 +2,7 @@
 
 #include "VulkanCore.h"
 #include <queue>
+#include <robin_hood.h>
 
 /** Fwd declares */
 class CVulkanPipelineLayout;
@@ -154,6 +155,8 @@ static constexpr uint8_t GMaxDescriptorSetPerPool = 32;
  */
 class CVulkanDescriptorSetManager
 {
+	using HandlesArrayType = std::array<uint64_t, GMaxBindingsPerSet>;
+
 	struct SDescriptorPoolEntry
 	{
 		uint8_t Allocations;
@@ -178,6 +181,21 @@ class CVulkanDescriptorSetManager
 			const vk::DescriptorSet& InSetHandle) : 
 			Set(InSet), LifetimeCounter(0), Hash(InHash), SetHandle(InSetHandle) {}
 	};
+
+	struct SDescriptorHash
+	{
+		uint64_t operator()(const HandlesArrayType& InHandles) const
+		{
+			uint64_t Hash = 0;
+
+			for (const auto& Handle : InHandles)
+			{
+				HashCombine<uint64_t, robin_hood::hash<uint64_t>>(Hash, Handle);
+			}
+
+			return Hash;
+		}
+	};
 public:
 	CVulkanDescriptorSetManager(CVulkanDevice& InDevice,
 		CVulkanPipelineLayout& InPipelineLayout);
@@ -198,10 +216,10 @@ private:
 	CVulkanPipelineLayout& PipelineLayout;
 
 	/** Used descriptor sets */
-	std::vector<SDescriptorSetEntry> Sets;
+	robin_hood::unordered_map<HandlesArrayType, SDescriptorSetEntry, SDescriptorHash> Sets;
 
 	/** Available descriptor sets that have been recycled */
-	std::unordered_map<uint32_t, std::queue<vk::DescriptorSet>> AvailableDescriptorSets;
+	robin_hood::unordered_map<uint32_t, std::queue<vk::DescriptorSet>> AvailableDescriptorSets;
 
 	/** Pools */
 	std::vector<SDescriptorPoolEntry> Pools;

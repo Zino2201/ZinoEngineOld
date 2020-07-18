@@ -26,7 +26,8 @@ RequiredIncludes =
 		LibDir.."stb_image",
 		LibDir.."SDL2/include",
 		LibDir.."boost",
-		LibDir.."imgui"
+		LibDir.."imgui",
+		LibDir.."robin-hood-hashing/src/include"
 	}
 RequiredLibDirs = 
 	{
