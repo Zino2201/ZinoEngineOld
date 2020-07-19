@@ -172,8 +172,9 @@ bool CVulkanRenderSystemContext::BeginSurface(CRSSurface* InSurface)
 	must(InSurface);
 
 	CVulkanSurface* Surface = static_cast<CVulkanSurface*>(InSurface);
-
 	CurrentSurface = Surface;
+
+	CurrentSurface->ResetOldSwapchain();
 
 	return CurrentSurface->AcquireImage();
 }

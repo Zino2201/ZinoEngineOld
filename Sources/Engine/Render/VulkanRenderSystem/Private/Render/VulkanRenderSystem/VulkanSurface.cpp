@@ -51,13 +51,12 @@ bool CVulkanSurface::AcquireImage()
 	vk::Result Result = SwapChain->AcquireImage();
 
 	/** If swap chain if out of date or suboptimal, recreate it */
-	if (Result == vk::Result::eErrorOutOfDateKHR ||
-		Result == vk::Result::eSuboptimalKHR)
+	if (Result == vk::Result::eErrorOutOfDateKHR)
 	{
 		RecreateSwapChain();
 		return false;
 	}
-	else if(Result != vk::Result::eSuccess)
+	else if(Result != vk::Result::eSuccess && Result != vk::Result::eSuboptimalKHR)
 	{
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to acquire swap chain image");
 	}
@@ -67,34 +66,39 @@ bool CVulkanSurface::AcquireImage()
 
 void CVulkanSurface::Present(CVulkanQueue* InPresentQueue)
 {
-	SwapChain->Present(InPresentQueue);
+	vk::Result Result = SwapChain->Present(InPresentQueue);
+
+	/** If swap chain if out of date or suboptimal, recreate it */
+	if (Result == vk::Result::eErrorOutOfDateKHR 
+		|| Result == vk::Result::eSuboptimalKHR
+		|| bHasBeenResized)
+	{
+		RecreateSwapChain();
+	}
+	else if(Result != vk::Result::eSuccess)
+	{
+		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to present swap chain image");
+	}
+}
+
+void CVulkanSurface::ResetOldSwapchain() 
+{ 
+	OldSwapChain.reset(); 
 }
 
 void CVulkanSurface::RecreateSwapChain()
 {
-	LOG(ELogSeverity::Debug, VulkanRS, "Recreated swap chain");
-
 	/**
-	 * Submit all commands and wait
+	 * Acquire old swap chain so we can still render a frame before removing it
 	 */
-	Device->WaitIdle();
-
-	/**
-	 * Acquire old swap chain handle to give to new swap chain
-	 */
-	vk::SwapchainKHR Handle = SwapChain->AcquireHandle();
+	OldSwapChain.swap(SwapChain);
 	SwapChain = std::make_unique<CVulkanSwapChain>(Device,
 		Width,
 		Height,
 		this,
 		bUseVSync,
-		Handle);
-	Device->GetDevice().destroySwapchainKHR(Handle);
-
-	/**
-	 * Clear all resources
-	 */
-	Device->GetDeferredDestructionMgr().DestroyResources();
+		OldSwapChain->GetSwapChain());
+	bHasBeenResized = false;
 }
 
 void CVulkanSurface::Resize(const uint32_t& InWidth, const uint32_t& InHeight)
@@ -102,7 +106,7 @@ void CVulkanSurface::Resize(const uint32_t& InWidth, const uint32_t& InHeight)
 	Width = InWidth;
 	Height = InHeight;
 
-	RecreateSwapChain();
+	bHasBeenResized = true;
 }
 
 EFormat CVulkanSurface::GetSwapChainFormat() const

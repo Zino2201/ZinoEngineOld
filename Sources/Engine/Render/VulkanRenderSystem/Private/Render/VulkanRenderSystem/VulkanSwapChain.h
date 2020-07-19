@@ -22,12 +22,6 @@ public:
     vk::Result AcquireImage();
     vk::Result Present(CVulkanQueue* InPresentQueue);
 
-    /**
-     * Acquire ownership of swap chain handle
-     * Used for recreation of swap chain
-     */
-    vk::SwapchainKHR AcquireHandle() { return Swapchain.release(); }
-
     const vk::Semaphore& GetImageAcquiredSemaphore() const { return *ImageAcquired; }
     const vk::Semaphore& GetRenderFinishedSemaphore() const { return *RenderFinished; }
     const vk::SurfaceFormatKHR& GetSurfaceFormat() const { return SurfaceFormat; }

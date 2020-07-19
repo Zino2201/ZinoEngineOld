@@ -21,6 +21,8 @@ public:
 	 */
 	void Resize(const uint32_t& InWidth, const uint32_t& InHeight) override;
 
+	void ResetOldSwapchain();
+
 	/**
 	 * Try acquire image
 	 * If swap chain is recreated, return false and the frame MUST be skipped
@@ -38,6 +40,7 @@ private:
 protected:
 	vk::UniqueSurfaceKHR Surface;
 	std::unique_ptr<CVulkanSwapChain> SwapChain;
+	std::unique_ptr<CVulkanSwapChain> OldSwapChain;
 	void* WindowHandle;
 	bool bHasBeenResized;
 	bool bUseVSync;
