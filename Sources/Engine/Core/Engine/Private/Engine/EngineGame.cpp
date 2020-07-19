@@ -157,7 +157,7 @@ void CEngineGame::Initialize()
 	ConVSync.BindOnChanged(this, &CEngineGame::OnVsyncChanged);
 
 	/** Create main game window */
-	Window = new CWindow("ZinoEngine", 1600, 900);
+	Window = new CWindow("ZinoEngine", 1600, 900, EWindowFlags::Centered | EWindowFlags::Resizable);
 
 	/** Event on resize */
 	SDL_AddEventWatch(&StaticOnWindowResized, this);
@@ -186,7 +186,7 @@ void CEngineGame::Initialize()
 	testSM = std::make_shared<CStaticMesh>();
 	testSM->UpdateData(Vertices, Indices);
 
-	for(int i = 0; i < 25; ++i)
+	for(int i = 0; i < 15; ++i)
 	{
 		double X = RAND_1_0 * 100 - 50;
 		double Y = RAND_1_0 * 100 - 50;
@@ -234,6 +234,9 @@ int CEngineGame::OnWindowResized(SDL_Event* InEvent)
 		Window->SetWidth(static_cast<uint32_t>(InEvent->window.data1));
 		Window->SetHeight(static_cast<uint32_t>(InEvent->window.data2));
 		
+		ImGuiIO& IO = ImGui::GetIO();
+		IO.DisplaySize = ImVec2(Window->GetWidth(), Window->GetHeight());
+
 		// Resize viewport
 		Viewport->Resize(Window->GetWidth(), Window->GetHeight());
 
@@ -248,7 +251,6 @@ static bool bIsMouseGrabbed = false;
 void CEngineGame::ProcessEvent(SDL_Event* InEvent)
 {
 	ImGui_ImplSDL2_ProcessEvent(InEvent);
-
 
 	if (InEvent->type == SDL_MOUSEMOTION)
 	{
@@ -349,9 +351,24 @@ void CEngineGame::Tick(const float& InDeltaTime)
 		"ZinoEngine %s v%s", ZE_CONFIGURATION_NAME, "0.1.0");
 	ImGui::End();
 
+	static std::vector<float> FrameTimes;
+	static size_t CurrentIdx = 0;
+	if(FrameTimes.capacity() == 0)
+	{
+		FrameTimes.resize(100);
+	}
+
+	FrameTimes[CurrentIdx] = InDeltaTime * 1000;
+	CurrentIdx = (CurrentIdx + 1) % 99;
+
+	float Avg = 0.f;
+	for(const auto& Val : FrameTimes)
+		Avg += Val;
+	Avg /= FrameTimes.size();
+
 	/** Print last profiling data */
 	ImGui::Begin("Debugger");
-	ImGui::Text("FPS: %f (%f ms)", 1.f / InDeltaTime, InDeltaTime * 1000);
+	ImGui::Text("FPS: %f (%f ms, avg: %f ms)", 1.f / InDeltaTime, InDeltaTime * 1000, Avg);
 	ImGui::Separator();
 	ImGui::Text("Rendering"); 
 

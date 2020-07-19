@@ -199,7 +199,7 @@ void Loop()
 		{	
 			double ActualDt = std::min(PhysDeltaTime, 1.0 / CVarPhysFPS.Get());
 			
-			CTickSystem::Get().Tick(ETickOrder::Physics, DeltaTimeSec);
+			CTickSystem::Get().Tick(ETickOrder::Physics, static_cast<float>(PhysDeltaTime));
 		
 			PhysDeltaTime -= ActualDt;
 		}
@@ -211,8 +211,11 @@ void Loop()
 		/** Fps limiter */
 		double SleepTime = 0.0;
 		SleepTime += (1000.0 / CVarMaxFPS.Get()) - DeltaTime;
-		SleepTime = std::max<double>(SleepTime, 0);
-		std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(SleepTime));
+		SleepTime = std::max<double>(SleepTime, 0.0);
+		if(SleepTime > 0.0)
+		{
+			std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(SleepTime));
+		}
 	}
 
 	Exit();
