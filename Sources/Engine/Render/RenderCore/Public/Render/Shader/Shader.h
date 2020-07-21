@@ -3,13 +3,13 @@
 #include "EngineCore.h"
 #include "NonCopyable.h"
 #include "Shader/ShaderCompiler.h"
+#include "Render/RenderSystem/RenderSystem.h"
 #include <robin_hood.h>
 
 namespace ZE
 {
 
 class CShader;
-class CRSShader;
 
 /**
  * Base shader type class
@@ -51,7 +51,7 @@ public:
 
     CRSShader* GetShader() const { return Shader.get(); }
 private:
-    boost::intrusive_ptr<CRSShader> Shader;
+	CRSShaderPtr Shader;
 };
 
 using CShaderPtr = boost::intrusive_ptr<CShader>;
