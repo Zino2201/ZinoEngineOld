@@ -1,5 +1,6 @@
 #include "Engine/Assets/StaticMesh.h"
 #include "Render/RenderSystem/RenderSystem.h"
+#include "Render/RenderSystem/Resources/Buffer.h"
 
 namespace ZE
 {
@@ -13,24 +14,28 @@ CStaticMeshRenderData::CStaticMeshRenderData(CStaticMesh* InStaticMesh) : Static
 
 	IndexFormat = EIndexFormat::Uint32;
 
-	VertexBuffer = GRenderSystem->CreateBuffer(
+	VertexBuffer = GRenderSystem->CreateBuffer({
 		ERSBufferUsage::VertexBuffer,
 		ERSMemoryUsage::DeviceLocal,
-		Vertices.size() * sizeof(Vertices.front()),
-		SRSResourceCreateInfo(Vertices.data(), "StaticMeshVertexBuffer"));
+		Vertices.size() * sizeof(Vertices.front()) });
 	if(!VertexBuffer)
 		LOG(ELogSeverity::Fatal, StaticMesh, "Failed to create a vertex buffer");
+
+	VertexBuffer->SetName("StaticMesh VertexBuffer");
+	RSUtils::Copy(Vertices.data(), VertexBuffer.get());
 
 	uint64_t IndexBufferTypeSize = IndexFormat == EIndexFormat::Uint16 ? sizeof(uint16_t) :
 		sizeof(uint32_t);
 
-	IndexBuffer = GRenderSystem->CreateBuffer(
+	IndexBuffer = GRenderSystem->CreateBuffer({
 		ERSBufferUsage::IndexBuffer,
 		ERSMemoryUsage::DeviceLocal,
-		Indices.size() * sizeof(Indices.front()),
-		SRSResourceCreateInfo(Indices.data(), "StaticMeshIndexBuffer"));
+		Indices.size() * sizeof(Indices.front()) });
 	if (!IndexBuffer)
 		LOG(ELogSeverity::Fatal, StaticMesh, "Failed to create a index buffer");
+	
+	IndexBuffer->SetName("StaticMesh IndexBuffer");
+	RSUtils::Copy(Indices.data(), IndexBuffer.get());
 }
 
 void CStaticMesh::UpdateData(const std::vector<SStaticMeshVertex>& InVertices,

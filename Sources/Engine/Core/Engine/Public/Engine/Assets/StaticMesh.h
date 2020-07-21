@@ -2,6 +2,7 @@
 
 #include "Asset.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "Render/RenderSystem/Resources/Pipeline.h"
 
 namespace ZE
 {

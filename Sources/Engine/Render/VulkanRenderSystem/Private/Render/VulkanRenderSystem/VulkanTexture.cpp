@@ -16,47 +16,35 @@ vk::ImageAspectFlagBits VulkanUtil::GetImageAspectFromFormat(const EFormat& InFo
 	}
 }
 
-CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice, 
-	const ERSTextureType& InTextureType,
-	const ERSTextureUsage& InTextureUsage,
-	const ERSMemoryUsage& InMemoryUsage,
-	const EFormat& InFormat, 
-	uint32_t InWidth,
-	uint32_t InHeight,
-	uint32_t InDepth,
-	uint32_t InArraySize,
-	uint32_t InMipLevels,
-	const ESampleCount& InSampleCount,
-	const SRSResourceCreateInfo& InCreateInfo)
+CVulkanTexture::CVulkanTexture(CVulkanDevice& InDevice, 
+	const SRSTextureCreateInfo& InCreateInfo)
 	: CVulkanDeviceResource(InDevice),
-	CRSTexture(InTextureType, InTextureUsage, InMemoryUsage,
-		InFormat, InWidth, InHeight, InDepth, InArraySize, InMipLevels, InSampleCount, 
-		InCreateInfo),
+	CRSTexture(InCreateInfo),
 	bShouldDestroyImage(true)
 {
 	{
 		vk::ImageUsageFlags UsageFlags =
 			vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst;
 
-		if (HAS_FLAG(InTextureUsage, ERSTextureUsage::Sampled))
+		if (HAS_FLAG(InCreateInfo.Usage, ERSTextureUsage::Sampled))
 		{
 			UsageFlags |= vk::ImageUsageFlagBits::eSampled;
 		}
 
-		if (HAS_FLAG(InTextureUsage, ERSTextureUsage::RenderTarget))
+		if (HAS_FLAG(InCreateInfo.Usage, ERSTextureUsage::RenderTarget))
 		{
 			UsageFlags |= vk::ImageUsageFlagBits::eColorAttachment;
 			UsageFlags |= vk::ImageUsageFlagBits::eInputAttachment;
 		}
 
-		if (HAS_FLAG(InTextureUsage, ERSTextureUsage::DepthStencil))
+		if (HAS_FLAG(InCreateInfo.Usage, ERSTextureUsage::DepthStencil))
 		{
 			UsageFlags |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
 			UsageFlags |= vk::ImageUsageFlagBits::eInputAttachment;
 		}
 
 		vk::ImageType ImageType;
-		switch(InTextureType)
+		switch(InCreateInfo.Type)
 		{
 		case ERSTextureType::Tex1D:
 			ImageType = vk::ImageType::e1D;
@@ -72,21 +60,20 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 		vk::ImageCreateInfo CreateInfo(
 			vk::ImageCreateFlags(),
 			ImageType,
-			VulkanUtil::FormatToVkFormat(InFormat),
-			vk::Extent3D(Width, Height, InDepth),
-			InMipLevels,
-			InArraySize,
-			VulkanUtil::SampleCountToVkSampleCount(InSampleCount),
+			VulkanUtil::FormatToVkFormat(InCreateInfo.Format),
+			vk::Extent3D(InCreateInfo.Width, InCreateInfo.Height, InCreateInfo.Depth),
+			InCreateInfo.MipLevels,
+			InCreateInfo.ArraySize,
+			VulkanUtil::SampleCountToVkSampleCount(InCreateInfo.SampleCount),
 			vk::ImageTiling::eOptimal,
 			UsageFlags);
 
 		VmaAllocationCreateInfo AllocInfo = {};
-		AllocInfo.usage = VulkanUtil::BufferUsageFlagsToMemoryUsage(InMemoryUsage);
+		AllocInfo.usage = VulkanUtil::BufferUsageFlagsToMemoryUsage(InCreateInfo.MemoryUsage);
 		AllocInfo.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-		AllocInfo.pUserData = const_cast<char*>(InCreateInfo.DebugName);
 		
 		VkResult Res;
-		Res = vmaCreateImage(Device->GetAllocator(),
+		Res = vmaCreateImage(Device.GetAllocator(),
 			reinterpret_cast<VkImageCreateInfo*>(&CreateInfo),
 			&AllocInfo,
 			reinterpret_cast<VkImage*>(&Image),
@@ -106,7 +93,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 	/** Create image view */
 	{
 		vk::ImageViewType ImageType;
-		switch (InTextureType)
+		switch (InCreateInfo.Type)
 		{
 		case ERSTextureType::Tex1D:
 			ImageType = vk::ImageViewType::e1D;
@@ -122,12 +109,12 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 		vk::ImageViewCreateInfo ViewCreateInfo(vk::ImageViewCreateFlags(),
 			Image,
 			ImageType,
-			VulkanUtil::FormatToVkFormat(InFormat),
+			VulkanUtil::FormatToVkFormat(CreateInfo.Format),
 			vk::ComponentMapping(),
 			vk::ImageSubresourceRange(
-				VulkanUtil::GetImageAspectFromFormat(InFormat), 0, InMipLevels, 0, 1));
+				VulkanUtil::GetImageAspectFromFormat(CreateInfo.Format), 0, CreateInfo.MipLevels, 0, 1));
 
-		vk::Result ResView = Device->GetDevice().createImageView(
+		vk::Result ResView = Device.GetDevice().createImageView(
 			&ViewCreateInfo,
 			nullptr,
 			&ImageView);
@@ -135,44 +122,18 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image view: %s",
 				vk::to_string(ResView).c_str());
 	}
-
-	/** Copy initial data */
-	if(InCreateInfo.InitialData)
-	{
-		/** Copy pixels to staging buffer for copy */
-		uint64_t BufSize = InWidth * InHeight * 4;
-		
-		CVulkanInternalStagingBuffer* StagingBuf = 
-			Device->GetStagingBufferMgr()->CreateStagingBuffer(BufSize,
-				vk::BufferUsageFlagBits::eTransferSrc);
-		memcpy(StagingBuf->GetAllocationInfo().pMappedData, InCreateInfo.InitialData, BufSize);
-		CopyFromBuffer(StagingBuf->GetBuffer());
-		Device->GetStagingBufferMgr()->ReleaseStagingBuffer(StagingBuf);
-	}
 }
 
-CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
-	const ERSTextureType& InTextureType,
-	const ERSTextureUsage& InTextureUsage,
-	const ERSMemoryUsage& InMemoryUsage,
-	const EFormat& InFormat,
-	const uint32_t& InWidth,
-	const uint32_t& InHeight,
-	const uint32_t& InDepth,
-	const uint32_t& InArraySize,
-	const uint32_t& InMipLevels,
-	const ESampleCount& InSampleCount,
-	const vk::Image& InImage,
-	const SRSResourceCreateInfo& InCreateInfo)
+CVulkanTexture::CVulkanTexture(CVulkanDevice& InDevice,
+	const SRSTextureCreateInfo& InCreateInfo,
+	const vk::Image& InImage)
 	: CVulkanDeviceResource(InDevice),
-		CRSTexture(InTextureType, InTextureUsage, InMemoryUsage,
-			InFormat, InWidth, InHeight, InDepth, InArraySize, InMipLevels, InSampleCount,
-			InCreateInfo),
+		CRSTexture(InCreateInfo),
 		bShouldDestroyImage(false),
 	Image(InImage)
 {
 	vk::ImageViewType ImageType;
-	switch (InTextureType)
+	switch (InCreateInfo.Type)
 	{
 	case ERSTextureType::Tex1D:
 		ImageType = vk::ImageViewType::e1D;
@@ -188,21 +149,46 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 	vk::ImageViewCreateInfo ViewCreateInfo(vk::ImageViewCreateFlags(),
 		Image,
 		ImageType,
-		VulkanUtil::FormatToVkFormat(InFormat),
+		VulkanUtil::FormatToVkFormat(CreateInfo.Format),
 		vk::ComponentMapping(),
 		vk::ImageSubresourceRange(
-			VulkanUtil::GetImageAspectFromFormat(InFormat), 0, InMipLevels, 0, 1));
+			VulkanUtil::GetImageAspectFromFormat(CreateInfo.Format), 0, CreateInfo.MipLevels, 0, 1));
 
-	vk::Result ResView = Device->GetDevice().createImageView(
+	vk::Result ResView = Device.GetDevice().createImageView(
 		&ViewCreateInfo,
 		nullptr,
 		&ImageView);
 	if (!ImageView)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image view: %s",
 			vk::to_string(ResView).c_str());
+}
+
+CVulkanTexture::~CVulkanTexture()
+{
+	if(bShouldDestroyImage)
+	{
+		Device.GetDeferredDestructionMgr().EnqueueImage(
+			CVulkanDeferredDestructionManager::EHandleType::Image,
+			Allocation,
+			Image);	
+	}
+
+	Device.GetDeferredDestructionMgr().EnqueueImageView(
+		CVulkanDeferredDestructionManager::EHandleType::ImageView,
+		ImageView);
+}
+
+void CVulkanTexture::SetName(const char* InName)
+{
+	CRSResource::SetName(InName);
+
+	/** Don't set anything if we don't own the texture */
+	if(bShouldDestroyImage)
+		vmaSetAllocationUserData(Device.GetAllocator(),
+			Allocation, reinterpret_cast<void*>(const_cast<char*>(InName)));
 
 #ifndef NDEBUG
-	PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectName = (PFN_vkSetDebugUtilsObjectNameEXT) 
+	PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectName = (PFN_vkSetDebugUtilsObjectNameEXT)
 		GVulkanRenderSystem->GetInstance().getProcAddr("vkSetDebugUtilsObjectNameEXT");
 
 	VkDebugUtilsObjectNameInfoEXT Info;
@@ -210,25 +196,23 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice* InDevice,
 	Info.pNext = nullptr;
 	Info.objectType = VK_OBJECT_TYPE_IMAGE_VIEW;
 	Info.objectHandle = reinterpret_cast<uint64_t>(static_cast<VkImageView>(ImageView));
-	Info.pObjectName = InCreateInfo.DebugName;
+	Info.pObjectName = InName;
 
-	SetDebugUtilsObjectName(static_cast<VkDevice>(Device->GetDevice()), &Info);
+	SetDebugUtilsObjectName(static_cast<VkDevice>(Device.GetDevice()), &Info);
 #endif
 }
 
-CVulkanTexture::~CVulkanTexture()
+void CVulkanTexture::Copy(const void* Src)
 {
-	if(bShouldDestroyImage)
-	{
-		Device->GetDeferredDestructionMgr().EnqueueImage(
-			CVulkanDeferredDestructionManager::EHandleType::Image,
-			Allocation,
-			Image);	
-	}
+	/** Copy pixels to staging buffer for copy */
+	uint64_t BufSize = CreateInfo.Width * CreateInfo.Height * 4;
 
-	Device->GetDeferredDestructionMgr().EnqueueImageView(
-		CVulkanDeferredDestructionManager::EHandleType::ImageView,
-		ImageView);
+	CVulkanInternalStagingBuffer* StagingBuf =
+		Device.GetStagingBufferMgr().CreateStagingBuffer(BufSize,
+			vk::BufferUsageFlagBits::eTransferSrc);
+	memcpy(StagingBuf->GetAllocationInfo().pMappedData, Src, BufSize);
+	CopyFromBuffer(StagingBuf->GetBuffer());
+	Device.GetStagingBufferMgr().ReleaseStagingBuffer(StagingBuf);
 }
 
 void CVulkanTexture::CopyFromBuffer(const vk::Buffer& InBuffer)
@@ -239,9 +223,9 @@ void CVulkanTexture::CopyFromBuffer(const vk::Buffer& InBuffer)
 
 	/** Do the actual copy */
 	const vk::CommandBuffer& CmdBuffer =
-		Device->GetContext()->GetCmdBufferMgr().GetMemoryCmdBuffer()->GetCommandBuffer();
+		Device.GetContext()->GetCmdBufferMgr().GetMemoryCmdBuffer()->GetCommandBuffer();
 
-	Device->GetContext()->GetCmdBufferMgr().BeginMemoryCmdBuffer();
+	Device.GetContext()->GetCmdBufferMgr().BeginMemoryCmdBuffer();
 
 	CmdBuffer.copyBufferToImage(InBuffer,
 		Image,
@@ -252,10 +236,10 @@ void CVulkanTexture::CopyFromBuffer(const vk::Buffer& InBuffer)
 				0,
 				1),
 			vk::Offset3D(),
-			vk::Extent3D(Width, Height, Depth)) });
+			vk::Extent3D(CreateInfo.Width, CreateInfo.Height, CreateInfo.Depth)) });
 
-	Device->GetContext()->GetCmdBufferMgr().SubmitMemoryCmdBuffer();
-	Device->WaitIdle();
+	Device.GetContext()->GetCmdBufferMgr().SubmitMemoryCmdBuffer();
+	Device.WaitIdle();
 
 	/** (Re-)generate mipmaps */
 	GenerateMipmaps();
@@ -264,14 +248,14 @@ void CVulkanTexture::CopyFromBuffer(const vk::Buffer& InBuffer)
 void CVulkanTexture::GenerateMipmaps()
 {
 	const vk::CommandBuffer& CmdBuffer =
-		Device->GetContext()->GetCmdBufferMgr().GetMemoryCmdBuffer()->GetCommandBuffer();
+		Device.GetContext()->GetCmdBufferMgr().GetMemoryCmdBuffer()->GetCommandBuffer();
 
-	Device->GetContext()->GetCmdBufferMgr().BeginMemoryCmdBuffer();
+	Device.GetContext()->GetCmdBufferMgr().BeginMemoryCmdBuffer();
 
-	uint32_t MipWidth = Width;
-	uint32_t MipHeight = Height;
+	uint32_t MipWidth = CreateInfo.Width;
+	uint32_t MipHeight = CreateInfo.Height;
 	
-	for (uint32_t i = 1; i < MipLevels; ++i)
+	for (uint32_t i = 1; i < CreateInfo.MipLevels; ++i)
 	{
 		CmdBuffer.pipelineBarrier(
 			vk::PipelineStageFlagBits::eTransfer,
@@ -346,20 +330,20 @@ void CVulkanTexture::GenerateMipmaps()
 				VK_QUEUE_FAMILY_IGNORED,
 				Image,
 				vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor,
-					MipLevels - 1, 1, 0, 1))
+					CreateInfo.MipLevels - 1, 1, 0, 1))
 		});
 
-	Device->GetContext()->GetCmdBufferMgr().SubmitMemoryCmdBuffer();
-	Device->WaitIdle();
+	Device.GetContext()->GetCmdBufferMgr().SubmitMemoryCmdBuffer();
+	Device.WaitIdle();
 }
 
 void CVulkanTexture::TransitionImageLayout(const vk::ImageLayout& InOldLayout,
 	const vk::ImageLayout& InNewLayout)
 {
 	const vk::CommandBuffer& CmdBuffer =
-		Device->GetContext()->GetCmdBufferMgr().GetMemoryCmdBuffer()->GetCommandBuffer();
+		Device.GetContext()->GetCmdBufferMgr().GetMemoryCmdBuffer()->GetCommandBuffer();
 
-	Device->GetContext()->GetCmdBufferMgr().BeginMemoryCmdBuffer();
+	Device.GetContext()->GetCmdBufferMgr().BeginMemoryCmdBuffer();
 	
 	vk::AccessFlags SrcAccessMask;
 	vk::AccessFlags DstAccessMask;
@@ -403,35 +387,15 @@ void CVulkanTexture::TransitionImageLayout(const vk::ImageLayout& InOldLayout,
 			VK_QUEUE_FAMILY_IGNORED,
 			Image,
 			vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor,
-				0, MipLevels, 0, 1)) });
+				0, CreateInfo.MipLevels, 0, 1)) });
 
-	Device->GetContext()->GetCmdBufferMgr().SubmitMemoryCmdBuffer();
-	Device->WaitIdle();
+	Device.GetContext()->GetCmdBufferMgr().SubmitMemoryCmdBuffer();
+	Device.WaitIdle();
 }
 
-CRSTexture* CVulkanRenderSystem::CreateTexture(
-	const ERSTextureType& InTextureType,
-	const ERSTextureUsage& InTextureUsage,
-	const ERSMemoryUsage& InMemoryUsage,
-	const EFormat& InFormat,
-	const uint32_t& InWidth,
-	const uint32_t& InHeight,
-	const uint32_t& InDepth,
-	const uint32_t& InArraySize,
-	const uint32_t& InMipLevels,
-	const ESampleCount& InSampleCount,
-	const SRSResourceCreateInfo& InInfo) const
+TOwnerPtr<CRSTexture> CVulkanRenderSystem::CreateTexture(
+	const SRSTextureCreateInfo& InCreateInfo) const
 {
-	return new CVulkanTexture(Device.get(),
-		InTextureType,
-		InTextureUsage,
-		InMemoryUsage,
-		InFormat,
-		InWidth,
-		InHeight,
-		InDepth,
-		InArraySize,
-		InMipLevels,
-		InSampleCount,
-		InInfo);
+	return new CVulkanTexture(*Device.get(),
+		InCreateInfo);
 }

@@ -28,7 +28,6 @@ public:
     virtual void PresentSurface(CRSSurface* InSurface) = 0;
 
     /** States commands */
-    virtual void BindGraphicsPipeline(CRSGraphicsPipeline* InGraphicsPipeline) = 0;
     virtual void BindGraphicsPipeline(const SRSGraphicsPipeline& InGraphicsPipeline) = 0;
     virtual void SetViewports(const std::vector<SViewport>& InViewports) = 0;
     virtual void SetScissors(const std::vector<ZE::Math::SRect2D>& InScissors) = 0;

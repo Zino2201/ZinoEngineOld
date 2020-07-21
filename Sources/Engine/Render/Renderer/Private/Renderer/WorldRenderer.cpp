@@ -4,6 +4,7 @@
 #include "Renderer/RenderableComponentType.h"
 #include "Renderer/ClusteredForward/ClusteredForwardRenderingPath.h"
 #include "Renderer/MeshRendering/RenderPassDrawcallFactory.h"
+#include "Render/RenderSystem/Resources/Texture.h"
 
 namespace ZE::Renderer
 {

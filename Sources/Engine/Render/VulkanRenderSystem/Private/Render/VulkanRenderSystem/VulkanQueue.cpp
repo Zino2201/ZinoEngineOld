@@ -2,11 +2,11 @@
 #include "Render/VulkanRenderSystem/VulkanDevice.h"
 #include "Render/VulkanRenderSystem/VulkanCommandBuffer.h"
 
-CVulkanQueue::CVulkanQueue(CVulkanDevice* InDevice,
+CVulkanQueue::CVulkanQueue(CVulkanDevice& InDevice,
 	const uint32_t& InFamilyIdx) : CVulkanDeviceResource(InDevice),
 	FamilyIndex(InFamilyIdx)
 {
-	Queue = Device->GetDevice().getQueue(InFamilyIdx, 0);
+	Queue = Device.GetDevice().getQueue(InFamilyIdx, 0);
 }
 
 CVulkanQueue::~CVulkanQueue() {}

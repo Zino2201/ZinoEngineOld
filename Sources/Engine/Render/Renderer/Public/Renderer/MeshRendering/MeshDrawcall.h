@@ -2,7 +2,9 @@
 
 #include "Render/RenderCore.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "Render/RenderSystem/Resources/GraphicsPipeline.h"
 #include "Containers/CoherentArray.h"
+#include "Shader/ShaderCore.h"
 
 namespace ZE::Renderer
 {

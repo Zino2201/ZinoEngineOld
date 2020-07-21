@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include <robin_hood.h>
 
 namespace ZE::Renderer
 {
@@ -22,7 +23,7 @@ struct STransientProxyDataPerFrame
 	STransientProxyDataPerFrame() : Proxy(nullptr) {}
 };
 
-using TransientPerFrameDataMap = std::unordered_map<const CRenderableComponentProxy*, 
+using TransientPerFrameDataMap = robin_hood::unordered_map<const CRenderableComponentProxy*, 
 	STransientProxyDataPerFrame>;
 
 /**

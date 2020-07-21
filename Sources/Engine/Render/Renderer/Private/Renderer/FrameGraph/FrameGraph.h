@@ -3,6 +3,7 @@
 #include "EngineCore.h"
 #include "RenderPass.h"
 #include "Renderer/RendererModule.h"
+#include <robin_hood.h>
 
 namespace ZE::Renderer
 {
@@ -139,8 +140,8 @@ private:
         const SRenderPassTextureInfos& InInfos, ERenderPassResourceLayout InLayout) const;
 private:
     std::vector<std::unique_ptr<CRenderPass>> RenderPasses;
-    std::unordered_map<uint32_t, SRenderPassResource> ResourceMap;
-    std::unordered_map<uint32_t, CRSTexturePtr> TextureResourceMap;
+    robin_hood::unordered_map<uint32_t, SRenderPassResource> ResourceMap;
+    robin_hood::unordered_map<uint32_t, CRSTexturePtr> TextureResourceMap;
     uint32_t AvailableRenderPassID;
     uint32_t AvailableResourceID;
     uint32_t AvailablePhysicalResourceID;
@@ -149,7 +150,7 @@ private:
     std::vector<size_t> ExecutionLayout;
 
     /** Map used to keep track of texture last layout */
-    std::unordered_map<RenderPassResourceID, ERSRenderPassAttachmentLayout> TextureLastLayout;
+    robin_hood::unordered_map<RenderPassResourceID, ERSRenderPassAttachmentLayout> TextureLastLayout;
 };
 
 struct SFrameGraphHash

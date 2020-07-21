@@ -209,7 +209,7 @@ void CVulkanRenderSystem::Destroy()
 
 void CVulkanRenderSystem::NewFrame()
 {
-	for(auto& [Unused, Layout] : Device->GetPipelineLayoutMgr()->GetLayoutMap())
+	for(auto& [Unused, Layout] : Device->GetPipelineLayoutMgr().GetLayoutMap())
 	{
 		Layout->GetSetManager().NewFrame();
 	}
@@ -283,88 +283,4 @@ SVulkanQueueFamilyIndices VulkanUtil::GetQueueFamilyIndices(const vk::PhysicalDe
 IRenderSystem* CreateVulkanRenderSystem()
 {
 	return new CVulkanRenderSystem;
-}
-
-vk::Format VulkanUtil::FormatToVkFormat(const EFormat& InFormat)
-{
-	switch (InFormat)
-	{
-	case EFormat::D32Sfloat:
-		return vk::Format::eD32Sfloat;
-	case EFormat::D32SfloatS8Uint:
-		return vk::Format::eD32SfloatS8Uint;
-	case EFormat::D24UnormS8Uint:
-		return vk::Format::eD24UnormS8Uint;
-	default:
-	case EFormat::R8G8B8A8UNorm:
-		return vk::Format::eR8G8B8A8Unorm;
-	case EFormat::B8G8R8A8UNorm:
-		return vk::Format::eB8G8R8A8Unorm;
-	case EFormat::R32G32Sfloat:
-		return vk::Format::eR32G32Sfloat;
-	case EFormat::R32G32B32Sfloat:
-		return vk::Format::eR32G32B32Sfloat;
-	case EFormat::R32G32B32A32Sfloat:
-		return vk::Format::eR32G32B32A32Sfloat;
-	case EFormat::R32G32B32A32Uint:
-		return vk::Format::eR32G32B32A32Uint;
-	case EFormat::R64Uint:
-		return vk::Format::eR64Uint;
-	case EFormat::R32Uint:
-		return vk::Format::eR32Uint;
-	}
-}
-
-EFormat VulkanUtil::VkFormatToFormat(const vk::Format& InFormat)
-{
-	switch (InFormat)
-	{
-	default:
-		return EFormat::Undefined;
-	case vk::Format::eD32Sfloat:
-		return EFormat::D32Sfloat;
-	case vk::Format::eD32SfloatS8Uint:
-		return EFormat::D32SfloatS8Uint;
-	case vk::Format::eD24UnormS8Uint:
-		return EFormat::D24UnormS8Uint;
-	case vk::Format::eR8G8B8A8Unorm:
-		return EFormat::R8G8B8A8UNorm;
-	case vk::Format::eB8G8R8A8Unorm:
-		return EFormat::B8G8R8A8UNorm;
-	case vk::Format::eR32G32Sfloat:
-		return EFormat::R32G32Sfloat;
-	case vk::Format::eR32G32B32Sfloat:
-		return EFormat::R32G32B32Sfloat;
-	case vk::Format::eR32G32B32A32Sfloat:
-		return EFormat::R32G32B32A32Sfloat;
-	case vk::Format::eR32G32B32A32Uint:
-		return EFormat::R32G32B32A32Uint;
-	case vk::Format::eR64Uint:
-		return EFormat::R64Uint;
-	case vk::Format::eR32Uint:
-		return EFormat::R32Uint;
-	}
-}
-
-vk::SampleCountFlagBits VulkanUtil::SampleCountToVkSampleCount(
-	const ESampleCount& InSampleCount)
-{
-	switch(InSampleCount)
-	{
-	default:
-	case ESampleCount::Sample1:
-		return vk::SampleCountFlagBits::e1;
-	case ESampleCount::Sample2:
-		return vk::SampleCountFlagBits::e2;
-	case ESampleCount::Sample4:
-		return vk::SampleCountFlagBits::e4;
-	case ESampleCount::Sample8:
-		return vk::SampleCountFlagBits::e8;
-	case ESampleCount::Sample16:
-		return vk::SampleCountFlagBits::e16;
-	case ESampleCount::Sample32:
-		return vk::SampleCountFlagBits::e32;
-	case ESampleCount::Sample64:
-		return vk::SampleCountFlagBits::e64;
-	}
 }

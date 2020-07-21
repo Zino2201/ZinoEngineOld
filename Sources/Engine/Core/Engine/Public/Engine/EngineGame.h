@@ -37,18 +37,9 @@ private:
     std::unique_ptr<class CWorld> World;
     CWindow* Window;
     std::unique_ptr<CViewport> Viewport;
-    SRSRenderPass TestRenderPass;
-	bool bshouldrendertri = false;
-	CRSShaderPtr shaderV = nullptr;
-	CRSShaderPtr shaderF = nullptr;
-	CRSGraphicsPipelinePtr pipeline = nullptr;
-    std::future<SShaderCompilerOutput> Vertex;
-    std::future<SShaderCompilerOutput> Frag;
-    CRSBufferPtr ubo = nullptr;
     std::shared_ptr<class CStaticMesh> testSM;
     std::unique_ptr<ZE::UI::CImGuiRender> ImGuiRenderer;
     ImFont* Font;
-    std::mutex ProfilingMutex;
 };
 
 } /* namespace ZE */

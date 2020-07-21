@@ -1,6 +1,6 @@
 #include "Render/Shader/Shader.h"
 #include "Render/RenderSystem/RenderSystem.h"
-#include "Render/RenderSystem/RenderSystemResources.h"
+#include "Render/RenderSystem/Resources/Shader.h"
 
 DECLARE_LOG_CATEGORY(Shader);
 
@@ -26,13 +26,15 @@ CShader* CShaderType::InstantiateShader(const SShaderCompilerOutput& InOutput) c
 
 CShader::CShader(const CShaderType* InShaderType, const SShaderCompilerOutput& InOutput)
 {
-	Shader = GRenderSystem->CreateShader(InShaderType->GetStage(),
+	Shader = GRenderSystem->CreateShader({ InShaderType->GetStage(),
 		InOutput.Bytecode.size(),
 		InOutput.Bytecode.data(),
-		InOutput.ReflectionData.ParameterMap);
+		InOutput.ReflectionData.ParameterMap });
 	if(!Shader)
 		LOG(ELogSeverity::Error, Shader, "Failed to create RS shader");
 }
+
+CShader::~CShader() = default;
 
 /** SHADER MANAGER */
 

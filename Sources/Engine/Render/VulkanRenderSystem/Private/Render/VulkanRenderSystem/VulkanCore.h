@@ -3,6 +3,28 @@
 #include "EngineCore.h"
 #include <optional>
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "Render/RenderSystem/Resources/RenderPass.h"
+#include "Shader/ShaderCore.h"
+
+namespace ZE
+{
+	enum class EShaderStage;
+	enum class ERSBufferUsage;
+	enum class ERSTextureType;
+	enum class ERSTextureUsage;
+	enum class ERSFilter;
+	enum class ERSSamplerAddressMode;
+	enum class EVertexInputRate;
+	enum class EPolygonMode;
+	enum class ECullMode;
+	enum class EFrontFace;
+	enum class EBlendFactor;
+	enum class EBlendOp;
+	enum class EStencilOp;
+	enum class ERSRenderPassAttachmentLoadOp;
+	enum class ERSRenderPassAttachmentStoreOp;
+	enum class ERSRenderPassAttachmentLayout;
+}
 
 /** OOF */
 using namespace ZE;
@@ -12,7 +34,7 @@ VULKANRENDERSYSTEM_API extern class CVulkanRenderSystem* GVulkanRenderSystem;
 VULKANRENDERSYSTEM_API extern class CVulkanRenderSystemContext* GRenderSystemContext;
 
 #define VULKAN_HPP_NO_EXCEPTIONS
-#define VULKAN_HPP_ASSERT
+#define VULKAN_HPP_ASSERT must
 #define VMA_ASSERT(expr) must(expr)
 
 #include <vulkan/vulkan.hpp>
@@ -28,7 +50,7 @@ const std::vector<const char*> GVulkanValidationLayers =
 };
 
 #ifdef NDEBUG
-constexpr bool GVulkanEnableValidationLayers = false; // false
+constexpr bool GVulkanEnableValidationLayers = false;
 #else
 constexpr bool GVulkanEnableValidationLayers = true;
 #endif
@@ -56,10 +78,10 @@ class CVulkanDevice;
 class CVulkanDeviceResource
 {
 public:
-	CVulkanDeviceResource(CVulkanDevice* InDevice) : Device(InDevice) {}
+	CVulkanDeviceResource(CVulkanDevice& InDevice) : Device(InDevice) {}
     virtual ~CVulkanDeviceResource() = default;
 protected:
-    CVulkanDevice* Device;
+    CVulkanDevice& Device;
 };
 
 /**
@@ -71,7 +93,7 @@ class CVulkanInternalStagingBuffer : public CVulkanDeviceResource,
 	        boost::thread_unsafe_counter>
 {
 public:
-    CVulkanInternalStagingBuffer(CVulkanDevice* InDevice,
+    CVulkanInternalStagingBuffer(CVulkanDevice& InDevice,
         uint64_t InSize,
         vk::BufferUsageFlags InUsageFlags);
     ~CVulkanInternalStagingBuffer();
@@ -115,46 +137,200 @@ struct SVulkanQueueFamilyIndices
 namespace VulkanUtil
 {
     VmaMemoryUsage BufferUsageFlagsToMemoryUsage(ERSMemoryUsage BufferUsage);
-	SVulkanSwapChainSupportDetails QuerySwapChainDetails(const vk::PhysicalDevice& InPhysicalDevice,
+	FORCEINLINE SVulkanSwapChainSupportDetails QuerySwapChainDetails(const vk::PhysicalDevice& InPhysicalDevice,
         const vk::SurfaceKHR& InSurface);
 	SVulkanQueueFamilyIndices GetQueueFamilyIndices(const vk::PhysicalDevice& InDevice);
-    vk::Format FormatToVkFormat(const EFormat& InFormat);
-    EFormat VkFormatToFormat(const vk::Format& InFormat);
-	vk::SampleCountFlagBits SampleCountToVkSampleCount(
+    FORCEINLINE vk::Format FormatToVkFormat(const EFormat& InFormat);
+    FORCEINLINE EFormat VkFormatToFormat(const vk::Format& InFormat);
+	FORCEINLINE vk::SampleCountFlagBits SampleCountToVkSampleCount(
 		const ESampleCount& InSampleCount);
-    vk::ImageAspectFlagBits GetImageAspectFromFormat(const EFormat& InFormat);
-    vk::ShaderStageFlagBits ShaderStageToVkShaderStage(const EShaderStage& InShader);
-    vk::DescriptorType ShaderParameterTypeToVkDescriptorType(const EShaderParameterType& InType);
-	vk::VertexInputRate VertexInputRateToVkVertexInputRate(const EVertexInputRate& InRate);
+    FORCEINLINE vk::ImageAspectFlagBits GetImageAspectFromFormat(const EFormat& InFormat);
+    FORCEINLINE vk::ShaderStageFlagBits ShaderStageToVkShaderStage(const EShaderStage& InShader);
+    FORCEINLINE vk::DescriptorType ShaderParameterTypeToVkDescriptorType(const EShaderParameterType& InType);
+	FORCEINLINE vk::VertexInputRate VertexInputRateToVkVertexInputRate(const EVertexInputRate& InRate);
 
     /** Rasterizer */
-	vk::PolygonMode PolygonModeToVkPolygonMode(EPolygonMode InPolygonMode);
-	vk::CullModeFlags CullModeToVkCullMode(ECullMode InCullMode);
-	vk::FrontFace FrontFaceToVkFrontFace(EFrontFace InFrontFace);
+	FORCEINLINE vk::PolygonMode PolygonModeToVkPolygonMode(EPolygonMode InPolygonMode);
+	FORCEINLINE vk::CullModeFlags CullModeToVkCullMode(ECullMode InCullMode);
+	FORCEINLINE vk::FrontFace FrontFaceToVkFrontFace(EFrontFace InFrontFace);
 
 	vk::CompareOp ComparisonOpToVkCompareOp(const ERSComparisonOp& InOp);
 
 	/** Blend */
-	vk::BlendFactor BlendFactorToVkBlendFactor(EBlendFactor InFactor);
-	vk::BlendOp BlendOpToVkBlendOp(EBlendOp InOp);
-	vk::StencilOp StencilOpToVkStencilOp(EStencilOp InOp);
+	FORCEINLINE vk::BlendFactor BlendFactorToVkBlendFactor(EBlendFactor InFactor);
+	FORCEINLINE vk::BlendOp BlendOpToVkBlendOp(EBlendOp InOp);
+	FORCEINLINE vk::StencilOp StencilOpToVkStencilOp(EStencilOp InOp);
 
     /** Render pass related */
     namespace RenderPass
     {
-        vk::AttachmentLoadOp AttachmentLoadOpToVkAttachmentLoadOp(
+        FORCEINLINE vk::AttachmentLoadOp AttachmentLoadOpToVkAttachmentLoadOp(
             const ERSRenderPassAttachmentLoadOp& InOp);
-		vk::AttachmentStoreOp AttachmentStoreOpToVkAttachmentStoreOp(
+		FORCEINLINE vk::AttachmentStoreOp AttachmentStoreOpToVkAttachmentStoreOp(
 			const ERSRenderPassAttachmentStoreOp& InOp);
-        vk::ImageLayout AttachmentLayoutToVkImageLayout(
+        FORCEINLINE vk::ImageLayout AttachmentLayoutToVkImageLayout(
             const ERSRenderPassAttachmentLayout& InLayout);
     }
 
     /** Sampler */
-    vk::Filter FilterToVkFilter(const ERSFilter& InFilter);
-    vk::SamplerMipmapMode FilterToVkSamplerMipMapMode(const ERSFilter& InFilter);
-    vk::SamplerAddressMode AddressModeToVkSamplerAddressMode(const ERSSamplerAddressMode& InAddressMode);
+    FORCEINLINE vk::Filter FilterToVkFilter(const ERSFilter& InFilter);
+    FORCEINLINE vk::SamplerMipmapMode FilterToVkSamplerMipMapMode(const ERSFilter& InFilter);
+    FORCEINLINE vk::SamplerAddressMode AddressModeToVkSamplerAddressMode(const ERSSamplerAddressMode& InAddressMode);
 }
 
 /** Log category */
 DECLARE_LOG_CATEGORY(VulkanRS);
+
+/** Functions definitions */
+namespace VulkanUtil
+{
+	vk::Format VulkanUtil::FormatToVkFormat(const EFormat& InFormat)
+	{
+		switch (InFormat)
+		{
+		case EFormat::D32Sfloat:
+			return vk::Format::eD32Sfloat;
+		case EFormat::D32SfloatS8Uint:
+			return vk::Format::eD32SfloatS8Uint;
+		case EFormat::D24UnormS8Uint:
+			return vk::Format::eD24UnormS8Uint;
+		default:
+		case EFormat::R8G8B8A8UNorm:
+			return vk::Format::eR8G8B8A8Unorm;
+		case EFormat::B8G8R8A8UNorm:
+			return vk::Format::eB8G8R8A8Unorm;
+		case EFormat::R32G32Sfloat:
+			return vk::Format::eR32G32Sfloat;
+		case EFormat::R32G32B32Sfloat:
+			return vk::Format::eR32G32B32Sfloat;
+		case EFormat::R32G32B32A32Sfloat:
+			return vk::Format::eR32G32B32A32Sfloat;
+		case EFormat::R32G32B32A32Uint:
+			return vk::Format::eR32G32B32A32Uint;
+		case EFormat::R64Uint:
+			return vk::Format::eR64Uint;
+		case EFormat::R32Uint:
+			return vk::Format::eR32Uint;
+		}
+	}
+
+	EFormat VulkanUtil::VkFormatToFormat(const vk::Format& InFormat)
+	{
+		switch (InFormat)
+		{
+		default:
+			return EFormat::Undefined;
+		case vk::Format::eD32Sfloat:
+			return EFormat::D32Sfloat;
+		case vk::Format::eD32SfloatS8Uint:
+			return EFormat::D32SfloatS8Uint;
+		case vk::Format::eD24UnormS8Uint:
+			return EFormat::D24UnormS8Uint;
+		case vk::Format::eR8G8B8A8Unorm:
+			return EFormat::R8G8B8A8UNorm;
+		case vk::Format::eB8G8R8A8Unorm:
+			return EFormat::B8G8R8A8UNorm;
+		case vk::Format::eR32G32Sfloat:
+			return EFormat::R32G32Sfloat;
+		case vk::Format::eR32G32B32Sfloat:
+			return EFormat::R32G32B32Sfloat;
+		case vk::Format::eR32G32B32A32Sfloat:
+			return EFormat::R32G32B32A32Sfloat;
+		case vk::Format::eR32G32B32A32Uint:
+			return EFormat::R32G32B32A32Uint;
+		case vk::Format::eR64Uint:
+			return EFormat::R64Uint;
+		case vk::Format::eR32Uint:
+			return EFormat::R32Uint;
+		}
+	}
+
+	vk::SampleCountFlagBits VulkanUtil::SampleCountToVkSampleCount(
+		const ESampleCount& InSampleCount)
+	{
+		switch (InSampleCount)
+		{
+		default:
+		case ESampleCount::Sample1:
+			return vk::SampleCountFlagBits::e1;
+		case ESampleCount::Sample2:
+			return vk::SampleCountFlagBits::e2;
+		case ESampleCount::Sample4:
+			return vk::SampleCountFlagBits::e4;
+		case ESampleCount::Sample8:
+			return vk::SampleCountFlagBits::e8;
+		case ESampleCount::Sample16:
+			return vk::SampleCountFlagBits::e16;
+		case ESampleCount::Sample32:
+			return vk::SampleCountFlagBits::e32;
+		case ESampleCount::Sample64:
+			return vk::SampleCountFlagBits::e64;
+		}
+	}
+
+	vk::ShaderStageFlagBits VulkanUtil::ShaderStageToVkShaderStage(const EShaderStage& InShader)
+	{
+		switch (InShader)
+		{
+		default:
+		case EShaderStage::Vertex:
+			return vk::ShaderStageFlagBits::eVertex;
+		case EShaderStage::Fragment:
+			return vk::ShaderStageFlagBits::eFragment;
+		}
+	}
+
+	namespace RenderPass
+	{
+
+		vk::AttachmentLoadOp VulkanUtil::RenderPass::AttachmentLoadOpToVkAttachmentLoadOp(
+			const ERSRenderPassAttachmentLoadOp& InOp)
+		{
+			switch (InOp)
+			{
+			default:
+			case ERSRenderPassAttachmentLoadOp::DontCare:
+				return vk::AttachmentLoadOp::eDontCare;
+			case ERSRenderPassAttachmentLoadOp::Clear:
+				return vk::AttachmentLoadOp::eClear;
+			case ERSRenderPassAttachmentLoadOp::Load:
+				return vk::AttachmentLoadOp::eLoad;
+			}
+		}
+
+		vk::AttachmentStoreOp VulkanUtil::RenderPass::AttachmentStoreOpToVkAttachmentStoreOp(
+			const ERSRenderPassAttachmentStoreOp& InOp)
+		{
+			switch (InOp)
+			{
+			default:
+			case ERSRenderPassAttachmentStoreOp::DontCare:
+				return vk::AttachmentStoreOp::eDontCare;
+			case ERSRenderPassAttachmentStoreOp::Store:
+				return vk::AttachmentStoreOp::eStore;
+			}
+		}
+
+		vk::ImageLayout VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(
+			const ERSRenderPassAttachmentLayout& InLayout)
+		{
+			switch (InLayout)
+			{
+			default:
+			case ERSRenderPassAttachmentLayout::Undefined:
+				return vk::ImageLayout::eUndefined;
+			case ERSRenderPassAttachmentLayout::ColorAttachment:
+				return vk::ImageLayout::eColorAttachmentOptimal;
+			case ERSRenderPassAttachmentLayout::ShaderReadOnlyOptimal:
+				return vk::ImageLayout::eShaderReadOnlyOptimal;
+			case ERSRenderPassAttachmentLayout::DepthStencilAttachment:
+				return vk::ImageLayout::eDepthStencilAttachmentOptimal;
+			case ERSRenderPassAttachmentLayout::DepthStencilReadOnlyOptimal:
+				return vk::ImageLayout::eDepthStencilReadOnlyOptimal;
+			case ERSRenderPassAttachmentLayout::Present:
+				return vk::ImageLayout::ePresentSrcKHR;
+			}
+		}
+
+	}
+}

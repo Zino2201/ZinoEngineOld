@@ -5,6 +5,7 @@
 #include <future>
 #include <string_view>
 #include "NonCopyable.h"
+#include <robin_hood.h>
 
 namespace ZE
 {
@@ -82,7 +83,7 @@ public:
     template<typename T>
     void Register(EShaderCompilerTarget InTarget)
     {
-		ShaderCompilers.insert(std::make_pair(InTarget, std::make_unique<T>(InTarget)));
+        ShaderCompilers.insert({ InTarget, std::make_unique<T>(InTarget) });
     }
 
     /**
@@ -95,7 +96,7 @@ public:
         const EShaderCompilerTarget& InTargetFormat,
         const bool& bInShouldOptimize = true);
 public:
-    std::unordered_map<EShaderCompilerTarget, std::unique_ptr<IShaderCompiler>> ShaderCompilers;
+    robin_hood::unordered_map<EShaderCompilerTarget, std::unique_ptr<IShaderCompiler>> ShaderCompilers;
 };
 
 }

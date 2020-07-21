@@ -58,11 +58,11 @@ RenderPassResourceID& CRenderPass::CreateRetainedTexture(CRSTexture* InTexture)
 {
 	SRenderPassResource& Tex = Graph.CreateResource(ERenderPassResourceType::Texture);
 	SRenderPassTextureInfos Infos;
-	Infos.Width = InTexture->GetWidth();
-	Infos.Height = InTexture->GetHeight();
-	Infos.Usage = InTexture->GetTextureUsage();
-	Infos.Type = InTexture->GetType();
-	Infos.Format = InTexture->GetFormat();
+	Infos.Width = InTexture->GetCreateInfo().Width;
+	Infos.Height = InTexture->GetCreateInfo().Height;
+	Infos.Usage = InTexture->GetCreateInfo().Usage;
+	Infos.Type = InTexture->GetCreateInfo().Type;
+	Infos.Format = InTexture->GetCreateInfo().Format;
 	Tex.TextureInfos = Infos;
 	Tex.bIsRetained = true;
 	Textures.push_back(Tex);
@@ -130,7 +130,7 @@ CRSTexture* CRenderPassPersistentResourceManager::GetOrCreateTexture(
 		{
 			SEntry Entry;
 
-			CRSTexture* Texture = GRenderSystem->CreateTexture(
+			CRSTexture* Texture = GRenderSystem->CreateTexture({
 				InInfos.Type,
 				InInfos.Usage,
 				InInfos.MemoryUsage,
@@ -140,8 +140,9 @@ CRSTexture* CRenderPassPersistentResourceManager::GetOrCreateTexture(
 				InInfos.Depth,
 				InInfos.ArraySize,
 				InInfos.MipLevels,
-				InInfos.SampleCount,
-				SRSResourceCreateInfo(nullptr, "FrameGraph Texture"));
+				InInfos.SampleCount });
+
+			Texture->SetName("FrameGraph Texture");
 
 			Entry.Infos = InInfos;
 			Entry.Texture = Texture;
@@ -159,7 +160,7 @@ CRSTexture* CRenderPassPersistentResourceManager::GetOrCreateTexture(
 
 	SEntry Entry;
 
-	CRSTexture* Texture = GRenderSystem->CreateTexture(
+	CRSTexture* Texture = GRenderSystem->CreateTexture({
 		InInfos.Type,
 		InInfos.Usage,
 		InInfos.MemoryUsage,
@@ -169,9 +170,10 @@ CRSTexture* CRenderPassPersistentResourceManager::GetOrCreateTexture(
 		InInfos.Depth,
 		InInfos.ArraySize,
 		InInfos.MipLevels,
-		InInfos.SampleCount,
-		SRSResourceCreateInfo(nullptr, "FrameGraph Texture"));
+		InInfos.SampleCount});
 
+	Texture->SetName("FrameGraph Texture");
+	
 	Entry.Infos = InInfos;
 	Entry.Texture = Texture;
 	Entry.InactiveCounter = 0;

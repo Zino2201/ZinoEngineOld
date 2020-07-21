@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ZRT.h"
-#include <unordered_set>
+#include <robin_hood.h>
 
 /**
  * Flags about this property
@@ -77,7 +77,7 @@ public:
 private:
 	CTypeDatabase() = default;
 private:
-	std::unordered_set<std::string> Types;
+	robin_hood::unordered_set<std::string> Types;
 };
 
 /**

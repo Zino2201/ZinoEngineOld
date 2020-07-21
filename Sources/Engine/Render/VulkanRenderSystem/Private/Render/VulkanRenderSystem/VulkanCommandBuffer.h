@@ -10,7 +10,7 @@ class CVulkanCommandBuffer : public CVulkanDeviceResource
     friend class CVulkanQueue;
 
 public:
-    CVulkanCommandBuffer(CVulkanDevice* InDevice,
+    CVulkanCommandBuffer(CVulkanDevice& InDevice,
         const vk::CommandPool& InParentPool,
         const bool& InFenceSignaledAtCreation);
 

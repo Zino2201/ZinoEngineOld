@@ -5,6 +5,7 @@
 #include "VulkanPipelineLayout.h"
 #include "VulkanPipeline.h"
 #include <robin_hood.h>
+#include "Render/RenderSystem/Resources/Framebuffer.h"
 
 class CVulkanSwapChain;
 class CVulkanQueue;
@@ -16,15 +17,15 @@ class CVulkanQueue;
 class CVulkanStagingBufferManager
 {
 public:
-    CVulkanStagingBufferManager(CVulkanDevice* InDevice);
+    CVulkanStagingBufferManager(CVulkanDevice& InDevice);
 
 	CVulkanInternalStagingBuffer* CreateStagingBuffer(uint64_t InSize,
 		vk::BufferUsageFlags InUsageFlags);
     void ReleaseStagingBuffer(CVulkanInternalStagingBuffer* InBuffer);
     void ReleaseStagingBuffers();
 private:
-    CVulkanDevice* Device;
-    TSet<CVulkanInternalStagingBuffer*> StagingBuffers;
+    CVulkanDevice& Device;
+    robin_hood::unordered_set<CVulkanInternalStagingBuffer*> StagingBuffers;
     std::vector<CVulkanInternalStagingBuffer*> StagingBuffersToDelete;
 };
 
@@ -212,8 +213,8 @@ public:
     void CreatePresentQueue(const vk::SurfaceKHR& InSurface);
 
     /** Managers */
-    CVulkanStagingBufferManager* GetStagingBufferMgr() { return StagingBufferMgr.get(); }
-    CVulkanPipelineLayoutManager* GetPipelineLayoutMgr() { return PipelineLayoutMgr.get(); }
+    CVulkanStagingBufferManager& GetStagingBufferMgr() { return StagingBufferMgr; }
+    CVulkanPipelineLayoutManager& GetPipelineLayoutMgr() { return PipelineLayoutMgr; }
     CVulkanDeferredDestructionManager& GetDeferredDestructionMgr() { return DeferredDestructionManager; }
     CVulkanPipelineManager& GetPipelineManager() { return PipelineManager; }
     CVulkanRenderPassFramebufferManager& GetRenderPassFramebufferMgr() { return RenderPassFramebufferMgr; }
@@ -227,7 +228,7 @@ public:
 private:
     CVulkanDeferredDestructionManager DeferredDestructionManager;
     std::unique_ptr<CVulkanRenderSystemContext> Context;
-    std::unique_ptr<CVulkanStagingBufferManager> StagingBufferMgr;
+    CVulkanStagingBufferManager StagingBufferMgr;
     VmaAllocator Allocator;
     vk::UniqueDevice Device;
     vk::PhysicalDevice PhysicalDevice;
@@ -235,7 +236,7 @@ private:
     SVulkanQueueFamilyIndices QueueFamilyIndices;
     std::unique_ptr<CVulkanQueue> GraphicsQueue;
     CVulkanQueue* PresentQueue;
-    std::unique_ptr<CVulkanPipelineLayoutManager> PipelineLayoutMgr;
+    CVulkanPipelineLayoutManager PipelineLayoutMgr;
     CVulkanPipelineManager PipelineManager;
     CVulkanRenderPassFramebufferManager RenderPassFramebufferMgr;
     std::unique_ptr<SVMADestructor> VmaDestructor;

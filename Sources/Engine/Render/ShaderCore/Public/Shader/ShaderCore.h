@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include "Module/Module.h"
+#include <robin_hood.h>
 
 namespace ZE
 {
@@ -90,7 +91,7 @@ class SShaderParameterMap
 public:
 	void AddParameter(const char* InName, const SShaderParameter& InParameter)
 	{
-		Parameters.insert(std::make_pair(InName, InParameter));
+		Parameters.insert({ InName, InParameter });
 	}
 
     const SShaderParameter& GetParameterByName(const CString& InName) const
@@ -111,7 +112,7 @@ public:
 		return OutParameters;
 	}
 private:
-    std::unordered_map<CString, SShaderParameter> Parameters;
+    robin_hood::unordered_map<CString, SShaderParameter> Parameters;
 };
 
 }

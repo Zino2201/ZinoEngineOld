@@ -14,7 +14,7 @@ class CVulkanSurface;
 class CVulkanCommandBufferManager
 {
 public:
-    CVulkanCommandBufferManager(CVulkanDevice* InDevice);
+    CVulkanCommandBufferManager(CVulkanDevice& InDevice);
     ~CVulkanCommandBufferManager();
 
     void BeginMemoryCmdBuffer();
@@ -27,7 +27,7 @@ private:
     void SubmitCmdBuffer(CVulkanCommandBuffer* InCommandBuffer,
         const vk::Semaphore& InSemaphore);
 private:
-    CVulkanDevice* Device;
+    CVulkanDevice& Device;
 
     vk::UniqueCommandPool CommandPool;
 
@@ -47,28 +47,27 @@ class CVulkanRenderSystemContext : public IRenderSystemContext
     friend class CVulkanPipelineSetManager;
 
 public:
-    CVulkanRenderSystemContext(CVulkanDevice* InDevice);
+    CVulkanRenderSystemContext(CVulkanDevice& InDevice);
     ~CVulkanRenderSystemContext();
 
-	virtual void BeginRenderPass(const SRSRenderPass& InRenderPass,
+	void BeginRenderPass(const SRSRenderPass& InRenderPass,
         const SRSFramebuffer& InFrameBuffer,
 		const std::array<float, 4>& InClearColor = { 0, 0, 0, 1 },
         const char* InName = "Unnamed Render Pass") override;
 
-	virtual void EndRenderPass() override;
+	void EndRenderPass() override;
 
-    virtual bool BeginSurface(CRSSurface* InSurface) override;
-    virtual void PresentSurface(CRSSurface* InSurface) override;
+    bool BeginSurface(CRSSurface* InSurface) override;
+    void PresentSurface(CRSSurface* InSurface) override;
 
 	/** States commands */
-	virtual void BindGraphicsPipeline(CRSGraphicsPipeline* InGraphicsPipeline) override;
     void BindGraphicsPipeline(const SRSGraphicsPipeline& InGraphicsPipeline) override;
-    virtual void SetViewports(const std::vector<SViewport>& InViewports) override;
-    virtual void SetScissors(const std::vector<SRect2D>& InScissors) override;
+    void SetViewports(const std::vector<SViewport>& InViewports) override;
+    void SetScissors(const std::vector<SRect2D>& InScissors) override;
 
     /** Resource bindings */
-    virtual void BindVertexBuffers(const std::vector<CRSBuffer*> InVertexBuffers) override;
-	virtual void BindIndexBuffer(CRSBuffer* InIndexBuffer,
+    void BindVertexBuffers(const std::vector<CRSBuffer*> InVertexBuffers) override;
+	void BindIndexBuffer(CRSBuffer* InIndexBuffer,
 		const uint64_t& InOffset,
 		const EIndexFormat& InIndexFormat) override;
     void SetShaderUniformBuffer(const uint32_t& InSet, const uint32_t& InBinding,
@@ -79,9 +78,9 @@ public:
 		CRSSampler* InSampler) override;
 
 	/** Draw commands */
-	virtual void Draw(const uint32_t& InVertexCount, const uint32_t& InInstanceCount,
+	void Draw(const uint32_t& InVertexCount, const uint32_t& InInstanceCount,
 		const uint32_t& InFirstVertex, const uint32_t& InFirstInstance) override;
-	virtual void DrawIndexed(const uint32_t& InIndexCount,
+	void DrawIndexed(const uint32_t& InIndexCount,
 		const uint32_t& InInstanceCount, const uint32_t& InFirstIndex,
 		const int32_t& InVertexOffset, const uint32_t& InFirstInstance) override;
 
@@ -91,7 +90,7 @@ private:
     void FlushWrites();
     void BindDescriptorSets();
 private:
-    CVulkanDevice* Device;
+    CVulkanDevice& Device;
     CVulkanCommandBufferManager CmdBufferMgr;
     CVulkanPipelineLayout* CurrentLayout;
     vk::RenderPass CurrentRenderPass;
@@ -130,6 +129,6 @@ private:
         const SDescriptorSetWrite& InWrite, const uint64_t& InHandle);
 
     /** Writes & handles collected before a draw call for each set */
-    std::unordered_map<uint32_t, std::array<SDescriptorSetWrite, GMaxBindingsPerSet>> WriteMap;
-    std::unordered_map<uint32_t, std::array<uint64_t, GMaxBindingsPerSet>> HandleMap;
+    robin_hood::unordered_map<uint32_t, std::array<SDescriptorSetWrite, GMaxBindingsPerSet>> WriteMap;
+    robin_hood::unordered_map<uint32_t, std::array<uint64_t, GMaxBindingsPerSet>> HandleMap;
 };

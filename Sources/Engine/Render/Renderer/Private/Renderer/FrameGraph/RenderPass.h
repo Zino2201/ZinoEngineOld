@@ -2,16 +2,18 @@
 
 #include "EngineCore.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "Render/RenderSystem/Resources/Texture.h"
+#include "Render/RenderSystem/Resources/RenderPass.h"
 #include "NonCopyable.h"
 #include <optional>
-#include <unordered_set>
+#include <robin_hood.h>
 
 namespace ZE { class IRenderSystemContext; }
 
 namespace ZE::Renderer
 {
 
-    DECLARE_LOG_CATEGORY(FrameGraph);
+DECLARE_LOG_CATEGORY(FrameGraph);
 
 class CFrameGraph;
 
@@ -161,7 +163,7 @@ protected:
     std::vector<SRenderPassWriteInfos> WriteInfosMap;
     std::vector<SRenderPassReadInfos> ReadInfos;
     std::vector<CRenderPass*> Dependencies;
-    std::unordered_set<RenderPassResourceID> Attachments;
+    robin_hood::unordered_set<RenderPassResourceID> Attachments;
     SRSRenderPass PhysRenderPass;
 };
 
@@ -194,7 +196,7 @@ public:
     void UpdateLifetimes();
     void Destroy() { TextureMap.clear(); }
 private:
-    std::unordered_map<uint32_t, SEntry> TextureMap;
+    robin_hood::unordered_map<uint32_t, SEntry> TextureMap;
 };
 
 /**

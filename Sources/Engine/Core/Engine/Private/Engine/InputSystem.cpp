@@ -1,13 +1,13 @@
 #include "Engine/InputSystem.h"
-#include <unordered_map>
+#include <robin_hood.h>
 #include <SDL2/SDL.h>
 
 namespace ZE::Input
 {
 
-std::unordered_map<SDL_Scancode, bool> HeldKeys;
-std::unordered_map<SDL_Scancode, bool> PressedKeys;
-std::unordered_map<SDL_Scancode, bool> ReleasedKeys;
+robin_hood::unordered_map<SDL_Scancode, bool> HeldKeys;
+robin_hood::unordered_map<SDL_Scancode, bool> PressedKeys;
+robin_hood::unordered_map<SDL_Scancode, bool> ReleasedKeys;
 
 void Clear()
 {

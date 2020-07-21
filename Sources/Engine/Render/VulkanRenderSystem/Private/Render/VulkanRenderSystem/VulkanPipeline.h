@@ -1,6 +1,8 @@
 #pragma once
 
 #include "VulkanCore.h"
+#include "Render/RenderSystem/Resources/Pipeline.h"
+#include "Render/RenderSystem/Resources/GraphicsPipeline.h"
 
 /** Fwd declares */
 class CVulkanPipelineLayout;
@@ -48,18 +50,17 @@ public:
         const vk::RenderPass& InRenderPass);
 private:
     CVulkanDevice& Device;
-    std::unordered_map<SGraphicsEntry, std::unique_ptr<CVulkanGraphicsPipeline>, 
+    robin_hood::unordered_map<SGraphicsEntry, std::unique_ptr<CVulkanGraphicsPipeline>, 
         SGraphicsEntryHash> GraphicsPipelines;
 };
 
 /**
  * Basic vulkan pipeline
  */
-class CVulkanPipeline : public CVulkanDeviceResource, 
-    public CRSPipeline
+class CVulkanPipeline : public CVulkanDeviceResource
 {
 public:
-    CVulkanPipeline(CVulkanDevice* InDevice, const SRSResourceCreateInfo& InCreateInfo);
+    CVulkanPipeline(CVulkanDevice& InDevice);
 
     virtual const vk::Pipeline& GetPipeline() const { return *Pipeline; }
     virtual CVulkanPipelineLayout* GetPipelineLayout() const { return Layout.get(); }
@@ -71,12 +72,10 @@ protected:
 /**
  * Graphics pipeline
  */
-class CVulkanGraphicsPipeline : public CVulkanPipeline,
-    public CRSGraphicsPipeline
+class CVulkanGraphicsPipeline : public CVulkanPipeline
 {
 public:
-    CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
+    CVulkanGraphicsPipeline(CVulkanDevice& InDevice,
         const SRSGraphicsPipeline& InGraphicsPipeline,
-        const vk::RenderPass& InRenderPass,
-        const SRSResourceCreateInfo& InCreateInfo);
+        const vk::RenderPass& InRenderPass);
 };

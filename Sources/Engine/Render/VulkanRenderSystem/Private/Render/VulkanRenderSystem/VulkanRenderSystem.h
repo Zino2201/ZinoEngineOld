@@ -11,56 +11,23 @@ class CVulkanDevice;
 class CVulkanRenderSystem : public IRenderSystem
 {
 public:
-	virtual void Initialize() override;
-	virtual void Destroy() override;
+	void Initialize() override;
+	void Destroy() override;
 	void NewFrame() override;
-	virtual void WaitGPU() override;
+	void WaitGPU() override;
 
-	virtual CRSSurface* CreateSurface(void* InWindowHandle,
-		const uint32_t& InWidth, const uint32_t& InHeight,
-		const bool& bInUseVSync,
-		const SRSResourceCreateInfo& InInfo = {}) const override;
+	TOwnerPtr<CRSSurface> CreateSurface(const SRSSurfaceCreateInfo& InCreateInfo) const override;
 
-	virtual CRSBuffer* CreateBuffer(
-		const ERSBufferUsage& InUsageFlags,
-		const ERSMemoryUsage& InMemUsage,
-		const uint64_t& InSize,
-		const SRSResourceCreateInfo& InInfo) const override;
+	TOwnerPtr<CRSBuffer> CreateBuffer(const SRSBufferCreateInfo& InCreateInfo) const override;
 
-	virtual CRSTexture* CreateTexture(
-		const ERSTextureType& InTextureType,
-		const ERSTextureUsage& InTextureUsage,
-		const ERSMemoryUsage& InMemoryUsage,
-		const EFormat& InFormat,
-		const uint32_t& InWidth,
-		const uint32_t& InHeight,
-		const uint32_t& InDepth,
-		const uint32_t& InArraySize,
-		const uint32_t& InMipLevels,
-		const ESampleCount& InSampleCount,
-		const SRSResourceCreateInfo& InInfo) const override;
+	TOwnerPtr<CRSTexture> CreateTexture(const SRSTextureCreateInfo& InCreateInfo) const override;
 
-	CRSSampler* CreateSampler(const SRSSamplerCreateInfo& InCreateInfo) const override;
+	TOwnerPtr<CRSSampler> CreateSampler(const SRSSamplerCreateInfo& InCreateInfo) const override;
 
-	virtual CRSShader* CreateShader(
-		const EShaderStage& InStage,
-		const uint64_t& InBytecodeSize,
-		const void* InBytecode,
-		const SShaderParameterMap& InParameterMap, 
-		const SRSResourceCreateInfo& InCreateInfo = {}) const override;
-
-	virtual CRSGraphicsPipeline* CreateGraphicsPipeline(
-		const std::vector<SRSPipelineShaderStage>& InShaderStages,
-		const std::vector<SVertexInputBindingDescription>& InBindingDescriptions,
-		const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions,
-		const SRSRenderPass& InRenderPass = SRSRenderPass(),
-		const SRSBlendState& InBlendState = SRSBlendState(),
-		const SRSRasterizerState& InRasterizerState = SRSRasterizerState(),
-		const SRSDepthStencilState& InDepthStencilState = SRSDepthStencilState(),
-		const SRSResourceCreateInfo& InCreateInfo = SRSResourceCreateInfo()) const override;
+	TOwnerPtr<CRSShader> CreateShader(const SRSShaderCreateInfo& InCreateInfo) const override;
 
 	/** Utils */
-	virtual const char* GetName() const override { return "Vulkan"; }
+	const char* GetName() const override { return "Vulkan"; }
 
 	const vk::Instance& GetInstance() const { return *Instance; }
 	CVulkanDevice* GetDevice() const { return Device.get(); }

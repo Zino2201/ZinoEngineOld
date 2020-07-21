@@ -24,7 +24,8 @@ CStdFile::CStdFile(const std::string_view& InPath,
 
 	if(!Stream.is_open())
 	{
-		LOG(ELogSeverity::Error, StdFileSystem, "%s", strerror(errno));
+		char ErrBuf[512];
+		LOG(ELogSeverity::Error, StdFileSystem, "%s", strerror_s(ErrBuf, errno));
 		return;
 	}
 

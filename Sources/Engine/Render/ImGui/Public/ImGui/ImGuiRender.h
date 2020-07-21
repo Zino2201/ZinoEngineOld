@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "Render/RenderSystem/Resources/GraphicsPipeline.h"
 #include "ImGui/ImGui.h"
 
 namespace ZE { class IRenderSystemContext; }
@@ -15,6 +16,7 @@ class IMGUI_API CImGuiRender
 {
 public:
 	CImGuiRender();
+	~CImGuiRender();
 
 	/**
 	 * Update buffers

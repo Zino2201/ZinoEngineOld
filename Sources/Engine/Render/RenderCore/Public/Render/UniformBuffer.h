@@ -3,8 +3,8 @@
 #include "EngineCore.h"
 #include <any>
 #include <algorithm>
-#include "Render/RenderSystem/RenderSystemResources.h"
 #include "Render/RenderSystem/RenderSystem.h"
+#include "Render/RenderSystem/Resources/Buffer.h"
 
 namespace ZE
 {
@@ -21,11 +21,11 @@ struct TUniformBuffer
         if constexpr(bUsePersistantMapping)
             MemoryUsage |= ERSMemoryUsage::UsePersistentMapping;
 
-        Buffer = GRenderSystem->CreateBuffer(
+        Buffer = GRenderSystem->CreateBuffer({
             ERSBufferUsage::UniformBuffer,
             MemoryUsage,
-            sizeof(T),
-            SRSResourceCreateInfo(nullptr, "TUniformBuffer"));
+            sizeof(T) });
+        Buffer->SetName("TUniformBuffer");
     }
 
     ~TUniformBuffer()
@@ -39,7 +39,7 @@ struct TUniformBuffer
      */
     void Copy(const void* RESTRICT InData, uint64_t InSize = 0)
     {
-        if(InSize == 0)
+        if (InSize == 0)
             InSize = sizeof(T);
 
         void* RESTRICT Dst = Buffer->GetMappedData();
@@ -53,12 +53,12 @@ struct TUniformBuffer
             Buffer->Unmap();
     }
 
-	void Copy(const T& InData)
+	FORCEINLINE void Copy(const T& InData)
 	{
 		Copy(reinterpret_cast<const void*>(&InData));
 	}
 
-    CRSBuffer* GetBuffer() const { return Buffer.get(); }
+    FORCEINLINE CRSBuffer* GetBuffer() const { return Buffer.get(); }
 private:
 	CRSBufferPtr Buffer;
 };

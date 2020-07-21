@@ -2,6 +2,9 @@
 #include "ImGui/ImGui.h"
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/RenderSystem/RenderSystemContext.h"
+#include "Render/RenderSystem/Resources/Texture.h"
+#include "Render/RenderSystem/Resources/Buffer.h"
+#include "Render/RenderSystem/Resources/Sampler.h"
 #include "Render/Shader/BasicShader.h"
 #include "Module/ModuleManager.h"
 
@@ -48,11 +51,12 @@ CImGuiRender::CImGuiRender()
 	 * Create font texture
 	 */
 	uint8_t* FontData = nullptr;
-	int FontWidth = 0;
-	int FontHeight = 0;
+	uint32_t FontWidth = 0;
+	uint32_t FontHeight = 0;
 
-	IO.Fonts->GetTexDataAsRGBA32(&FontData, &FontWidth, &FontHeight);
-	Font = GRenderSystem->CreateTexture(
+	IO.Fonts->GetTexDataAsRGBA32(&FontData, reinterpret_cast<int*>(&FontWidth), 
+		reinterpret_cast<int*>(&FontHeight));
+	Font = GRenderSystem->CreateTexture({
 		ERSTextureType::Tex2D,
 		ERSTextureUsage::Sampled,
 		ERSMemoryUsage::DeviceLocal,
@@ -62,25 +66,29 @@ CImGuiRender::CImGuiRender()
 		1,
 		1,
 		1,
-		ESampleCount::Sample1,
-		SRSResourceCreateInfo(FontData, "ImGuiRender Font"));
+		ESampleCount::Sample1});
 	if(!Font)
 	{
 		LOG(ELogSeverity::Error, ImGuiRender, "Failed to create ImGui font, will not render");
 		return;
 	}
 
+	Font->SetName("ImGuiRender Font");
+
+	/** Copy */
+	Font->Copy(FontData);
+
 	/** UBO */
-	GlobalData = GRenderSystem->CreateBuffer(
+	GlobalData = GRenderSystem->CreateBuffer({
 		ERSBufferUsage::UniformBuffer,
 		ERSMemoryUsage::HostVisible | ERSMemoryUsage::UsePersistentMapping,
-		sizeof(SGlobalData),
-		SRSResourceCreateInfo(nullptr, "ImGuiRender Global Data UBO"));
+		sizeof(SGlobalData) });
 	if(!GlobalData)
 	{
 		LOG(ELogSeverity::Error, ImGuiRender, "Failed to create ImGui ubo, will not render");
 		return;
 	}
+	GlobalData->SetName("ImGuiRender Global Data UBO");
 
 	/** Sampler */
 	Sampler = GRenderSystem->CreateSampler(SRSSamplerCreateInfo());
@@ -123,6 +131,8 @@ CImGuiRender::CImGuiRender()
 
 	DrawData = std::make_unique<ImDrawData>();
 }
+
+CImGuiRender::~CImGuiRender() = default;
 
 void CImGuiRender::CopyDrawdata()
 {
@@ -167,16 +177,17 @@ void CImGuiRender::Update()
 	/** Recreate buffers if modified and needed */
 	if (!VertexBuffer || LastVertexSize < VertexSize)
 	{
-		VertexBuffer = GRenderSystem->CreateBuffer(
+		VertexBuffer = GRenderSystem->CreateBuffer( {
 			ERSBufferUsage::VertexBuffer,
 			ERSMemoryUsage::HostVisible,
-			VertexSize,
-			SRSResourceCreateInfo(nullptr, "ImGuiVertexBuffer"));
+			VertexSize });
 		if (!VertexBuffer)
 		{
 			LOG(ELogSeverity::Error, ImGuiRender, "Failed to create ImGui vertex buffer");
 			return;
 		}
+
+		VertexBuffer->SetName("ImGuiVertexBuffer");
 
 		VertexCount = DrawData->TotalVtxCount;
 		LastVertexSize = VertexSize;
@@ -184,16 +195,17 @@ void CImGuiRender::Update()
 
 	if (!IndexBuffer || LastIndexSize < IndexSize)
 	{
-		IndexBuffer = GRenderSystem->CreateBuffer(
+		IndexBuffer = GRenderSystem->CreateBuffer({
 			ERSBufferUsage::IndexBuffer,
 			ERSMemoryUsage::HostVisible,
-			IndexSize,
-			SRSResourceCreateInfo(nullptr, "ImGuiIndexBuffer"));
+			IndexSize });
 		if (!IndexBuffer)
 		{
 			LOG(ELogSeverity::Error, ImGuiRender, "Failed to create ImGui index buffer");
 			return;
 		}
+
+		IndexBuffer->SetName("ImGuiVertexBuffer");
 
 		IndexCount = DrawData->TotalIdxCount;
 		LastIndexSize = IndexSize;

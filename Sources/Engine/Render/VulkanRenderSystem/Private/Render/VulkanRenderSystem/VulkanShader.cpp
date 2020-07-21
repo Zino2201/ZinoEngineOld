@@ -2,50 +2,24 @@
 #include "VulkanDevice.h"
 #include "VulkanRenderSystem.h"
 
-CVulkanShader::CVulkanShader(CVulkanDevice* InDevice, 
-	const EShaderStage& InStage, 
-	const uint64_t& InBytecodeSize, 
-	const void* InBytecode, 
-	const SShaderParameterMap& InParameterMap, 
-	const SRSResourceCreateInfo& InCreateInfo)
-	: CVulkanDeviceResource(InDevice), CRSShader(InStage, InBytecodeSize, InBytecode,
-		InParameterMap,
-		InCreateInfo)
+CVulkanShader::CVulkanShader(CVulkanDevice& InDevice, 
+	const SRSShaderCreateInfo& InCreateInfo)
+	: CVulkanDeviceResource(InDevice), CRSShader(InCreateInfo)
 {
 	/** Create shader module */
 	vk::ShaderModuleCreateInfo CreateInfos(
 		vk::ShaderModuleCreateFlags(),
-		InBytecodeSize * sizeof(uint32_t),
-		reinterpret_cast<const uint32_t*>(InBytecode));
+		InCreateInfo.BytecodeSize * sizeof(uint32_t),
+		reinterpret_cast<const uint32_t*>(InCreateInfo.Bytecode));
 
-	ShaderModule = Device->GetDevice().createShaderModuleUnique(CreateInfos).value;
+	ShaderModule = Device.GetDevice().createShaderModuleUnique(CreateInfos).value;
 	if (!ShaderModule)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create shader module");
 }
 
-CRSShader* CVulkanRenderSystem::CreateShader(
-	const EShaderStage& InStage,
-	const uint64_t& InBytecodeSize,
-	const void* InBytecode,
-	const SShaderParameterMap& InParameterMap, 
-	const SRSResourceCreateInfo& InCreateInfo) const
+TOwnerPtr<CRSShader> CVulkanRenderSystem::CreateShader(
+	const SRSShaderCreateInfo& InCreateInfo) const
 {
-	return new CVulkanShader(Device.get(),
-		InStage,
-		InBytecodeSize,
-		InBytecode,
-		InParameterMap,
+	return new CVulkanShader(*Device.get(),
 		InCreateInfo);
-}
-
-vk::ShaderStageFlagBits VulkanUtil::ShaderStageToVkShaderStage(const EShaderStage& InShader)
-{
-	switch(InShader)
-	{
-	default:
-	case EShaderStage::Vertex:
-		return vk::ShaderStageFlagBits::eVertex;
-	case EShaderStage::Fragment:
-		return vk::ShaderStageFlagBits::eFragment;
-	}
 }

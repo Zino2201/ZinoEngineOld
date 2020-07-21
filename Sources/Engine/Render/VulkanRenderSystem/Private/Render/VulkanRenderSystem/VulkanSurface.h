@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VulkanCore.h"
+#include "Render/RenderSystem/Resources/Surface.h"
 
 class CVulkanSwapChain;
 class CVulkanQueue;
@@ -9,11 +10,8 @@ class CVulkanSurface : public CRSSurface,
 	public CVulkanDeviceResource
 {
 public:
-	CVulkanSurface(CVulkanDevice* InDevice,
-		void* InWindowHandle,
-		const uint32_t& InWidth, const uint32_t& InHeight,
-		const bool& bInUseVSync,
-		const SRSResourceCreateInfo& InInfo);
+	CVulkanSurface(CVulkanDevice& InDevice,
+		const SRSSurfaceCreateInfo& InCreateInfo);
 
 	/**
 	 * Resize the viewport

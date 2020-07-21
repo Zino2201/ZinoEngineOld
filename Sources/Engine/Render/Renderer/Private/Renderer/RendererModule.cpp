@@ -36,17 +36,18 @@ CRendererModule& CRendererModule::Get()
 
 void CRendererModule::Initialize()
 {
-	QuadVBuffer = GRenderSystem->CreateBuffer(
+	QuadVBuffer = GRenderSystem->CreateBuffer({
 		ERSBufferUsage::VertexBuffer,
 		ERSMemoryUsage::DeviceLocal,
-		QuadVertices.size() * sizeof(QuadVertices.front()),
-		SRSResourceCreateInfo(QuadVertices.data()));
+		QuadVertices.size() * sizeof(QuadVertices.front()) });
 
-	QuadIBuffer = GRenderSystem->CreateBuffer(
+	QuadIBuffer = GRenderSystem->CreateBuffer({
 		ERSBufferUsage::IndexBuffer,
 		ERSMemoryUsage::DeviceLocal,
-		QuadIndices.size() * sizeof(QuadIndices.front()),
-		SRSResourceCreateInfo(QuadIndices.data()));
+		QuadIndices.size() * sizeof(QuadIndices.front()) });
+	
+	RSUtils::Copy(QuadVertices.data(), QuadVBuffer.get());
+	RSUtils::Copy(QuadIndices.data(), QuadIBuffer.get());
 }
 
 void CRendererModule::CreateImGuiRenderer()

@@ -23,33 +23,29 @@ CVulkanGraphicsPipeline* CVulkanPipelineManager::GetOrCreateGraphicsPipeline(
 	LOG(ELogSeverity::Debug, VulkanRS, "new CVulkanGraphicsPipeline");
 
 	TOwnerPtr<CVulkanGraphicsPipeline> Pipeline = new CVulkanGraphicsPipeline(
-		&Device, InPipeline, InRenderPass, SRSResourceCreateInfo());
+		Device, InPipeline, InRenderPass);
 	
 	GraphicsPipelines.insert({ Entry, std::unique_ptr<CVulkanGraphicsPipeline>(Pipeline) });
 
 	return Pipeline;
 }
 
-CVulkanPipeline::CVulkanPipeline(CVulkanDevice* InDevice,
-	const SRSResourceCreateInfo& InCreateInfo) : CVulkanDeviceResource(InDevice),
-	CRSPipeline(InCreateInfo)
+CVulkanPipeline::CVulkanPipeline(CVulkanDevice& InDevice) : CVulkanDeviceResource(InDevice)
 {
 
 }
 
-CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
+CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice& InDevice,
 	const SRSGraphicsPipeline& InGraphicsPipeline,
-	const vk::RenderPass& InRenderPass,
-	const SRSResourceCreateInfo& InCreateInfo)
-	: CVulkanPipeline(InDevice, InCreateInfo),
-	CRSGraphicsPipeline(InGraphicsPipeline, InCreateInfo)
+	const vk::RenderPass& InRenderPass)
+	: CVulkanPipeline(InDevice)
 {
 	std::unordered_map<uint32_t, std::vector<vk::DescriptorSetLayoutBinding>> Bindings;
 	std::unordered_set<uint64_t> AddedParametersHash;
 
 	for(const auto& Stage : InGraphicsPipeline.ShaderStages)
 	{
-		for (const auto& Parameter : Stage.Shader->GetShaderParameterMap().GetParameters())
+		for (const auto& Parameter : Stage.Shader->GetCreateInfo().ParameterMap.GetParameters())
 		{
 			uint64_t HashParameter = SShaderParameterHash()(Parameter);
 
@@ -90,8 +86,7 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 	 * Create actual pipeline
 	 */
 	vk::GraphicsPipelineCreateInfo CreateInfo;
-
-	Layout = Device->GetPipelineLayoutMgr()->GetPipelineLayout(Desc);
+	Layout = Device.GetPipelineLayoutMgr().GetPipelineLayout(Desc);
 
 	CreateInfo.setRenderPass(InRenderPass);
 	CreateInfo.setLayout(Layout->GetPipelineLayout());
@@ -258,7 +253,7 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice* InDevice,
 		DynamicStates.data());
 	CreateInfo.setPDynamicState(&DynamicState);
 
-	Pipeline = Device->GetDevice().createGraphicsPipelineUnique(vk::PipelineCache(),
+	Pipeline = Device.GetDevice().createGraphicsPipelineUnique(vk::PipelineCache(),
 		CreateInfo).value;
 	if (!Pipeline)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create pipeline");
@@ -281,19 +276,6 @@ vk::DescriptorType VulkanUtil::ShaderParameterTypeToVkDescriptorType(
 	case EShaderParameterType::StorageBuffer:
 		return vk::DescriptorType::eStorageBuffer;
 	}
-}
-
-CRSGraphicsPipeline* CVulkanRenderSystem::CreateGraphicsPipeline(
-	const std::vector<SRSPipelineShaderStage>& InShaderStages,
-	const std::vector<SVertexInputBindingDescription>& InBindingDescriptions,
-	const std::vector<SVertexInputAttributeDescription>& InAttributeDescriptions,
-	const SRSRenderPass& InRenderPass,
-	const SRSBlendState& InBlendState,
-	const SRSRasterizerState& InRasterizerState,
-	const SRSDepthStencilState& InDepthStencilState,
-	const SRSResourceCreateInfo& InCreateInfo) const
-{
-	return nullptr;
 }
 
 vk::CompareOp VulkanUtil::ComparisonOpToVkCompareOp(const ERSComparisonOp& InOp)

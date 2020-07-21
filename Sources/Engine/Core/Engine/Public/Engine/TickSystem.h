@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include "NonCopyable.h"
+#include <robin_hood.h>
 
 /**
  * Tick system
@@ -64,7 +65,7 @@ public:
 private:
     CTickSystem() = default;
 private:
-    std::unordered_map<ETickOrder, std::vector<CTickable*>> TickablesMap;
+    robin_hood::unordered_map<ETickOrder, std::vector<CTickable*>> TickablesMap;
     std::vector<CTickable*> TickablesToAdd;
     ETickOrder CurrentOrder;
 };

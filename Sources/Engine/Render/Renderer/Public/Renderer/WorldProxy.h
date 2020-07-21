@@ -26,7 +26,7 @@ public:
 	auto& GetCachedDrawcalls(const ERenderPass& InRenderPass) { return CachedDrawcallMap[InRenderPass]; }
 private:
 	std::vector<std::unique_ptr<CRenderableComponentProxy>> Proxies;
-	std::unordered_map<ERenderPass, TDrawcallList> CachedDrawcallMap;
+	robin_hood::unordered_map<ERenderPass, TDrawcallList> CachedDrawcallMap;
 };
 
 }

@@ -3,6 +3,7 @@
 #include "Render/RenderSystem/RenderSystemContext.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "Render/RenderSystem/RenderSystem.h"
+#include "Render/RenderSystem/Resources/Sampler.h"
 #include "Render/UniformBuffer.h"
 
 namespace ZE::Renderer

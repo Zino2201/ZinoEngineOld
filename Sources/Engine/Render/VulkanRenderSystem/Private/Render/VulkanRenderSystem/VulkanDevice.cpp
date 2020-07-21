@@ -4,8 +4,9 @@
 #include "Render/VulkanRenderSystem/VulkanQueue.h"
 #include "Render/VulkanRenderSystem/VulkanTexture.h"
 #include <set>
+#include "Render/RenderSystem/Resources/RenderPass.h"
 
-CVulkanStagingBufferManager::CVulkanStagingBufferManager(CVulkanDevice* InDevice)
+CVulkanStagingBufferManager::CVulkanStagingBufferManager(CVulkanDevice& InDevice)
 	: Device(InDevice) {}
 
 CVulkanInternalStagingBuffer* CVulkanStagingBufferManager::CreateStagingBuffer(uint64_t InSize,
@@ -13,7 +14,7 @@ CVulkanInternalStagingBuffer* CVulkanStagingBufferManager::CreateStagingBuffer(u
 {
 	CVulkanInternalStagingBuffer* Buffer = new CVulkanInternalStagingBuffer(Device,
 		InSize, InUsageFlags);
-	StagingBuffers.Add(Buffer);
+	StagingBuffers.insert(Buffer);
 
 	return Buffer;
 }
@@ -27,7 +28,7 @@ void CVulkanStagingBufferManager::ReleaseStagingBuffers()
 {
 	for(const auto& StagingBufferToDelete : StagingBuffersToDelete)
 	{
-		StagingBuffers.Remove(StagingBufferToDelete);
+		StagingBuffers.erase(StagingBufferToDelete);
 
 		delete StagingBufferToDelete;
 	}
@@ -280,8 +281,8 @@ vk::Framebuffer CVulkanRenderPassFramebufferManager::GetFramebuffer(const SRSFra
 		CVulkanTexture* VkRt =
 			static_cast<CVulkanTexture*>(RT);
 
-		Width = std::max(Width, RT->GetWidth());
-		Height = std::max(Height, RT->GetHeight());
+		Width = std::max(Width, RT->GetCreateInfo().Width);
+		Height = std::max(Height, RT->GetCreateInfo().Height);
 
 		Attachments.push_back(VkRt->GetImageView());
 	}
@@ -321,7 +322,8 @@ vk::Framebuffer CVulkanRenderPassFramebufferManager::GetFramebuffer(const SRSFra
 
 /** Vulkan device */
 CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysicalDevice) :
-	PresentQueue(nullptr), DeferredDestructionManager(*this), PipelineManager(*this),
+	PresentQueue(nullptr), StagingBufferMgr(*this),
+	PipelineLayoutMgr(*this), DeferredDestructionManager(*this), PipelineManager(*this),
 	RenderPassFramebufferMgr(*this)
 {
 	PhysicalDevice = InPhysicalDevice;
@@ -369,7 +371,7 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysicalDevice) :
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create logical device");
 
 		/** Get queues */
-		GraphicsQueue = std::make_unique<CVulkanQueue>(this, QueueFamilyIndices.Graphics.value());
+		GraphicsQueue = std::make_unique<CVulkanQueue>(*this, QueueFamilyIndices.Graphics.value());
 	}
 
 	/** Allocator */
@@ -380,11 +382,8 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysicalDevice) :
 	vmaCreateAllocator(&AllocatorInfo, &Allocator);
 	VmaDestructor = std::make_unique<SVMADestructor>(*this);
 
-	StagingBufferMgr = std::make_unique<CVulkanStagingBufferManager>(this);
-	PipelineLayoutMgr = std::make_unique<CVulkanPipelineLayoutManager>(this);
-
 	/** Create device context */
-	Context = std::make_unique<CVulkanRenderSystemContext>(this);
+	Context = std::make_unique<CVulkanRenderSystemContext>(*this);
 }
 
 CVulkanDevice::~CVulkanDevice()

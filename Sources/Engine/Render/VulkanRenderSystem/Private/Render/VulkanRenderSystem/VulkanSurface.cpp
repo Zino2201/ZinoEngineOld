@@ -6,13 +6,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
 
-CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice, 
-	void* InWindowHandle, const uint32_t& InWidth, const uint32_t& InHeight,
-	const bool& bInUseVSync,
-	const SRSResourceCreateInfo& InInfo)
-	: CRSSurface(InWindowHandle, InWidth, InHeight, bInUseVSync, InInfo), 
-	CVulkanDeviceResource(InDevice), WindowHandle(InWindowHandle), bHasBeenResized(false),
-	bUseVSync(bInUseVSync)
+CVulkanSurface::CVulkanSurface(CVulkanDevice& InDevice, 
+	const SRSSurfaceCreateInfo& InCreateInfo)
+	: CRSSurface(InCreateInfo), 
+	CVulkanDeviceResource(InDevice), WindowHandle(InCreateInfo.WindowHandle), bHasBeenResized(false),
+	bUseVSync(InCreateInfo.bEnableVSync)
 {
 	/**
 	 * Create vulkan surface
@@ -20,7 +18,7 @@ CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice,
 	{
 		VkSurfaceKHR SurfaceTmp;
 
-		if (!SDL_Vulkan_CreateSurface(reinterpret_cast<SDL_Window*>(InWindowHandle),
+		if (!SDL_Vulkan_CreateSurface(reinterpret_cast<SDL_Window*>(InCreateInfo.WindowHandle),
 			static_cast<VkInstance>(GVulkanRenderSystem->GetInstance()),
 			&SurfaceTmp))
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create surface: %s",
@@ -31,7 +29,7 @@ CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice,
 				nullptr, vk::DispatchLoaderStatic()));
 
 		/** Create present queue if not created */
-		Device->CreatePresentQueue(*Surface);
+		Device.CreatePresentQueue(*Surface);
 	}
 
 	/**
@@ -39,10 +37,10 @@ CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice,
 	 */
 	{
 		SwapChain = std::make_unique<CVulkanSwapChain>(Device,
-			InWidth, 
-			InHeight,
+			InCreateInfo.Width, 
+			InCreateInfo.Height,
 			this,
-			bInUseVSync);
+			InCreateInfo.bEnableVSync);
 	}
 }
 
@@ -93,18 +91,18 @@ void CVulkanSurface::RecreateSwapChain()
 	 */
 	OldSwapChain.swap(SwapChain);
 	SwapChain = std::make_unique<CVulkanSwapChain>(Device,
-		Width,
-		Height,
+		CreateInfo.Width,
+		CreateInfo.Height,
 		this,
-		bUseVSync,
+		CreateInfo.bEnableVSync,
 		OldSwapChain->GetSwapChain());
 	bHasBeenResized = false;
 }
 
 void CVulkanSurface::Resize(const uint32_t& InWidth, const uint32_t& InHeight)
 {
-	Width = InWidth;
-	Height = InHeight;
+	CreateInfo.Width = InWidth;
+	CreateInfo.Height = InHeight;
 
 	bHasBeenResized = true;
 }
@@ -119,16 +117,9 @@ CRSTexture* CVulkanSurface::GetBackbufferTexture()
 	return SwapChain->GetBackbufferTexture();
 }
 
-CRSSurface* CVulkanRenderSystem::CreateSurface(void* InWindowHandle,
-	const uint32_t& InWidth, const uint32_t& InHeight,
-	const bool& bInUseVSync,
-	const SRSResourceCreateInfo& InInfo) const
+TOwnerPtr<CRSSurface> CVulkanRenderSystem::CreateSurface(const SRSSurfaceCreateInfo& InCreateInfo) const
 {
 	return new CVulkanSurface(
-		Device.get(),
-		InWindowHandle,
-		InWidth,
-		InHeight,
-		bInUseVSync,
-		InInfo);
+		*Device.get(),
+		InCreateInfo);
 }

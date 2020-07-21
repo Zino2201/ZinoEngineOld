@@ -84,19 +84,19 @@ void CClusteredForwardRenderingPath::Draw(const SWorldView& InView)
 		[&](CRenderPass& InRenderPass, SBasePass& InData)
 	{
 		SRenderPassTextureInfos ColorInfos;
-		ColorInfos.Format = InView.TargetRT->GetFormat();
-		ColorInfos.Width = InView.TargetRT->GetWidth();
-		ColorInfos.Height = InView.TargetRT->GetHeight();
+		ColorInfos.Format = InView.TargetRT->GetCreateInfo().Format;
+		ColorInfos.Width = InView.TargetRT->GetCreateInfo().Width;
+		ColorInfos.Height = InView.TargetRT->GetCreateInfo().Height;
 		ColorInfos.Usage = ERSTextureUsage::RenderTarget | ERSTextureUsage::Sampled;
 
 		SRenderPassTextureInfos DepthInfos;
 		DepthInfos.Format = EFormat::D32SfloatS8Uint;
-		DepthInfos.Width = InView.TargetRT->GetWidth();
-		DepthInfos.Height = InView.TargetRT->GetHeight();
+		DepthInfos.Width = InView.TargetRT->GetCreateInfo().Width;
+		DepthInfos.Height = InView.TargetRT->GetCreateInfo().Height;
 
 		InData.Color = InRenderPass.CreateTexture(ColorInfos);
 		InData.Depth = InRenderPass.CreateTexture(DepthInfos);
-		InData.Backbuffer = InRenderPass.CreateRetainedTexture(InView.TargetRT.get());
+		InData.Backbuffer = InRenderPass.CreateRetainedTexture(InView.TargetRT);
 
 		InRenderPass.Write(InData.Color);
 		InRenderPass.Write(InData.Depth);

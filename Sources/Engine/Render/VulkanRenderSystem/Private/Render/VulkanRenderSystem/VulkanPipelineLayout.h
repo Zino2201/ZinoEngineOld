@@ -128,7 +128,7 @@ namespace std
 class CVulkanPipelineLayoutManager
 {
 public:
-	CVulkanPipelineLayoutManager(CVulkanDevice* InDevice);
+	CVulkanPipelineLayoutManager(CVulkanDevice& InDevice);
 	~CVulkanPipelineLayoutManager();
 
 	/**
@@ -138,8 +138,8 @@ public:
 
 	auto& GetLayoutMap() { return Layouts; }
 private:
-	CVulkanDevice* Device;
-    std::unordered_map<SVulkanPipelineLayoutDesc, CVulkanPipelineLayoutPtr> Layouts;
+	CVulkanDevice& Device;
+    robin_hood::unordered_map<SVulkanPipelineLayoutDesc, CVulkanPipelineLayoutPtr> Layouts;
 };
 
 /** Lifetime of a unused descriptor set (in frames) */
@@ -245,7 +245,7 @@ class CVulkanPipelineLayout : public CVulkanDeviceResource,
 	public boost::intrusive_ref_counter<CVulkanPipelineLayout, boost::thread_unsafe_counter>
 {
 public:
-	CVulkanPipelineLayout(CVulkanDevice* Device,
+	CVulkanPipelineLayout(CVulkanDevice& Device,
 		const SVulkanPipelineLayoutDesc& InDesc);
 	~CVulkanPipelineLayout();
 
@@ -260,7 +260,7 @@ public:
 	CVulkanDescriptorSetManager& GetSetManager() { return SetManager; }
 private:
 	CVulkanDescriptorSetManager SetManager;
-	std::unordered_map<uint32_t, vk::UniqueDescriptorSetLayout> Layouts;
+	robin_hood::unordered_map<uint32_t, vk::UniqueDescriptorSetLayout> Layouts;
 	vk::UniquePipelineLayout PipelineLayout;
 	std::vector<vk::DescriptorPoolSize> PoolSizes;
 };

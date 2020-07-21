@@ -1,7 +1,7 @@
 #include "VulkanPipelineLayout.h"
 #include "VulkanDevice.h"
 
-CVulkanPipelineLayoutManager::CVulkanPipelineLayoutManager(CVulkanDevice* InDevice) 
+CVulkanPipelineLayoutManager::CVulkanPipelineLayoutManager(CVulkanDevice& InDevice) 
 	: Device(InDevice) { }
 
 CVulkanPipelineLayoutManager::~CVulkanPipelineLayoutManager() { }
@@ -19,7 +19,7 @@ CVulkanPipelineLayout* CVulkanPipelineLayoutManager::GetPipelineLayout(
 		CVulkanPipelineLayout* Layout = new CVulkanPipelineLayout(Device,
 			InEntry);
 
-		Layouts.insert(std::make_pair(InEntry, Layout));
+		Layouts.insert( { InEntry, Layout });
 
 		return Layout;
 	}
@@ -164,9 +164,9 @@ CVulkanDescriptorSetManager::SDescriptorPoolEntry* CVulkanDescriptorSetManager::
  */
 constexpr uint32_t GMaxAllocationsPerPool = 42;
 
-CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* Device,
+CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice& Device,
 	const SVulkanPipelineLayoutDesc& InDesc) :
-	CVulkanDeviceResource(Device), SetManager(*Device, *this)
+	CVulkanDeviceResource(Device), SetManager(Device, *this)
 {
 	std::vector<vk::DescriptorSetLayout> SetLayouts;
 	Layouts.reserve(InDesc.SetLayoutBindings.size());
@@ -183,7 +183,7 @@ CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* Device,
 				static_cast<uint32_t>(SetBindings.Bindings.size()),
 				SetBindings.Bindings.data());
 
-			Layouts.insert(std::make_pair(Set, Device->GetDevice().createDescriptorSetLayoutUnique(LayoutCreateInfo).value));
+			Layouts.insert( { Set, Device.GetDevice().createDescriptorSetLayoutUnique(LayoutCreateInfo).value });
 
 			SetLayouts.push_back(*Layouts[Set]);
 
@@ -208,7 +208,7 @@ CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice* Device,
 		static_cast<uint32_t>(Layouts.size()),
 		SetLayouts.data());
 
- 	PipelineLayout = Device->GetDevice().createPipelineLayoutUnique(CreateInfo).value;
+ 	PipelineLayout = Device.GetDevice().createPipelineLayoutUnique(CreateInfo).value;
 	if (!PipelineLayout)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan pipeline layout");
 }

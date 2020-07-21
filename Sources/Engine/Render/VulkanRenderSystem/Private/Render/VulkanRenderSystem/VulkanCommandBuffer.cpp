@@ -1,12 +1,12 @@
 #include "Render/VulkanRenderSystem/VulkanCommandBuffer.h"
 #include "Render/VulkanRenderSystem/VulkanDevice.h"
 
-CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanDevice* InDevice,
+CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanDevice& InDevice,
 	const vk::CommandPool& InParentPool,
 	const bool& InFenceSignaledAtCreation)
 	: CVulkanDeviceResource(InDevice), bHasBegun(false)
 {
-	CommandBuffer = std::move(Device->GetDevice().allocateCommandBuffersUnique(
+	CommandBuffer = std::move(Device.GetDevice().allocateCommandBuffersUnique(
 		vk::CommandBufferAllocateInfo(InParentPool,
 			vk::CommandBufferLevel::ePrimary,
 			1)).value.front());
@@ -15,7 +15,7 @@ CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanDevice* InDevice,
 	if(InFenceSignaledAtCreation)
 		Flags |= vk::FenceCreateFlagBits::eSignaled;
 
-	Fence = Device->GetDevice().createFenceUnique(
+	Fence = Device.GetDevice().createFenceUnique(
 		vk::FenceCreateInfo(Flags)).value;
 	if(!Fence)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create fence");
@@ -53,7 +53,7 @@ void CVulkanCommandBuffer::WaitFenceAndReset()
 	 */
 	while(true)
 	{
-		vk::Result FenceStatus = Device->GetDevice().getFenceStatus(
+		vk::Result FenceStatus = Device.GetDevice().getFenceStatus(
 			*Fence);
 
 		/**
@@ -64,7 +64,7 @@ void CVulkanCommandBuffer::WaitFenceAndReset()
 	}
 
 	/** Clear pending staging buffers */
-	Device->GetStagingBufferMgr()->ReleaseStagingBuffers();
+	Device.GetStagingBufferMgr().ReleaseStagingBuffers();
 
 	/**
 	 * Reset command buffer
@@ -74,11 +74,11 @@ void CVulkanCommandBuffer::WaitFenceAndReset()
 	/**
 	 * Reset fence
 	 */
-	Device->GetDevice().resetFences({ *Fence });
+	Device.GetDevice().resetFences({ *Fence });
 
 	bHasBeenSubmitted = false;
 	bHasBegun = false;
 
-	WaitFlags.clear();
-	WaitSemaphores.clear();
+	WaitFlags.resize(0);
+	WaitSemaphores.resize(0);
 }

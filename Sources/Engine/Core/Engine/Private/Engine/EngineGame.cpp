@@ -2,6 +2,7 @@
 #include "Render/Window.h"
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "Render/RenderSystem/Resources/Surface.h"
 #include "Render/RenderSystem/RenderSystemContext.h"
 #include "Engine/Viewport.h"
 #include <array>

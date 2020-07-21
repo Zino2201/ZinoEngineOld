@@ -10,14 +10,14 @@
 #include "Render/VulkanRenderSystem/VulkanBuffer.h"
 #include "Render/VulkanRenderSystem/VulkanSampler.h"
 
-CVulkanCommandBufferManager::CVulkanCommandBufferManager(CVulkanDevice* InDevice)
+CVulkanCommandBufferManager::CVulkanCommandBufferManager(CVulkanDevice& InDevice)
 	: Device(InDevice)
 {
-	CommandPool = Device->GetDevice().createCommandPoolUnique(
+	CommandPool = Device.GetDevice().createCommandPoolUnique(
 		vk::CommandPoolCreateInfo(
 			vk::CommandPoolCreateFlagBits::eTransient |
 				vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-		Device->GetGraphicsQueue()->GetFamilyIndex())).value;
+		Device.GetGraphicsQueue()->GetFamilyIndex())).value;
 	if(!CommandPool)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create command pool");
 
@@ -64,7 +64,7 @@ void CVulkanCommandBufferManager::SubmitGraphicsCmdBuffer(const vk::Semaphore& I
 		GraphicsCmdBuffer->WaitFenceAndReset();
 
 	/** Release deferred destruction resources */
-	Device->GetDeferredDestructionMgr().DestroyResources();
+	Device.GetDeferredDestructionMgr().DestroyResources();
 
 	GraphicsCmdBuffer->Begin();
 }
@@ -78,11 +78,11 @@ void CVulkanCommandBufferManager::SubmitCmdBuffer(CVulkanCommandBuffer* InComman
 
 		if (InSemaphore)
 		{
-			Device->GetGraphicsQueue()->Submit(InCommandBuffer, { InSemaphore });
+			Device.GetGraphicsQueue()->Submit(InCommandBuffer, { InSemaphore });
 		}
 		else
 		{
-			Device->GetGraphicsQueue()->Submit(InCommandBuffer, {});
+			Device.GetGraphicsQueue()->Submit(InCommandBuffer, {});
 		}
 	}
 
@@ -96,7 +96,7 @@ void CVulkanCommandBufferManager::SubmitCmdBuffer(CVulkanCommandBuffer* InComman
 PFN_vkCmdBeginDebugUtilsLabelEXT BeginMarker;
 PFN_vkCmdEndDebugUtilsLabelEXT EndMarker;
 
-CVulkanRenderSystemContext::CVulkanRenderSystemContext(CVulkanDevice* InDevice)
+CVulkanRenderSystemContext::CVulkanRenderSystemContext(CVulkanDevice& InDevice)
 	: Device(InDevice), CmdBufferMgr(InDevice), CurrentLayout(nullptr), ColorAttachmentsCount(0)
 {
 	GRenderSystemContext = this;
@@ -119,8 +119,8 @@ void CVulkanRenderSystemContext::BeginRenderPass(const SRSRenderPass& InRenderPa
 	const std::array<float, 4>& InClearColor,
 	const char* InName)
 {
-	vk::RenderPass RenderPass = Device->GetRenderPassFramebufferMgr().GetRenderPass(InRenderPass);
-	vk::Framebuffer Framebuffer = Device->GetRenderPassFramebufferMgr().GetFramebuffer(InFramebuffer,
+	vk::RenderPass RenderPass = Device.GetRenderPassFramebufferMgr().GetRenderPass(InRenderPass);
+	vk::Framebuffer Framebuffer = Device.GetRenderPassFramebufferMgr().GetFramebuffer(InFramebuffer,
 		RenderPass);
 
 	ColorAttachmentsCount = static_cast<uint32_t>(InRenderPass.ColorAttachments.size());
@@ -136,8 +136,8 @@ void CVulkanRenderSystemContext::BeginRenderPass(const SRSRenderPass& InRenderPa
 		RenderPass,
 		Framebuffer,
 		vk::Rect2D(vk::Offset2D(), 
-			vk::Extent2D(InFramebuffer.ColorRTs[0]->GetWidth(),
-				InFramebuffer.ColorRTs[0]->GetHeight())),
+			vk::Extent2D(InFramebuffer.ColorRTs[0]->GetCreateInfo().Width,
+				InFramebuffer.ColorRTs[0]->GetCreateInfo().Height)),
 		static_cast<uint32_t>(ClearValues.size()),
 		ClearValues.data());
 
@@ -201,25 +201,10 @@ void CVulkanRenderSystemContext::PresentSurface(CRSSurface* InSurface)
 		/**
 		 * Present the surface
 		 */
-		Surface->Present(Device->GetPresentQueue());
+		Surface->Present(Device.GetPresentQueue());
 	}
 
 	CurrentSurface = nullptr;
-}
-
-void CVulkanRenderSystemContext::BindGraphicsPipeline(
-	CRSGraphicsPipeline* InGraphicsPipeline)
-{
-	CVulkanGraphicsPipeline* GraphicsPipeline =
-		static_cast<CVulkanGraphicsPipeline*>(InGraphicsPipeline);
-
-	if(CurrentLayout != GraphicsPipeline->GetPipelineLayout())
-	{
-		CurrentLayout = GraphicsPipeline->GetPipelineLayout();
-	}
-
-	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
-		.bindPipeline(vk::PipelineBindPoint::eGraphics, GraphicsPipeline->GetPipeline());
 }
 
 void CVulkanRenderSystemContext::BindGraphicsPipeline(const SRSGraphicsPipeline& InGraphicsPipeline)
@@ -227,7 +212,7 @@ void CVulkanRenderSystemContext::BindGraphicsPipeline(const SRSGraphicsPipeline&
 	/**
 	 * Get or create a pipeline
 	 */
-	CVulkanGraphicsPipeline* Pipeline = Device->GetPipelineManager().GetOrCreateGraphicsPipeline(
+	CVulkanGraphicsPipeline* Pipeline = Device.GetPipelineManager().GetOrCreateGraphicsPipeline(
 		InGraphicsPipeline,
 		CurrentRenderPass);
 
@@ -340,7 +325,7 @@ void CVulkanRenderSystemContext::SetShaderTexture(const uint32_t& InSet, const u
 
 	vk::ImageLayout ImgLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
-	if(HAS_FLAG(Texture->GetTextureUsage(), ERSTextureUsage::DepthStencil))
+	if(HAS_FLAG(Texture->GetCreateInfo().Usage, ERSTextureUsage::DepthStencil))
 	{
 		ImgLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
 	}
@@ -415,7 +400,7 @@ void CVulkanRenderSystemContext::BindDescriptorSets()
 					&Write.BufferInfo);
 			}
 
-			Device->GetDevice().updateDescriptorSets(
+			Device.GetDevice().updateDescriptorSets(
 				static_cast<uint32_t>(FinalWrites.size()),
 				FinalWrites.data(),
 				0,
@@ -454,53 +439,4 @@ void CVulkanRenderSystemContext::DrawIndexed(const uint32_t& InIndexCount,
 	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
 		.drawIndexed(InIndexCount, InInstanceCount, InFirstIndex, InVertexOffset,
 			InFirstInstance);
-}
-
-vk::AttachmentLoadOp VulkanUtil::RenderPass::AttachmentLoadOpToVkAttachmentLoadOp(
-	const ERSRenderPassAttachmentLoadOp& InOp)
-{
-	switch(InOp)
-	{
-	default:
-	case ERSRenderPassAttachmentLoadOp::DontCare:
-		return vk::AttachmentLoadOp::eDontCare;
-	case ERSRenderPassAttachmentLoadOp::Clear:
-		return vk::AttachmentLoadOp::eClear;
-	case ERSRenderPassAttachmentLoadOp::Load:
-		return vk::AttachmentLoadOp::eLoad;
-	}
-}
-
-vk::AttachmentStoreOp VulkanUtil::RenderPass::AttachmentStoreOpToVkAttachmentStoreOp(
-	const ERSRenderPassAttachmentStoreOp& InOp)
-{
-	switch (InOp)
-	{
-	default:
-	case ERSRenderPassAttachmentStoreOp::DontCare:
-		return vk::AttachmentStoreOp::eDontCare;
-	case ERSRenderPassAttachmentStoreOp::Store:
-		return vk::AttachmentStoreOp::eStore;
-	}
-}
-
-vk::ImageLayout VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(
-	const ERSRenderPassAttachmentLayout& InLayout)
-{
-	switch(InLayout)
-	{
-	default:
-	case ERSRenderPassAttachmentLayout::Undefined:
-		return vk::ImageLayout::eUndefined;
-	case ERSRenderPassAttachmentLayout::ColorAttachment:
-		return vk::ImageLayout::eColorAttachmentOptimal;
-	case ERSRenderPassAttachmentLayout::ShaderReadOnlyOptimal:
-		return vk::ImageLayout::eShaderReadOnlyOptimal;
-	case ERSRenderPassAttachmentLayout::DepthStencilAttachment:
-		return vk::ImageLayout::eDepthStencilAttachmentOptimal;
-	case ERSRenderPassAttachmentLayout::DepthStencilReadOnlyOptimal:
-		return vk::ImageLayout::eDepthStencilReadOnlyOptimal;
-	case ERSRenderPassAttachmentLayout::Present:
-		return vk::ImageLayout::ePresentSrcKHR;
-	}
 }

@@ -3,6 +3,7 @@
 #include "Render/RenderCore.h"
 #include "Renderer/MeshRendering/MeshDrawcall.h"
 #include "Renderer/RenderPass/RenderPass.h"
+#include <robin_hood.h>
 
 namespace ZE { class CRSShader; }
 
@@ -56,7 +57,7 @@ struct IRenderPassDrawcallFactoryCreator
 void RegisterDrawcallFactory(const ERenderPass& InRenderPass,
 	IRenderPassDrawcallFactoryCreator* Creator);
 IRenderPassDrawcallFactoryCreator* GetCreatorForRenderPass(const ERenderPass& InRenderPass);
-const std::unordered_map<ERenderPass, IRenderPassDrawcallFactoryCreator*>& GetCreators();
+const robin_hood::unordered_map<ERenderPass, IRenderPassDrawcallFactoryCreator*>& GetCreators();
 /**
  * Helper struct
  */

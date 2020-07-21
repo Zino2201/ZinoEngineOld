@@ -7,6 +7,10 @@
 #include "Renderer/RendererModule.h"
 #include "Render/RenderSystem/RenderSystemContext.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "Render/RenderSystem/Resources/RenderPass.h"
+#include "Render/RenderSystem/Resources/Framebuffer.h"
+#include "Render/RenderSystem/Resources/Pipeline.h"
+#include "Render/RenderSystem/Resources/Surface.h"
 #include "ImGui/ImGuiRender.h"
 #include <SDL2/SDL.h>
 #include "Editor/Widgets/MapTabWidget.h"

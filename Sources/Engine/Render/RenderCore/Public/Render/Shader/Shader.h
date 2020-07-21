@@ -3,6 +3,7 @@
 #include "EngineCore.h"
 #include "NonCopyable.h"
 #include "Shader/ShaderCompiler.h"
+#include <robin_hood.h>
 
 namespace ZE
 {
@@ -46,7 +47,7 @@ class RENDERCORE_API CShader
 {
 public:
     CShader(const CShaderType* InShaderType, const SShaderCompilerOutput& InOutput);
-    virtual ~CShader() = default;
+    virtual ~CShader();
 
     CRSShader* GetShader() const { return Shader.get(); }
 private:
@@ -69,7 +70,7 @@ public:
 
     void AddShaderType(const char* InName, CShaderType* InShaderType);
 private:
-    std::unordered_map<const char*, CShaderType*> ShaderMap;
+    robin_hood::unordered_map<const char*, CShaderType*> ShaderMap;
 };
 
 #define DECLARE_SHADER(Class, BaseClass) \

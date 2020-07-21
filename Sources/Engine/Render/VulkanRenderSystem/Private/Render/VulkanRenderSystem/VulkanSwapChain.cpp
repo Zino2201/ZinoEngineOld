@@ -7,7 +7,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
 
-CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
+CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice& InDevice,
 	const uint32_t& InWidth,
 	const uint32_t& InHeight,
 	CVulkanSurface* InSurface,
@@ -21,11 +21,11 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 	 * Query details about swap chain
 	 */
 	SVulkanSwapChainSupportDetails Details = VulkanUtil::QuerySwapChainDetails(
-		Device->GetPhysicalDevice(),
+		Device.GetPhysicalDevice(),
 		Surface);
 
 	SVulkanQueueFamilyIndices Indices =
-		VulkanUtil::GetQueueFamilyIndices(Device->GetPhysicalDevice());
+		VulkanUtil::GetQueueFamilyIndices(Device.GetPhysicalDevice());
 
 	uint32_t QueueFamilyIndices[] = { Indices.Graphics.value() };
 
@@ -39,8 +39,8 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 		ImageCount > Details.Capabilities.maxImageCount)
 		ImageCount = Details.Capabilities.maxImageCount;
 
-	if(!Device->GetPhysicalDevice().getSurfaceSupportKHR(
-		Device->GetPresentQueue()->GetFamilyIndex(), Surface).value)
+	if(!Device.GetPhysicalDevice().getSurfaceSupportKHR(
+		Device.GetPresentQueue()->GetFamilyIndex(), Surface).value)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Selected present queue doesn't support presentation !");
 
 	/**
@@ -55,28 +55,28 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 		Extent,
 		1,
 		vk::ImageUsageFlagBits::eColorAttachment,
-		Device->GetGraphicsQueue() != Device->GetPresentQueue() ? vk::SharingMode::eConcurrent 
+		Device.GetGraphicsQueue() != Device.GetPresentQueue() ? vk::SharingMode::eConcurrent 
 			: vk::SharingMode::eExclusive,
-		Device->GetGraphicsQueue() != Device->GetPresentQueue() ? 2 : 0,
-		Device->GetGraphicsQueue() != Device->GetPresentQueue() ? QueueFamilyIndices : nullptr,
+		Device.GetGraphicsQueue() != Device.GetPresentQueue() ? 2 : 0,
+		Device.GetGraphicsQueue() != Device.GetPresentQueue() ? QueueFamilyIndices : nullptr,
 		Details.Capabilities.currentTransform,
 		vk::CompositeAlphaFlagBitsKHR::eOpaque,
 		PresentMode,
 		VK_TRUE,
 		InOldSwapchain);
-	Swapchain = Device->GetDevice().createSwapchainKHRUnique(CreateInfos).value;
+	Swapchain = Device.GetDevice().createSwapchainKHRUnique(CreateInfos).value;
 	if (!Swapchain)
 		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create swap chain");
 
 	/** Get swapchain images */
-	Images = Device->GetDevice().getSwapchainImagesKHR(*Swapchain).value;
+	Images = Device.GetDevice().getSwapchainImagesKHR(*Swapchain).value;
 
 	/** Create swapchain image views */
 	ImageViews.resize(Images.size());
 
 	for (int i = 0; i < Images.size(); ++i)
 	{
-		ImageViews[i] = new CVulkanTexture(Device,
+		ImageViews[i] = new CVulkanTexture(Device, {
 			ERSTextureType::Tex2D,
 			ERSTextureUsage::RenderTarget,
 			ERSMemoryUsage::DeviceLocal,
@@ -86,23 +86,24 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice,
 			1,
 			1,
 			1,
-			ESampleCount::Sample1,
-			Images[i],
-			SRSResourceCreateInfo(nullptr, "Swapchain Backbuffer"));
+			ESampleCount::Sample1 },
+			Images[i]);
 
 		if(!ImageViews[i])
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create swap chain image view for image %i", i);
+
+		ImageViews[i]->SetName("Swapchain Backbuffer");
 	}
 
 	/** Create semaphores */
 	{
 		vk::SemaphoreCreateInfo CreateInfo;
 
-		ImageAcquired = Device->GetDevice().createSemaphoreUnique(CreateInfo).value;
+		ImageAcquired = Device.GetDevice().createSemaphoreUnique(CreateInfo).value;
 		if (!ImageAcquired)
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image acquired semaphore");
 
-		RenderFinished = Device->GetDevice().createSemaphoreUnique(CreateInfo).value;
+		RenderFinished = Device.GetDevice().createSemaphoreUnique(CreateInfo).value;
 		if (!RenderFinished)
 			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create render finished semaphore");
 	}
@@ -113,7 +114,7 @@ CVulkanSwapChain::~CVulkanSwapChain() = default;
 vk::Result CVulkanSwapChain::AcquireImage()
 {
 	/** Acquire new image */
-	auto [Result, ImageIdx] = Device->GetDevice().acquireNextImageKHR(
+	auto [Result, ImageIdx] = Device.GetDevice().acquireNextImageKHR(
 		*Swapchain,
 		std::numeric_limits<uint64_t>::max(),
 		*ImageAcquired,

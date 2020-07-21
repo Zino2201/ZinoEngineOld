@@ -10,7 +10,7 @@ class CVulkanCommandBuffer;
 class CVulkanQueue : public CVulkanDeviceResource
 {
 public:
-    CVulkanQueue(CVulkanDevice* InDevice, 
+    CVulkanQueue(CVulkanDevice& InDevice, 
         const uint32_t& InFamilyIdx);
     ~CVulkanQueue();
 

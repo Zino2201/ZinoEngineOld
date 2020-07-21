@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/RenderSystem/RenderSystemContext.h"
+#include "Render/RenderSystem/Resources/Framebuffer.h"
 #include "Renderer/RendererModule.h"
 
 namespace ZE::Renderer

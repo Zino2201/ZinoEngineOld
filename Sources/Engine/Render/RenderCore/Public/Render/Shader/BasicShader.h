@@ -2,6 +2,7 @@
 
 #include "Shader.h"
 #include "NonCopyable.h"
+#include <robin_hood.h>
 
 namespace ZE
 {
@@ -56,7 +57,7 @@ public:
     CShader* GetShader(const char* InType) { return ShaderMap[InType].get(); }
 private:
     std::vector<CBasicShaderType*> ShaderTypes;
-    std::unordered_map<const char*, CShaderPtr> ShaderMap;
+    robin_hood::unordered_map<const char*, CShaderPtr> ShaderMap;
 };
 
 }

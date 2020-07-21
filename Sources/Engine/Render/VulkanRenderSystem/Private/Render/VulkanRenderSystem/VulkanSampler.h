@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VulkanCore.h"
+#include "Render/RenderSystem/Resources/Sampler.h"
 
 class CVulkanSampler : public CRSSampler
 {

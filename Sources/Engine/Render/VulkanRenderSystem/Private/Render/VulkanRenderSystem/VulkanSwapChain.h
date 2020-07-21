@@ -11,7 +11,7 @@ class CVulkanSurface;
 class CVulkanSwapChain : public CVulkanDeviceResource
 {
 public:
-    CVulkanSwapChain(CVulkanDevice* InDevice,
+    CVulkanSwapChain(CVulkanDevice& InDevice,
         const uint32_t& InWidth,
         const uint32_t& InHeight,
         CVulkanSurface* InSurface,
