@@ -49,7 +49,7 @@ bool CVulkanSurface::AcquireImage()
 	vk::Result Result = SwapChain->AcquireImage();
 
 	/** If swap chain if out of date or suboptimal, recreate it */
-	if (Result == vk::Result::eErrorOutOfDateKHR)
+	if (Result == vk::Result::eErrorOutOfDateKHR || bHasBeenResized)
 	{
 		RecreateSwapChain();
 		return false;
