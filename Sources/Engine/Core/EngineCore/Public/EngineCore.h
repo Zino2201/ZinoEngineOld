@@ -1,24 +1,18 @@
 #pragma once
 
+/** Detect unsupported compilers/platforms */
+#ifndef _MSC_VER
+#error "This compiler is not yet supported"
+#endif
+
 #ifndef _WIN32
 #error "ZinoEngine doesn't support this platform yet"
 #endif
 
 /**
- * Minimal include for classes (PCH)
+ * Minimal include for classes
  */
 #include <cstdint>
-#include <thread>
-#include <mutex>
-
-/** Fix for __declspec(dllexport) templates */
-#pragma warning(disable: 4251)
-
-/** Containers */
-#include "Containers/Set.h"
-
-/** Utils */
-#include "Delegates/MulticastDelegate.h"
 
 /** Maths */
 #include "Maths/MathCore.h"
@@ -32,23 +26,46 @@
 
 /** Macros */
 #define SDL_MAIN_HANDLED
+#define UNUSED_VARIABLE(Var) (void)(Var)
+
+/** Platform specific thing */
+#ifdef _WIN32
 #define NOMINMAX
+#endif
+
+/** Compiler specific things */
+#ifdef _MSC_FULL_VER
 #define FORCEINLINE __forceinline
+#define RESTRICT __restrict
+
+/** Fix for __declspec(dllexport) templates on MSVC */
+#pragma warning(disable: 4251)
+
+/** Dllexport/dllimport */
+#ifdef ZE_MONOLITHIC
+#define DLLEXPORT
+#define DLLIMPORT
+#else
+#define DLLEXPORT __declspec(dllexport)
+#define DLLIMPORT __declspec(dllimport)
+#endif /** ZE_MONOLITHIC */
+#endif /** _MSC_VER */
+
+/** Assertions */
 #ifdef _DEBUG
 #define verify(condition) if(!(condition)) __debugbreak()
 #define must(condition) if(!(condition)) { __debugbreak(); exit(-1); }
 #else
 #define verify(condition)
-#define must(condition)
+#define must(condition) if(!(condition)) { LOG(ELogSeverity::Fatal, "Assertion failed: %s", #condition); }
 #endif
-#define RESTRICT __restrict
-#ifdef ZE_MONOLITHIC
-#define DLLEXPORT
-#else
-#define DLLEXPORT __declspec(dllexport)
-#endif
+
 #define CONCAT_(x,y) x##y
 #define CONCAT(x,y) CONCAT_(x,y)
+
+/** Flags */
+#include <type_traits>
+#include "Flags/Flags.h"
 
 namespace ZE
 {
@@ -81,9 +98,6 @@ enum class ESampleCount
 	Sample64 = 1 << 6
 };
 
-/** Flags */
-#include <type_traits>
-
 #define DECLARE_FLAG_ENUM(EnumType) \
 	inline EnumType operator~ (EnumType a) { return (EnumType)~(std::underlying_type<EnumType>::type)a; } \
 	inline EnumType operator| (EnumType a, EnumType b) { return (EnumType)((std::underlying_type<EnumType>::type)a | (std::underlying_type<EnumType>::type)b); } \
@@ -95,47 +109,4 @@ enum class ESampleCount
 #define HAS_FLAG(Enum, Other) (Enum & Other) == Other
 #define HASN_FLAG(Enum, Other) !(HAS_FLAG(Enum, Other))
 
-/** Semaphore */
-
-/**
- * A simple semaphore that can be resetted
- */
-class CSemaphore
-{
-public:
-    CSemaphore()
-        : bNotified(false) {}
-
-    void Notify()
-    {
-        if(!bIsWaiting)
-            return;
-
-        bNotified = true;
-        Condition.notify_one();
-    }
-
-    void Wait()
-    {
-        std::unique_lock<std::mutex> Lock(Mutex);
-        bIsWaiting = true;
-        while(!bNotified)
-        {
-            Condition.wait(Lock);
-        }
-
-        bNotified = false;
-        bIsWaiting = false;
-    }
-
-    bool HasWaiter() const { return bIsWaiting; }
-private:
-    std::mutex Mutex;
-    std::condition_variable Condition;
-    bool bNotified;
-    std::atomic_bool bIsWaiting;
-};
-
 } /* namespace ZE */
-
-#define CString std::string
