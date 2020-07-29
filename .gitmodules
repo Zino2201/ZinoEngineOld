@@ -14,3 +14,6 @@
 [submodule "Sources/Libs/robin-hood-hashing"]
 	path = Sources/Libs/robin-hood-hashing
 	url = https://github.com/martinus/robin-hood-hashing.git
+[submodule "Sources/Libs/fmt"]
+	path = Sources/Libs/fmt
+	url = https://github.com/fmtlib/fmt
