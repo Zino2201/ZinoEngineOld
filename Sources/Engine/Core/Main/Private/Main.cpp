@@ -171,7 +171,8 @@ void Init()
 	ZE::Logger::Info("Initializing and starting app");
 
 	/** INITIALIZE ENGINE CLASS */
-	Engine.reset(ZE::CreateGameApp());
+	//Engine.reset(ZE::CreateGameApp());
+	Engine.reset(ZE::Editor::CreateEditor());
 
 	/** START GAME LOOP */
 	Engine->Run();

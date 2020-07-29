@@ -2,12 +2,25 @@
 
 #include "EngineCore.h"
 #include <array>
+#include "Logger/Sink.h"
 
 struct ImGuiInputTextCallbackData;
 struct ImVec4;
 
 namespace ZE
 {
+
+class ENGINE_API CConsoleSink : public Logger::CSink
+{
+public:
+	CConsoleSink();
+
+	void Log(const Logger::SMessage& InMessage) override;
+
+	FORCEINLINE const auto& GetMessages() const { return Messages; }
+private:
+	std::vector<Logger::SMessage> Messages;
+};
 
 /**
  * Console widget
@@ -24,6 +37,7 @@ private:
 private:
 	std::array<char, 32> Input;
 	size_t CurrentConsoleSize;
+	CConsoleSink* Sink;
 };
 
 }

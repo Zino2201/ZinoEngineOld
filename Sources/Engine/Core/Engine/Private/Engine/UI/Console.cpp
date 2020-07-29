@@ -7,8 +7,21 @@
 namespace ZE
 {
 
-CConsoleWidget::CConsoleWidget() : CurrentConsoleSize(0)
+/** Console sink */
+
+CConsoleSink::CConsoleSink() : CSink("ConsoleWidget") {}	
+	
+void CConsoleSink::Log(const Logger::SMessage& InMessage)
 {
+	Messages.emplace_back(InMessage);
+}
+
+CConsoleWidget::CConsoleWidget() : CurrentConsoleSize(0), Sink(nullptr)
+{
+	std::unique_ptr<CConsoleSink> ConSink = std::make_unique<CConsoleSink>();
+	Sink = ConSink.get();
+	ZE::Logger::AddSink(std::move(ConSink));
+
 	memset(Input.data(), 0, Input.size());
 }
 
@@ -74,19 +87,19 @@ void CConsoleWidget::Draw()
 	if(ImGui::BeginChild("ScrollingRegion", 
 		ImVec2(0, -FooterHeight), true, ImGuiWindowFlags_HorizontalScrollbar))
 	{
-		/*const auto& Messages = CLogger::Get().GetMessages();
+		const auto& Messages = Sink->GetMessages();
 		for (const auto& Msg : Messages)
 		{
 			UI::SImGuiAutoStyleColor TextCol(ImGuiCol_Text, ToColor(Msg.Severity));
-			ImGui::TextWrapped("({}) {}", Msg.Category.data(), Msg.Message.c_str());
-		}*/
+			ImGui::TextWrapped("%s", Msg.Message.c_str());
+		}
 
-		/*if (CurrentConsoleSize != Messages.size() &&
+		if (CurrentConsoleSize != Messages.size() &&
 			ImGui::GetScrollY() == ImGui::GetScrollMaxY())
 		{
 			ImGui::SetScrollHereY();
 			CurrentConsoleSize = Messages.size();
-		}*/
+		}
 	}
 	ImGui::EndChild();
 
@@ -137,21 +150,20 @@ int CConsoleWidget::OnTextEdited(ImGuiInputTextCallbackData* InData)
 
 ImVec4 CConsoleWidget::ToColor(const Logger::ESeverityFlagBits& InSeverity) const
 {
-	return ImVec4(1, 1, 1, 1);
-	/*switch(InSeverity)
+	switch (InSeverity)
 	{
-	case ELogSeverity::Debug:
+	case Logger::ESeverityFlagBits::Verbose:
 		return ImVec4(0.22f, 0.58f, 0.62f, 1);
 	default:
-	case ELogSeverity::Info:
+	case Logger::ESeverityFlagBits::Info:
 		return ImVec4(1, 1, 1, 1);
-	case ELogSeverity::Warn:
+	case Logger::ESeverityFlagBits::Warn:
 		return ImVec4(0.97f, 0.94f, 0.47f, 1);
-	case ELogSeverity::Error:
+	case Logger::ESeverityFlagBits::Error:
 		return ImVec4(0.90f, 0.28f, 0.24f, 1);
-	case ELogSeverity::Fatal:
+	case Logger::ESeverityFlagBits::Fatal:
 		return ImVec4(0.9f, 0, 0, 1);
-	}*/
+	}
 }
 
 }
