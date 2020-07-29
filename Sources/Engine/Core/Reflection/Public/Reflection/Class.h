@@ -17,7 +17,7 @@ public:
 		const uint64_t& InSize)
 		: CStruct(InName, InSize), bIsInterface(false) {}
 
-	REFLECTION_API static void AddClass(CClass* InClass);
+	static void AddClass(CClass* InClass);
 
 	template<typename T>
 	static CClass* Get()
@@ -28,17 +28,17 @@ public:
 		return Class;
 	}
 
-	REFLECTION_API static CClass* Get(const char* InName);
+	static CClass* Get(const char* InName);
 
 	void SetIsInterface(const bool& bInIsInterface) { bIsInterface = bInIsInterface; bIsInstanciable = !bIsInterface; }
 
 	bool IsInterface() const { return bIsInterface; }
 
-	REFLECTION_API static const std::vector<CClass*>& GetClasses() { return Classes; }
+	static const std::vector<CClass*>& GetClasses() { return Classes; }
 private:
 	bool bIsInterface;
 
-	REFLECTION_API inline static std::vector<CClass*> Classes;
+	inline static std::vector<CClass*> Classes;
 };
 
 }

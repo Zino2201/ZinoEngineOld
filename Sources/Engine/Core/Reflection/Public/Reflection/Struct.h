@@ -113,7 +113,7 @@ public:
 		Func->Func(InP, std::forward<Args>(InArgs)...);
 	}
 
-    REFLECTION_API static void AddStruct(CStruct* InStruct);
+    static void AddStruct(CStruct* InStruct);
 
     void AddProperty(const CProperty& InProperty)
     {
@@ -132,10 +132,10 @@ public:
 		return Struct;
 	}
 
-    REFLECTION_API static CStruct* Get(const char* InName);
+    static CStruct* Get(const char* InName);
 
-    const std::vector<CStruct*>& GetParents() { return Parents; }
-    REFLECTION_API static const std::vector<CStruct*>& GetStructs() { return Structs; }
+	const std::vector<CStruct*>& GetParents() { return Parents; }
+	static const std::vector<CStruct*>& GetStructs() { return Structs; }
 protected:
     std::unique_ptr<IInstantiateFunc> InstantiateFunc;
     std::unique_ptr<IInstantiateFunc> PlacementNewFunc;

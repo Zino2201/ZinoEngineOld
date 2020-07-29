@@ -1,3 +1,4 @@
+#include "EngineCore.h"
 #include "Logger/Sinks/FileSink.h"
 #include "FileSystem/ZFS.h"
 
