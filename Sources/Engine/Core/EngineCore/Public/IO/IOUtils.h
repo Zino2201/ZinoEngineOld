@@ -7,8 +7,6 @@
 namespace ZE
 {
 
-DECLARE_LOG_CATEGORY(IOUtils);
-
 namespace IOUtils
 {
 	static std::vector<uint8_t> ReadBinaryFile(const std::string_view& InFilename)
@@ -17,7 +15,7 @@ namespace IOUtils
 
 		if (!File.is_open())
 		{
-			LOG(ELogSeverity::Error, IOUtils, "Failed to read file %s", InFilename.data());
+			ZE::Logger::Error("Failed to read file {}", InFilename.data());
 			return {};
 		}
 
@@ -35,7 +33,7 @@ namespace IOUtils
 		std::string Line, Text;
 		std::ifstream File(InFilename.data());
 		if (!File.is_open())
-			LOG(ELogSeverity::Error, IOUtils, "Failed to read file %s", InFilename.data());
+			ZE::Logger::Error("Failed to read file {}", InFilename.data());
 
 		while (std::getline(File, Line))
 		{

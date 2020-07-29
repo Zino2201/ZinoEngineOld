@@ -6,8 +6,6 @@
 namespace ZE
 {
 
-DECLARE_LOG_CATEGORY(Viewport);
-
 /**
  * Represents a viewport
  */

@@ -30,22 +30,21 @@ void CRenderPassDrawcallFactory::ComputeDrawcalls(const SMesh& InMesh,
 
 namespace RenderPassDrawcallFactory
 {
-static robin_hood::unordered_map<ERenderPass, IRenderPassDrawcallFactoryCreator*> Creators;
 
-void RegisterDrawcallFactory(const ERenderPass& InRenderPass,
+void RegisterDrawcallFactory(const ERenderPassFlagBits& InRenderPass,
 	IRenderPassDrawcallFactoryCreator* Creator)
 {
-	Creators[InRenderPass] = Creator;
+	IRenderPassDrawcallFactoryCreator::Creators[InRenderPass] = Creator;
 }
 
-IRenderPassDrawcallFactoryCreator* GetCreatorForRenderPass(const ERenderPass& InRenderPass)
+IRenderPassDrawcallFactoryCreator* GetCreatorForRenderPass(const ERenderPassFlagBits& InRenderPass)
 {
-	return Creators[InRenderPass];
+	return IRenderPassDrawcallFactoryCreator::Creators[InRenderPass];
 }
 
-const robin_hood::unordered_map<ERenderPass, IRenderPassDrawcallFactoryCreator*>& GetCreators()
+const robin_hood::unordered_map<ERenderPassFlagBits, IRenderPassDrawcallFactoryCreator*>& GetCreators()
 {
-	return Creators;
+	return IRenderPassDrawcallFactoryCreator::Creators;
 }
 
 }

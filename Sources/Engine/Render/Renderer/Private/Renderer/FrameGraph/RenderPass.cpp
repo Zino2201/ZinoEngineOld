@@ -42,10 +42,10 @@ RenderPassResourceID& CRenderPass::CreateTexture(const SRenderPassTextureInfos& 
 	case EFormat::D32Sfloat:
 	case EFormat::D32SfloatS8Uint:
 	case EFormat::D24UnormS8Uint:
-		Tex.TextureInfos.Usage |= ERSTextureUsage::DepthStencil;
+		Tex.TextureInfos.Usage |= ERSTextureUsageFlagBits::DepthStencil;
 		break;
 	default:
-		Tex.TextureInfos.Usage |= ERSTextureUsage::RenderTarget;
+		Tex.TextureInfos.Usage |= ERSTextureUsageFlagBits::RenderTarget;
 		break;
 	}
 
@@ -200,7 +200,7 @@ void CRenderPassPersistentResourceManager::UpdateLifetimes()
 
 #ifdef _DEBUG
 	if(!TexturesToDelete.empty())
-		LOG(ELogSeverity::Debug, FrameGraph, "Cleared %d unused textures", TexturesToDelete.size());
+		ZE::Logger::Verbose("Cleared {} unused textures", TexturesToDelete.size());
 #endif
 }
 

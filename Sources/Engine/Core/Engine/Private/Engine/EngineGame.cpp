@@ -35,8 +35,6 @@ namespace ZE
 static TConVar<int32_t> ConVSync("r_vsync", 0, 
 	"Enable V-SYNC.\n0 = disabled\n1 = enabled\n2 = triple buffering (not implemented)");
 
-CEngineGame::~CEngineGame() { testSM.reset(); delete Window; }
-
 void LoadModelUsingTinyObjLoader(const std::string_view& InPath,
 	std::vector<SStaticMeshVertex>& OutVertices,
 	std::vector<uint32_t>& OutIndices)
@@ -94,7 +92,7 @@ void LoadModelUsingAssimp(const std::string_view& InPath,
 		| aiProcess_CalcTangentSpace
 		| aiProcess_GenNormals);
 	if(!Scene)
-		LOG(ELogSeverity::Fatal, None, "Failed to load model %s", InPath.data());
+		ZE::Logger::Fatal("Failed to load model {}", InPath.data());
 
 	aiMesh* Mesh = Scene->mMeshes[0];
 
@@ -140,25 +138,25 @@ int StaticOnWindowResized(void* InUserData, SDL_Event* InEvent)
 {
 	must(InUserData);
 
-	return reinterpret_cast<CEngineGame*>(InUserData)->OnWindowResized(InEvent);
+	return reinterpret_cast<CZEGameApp*>(InUserData)->OnWindowResized(InEvent);
 }
 
 #include <cstdlib>
 #include <chrono>
 #define RAND_1_0 (static_cast<double>(rand()) / static_cast <double> (RAND_MAX))
 
-void CEngineGame::Initialize()
+CZEGameApp::CZEGameApp() : 
+	CZinoEngineApp(false)
 {
-	CEngine::Initialize();
-
 	srand(2201);
 
 	using namespace ZE::Components;
 
-	ConVSync.BindOnChanged(this, &CEngineGame::OnVsyncChanged);
+	ConVSync.BindOnChanged(this, &CZEGameApp::OnVsyncChanged);
 
 	/** Create main game window */
-	Window = new CWindow("ZinoEngine", 1600, 900, EWindowFlags::Centered | EWindowFlags::Resizable);
+	Window = std::make_unique<CWindow>("ZinoEngine", 1600, 900, 
+		EWindowFlagBits::Centered | EWindowFlagBits::Resizable | EWindowFlagBits::Maximized);
 
 	/** Event on resize */
 	SDL_AddEventWatch(&StaticOnWindowResized, this);
@@ -210,6 +208,8 @@ void CEngineGame::Initialize()
 	ImGuiRenderer = std::make_unique<ZE::UI::CImGuiRender>();
 }
 
+CZEGameApp::~CZEGameApp() { ImGui_ImplSDL2_Shutdown(); }
+
 glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 LightPos = glm::vec3(0, 5, 10);
 glm::vec3 CameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
@@ -221,12 +221,12 @@ glm::vec3 CameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	float CamYaw = 0.f, CamPitch = 0.f;
 CConsoleWidget Console;
 
-void CEngineGame::OnVsyncChanged(const int32_t& InData)
+void CZEGameApp::OnVsyncChanged(const int32_t& InData)
 {
 	Viewport->SetVSync(InData);
 }
 
-int CEngineGame::OnWindowResized(SDL_Event* InEvent)
+int CZEGameApp::OnWindowResized(SDL_Event* InEvent)
 {
 	switch(InEvent->window.event)
 	{
@@ -249,16 +249,20 @@ int CEngineGame::OnWindowResized(SDL_Event* InEvent)
 
 static bool bIsMouseGrabbed = false;
 
-void CEngineGame::ProcessEvent(SDL_Event* InEvent)
+void CZEGameApp::ProcessEvent(SDL_Event& InEvent)
 {
-	ImGui_ImplSDL2_ProcessEvent(InEvent);
+	CZinoEngineApp::ProcessEvent(InEvent);
 
-	if (InEvent->type == SDL_MOUSEMOTION)
+	ImGuiIO& IO = ImGui::GetIO();
+
+	ImGui_ImplSDL2_ProcessEvent(&InEvent);
+
+	if (InEvent.type == SDL_MOUSEMOTION)
 	{
 		if (bIsMouseGrabbed)
 		{
-			float DeltaX = InEvent->motion.xrel * 0.5f;
-			float DeltaY = InEvent->motion.yrel * 0.5f;
+			float DeltaX = InEvent.motion.xrel * 0.5f;
+			float DeltaY = InEvent.motion.yrel * 0.5f;
 
 			CamYaw += DeltaX;
 			CamPitch += -DeltaY;
@@ -275,26 +279,15 @@ void CEngineGame::ProcessEvent(SDL_Event* InEvent)
 			Front.y *= -1;
 			CameraFront = glm::normalize(Front);
 
-			SDL_WarpMouseInWindow((SDL_Window*)Window->GetHandle(),
+			SDL_WarpMouseInWindow((SDL_Window*) Window->GetHandle(),
 				Window->GetWidth() / 2, Window->GetHeight() / 2);
 		}
 	}
-}
 
-void CEngineGame::Tick(const float& InDeltaTime)
-{
-	CEngine::Tick(InDeltaTime);
-
-	ImGuiIO& IO = ImGui::GetIO();
-
-	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(Window->GetHandle()));
-	ImGui::NewFrame();
-
+	
 	/** Update camera */
 	const Uint8* KeyState = SDL_GetKeyboardState(nullptr);
 	Uint32 MouseState = SDL_GetMouseState(nullptr, nullptr);
-
-	const float CameraSpeed = 5.f * InDeltaTime;
 
 	const bool bImGuiInteract = ImGui::IsAnyItemHovered()
 		|| ImGui::IsAnyWindowHovered()
@@ -310,6 +303,26 @@ void CEngineGame::Tick(const float& InDeltaTime)
 		IO.WantCaptureKeyboard = false;
 		IO.WantCaptureMouse = false;
 	}
+
+	if (ZE::Input::IsKeyPressed(SDL_SCANCODE_ESCAPE))
+	{
+		if (bIsMouseGrabbed)
+		{
+			SDL_SetRelativeMouseMode(SDL_FALSE);
+			bIsMouseGrabbed = false;
+			IO.WantCaptureKeyboard = true;
+			IO.WantCaptureMouse = true;
+		}
+	}
+}
+
+void CZEGameApp::Tick(const float& InDeltaTime)
+{
+	ImGuiIO& IO = ImGui::GetIO();
+
+	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(Window->GetHandle()));
+	
+	const float CameraSpeed = 5.f * InDeltaTime;
 
 	/*if(!bImGuiInteract)
 	{*/
@@ -330,18 +343,10 @@ void CEngineGame::Tick(const float& InDeltaTime)
 			CameraPos += glm::normalize(glm::cross(CameraFront, CameraUp)) * CameraSpeed;
 		}
 	//}
+	
+	ImGui::NewFrame();
 
-	if (ZE::Input::IsKeyPressed(SDL_SCANCODE_ESCAPE))
-	{
-		if (bIsMouseGrabbed)
-		{
-			SDL_SetRelativeMouseMode(SDL_FALSE);
-			bIsMouseGrabbed = false;
-			IO.WantCaptureKeyboard = true;
-			IO.WantCaptureMouse = true;
-		}
-	}
-
+#if 1
 	/** UI */
 	ImGui::PushFont(Font);
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -373,17 +378,17 @@ void CEngineGame::Tick(const float& InDeltaTime)
 	ImGui::Separator();
 	ImGui::Text("Rendering"); 
 
-	ImGui::Text("VSync: %d", ConVSync.Get());
+	ImGui::Text("VSync: %i", ConVSync.Get());
 
 	ImGui::Separator();
 	ImGui::End();
 	Console.Draw();
 	ImGui::PopFont();
-
+#endif
 	ImGui::Render();
 }
 
-void CEngineGame::Draw()
+void CZEGameApp::Draw()
 {
 	// TODO: Execute jobs while rendering is processing
 
@@ -421,14 +426,9 @@ void CEngineGame::Draw()
 	Renderer::CRendererModule::Get().FlushViews();
 }
 
-void CEngineGame::Exit()
+CZinoEngineApp* CreateGameApp()
 {
-	ImGui_ImplSDL2_Shutdown();
-}
-
-CEngine* CreateEngine()
-{
-	return new CEngineGame;
+	return new CZEGameApp;
 }
 
 } /* namespace ZE */

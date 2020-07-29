@@ -36,6 +36,17 @@ public:
 	{
 		return TFlags<T>(~Mask);
 	}
+	
+	/** Compare operators */
+	friend constexpr bool operator==(const TFlags<T>& InLeft, const TFlags<T>& InRight)
+	{
+		return InLeft.Mask == InRight.Mask;
+	}
+
+	friend constexpr bool operator!=(const TFlags<T>& InLeft, const TFlags<T>& InRight)
+	{
+		return InLeft.Mask != InRight.Mask;
+	}
 
 	/** Assignements operators */
 	constexpr TFlags<T> operator=(const TFlags<T>& InOther)
@@ -44,19 +55,19 @@ public:
 		return *this;
 	}
 
-	constexpr TFlags<T> operator|=(const TFlags<T> & InOther) const
+	constexpr TFlags<T> operator|=(const TFlags<T> & InOther)
 	{
 		Mask |= InOther.Mask;
 		return *this;
 	}
 
-	constexpr TFlags<T> operator&=(const TFlags<T> & InOther) const
+	constexpr TFlags<T> operator&=(const TFlags<T> & InOther)
 	{
 		Mask &= InOther.Mask;
 		return *this;
 	}
 
-	constexpr TFlags<T> operator^=(const TFlags<T> & InOther) const
+	constexpr TFlags<T> operator^=(const TFlags<T> & InOther)
 	{
 		Mask ^= InOther.Mask;
 		return *this;

@@ -35,7 +35,7 @@ enum class EJobType
 struct alignas(GJobAlignement) ENGINECORE_API SJob
 {
 	using JobFunction = void(*)(const SJob& InJob);
-	static constexpr size_t UserdataSize = 64;
+	static constexpr size_t UserdataSize = 128;
 	static constexpr size_t MaxDependents = 16;
 	static constexpr uint8_t MaxChilds = 255;
 

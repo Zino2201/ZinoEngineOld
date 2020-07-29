@@ -2,15 +2,13 @@
 #include "Module/ModuleManager.h"
 #include "Reflection/Builders.h"
 
-DECLARE_LOG_CATEGORY(ECS);
-
 namespace ZE::ECS
 {
 
 void CECSManager::Initialize()
 {
 	/** Hook to OnModuleLoaded, so we can load new systems when a module is loaded */
-	CModuleManager::GetOnModuleLoadedDelegate()
+	ZE::Module::GetOnModuleLoadedDelegate()
 		.Bind(std::bind(&CECSManager::OnModuleLoaded, this, std::placeholders::_1));
 
 	OnModuleLoaded("Engine");
@@ -40,7 +38,7 @@ void CECSManager::OnModuleLoaded(const std::string_view& InName)
 		AddedSystems.insert(SystemClass);
 		GroupMap[System->GetOrder()].push_back(System);
 
-		LOG(ELogSeverity::Info, ECS, "Instanciating entity component system %s for component %s", 
+		ZE::Logger::Info("Instanciating entity component system {} for component {}", 
 			SystemClass->GetName(), System->GetStaticClass()->GetName());
 	}
 
@@ -76,6 +74,8 @@ SEntityComponent* CEntity::RemoveComponent(ZE::Refl::CStruct* InComponent)
 
 CEntityManager::CEntityManager(CWorld& InWorld) : World(InWorld), AvailableEntityID(0)
 {
+	TickFlags = ETickFlagBits::Variable | ETickFlagBits::Fixed | ETickFlagBits::EndOfSimulation;
+
 	for(const auto& System : CECSManager::Get().GetSystems())
 	{
 		System->Initialize(*this);
@@ -84,9 +84,37 @@ CEntityManager::CEntityManager(CWorld& InWorld) : World(InWorld), AvailableEntit
 
 void CEntityManager::Tick(const float& InDeltaTime)
 {
-	auto Systems = CECSManager::Get().GetSystemsByOrder(CTickSystem::Get().GetCurrentOrder());
+	auto Systems = CECSManager::Get().GetSystemsByOrder(ETickFlagBits::Variable);
 
-	if(Systems.has_value())
+	if (Systems.has_value())
+	{
+		for (auto& System : *Systems.value())
+		{
+			if (System->ShouldTick())
+				System->Tick(*this, InDeltaTime);
+		}
+	}
+}
+
+void CEntityManager::FixedTick(const float& InDeltaTime)
+{
+	auto Systems = CECSManager::Get().GetSystemsByOrder(ETickFlagBits::Fixed);
+
+	if (Systems.has_value())
+	{
+		for (auto& System : *Systems.value())
+		{
+			if (System->ShouldTick())
+				System->Tick(*this, InDeltaTime);
+		}
+	}
+}
+
+void CEntityManager::LateTick(const float& InDeltaTime)
+{
+	auto Systems = CECSManager::Get().GetSystemsByOrder(ETickFlagBits::EndOfSimulation);
+
+	if (Systems.has_value())
 	{
 		for (auto& System : *Systems.value())
 		{
@@ -102,7 +130,7 @@ EntityID CEntityManager::CreateEntity()
 
 	auto It = Entities.insert({ ID, CEntity(*this, ID) });
 	
-	LOG(ELogSeverity::Debug, ECS, "Created new entity with ID %i", ID);
+	ZE::Logger::Verbose("Created new entity with ID {}", ID);
 
 	return ID;
 }
@@ -135,14 +163,13 @@ SEntityComponent* CEntityManager::AddComponent(
 
 		OnComponentAdded.Broadcast(*this, InEntity, Component);
 
-		LOG(ELogSeverity::Debug, ECS, "Added component %s to entity ID %i", 
+		ZE::Logger::Verbose("Added component {} to entity ID {}", 
 			InStruct->GetName(), InEntity);
 
 		return Component;
 	}
 
-	LOG(ELogSeverity::Error, ECS, 
-		"Failed to add component %s to entity ID %d (entity doesn't exist)",
+	ZE::Logger::Error("Failed to add component {} to entity ID {} (entity doesn't exist)",
 		InStruct->GetName(), InEntity);
 	
 	return nullptr;
@@ -179,13 +206,12 @@ void CEntityManager::RemoveComponent(
 		/** Free the memory */
 		ComponentPoolMap[InComponent].Free(*Component);
 
-		LOG(ELogSeverity::Debug, ECS, "Removed component %s to entity ID %i",
+		ZE::Logger::Verbose("Removed component {} to entity ID {}",
 			InComponent->GetName(), InEntity);
 	}
 	else
 	{
-		LOG(ELogSeverity::Error, ECS,
-			"Failed to remove component %s in entity ID %d (entity doesn't exist)",
+		ZE::Logger::Error("Failed to remove component {} in entity ID {} (entity doesn't exist)",
 			InComponent->GetName(), InEntity);
 	}
 }
@@ -213,8 +239,7 @@ void CEntityManager::AttachEntity(const EntityID& InEntity, const EntityID& InPa
 	if(!Parent || !Child)
 	{
 		must(false);
-		LOG(ELogSeverity::Error, ECS, 
-			"Failed to attach entity %d to %d, one is missing hierarchy component",
+		ZE::Logger::Error("Failed to attach entity {} to {}, one is missing hierarchy component",
 			InEntity, InParent);
 		return;
 	}
@@ -254,7 +279,7 @@ SEntityComponent* CEntityManager::GetComponent(const EntityID& InID,
 		}
 	}
 
-	LOG(ELogSeverity::Info, ECS, "Failed to find component %s in entity ID %d",
+	ZE::Logger::Info("Failed to find component {} in entity ID {}",
 		InComponent->GetName(), InID);
 
 	return nullptr;

@@ -9,17 +9,17 @@
 namespace ZE
 {
 
-enum class EConVarFlags
+enum class EConVarFlagBits
 {
-	None = 1 << 0,
+	None = 0,
 
 	/** Mark this ConVar as a cheat */
-	Cheat = 1 << 1,
+	Cheat = 1 << 0,
 
 	/** Allow saving this convar */
-	Saved = 1 << 2,
+	Saved = 1 << 1,
 };
-DECLARE_FLAG_ENUM(EConVarFlags);
+ENABLE_FLAG_ENUMS(EConVarFlagBits, EConVarFlags);
 
 /**
  * A console variable
@@ -55,7 +55,7 @@ struct SConVar
 	SConVar(const std::string& InName, 
 		const float& InDefaultValue,
 		const std::string& InHelp,
-		const EConVarFlags& InFlags = EConVarFlags::None) : Name(InName), Data(std::in_place_index<0>,
+		const EConVarFlags& InFlags = EConVarFlagBits::None) : Name(InName), Data(std::in_place_index<0>,
 			InDefaultValue), Help(InHelp), Flags(InFlags),
 			Minimum(std::in_place_index<0>, std::numeric_limits<float>::min()),
 			Maximum(std::in_place_index<0>, std::numeric_limits<float>::max()) {}
@@ -63,7 +63,7 @@ struct SConVar
 	SConVar(const std::string& InName, 
 		const int32_t& InDefaultValue,
 		const std::string& InHelp,
-		const EConVarFlags& InFlags = EConVarFlags::None) : Name(InName), Data(std::in_place_index<1>,
+		const EConVarFlags& InFlags = EConVarFlagBits::None) : Name(InName), Data(std::in_place_index<1>,
 			InDefaultValue), Help(InHelp), Flags(InFlags),
 			Minimum(std::in_place_index<1>, std::numeric_limits<int32_t>::min()),
 			Maximum(std::in_place_index<1>, std::numeric_limits<int32_t>::max()) {}
@@ -71,7 +71,7 @@ struct SConVar
 	SConVar(const std::string& InName, 
 		const std::string& InDefaultValue,
 		const std::string& InHelp,
-		const EConVarFlags& InFlags = EConVarFlags::None) : Name(InName), Data(std::in_place_index<2>,
+		const EConVarFlags& InFlags = EConVarFlagBits::None) : Name(InName), Data(std::in_place_index<2>,
 			InDefaultValue), Help(InHelp), Flags(InFlags) {}
 
 	void SetMin(const ConvarDataType& InData)

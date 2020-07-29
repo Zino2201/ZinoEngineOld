@@ -9,9 +9,9 @@
 namespace ZE
 {
 	enum class EShaderStage;
-	enum class ERSBufferUsage;
+	enum class ERSBufferUsageFlagBits;
 	enum class ERSTextureType;
-	enum class ERSTextureUsage;
+	enum class ERSTextureUsageFlagBits;
 	enum class ERSFilter;
 	enum class ERSSamplerAddressMode;
 	enum class EVertexInputRate;
@@ -179,7 +179,6 @@ namespace VulkanUtil
 }
 
 /** Log category */
-DECLARE_LOG_CATEGORY(VulkanRS);
 
 /** Functions definitions */
 namespace VulkanUtil

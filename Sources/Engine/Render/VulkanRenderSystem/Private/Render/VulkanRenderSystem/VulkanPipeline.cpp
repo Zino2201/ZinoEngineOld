@@ -20,8 +20,6 @@ CVulkanGraphicsPipeline* CVulkanPipelineManager::GetOrCreateGraphicsPipeline(
 	if(Result != GraphicsPipelines.end())
 		return Result->second.get();
 
-	LOG(ELogSeverity::Debug, VulkanRS, "new CVulkanGraphicsPipeline");
-
 	TOwnerPtr<CVulkanGraphicsPipeline> Pipeline = new CVulkanGraphicsPipeline(
 		Device, InPipeline, InRenderPass);
 	
@@ -256,7 +254,7 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice& InDevice,
 	Pipeline = Device.GetDevice().createGraphicsPipelineUnique(vk::PipelineCache(),
 		CreateInfo).value;
 	if (!Pipeline)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create pipeline");
+		ZE::Logger::Fatal("Failed to create pipeline");
 }
 
 vk::DescriptorType VulkanUtil::ShaderParameterTypeToVkDescriptorType(

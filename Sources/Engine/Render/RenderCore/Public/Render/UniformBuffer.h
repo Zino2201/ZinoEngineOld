@@ -17,20 +17,13 @@ struct TUniformBuffer
 {
     TUniformBuffer()
     {
-        ERSMemoryUsage MemoryUsage = ERSMemoryUsage::HostVisible;
-        if constexpr(bUsePersistantMapping)
-            MemoryUsage |= ERSMemoryUsage::UsePersistentMapping;
-
         Buffer = GRenderSystem->CreateBuffer({
-            ERSBufferUsage::UniformBuffer,
-            MemoryUsage,
+            ERSBufferUsageFlagBits::UniformBuffer,
+            ERSMemoryUsage::HostVisible,
+            bUsePersistantMapping ? ERSMemoryHintFlagBits::Mapped : ERSMemoryHintFlagBits::None,
             sizeof(T) });
         Buffer->SetName("TUniformBuffer");
-    }
 
-    ~TUniformBuffer()
-    {
-        Buffer.reset();
     }
 
     /**

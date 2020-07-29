@@ -27,29 +27,37 @@ protected:
  */
 
 /**
- * Memory usage of the specified resources
+ * Memory type of the specified resources
+ *
+ * Host = CPU
+ * Device = GPU
  */
 enum class ERSMemoryUsage
 {
-    None = 1 << 0,
-
-	/** MEMORY TYPES */
-
 	/** Memory that will be only accessed by the GPU */
-	DeviceLocal = 1 << 1,
+	DeviceLocal,
 
 	/** Memory that can be mapped by the CPU */
-	HostVisible = 1 << 2,
+	HostVisible,
 
 	/** Memory stored in host memory */
-	HostOnly = 1 << 3,
-
-	/** FLAGS */
-    
-    /** Use persistent mapping (BUFFER ONLY) */
-	UsePersistentMapping = 1 << 4,
+	HostOnly,
 };
-DECLARE_FLAG_ENUM(ERSMemoryUsage);
+
+/**
+ * Hint about the resource memory
+ */
+enum class ERSMemoryHintFlagBits
+{
+	None = 0,
+
+	/**
+	 * Force the resource to be mapped by default
+	 * Used for persistent mapping
+	 */
+	Mapped = 1 << 0,
+};
+ENABLE_FLAG_ENUMS(ERSMemoryHintFlagBits, ERSMemoryHintFlags);
 
 /**
  * Compare operation

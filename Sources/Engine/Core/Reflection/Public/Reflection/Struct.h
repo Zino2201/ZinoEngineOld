@@ -42,7 +42,7 @@ private:
  * Can hold properties and have oop
  */
 ZCLASS()
-class CStruct : public CType
+class REFLECTION_API CStruct : public CType
 {
 	REFL_BODY()
 
@@ -70,26 +70,20 @@ class CStruct : public CType
 public:
 	CStruct(const char* InName,
 		const uint64_t& InSize)
-        : CType(InName, InSize) 
-    {
-        
-    }
-
-    ~CStruct()
-    {
-
-    }
+        : CType(InName, InSize) {}
 
     template<typename... Args>
     void AddInstantiateFunc(const std::function<void*(Args...)>& InFunc)
     {
         InstantiateFunc = std::make_unique<CInstantiateFunc<Args...>>(InFunc);
+        bIsInstanciable = true;
     }   
     
     template<typename... Args>
     void AddPlacementNewFunc(const std::function<void(void*, Args...)>& InFunc)
     {
         PlacementNewFunc = std::make_unique<CPlacementNewFunc<Args...>>(InFunc);
+        bIsInstanciable = true;
     }
 
     /**
@@ -126,8 +120,8 @@ public:
         Properties.push_back(InProperty);
     }
 
-    REFLECTION_API void AddParent(CStruct* InParent);
-    REFLECTION_API bool IsDerivedFrom(CStruct* InParent) const;
+    void AddParent(CStruct* InParent);
+    bool IsDerivedFrom(CStruct* InParent) const;
 
 	template<typename T>
 	static CStruct* Get()
@@ -147,7 +141,7 @@ protected:
     std::unique_ptr<IInstantiateFunc> PlacementNewFunc;
     std::vector<CProperty> Properties;
     std::vector<CStruct*> Parents;
-    REFLECTION_API inline static std::vector<CStruct*> Structs;
+    inline static std::vector<CStruct*> Structs;
     bool bIsInstanciable;
 public:
     std::vector<const char*> Refl_ParentsWaitingAdd;

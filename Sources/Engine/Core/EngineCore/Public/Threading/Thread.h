@@ -15,4 +15,6 @@ ENGINECORE_API void SetThreadName(const std::string_view& InStr);
 */
 ENGINECORE_API std::string GetThreadName();
 
+ENGINECORE_API std::string GetThreadName(const std::thread::id& InID);
+
 }

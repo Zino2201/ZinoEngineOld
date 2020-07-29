@@ -12,30 +12,28 @@ namespace ZE::FileSystem
 class IFileSystem;
 class IFile;
 
-/** ZFS API */
-DECLARE_LOG_CATEGORY(ZFS);
-
 /** FLAGS */
 
 /**
  * File open flags
  */
-enum class EFileReadFlags
+enum class EFileReadFlagBits
 {
-	None = 1 << 0,
+	None = 0,
 };
-DECLARE_FLAG_ENUM(EFileReadFlags);
+ENABLE_FLAG_ENUMS(EFileReadFlagBits, EFileReadFlags);
 
 /**
  * File write flags
  */
-enum class EFileWriteFlags
+enum class EFileWriteFlagBits
 {
-	None = 1 << 0,
-	ReplaceExisting = 1 << 1,
-	Binary = 1 << 2,
+	None = 0,
+
+	ReplaceExisting = 1 << 0,
+	Binary = 1 << 1,
 };
-DECLARE_FLAG_ENUM(EFileWriteFlags);
+ENABLE_FLAG_ENUMS(EFileWriteFlagBits, EFileWriteFlags);
 
 #pragma region API
 
@@ -43,13 +41,13 @@ DECLARE_FLAG_ENUM(EFileWriteFlags);
  * Create a file archive of the specified path for reading
  */
 ENGINECORE_API TOwnerPtr<IFile> Read(const std::string_view& InPath,
-	const EFileReadFlags& InReadFlags = EFileReadFlags::None);
+	const EFileReadFlags& InReadFlags = EFileReadFlagBits::None);
 
 /**
  * Create a file archive of the specified path for writing
  */
 ENGINECORE_API TOwnerPtr<IFile> Write(const std::string_view& InPath, 
-	const EFileWriteFlags& InWriteFlags = EFileWriteFlags::None); 
+	const EFileWriteFlags& InWriteFlags = EFileWriteFlagBits::None); 
 
 /**
  * Check if the specified file or directory exists
@@ -110,7 +108,7 @@ public:
 		Filesystems.insert({ SFSEntry(InName, InAlias, InPriority),
 			std::unique_ptr<T>(FS) });
 
-		LOG(ELogSeverity::Info, ZFS, "Added new filesystem: alias %s (%d)", InAlias.c_str(),
+		ZE::Logger::Info("Added new filesystem: alias {} ({})", InAlias.c_str(),
 			InPriority);
 
 		return FS;

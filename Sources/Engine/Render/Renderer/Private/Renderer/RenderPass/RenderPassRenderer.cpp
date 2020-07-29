@@ -6,15 +6,13 @@
 #include "Render/RenderSystem/RenderSystemContext.h"
 #include "Renderer/RenderableComponentProxy.h"
 
-DECLARE_LOG_CATEGORY(RenderPassRenderer);
-
 namespace ZE::Renderer
 {
 
 CRenderPassRenderer::CRenderPassRenderer(CWorldProxy& InProxy) : WorldProxy(InProxy) {}
 
 void CRenderPassRenderer::PrepareDrawcalls(SWorldView& InView, 
-	const ERenderPass& InRenderPass,
+	const ERenderPassFlagBits& InRenderPass,
 	CRenderPassDrawcallFactory& InDrawcallFactory)
 {
 	using namespace JobSystem;
@@ -26,7 +24,7 @@ void CRenderPassRenderer::PrepareDrawcalls(SWorldView& InView,
 	 */
 	DynamicDrawcalls.Reserve(InView.VisibleDynamicMeshes.size());
 
-	if(InRenderPass != ERenderPass::None)
+	if(InRenderPass != ERenderPassFlagBits::None)
 		FinalDrawcalls.reserve(
 			DynamicDrawcalls.GetCapacity() + WorldProxy.GetCachedDrawcalls(InRenderPass).GetSize());
 	else
@@ -43,8 +41,8 @@ void CRenderPassRenderer::PrepareDrawcalls(SWorldView& InView,
 			 */
 			for(size_t i = 0; i < InView.VisibleDynamicMeshes.size(); ++i)
 			{
-				if(InRenderPass != ERenderPass::None 
-					&& HAS_FLAG(InView.VisibleDynamicMeshRenderPassFlags[i], InRenderPass))
+				if(InRenderPass != ERenderPassFlagBits::None 
+					&& InView.VisibleDynamicMeshRenderPassFlags[i] & InRenderPass)
 				{
 					InDrawcallFactory.ProcessMesh(InView, *InView.VisibleDynamicMeshProxies[i],
 						InView.VisibleDynamicMeshes[i]);
@@ -87,7 +85,7 @@ void CRenderPassRenderer::SubmitDrawcall(IRenderSystemContext& InContext,
 		switch(Binding.ParameterType)
 		{
 		default:
-			LOG(ELogSeverity::Error, RenderPassRenderer, "Unknown parameter type for binding %d set %d",
+			ZE::Logger::Error("Unknown parameter type for binding {} set {}",
 				Binding.Binding, Binding.Set);
 			break;
 		case EShaderParameterType::UniformBuffer:

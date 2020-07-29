@@ -17,10 +17,6 @@ public:
     CClusteredForwardRenderingPath();
 
     void Draw(const SWorldView& InView) override;
-private:
-   /* void RenderWorld(IRenderSystemContext* InContext, CWorldProxy* InWorld, 
-        const SWorldRendererView& InView,
-        EMeshRenderPass InRenderPass);*/
 };
 
 }

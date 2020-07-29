@@ -13,19 +13,18 @@ class CViewport;
 namespace ZE::Editor
 {
 
-class CZEEditor : public CEngine
+class CZEEditor final : public CZinoEngineApp,
+	public CTickable
 {
 public:
+	CZEEditor();
 	~CZEEditor();
 
-	void Initialize() override;
-	void ProcessEvent(SDL_Event* InEvent) override;
+	void ProcessEvent(SDL_Event& InEvent) override;
 	void Tick(const float& InDeltaTime) override;
-	void Draw() override;
-	void Exit() override;
 	int OnWindowResized(SDL_Event* InEvent);
-	bool ShouldExit() const override { return !bShouldRun; }
-	bool ShouldWaitForEvents() const override { return true; }
+protected:
+	void Draw() override;
 private:
 	void DrawMainTab();
 private:
@@ -35,6 +34,6 @@ private:
 	bool bShouldRun;
 };
 
-EDITOR_API TOwnerPtr<CEngine> CreateEditor();
+EDITOR_API TOwnerPtr<CZinoEngineApp> CreateEditor();
 
 }

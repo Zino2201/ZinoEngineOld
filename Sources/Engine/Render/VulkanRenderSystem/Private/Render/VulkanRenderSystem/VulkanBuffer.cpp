@@ -25,7 +25,7 @@ CVulkanInternalStagingBuffer::CVulkanInternalStagingBuffer(
 		reinterpret_cast<VkBuffer*>(&Buffer),
 		&Allocation,
 		&AllocationInfo) != VK_SUCCESS)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan internal staging buffer");
+		ZE::Logger::Fatal("Failed to create Vulkan internal staging buffer");
 }
 
 CVulkanInternalStagingBuffer::~CVulkanInternalStagingBuffer()
@@ -45,17 +45,17 @@ CVulkanBuffer::CVulkanBuffer(
 	UsageFlags |= vk::BufferUsageFlagBits::eTransferSrc |
 		vk::BufferUsageFlagBits::eTransferDst;
 
-	if(HAS_FLAG(InCreateInfo.UsageFlags, ERSBufferUsage::VertexBuffer))
+	if(InCreateInfo.UsageFlags & ERSBufferUsageFlagBits::VertexBuffer)
 	{
 		UsageFlags |= vk::BufferUsageFlagBits::eVertexBuffer;
 	}
 	
-	if(HAS_FLAG(InCreateInfo.UsageFlags, ERSBufferUsage::IndexBuffer))
+	if(InCreateInfo.UsageFlags & ERSBufferUsageFlagBits::IndexBuffer)
 	{
 		UsageFlags |= vk::BufferUsageFlagBits::eIndexBuffer;
 	}
 
-	if(HAS_FLAG(InCreateInfo.UsageFlags, ERSBufferUsage::UniformBuffer))
+	if(InCreateInfo.UsageFlags & ERSBufferUsageFlagBits::UniformBuffer)
 	{
 		UsageFlags |= vk::BufferUsageFlagBits::eUniformBuffer;
 	}
@@ -68,9 +68,9 @@ CVulkanBuffer::CVulkanBuffer(
 
 	VmaAllocationCreateInfo AllocInfo = {};
 	AllocInfo.flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
-	if(HAS_FLAG(InCreateInfo.MemoryUsage, ERSMemoryUsage::UsePersistentMapping))
-		AllocInfo.flags |= VMA_ALLOCATION_CREATE_MAPPED_BIT;
 	AllocInfo.usage = VulkanUtil::BufferUsageFlagsToMemoryUsage(InCreateInfo.MemoryUsage);
+	if(InCreateInfo.Hints & ERSMemoryHintFlagBits::Mapped)
+		AllocInfo.flags |= VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
 	vk::Result Result = static_cast<vk::Result>(vmaCreateBuffer(Device.GetAllocator(),
 		reinterpret_cast<VkBufferCreateInfo*>(&BufferCreateInfo),
@@ -80,7 +80,7 @@ CVulkanBuffer::CVulkanBuffer(
 		&AllocationInfo));
 
 	if (Result != vk::Result::eSuccess)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan buffer: %s",
+		ZE::Logger::Fatal("Failed to create Vulkan buffer: {}",
 			vk::to_string(Result).c_str());
 }
 
@@ -191,7 +191,7 @@ void* CVulkanBuffer::Map(ERSBufferMapMode InMapMode)
 	else
 	{
 		/**
-		 * Create a staging buffer that wlil be writted
+		 * Create a staging buffer that will be writted
 		 */
 		CVulkanInternalStagingBuffer* StagingBuffer =
 			Device.GetStagingBufferMgr().CreateStagingBuffer(CreateInfo.Size,

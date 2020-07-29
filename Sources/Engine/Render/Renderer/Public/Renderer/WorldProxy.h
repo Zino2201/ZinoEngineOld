@@ -23,10 +23,10 @@ public:
 	void RemoveProxy(CRenderableComponentProxy* InProxy);
 
 	auto& GetProxies() { return Proxies; }
-	auto& GetCachedDrawcalls(const ERenderPass& InRenderPass) { return CachedDrawcallMap[InRenderPass]; }
+	auto& GetCachedDrawcalls(const ERenderPassFlagBits& InRenderPass) { return CachedDrawcallMap[InRenderPass]; }
 private:
 	std::vector<std::unique_ptr<CRenderableComponentProxy>> Proxies;
-	robin_hood::unordered_map<ERenderPass, TDrawcallList> CachedDrawcallMap;
+	robin_hood::unordered_map<ERenderPassFlagBits, TDrawcallList> CachedDrawcallMap;
 };
 
 }

@@ -60,7 +60,7 @@ public:
     bool ShouldTick() const override { return true; }
     uint32_t GetPriority() const override { return 0; }
     void AddRenderableComponentToUpdate(SRenderableComponent* InComponent);
-    ETickOrder GetOrder() const override { return ETickOrder::EndOfFrame; }
+    ETickFlagBits GetOrder() const override { return ETickFlagBits::EndOfSimulation; }
 private:
     void OnComponentAdded(ECS::CEntityManager& InEntityManager, const ECS::EntityID& InEntityID, 
         ECS::SEntityComponent* InComponent);

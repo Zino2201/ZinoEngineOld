@@ -61,7 +61,7 @@ public:
 		return ThreadId != InOther.ThreadId;
 	}
 private:
-	const SJob* TryGetOrStealJob();
+	const SJob* TryGetOrStealJob(const size_t& InWorkerIdx = -1);
 private:
 	EWorkerThreadType Type;
 	std::atomic_bool Active;

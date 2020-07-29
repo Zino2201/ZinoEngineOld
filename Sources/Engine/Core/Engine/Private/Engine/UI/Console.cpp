@@ -43,53 +43,51 @@ void CConsoleWidget::Draw()
 	const float FooterHeight =
 		ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
 
+	using namespace Logger;
+
 	/** Filters */
-	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ELogSeverity::Debug));
-	ImGui::Button("DEBUG");
+	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ESeverityFlagBits::Verbose));
+	ImGui::Button("VERBOSE");
 	ImGui::PopStyleColor();
 
 	ImGui::SameLine();
 
-	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ELogSeverity::Info));
+	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ESeverityFlagBits::Info));
 	ImGui::Button("INFO");
 	ImGui::PopStyleColor();
 
 	ImGui::SameLine();
 
-	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ELogSeverity::Warn));
+	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ESeverityFlagBits::Warn));
 	ImGui::Button("WARN");
 	ImGui::PopStyleColor();
 
 	ImGui::SameLine();
 
-	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ELogSeverity::Error));
+	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ESeverityFlagBits::Error));
 	ImGui::Button("ERROR");
 	ImGui::PopStyleColor();
 
 	ImGui::Separator();
 
 	/** Console */
-	if(!ImGui::BeginChild("ScrollingRegion", 
+	if(ImGui::BeginChild("ScrollingRegion", 
 		ImVec2(0, -FooterHeight), true, ImGuiWindowFlags_HorizontalScrollbar))
 	{
-		ImGui::EndChild();
-		return;
-	}
-	
-	const auto& Messages = CLogger::Get().GetMessages();
-	for (const auto& Msg : Messages)
-	{
-		UI::SImGuiAutoStyleColor TextCol(ImGuiCol_Text, ToColor(Msg.Severity));
-		ImGui::TextWrapped("(%s) %s", Msg.Category.data(), Msg.Message.c_str());
-	}
+		/*const auto& Messages = CLogger::Get().GetMessages();
+		for (const auto& Msg : Messages)
+		{
+			UI::SImGuiAutoStyleColor TextCol(ImGuiCol_Text, ToColor(Msg.Severity));
+			ImGui::TextWrapped("({}) {}", Msg.Category.data(), Msg.Message.c_str());
+		}*/
 
-	if(CurrentConsoleSize != Messages.size() && 
-		ImGui::GetScrollY() == ImGui::GetScrollMaxY())
-	{
-		ImGui::SetScrollHereY();
-		CurrentConsoleSize = Messages.size();
+		/*if (CurrentConsoleSize != Messages.size() &&
+			ImGui::GetScrollY() == ImGui::GetScrollMaxY())
+		{
+			ImGui::SetScrollHereY();
+			CurrentConsoleSize = Messages.size();
+		}*/
 	}
-
 	ImGui::EndChild();
 
 	/** Input */
@@ -113,7 +111,7 @@ void CConsoleWidget::Draw()
 				else
 					Parameters.emplace_back(InputStr[1]);
 			}
-			LOG(ELogSeverity::Info, None, "> %s", Input.data());
+			ZE::Logger::Info("> {}", Input.data());
 			CConsole::Get().Execute(InputStr[0], Parameters);
 			memset(Input.data(), 0, Input.size());
 		}
@@ -137,9 +135,10 @@ int CConsoleWidget::OnTextEdited(ImGuiInputTextCallbackData* InData)
 	return 0;
 }
 
-ImVec4 CConsoleWidget::ToColor(const ELogSeverity& InSeverity) const
+ImVec4 CConsoleWidget::ToColor(const Logger::ESeverityFlagBits& InSeverity) const
 {
-	switch(InSeverity)
+	return ImVec4(1, 1, 1, 1);
+	/*switch(InSeverity)
 	{
 	case ELogSeverity::Debug:
 		return ImVec4(0.22f, 0.58f, 0.62f, 1);
@@ -152,7 +151,7 @@ ImVec4 CConsoleWidget::ToColor(const ELogSeverity& InSeverity) const
 		return ImVec4(0.90f, 0.28f, 0.24f, 1);
 	case ELogSeverity::Fatal:
 		return ImVec4(0.9f, 0, 0, 1);
-	}
+	}*/
 }
 
 }

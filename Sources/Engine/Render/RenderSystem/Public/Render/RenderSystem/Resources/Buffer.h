@@ -8,40 +8,42 @@ namespace ZE
 /**
  * Buffer usage flags
  */
-enum class ERSBufferUsage
+enum class ERSBufferUsageFlagBits
 {
-    None = 1 << 0,
+    None = 0,
 
-    VertexBuffer = 1 << 1,
-    IndexBuffer = 1 << 2,
-    UniformBuffer = 1 << 3
+    VertexBuffer = 1 << 0,
+    IndexBuffer = 1 << 1,
+    UniformBuffer = 1 << 2
 };
-DECLARE_FLAG_ENUM(ERSBufferUsage);
+ENABLE_FLAG_ENUMS(ERSBufferUsageFlagBits, ERSBufferUsageFlags);
 
 /**
  * Map mode buffer
  */
 enum class ERSBufferMapMode
 {
-    /** Read only */
+    /** Read only, will  */
     ReadOnly,
 
     /** Will be written */
-    WriteOnly
+    WriteOnly,
 };
 
 struct SRSBufferCreateInfo
 {
-    ERSBufferUsage UsageFlags;
+    ERSBufferUsageFlags UsageFlags;
     ERSMemoryUsage MemoryUsage;
+    ERSMemoryHintFlagBits Hints;
     uint64_t Size;
     const char* DebugName;
 
-    SRSBufferCreateInfo(const ERSBufferUsage& InUsageFlags,
+    SRSBufferCreateInfo(const ERSBufferUsageFlags& InUsageFlags,
         const ERSMemoryUsage& InMemoryUsage,
+        const ERSMemoryHintFlagBits& InHints,
         const uint64_t& InSize,
         const char* InDebugName = "Buffer") : UsageFlags(InUsageFlags),
-        MemoryUsage(InMemoryUsage), Size(InSize), DebugName(InDebugName) {}
+        MemoryUsage(InMemoryUsage), Hints(InHints), Size(InSize), DebugName(InDebugName) {}
 };
 
 /**
@@ -56,6 +58,10 @@ public:
 	virtual void Unmap() {}
 
 	FORCEINLINE const SRSBufferCreateInfo& GetCreateInfo() const { return CreateInfo; }
+
+    /**
+     * Get mapped buffer data (only valid when using Mapped hint !)
+     */
     virtual void* GetMappedData() const { return nullptr; }
 protected:
 	SRSBufferCreateInfo CreateInfo;

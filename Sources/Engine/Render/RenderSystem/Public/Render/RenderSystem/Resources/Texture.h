@@ -8,14 +8,15 @@ namespace ZE
 /**
  * Texture usage
  */
-enum class ERSTextureUsage
+enum class ERSTextureUsageFlagBits
 {
-    None = 1 << 0,
-    Sampled = 1 << 1,
-    RenderTarget = 1 << 2,
-    DepthStencil = 1 << 3
+    None = 0,
+  
+    Sampled = 1 << 0,
+    RenderTarget = 1 << 1,
+    DepthStencil = 1 << 2
 };
-DECLARE_FLAG_ENUM(ERSTextureUsage);
+ENABLE_FLAG_ENUMS(ERSTextureUsageFlagBits, ERSTextureUsageFlags);
 
 /**
  * Texture type
@@ -30,7 +31,7 @@ enum class ERSTextureType
 struct SRSTextureCreateInfo
 {
     ERSTextureType Type;
-    ERSTextureUsage Usage;
+    ERSTextureUsageFlags Usage;
     ERSMemoryUsage MemoryUsage;
     EFormat Format;
     uint32_t Width;
@@ -42,7 +43,7 @@ struct SRSTextureCreateInfo
 
 	SRSTextureCreateInfo(
 		const ERSTextureType& InTextureType,
-		const ERSTextureUsage& InTextureUsage,
+		const ERSTextureUsageFlags& InTextureUsage,
 		const ERSMemoryUsage& InMemoryUsage,
 		const EFormat& InFormat,
 		const uint32_t& InWidth,

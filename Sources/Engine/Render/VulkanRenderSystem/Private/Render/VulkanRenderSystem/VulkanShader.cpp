@@ -14,7 +14,7 @@ CVulkanShader::CVulkanShader(CVulkanDevice& InDevice,
 
 	ShaderModule = Device.GetDevice().createShaderModuleUnique(CreateInfos).value;
 	if (!ShaderModule)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create shader module");
+		ZE::Logger::Fatal("Failed to create shader module");
 }
 
 TOwnerPtr<CRSShader> CVulkanRenderSystem::CreateShader(

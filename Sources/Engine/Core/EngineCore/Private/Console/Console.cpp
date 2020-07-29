@@ -17,19 +17,18 @@ void CConsole::Execute(const std::string_view& InCmdName,
 			if(InParams.empty())
 			{
 				if(ConVar.Data.index() == SConVar::DataTypeFloat)
-					LOG(ELogSeverity::Error, None, 
-						"Invalid syntax.\n%s\n\t- Min: %f\n\t- Max: %f\n\t- Current: %f", 
+					ZE::Logger::Error("Invalid syntax.\n{}\n\t- Min: {}\n\t- Max: {}\n\t- Current: {}", 
 						ConVar.Help.c_str(),
 						ConVar.GetMinAsFloat(), ConVar.GetMaxAsFloat(),
 						ConVar.GetAsFloat());
 				else if (ConVar.Data.index() == SConVar::DataTypeInt32)
-					LOG(ELogSeverity::Error, None, 
-						"Invalid syntax\n%s\n\t- Min: %d\n\t- Max: %d\n\t- Current: %d", 
+					ZE::Logger::Error( 
+						"Invalid syntax\n{}\n\t- Min: {}\n\t- Max: {}\n\t- Current: {}", 
 						ConVar.Help.c_str(),
 						ConVar.GetMinAsInt(), ConVar.GetMaxAsInt(),
 						ConVar.GetAsInt());
 				else
-					LOG(ELogSeverity::Error, None, "Invalid syntax\n%s\n\t- Current:", 
+					ZE::Logger::Error("Invalid syntax\n{}\n\t- Current:", 
 						ConVar.Help.c_str(),
 						ConVar.GetAsString().c_str());
 			}
@@ -44,7 +43,7 @@ void CConsole::Execute(const std::string_view& InCmdName,
 					auto Result = std::from_chars(Arg.data(), Arg.data() + Arg.size(), Int);
 					if(Result.ec == std::errc::invalid_argument)
 					{
-						LOG(ELogSeverity::Error, None, "Invalid argument \"%s\"", InParams[0].data());
+						ZE::Logger::Error("Invalid argument \"{}\"", InParams[0].data());
 						return;
 					}
 					else
@@ -58,7 +57,7 @@ void CConsole::Execute(const std::string_view& InCmdName,
 					auto Result = std::from_chars(Arg.data(), Arg.data() + Arg.size(), Float);
 					if (Result.ec == std::errc::invalid_argument)
 					{
-						LOG(ELogSeverity::Error, None, "Invalid argument \"%s\"", InParams[0].data());
+						ZE::Logger::Error("Invalid argument \"{}\"", InParams[0].data());
 						return;
 					}
 					else
@@ -70,14 +69,14 @@ void CConsole::Execute(const std::string_view& InCmdName,
 					break;
 				}
 
-				LOG(ELogSeverity::Info, None, "\"%s\" changed to \"%s\"", InCmdName.data(),
+				ZE::Logger::Info("\"{}\" changed to \"{}\"", InCmdName.data(),
 					InParams[0].data());
 			}
 			return;
 		}
 	}
 
-	LOG(ELogSeverity::Error, None, "Unknown concmd/convar \"%s\"", InCmdName.data());
+	ZE::Logger::Error("Unknown concmd/convar \"{}\"", InCmdName.data());
 }
 
 }

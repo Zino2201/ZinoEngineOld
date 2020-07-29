@@ -1,12 +1,13 @@
 #include "Engine/TickSystem.h"
 #include <algorithm>
+#include "Engine/Engine.h"
 
 namespace ZE
 {
 
-void CTickSystem::Tick(ETickOrder InOrder, const float& InDeltaTime)
+void CTickSystem::Tick(ETickFlagBits InFlag, const float& InDeltaTime)
 {
-	CurrentOrder = InOrder;
+	CurrentTick = InFlag;
 
 	/**
 	 * Check if we have any tickables waiting to be added to the global map
@@ -15,27 +16,65 @@ void CTickSystem::Tick(ETickOrder InOrder, const float& InDeltaTime)
 	{
 		for(auto& Tickable : TickablesToAdd)
 		{
-			auto& Tickables = TickablesMap[Tickable->GetTickOrder()];
-			must(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
-			Tickables.push_back(Tickable);
+			if(!Tickable->CanEverTick())
+				continue;
+
+			// TODO: Find a way to iterate over flags
+			
+			if(Tickable->GetTickFlags() & ETickFlagBits::Variable)
+			{
+				auto& Tickables = TickablesMap[ETickFlagBits::Variable];
+				must(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
+				Tickables.push_back(Tickable);
+			}
+			
+			if(Tickable->GetTickFlags() & ETickFlagBits::Fixed)
+			{
+				auto& Tickables = TickablesMap[ETickFlagBits::Fixed];
+				must(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
+				Tickables.push_back(Tickable);
+			}
+
+			if(Tickable->GetTickFlags() & ETickFlagBits::EndOfSimulation)
+			{
+				auto& Tickables = TickablesMap[ETickFlagBits::EndOfSimulation];
+				must(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
+				Tickables.push_back(Tickable);
+			}	
 		}
 
 		TickablesToAdd.clear();
 	}
 
-	/**
-	 * Tick the specified order and also ETickOrder::All
-	 */
-	auto& Tickables = TickablesMap[InOrder];
-	for (auto& Tickable : Tickables)
+	switch(InFlag)
 	{
-		Tickable->Tick(InDeltaTime);
+	case ETickFlagBits::Variable:
+	{
+		auto& Tickables = TickablesMap[ETickFlagBits::Variable];
+		for (auto& Tickable : Tickables)
+		{
+			Tickable->Tick(InDeltaTime);
+		}
+		break;
 	}
-
-	auto& AllTickables = TickablesMap[ETickOrder::All];
-	for (auto& Tickable : AllTickables)
+	case ETickFlagBits::Fixed:
 	{
-		Tickable->Tick(InDeltaTime);
+		auto& Tickables = TickablesMap[ETickFlagBits::Fixed];
+		for (auto& Tickable : Tickables)
+		{
+			Tickable->FixedTick(InDeltaTime);
+		}
+		break;
+	}
+	case ETickFlagBits::EndOfSimulation:
+	{	
+		auto& Tickables = TickablesMap[ETickFlagBits::EndOfSimulation];
+		for (auto& Tickable : Tickables)
+		{
+			Tickable->LateTick(InDeltaTime);
+		}
+		break;
+	}
 	}
 }
 
@@ -52,7 +91,8 @@ void CTickSystem::Unregister(CTickable& InTickable)
 			Tickables.end());
 }
 
-CTickable::CTickable() { CTickSystem::Get().Register(*this); }
-CTickable::~CTickable() { CTickSystem::Get().Unregister(*this); }
+CTickable::CTickable() : bCanEverTick(true), 
+	bIsTickEnabled(true), TickFlags(ETickFlagBits::Variable) { CZinoEngineApp::Get()->GetTickSystem().Register(*this); }
+CTickable::~CTickable() { CZinoEngineApp::Get()->GetTickSystem().Unregister(*this); }
 
 };

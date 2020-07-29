@@ -11,29 +11,33 @@ namespace ZE
 {
 
 /**
- * When to tick
+ * Tick group
  */
-enum class ETickOrder
+enum class ETickFlagBits
 {
-    /** Executed for each order called, 
-     *   you can get the current order with CTickSystem::GetCurrentOrder */
-    All,
+    None = 0,
 
-    /** Executed at the beginning of the frame and before physics */
-    StartOfFrame,
+    /**
+    * First order called in the game loop
+    * Fixed tick group, this is called at fixed time amount and is preferred for physics
+    * interaction as a physics engine work better at a fixed timestep. 
+    * NOTE: This group is called before actual physics simulation */
+    Fixed = 1 << 0,
 
-    /** For physics only */
-    Physics,
+    /** Variable tick group, that is frame-rate dependent, use the provided delta time to
+    * ensure consistency over frames. Do not interact with physics using this group ! Prefer Fixed */
+    Variable = 1 << 1,
 
-    /** Executed after physics */
-    PostPhysics,
-
-    /** Executed at the end of the frame after rendering has been queued */
-    EndOfFrame
+    /**
+     * Called before rendering and after fixed & variable tick
+     */
+    EndOfSimulation = 1 << 2,
 };
+ENABLE_FLAG_ENUMS(ETickFlagBits, ETickFlags);
 
 /**
  * Base abstract class for objects that can be ticked
+ * By default, a tickable object is set to tick at a variable rate, and ticking is enabled by default
  */
 class ENGINE_API CTickable
 {
@@ -41,33 +45,47 @@ public:
     CTickable();
     virtual ~CTickable();
 
-    virtual void Tick(const float& InDeltaTime) = 0;
-    virtual ETickOrder GetTickOrder() const = 0;
+    /**
+     * Variable tick
+     */
+    virtual void Tick(const float& InDeltaTime) {}
+
+    /**
+     * Used for Fixed ticking
+     */
+    virtual void FixedTick(const float& InDeltaTime) {}
+
+    /**
+     * EndOfSimulation
+     */
+    virtual void LateTick(const float& InDeltaTime) {}
+
+    const bool& CanEverTick() const { return bCanEverTick; }
+    const bool& IsTickEnabled() const { return bIsTickEnabled; }
+    const ETickFlags& GetTickFlags() const { return TickFlags; }
+protected:
+    bool bCanEverTick;
+    bool bIsTickEnabled;
+    ETickFlags TickFlags;
 };
 
 /**
  * Engine tick system
  */
-class ENGINE_API CTickSystem : public CNonCopyable
+class ENGINE_API CTickSystem
 {
 public:
-    static CTickSystem& Get()
-    {
-        static CTickSystem Instance;
-        return Instance;
-    }
+    CTickSystem() = default;
 
-    void Tick(ETickOrder InOrder, const float& InDeltaTime);
+    void Tick(ETickFlagBits InFlag, const float& InDeltaTime);
     void Register(CTickable& InTickable);
     void Unregister(CTickable& InTickable);
 
-    ETickOrder GetCurrentOrder() const { return CurrentOrder; }
+    ETickFlagBits GetCurrentTick() const { return CurrentTick; }
 private:
-    CTickSystem() = default;
-private:
-    robin_hood::unordered_map<ETickOrder, std::vector<CTickable*>> TickablesMap;
+    robin_hood::unordered_map<ETickFlagBits, std::vector<CTickable*>> TickablesMap;
     std::vector<CTickable*> TickablesToAdd;
-    ETickOrder CurrentOrder;
+    ETickFlagBits CurrentTick;
 };
 
 }

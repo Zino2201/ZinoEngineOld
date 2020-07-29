@@ -94,7 +94,7 @@ public:
 		Parameters.insert({ InName, InParameter });
 	}
 
-    const SShaderParameter& GetParameterByName(const CString& InName) const
+    const SShaderParameter& GetParameterByName(const std::string& InName) const
 	{
 		return Parameters.find(InName)->second;
 	}
@@ -112,7 +112,7 @@ public:
 		return OutParameters;
 	}
 private:
-    robin_hood::unordered_map<CString, SShaderParameter> Parameters;
+    robin_hood::unordered_map<std::string, SShaderParameter> Parameters;
 };
 
 }

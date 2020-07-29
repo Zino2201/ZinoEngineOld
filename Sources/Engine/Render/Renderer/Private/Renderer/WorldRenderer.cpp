@@ -83,7 +83,7 @@ void CWorldRenderer::Prepare()
 			{
 				View.VisibleDynamicMeshes.emplace_back(std::move(Mesh));
 				// TEST!
-				View.VisibleDynamicMeshRenderPassFlags.emplace_back(ERenderPass::BasePass); 
+				View.VisibleDynamicMeshRenderPassFlags.emplace_back(ERenderPassFlagBits::BasePass); 
 				View.VisibleDynamicMeshProxies.emplace_back(Proxy);
 			}
 		}

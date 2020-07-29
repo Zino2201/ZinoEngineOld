@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include "Job.h"
+#include <thread>
 
 namespace ZE::JobSystem
 {
@@ -33,7 +34,7 @@ template<typename T, typename... Args>
 [[nodiscard]] const SJob& CreateJobUserdata(EJobType InType, 
 	const SJob::JobFunction& InJobFunc, Args&&... InArgs)
 {
-	static_assert(sizeof(T) < std::hardware_constructive_interference_size, "T is too big !");
+	static_assert(sizeof(T) <= SJob::UserdataSize, "Userdata is too big !");
 
 	const SJob& Job = CreateJob(InType, InJobFunc);
 	new (Job.GetUserdata<void*>()) T(std::forward<Args>(InArgs)...);
@@ -46,7 +47,7 @@ template<typename T, typename... Args>
 	const SJob::JobFunction& InJobFunc, 
 	const SJob& InParent, Args&&... InArgs)
 {
-	static_assert(sizeof(T) < std::hardware_constructive_interference_size, "T is too big !");
+	static_assert(sizeof(T) <= SJob::UserdataSize, "Userdata is too big !");
 
 	const SJob& Job = CreateJob(InType, InJobFunc, InParent);
 	new (Job.GetUserdata<void*>()) T(std::forward<Args>(InArgs)...);
@@ -91,5 +92,6 @@ ENGINECORE_API CWorkerThread& GetWorkerByIdx(const size_t& InIdx);
 ENGINECORE_API CWorkerThread& GetWorker();
 ENGINECORE_API size_t GetWorkerIdx();
 ENGINECORE_API size_t GetWorkerCount();
+FORCEINLINE size_t GetMainWorkerIdx() { return 0; }
 
 }

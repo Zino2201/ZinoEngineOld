@@ -48,7 +48,7 @@ public:
 	TConVar(const std::string& InName, 
 		const T& InDefaultValue,
 		const std::string& InHelp,
-		const EConVarFlags& InFlags = EConVarFlags::None) :
+		const EConVarFlags& InFlags = EConVarFlagBits::None) :
 		ConVar(CConsole::Get().EmplaceConVar(InName, InDefaultValue, InHelp, InFlags)) {}
 	
 	/**
@@ -59,7 +59,7 @@ public:
 		const std::string& InHelp, 
 		const T& InMin,
 		const T& InMax,
-		const EConVarFlags& InFlags = EConVarFlags::None) requires TIsValidConVarNumber<T> :
+		const EConVarFlags& InFlags = EConVarFlagBits::None) requires TIsValidConVarNumber<T> :
 		ConVar(CConsole::Get().EmplaceConVar(InName, InDefaultValue, InHelp, InFlags)) 
 	{
 		CConsole::Get().GetConVar(ConVar).SetMin(InMin);

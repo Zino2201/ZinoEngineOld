@@ -17,29 +17,27 @@ namespace ZE
 class CWindow;
 class CViewport;
 
-/**
- * Engine derived class for games
- */
-class CEngineGame : public CEngine
+class ENGINE_API CZEGameApp final : public CZinoEngineApp,
+	public CTickable
 {
 public:
-    ~CEngineGame();
+    CZEGameApp();
+	~CZEGameApp();
 
-    ENGINE_API virtual void Initialize() override;
-    ENGINE_API virtual void Tick(const float& InDeltaTime) override;
-    ENGINE_API virtual void Draw() override;
-    ENGINE_API void ProcessEvent(SDL_Event* InEvent) override;
-    ENGINE_API void Exit() override;
+	void Tick(const float& InDeltaTime) override;
     int OnWindowResized(SDL_Event* InEvent);
+protected:
+    void ProcessEvent(SDL_Event& InEvent) override;
+	void Draw() override;
 private:
-    void OnVsyncChanged(const int32_t& InData);
+	void OnVsyncChanged(const int32_t& InData);
 private:
-    std::unique_ptr<class CWorld> World;
-    CWindow* Window;
-    std::unique_ptr<CViewport> Viewport;
-    std::shared_ptr<class CStaticMesh> testSM;
-    std::unique_ptr<ZE::UI::CImGuiRender> ImGuiRenderer;
-    ImFont* Font;
+	std::unique_ptr<class CWorld> World;
+	std::unique_ptr<CWindow> Window;
+	std::unique_ptr<CViewport> Viewport;
+	std::shared_ptr<class CStaticMesh> testSM;
+	std::unique_ptr<ZE::UI::CImGuiRender> ImGuiRenderer;
+	ImFont* Font;
 };
 
 } /* namespace ZE */

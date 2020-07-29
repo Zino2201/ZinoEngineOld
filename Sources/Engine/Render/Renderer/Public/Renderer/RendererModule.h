@@ -22,15 +22,13 @@ struct SQuadVertex
 		const Math::SVector2f& InTexCoord) : Position(InPosition), TexCoord(InTexCoord) {}
 };
 
-class CRendererModule : public CModule
+class CRendererModule : public ZE::Module::CModule
 {
 public:
-	virtual ~CRendererModule();
+	RENDERER_API CRendererModule();
+	RENDERER_API virtual ~CRendererModule();
 
 	RENDERER_API static CRendererModule& Get();
-
-	RENDERER_API void Initialize() override;
-	RENDERER_API void Destroy() override;
 
 	RENDERER_API void CreateImGuiRenderer();
 

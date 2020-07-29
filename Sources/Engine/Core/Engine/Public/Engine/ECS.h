@@ -35,7 +35,7 @@ public:
     void Initialize();
 
 	std::vector<std::unique_ptr<ECS::IEntityComponentSystem>>& GetSystems() { return Systems; }
-    std::optional<std::vector<ECS::IEntityComponentSystem*>*> GetSystemsByOrder(ETickOrder InOrder)
+    std::optional<std::vector<ECS::IEntityComponentSystem*>*> GetSystemsByOrder(ETickFlagBits InOrder)
     {
         auto& Set = GroupMap.find(InOrder);
 
@@ -60,7 +60,7 @@ private:
     void OnModuleLoaded(const std::string_view& InName);
 private:
     std::vector<std::unique_ptr<ECS::IEntityComponentSystem>> Systems;
-    std::unordered_map<ETickOrder, std::vector<ECS::IEntityComponentSystem*>> GroupMap;
+    std::unordered_map<ETickFlagBits, std::vector<ECS::IEntityComponentSystem*>> GroupMap;
     std::unordered_set<Refl::CClass*> AddedSystems;
 };
 
@@ -175,7 +175,7 @@ public:
     /**
      * System group
      */
-    virtual ETickOrder GetOrder() const { return ETickOrder::StartOfFrame; }
+    virtual ETickFlagBits GetOrder() const { return ETickFlagBits::Variable; }
 };
 
 /**
@@ -198,17 +198,16 @@ public:
     ENGINE_API EntityID CreateEntity();
 
     /**
-     * Tick the components
-     */
-    ENGINE_API void Tick(const float& InDeltaTime) override;
-
-    /**
      * Add a new component
      * If a component of the same type already exists, it returns it
      */
     ENGINE_API SEntityComponent* AddComponent(
         const ECS::EntityID& InEntity,
         ZE::Refl::CStruct* InStruct);
+
+	ENGINE_API void Tick(const float& InDeltaTime) override;
+	ENGINE_API void FixedTick(const float& InDeltaTime) override;
+	ENGINE_API void LateTick(const float& InDeltaTime) override;
 
     template<typename T>
 	T* AddComponent(const ECS::EntityID& InEntity)
@@ -249,7 +248,6 @@ public:
      */
     ENGINE_API void AttachEntity(const EntityID& InEntity, const EntityID& InParent);
 
-    ETickOrder GetTickOrder() const override { return ETickOrder::All; }
     CWorld& GetWorld() { return World; }
     CEntity& GetEntityByID(const EntityID& InID) { return Entities.find(InID)->second; }
     auto& GetOnComponentAdded() { return OnComponentAdded; }

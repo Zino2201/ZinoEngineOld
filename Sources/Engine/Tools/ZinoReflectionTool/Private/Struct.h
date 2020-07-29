@@ -8,11 +8,12 @@
  */
 enum class EPropertyFlags
 {
-	None = 1 << 0,
-	Constexpr = 1 << 1,
-	Const = 1 << 2,
-	Mutable = 1 << 3,
-	Volatile = 1 << 4
+	None = 0,
+
+	Constexpr = 1 << 0,
+	Const = 1 << 1,
+	Mutable = 1 << 2,
+	Volatile = 1 << 3
 };
 DECLARE_FLAG_ENUM(EPropertyFlags);
 

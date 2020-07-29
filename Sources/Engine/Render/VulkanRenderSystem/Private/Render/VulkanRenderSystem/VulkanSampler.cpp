@@ -23,7 +23,7 @@ CVulkanSampler::CVulkanSampler(CVulkanDevice& InDevice,
 			InSamplerCreateInfo.MinLOD,
 			InSamplerCreateInfo.MaxLOD)).value;
 	if(!Sampler)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan sampler");
+		ZE::Logger::Fatal("Failed to create Vulkan sampler");
 }
 
 CVulkanSampler::~CVulkanSampler()

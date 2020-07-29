@@ -3,6 +3,6 @@
 namespace ZE
 {
 
-DEFINE_MODULE(CDefaultModule, ShaderCore);
+DEFINE_MODULE(ZE::Module::CDefaultModule, ShaderCore);
 
 }

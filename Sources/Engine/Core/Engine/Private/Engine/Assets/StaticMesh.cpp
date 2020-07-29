@@ -5,8 +5,6 @@
 namespace ZE
 {
 
-DECLARE_LOG_CATEGORY(StaticMesh);
-
 CStaticMeshRenderData::CStaticMeshRenderData(CStaticMesh* InStaticMesh) : StaticMesh(InStaticMesh) 
 {
 	const std::vector<SStaticMeshVertex>& Vertices = StaticMesh->Vertices;
@@ -15,11 +13,12 @@ CStaticMeshRenderData::CStaticMeshRenderData(CStaticMesh* InStaticMesh) : Static
 	IndexFormat = EIndexFormat::Uint32;
 
 	VertexBuffer = GRenderSystem->CreateBuffer({
-		ERSBufferUsage::VertexBuffer,
+		ERSBufferUsageFlagBits::VertexBuffer,
 		ERSMemoryUsage::DeviceLocal,
+		ERSMemoryHintFlagBits::None,
 		Vertices.size() * sizeof(Vertices.front()) });
 	if(!VertexBuffer)
-		LOG(ELogSeverity::Fatal, StaticMesh, "Failed to create a vertex buffer");
+		ZE::Logger::Error("Failed to create a vertex buffer");
 
 	VertexBuffer->SetName("StaticMesh VertexBuffer");
 	RSUtils::Copy(Vertices.data(), VertexBuffer.get());
@@ -28,11 +27,12 @@ CStaticMeshRenderData::CStaticMeshRenderData(CStaticMesh* InStaticMesh) : Static
 		sizeof(uint32_t);
 
 	IndexBuffer = GRenderSystem->CreateBuffer({
-		ERSBufferUsage::IndexBuffer,
+		ERSBufferUsageFlagBits::IndexBuffer,
 		ERSMemoryUsage::DeviceLocal,
+		ERSMemoryHintFlagBits::None,
 		Indices.size() * sizeof(Indices.front()) });
 	if (!IndexBuffer)
-		LOG(ELogSeverity::Fatal, StaticMesh, "Failed to create a index buffer");
+		ZE::Logger::Error("Failed to create a index buffer");
 	
 	IndexBuffer->SetName("StaticMesh IndexBuffer");
 	RSUtils::Copy(Indices.data(), IndexBuffer.get());

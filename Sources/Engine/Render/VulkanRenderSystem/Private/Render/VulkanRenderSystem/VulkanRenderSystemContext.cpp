@@ -19,18 +19,18 @@ CVulkanCommandBufferManager::CVulkanCommandBufferManager(CVulkanDevice& InDevice
 				vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
 		Device.GetGraphicsQueue()->GetFamilyIndex())).value;
 	if(!CommandPool)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create command pool");
+		ZE::Logger::Error("Failed to create command pool");
 
 	/**
 	 * Allocate 2 command buffers
 	 */
 	MemoryCmdBuffer = std::make_unique<CVulkanCommandBuffer>(Device, *CommandPool, false);
 	if(!MemoryCmdBuffer)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to allocate memory command buffer");
+		ZE::Logger::Fatal("Failed to allocate memory command buffer");
 
 	GraphicsCmdBuffer = std::make_unique<CVulkanCommandBuffer>(Device, *CommandPool, false);
 	if (!GraphicsCmdBuffer)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to allocate graphics command buffer");
+		ZE::Logger::Fatal("Failed to allocate graphics command buffer");
 }
 
 CVulkanCommandBufferManager::~CVulkanCommandBufferManager() {}
@@ -325,7 +325,7 @@ void CVulkanRenderSystemContext::SetShaderTexture(const uint32_t& InSet, const u
 
 	vk::ImageLayout ImgLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
-	if(HAS_FLAG(Texture->GetCreateInfo().Usage, ERSTextureUsage::DepthStencil))
+	if(Texture->GetCreateInfo().Usage & ERSTextureUsageFlagBits::DepthStencil)
 	{
 		ImgLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
 	}

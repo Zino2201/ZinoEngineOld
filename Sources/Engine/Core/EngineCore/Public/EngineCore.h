@@ -22,7 +22,7 @@
 /** Memory */
 #include "Memory/SmartPointers.h"
 
-#include "Logger.h"
+#include "Logger/Logger.h"
 
 /** Macros */
 #define SDL_MAIN_HANDLED
@@ -52,12 +52,11 @@
 #endif /** _MSC_VER */
 
 /** Assertions */
+#define must(condition) if(!(condition)) { ZE::Logger::Fatal("Assertion failed: {}", #condition); }
 #ifdef _DEBUG
 #define verify(condition) if(!(condition)) __debugbreak()
-#define must(condition) if(!(condition)) { __debugbreak(); exit(-1); }
 #else
 #define verify(condition)
-#define must(condition) if(!(condition)) { LOG(ELogSeverity::Fatal, "Assertion failed: %s", #condition); }
 #endif
 
 #define CONCAT_(x,y) x##y
@@ -98,14 +97,6 @@ enum class ESampleCount
 	Sample64 = 1 << 6
 };
 
-#define DECLARE_FLAG_ENUM(EnumType) \
-	inline EnumType operator~ (EnumType a) { return (EnumType)~(std::underlying_type<EnumType>::type)a; } \
-	inline EnumType operator| (EnumType a, EnumType b) { return (EnumType)((std::underlying_type<EnumType>::type)a | (std::underlying_type<EnumType>::type)b); } \
-	inline EnumType operator& (EnumType a, EnumType b) { return (EnumType)((std::underlying_type<EnumType>::type)a & (std::underlying_type<EnumType>::type)b); } \
-	inline EnumType operator^ (EnumType a, EnumType b) { return (EnumType)((std::underlying_type<EnumType>::type)a ^ (std::underlying_type<EnumType>::type)b); } \
-	inline EnumType& operator|= (EnumType& a, EnumType b) { return (EnumType&)((std::underlying_type<EnumType>::type&)a |= (std::underlying_type<EnumType>::type)b); } \
-	inline EnumType& operator&= (EnumType& a, EnumType b) { return (EnumType&)((std::underlying_type<EnumType>::type&)a &= (std::underlying_type<EnumType>::type)b); } \
-	inline EnumType& operator^= (EnumType& a, EnumType b) { return (EnumType&)((std::underlying_type<EnumType>::type&)a ^= (std::underlying_type<EnumType>::type)b); }
 #define HAS_FLAG(Enum, Other) (Enum & Other) == Other
 #define HASN_FLAG(Enum, Other) !(HAS_FLAG(Enum, Other))
 

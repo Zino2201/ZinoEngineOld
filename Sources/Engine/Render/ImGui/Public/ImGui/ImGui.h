@@ -6,11 +6,11 @@
 namespace ZE::UI
 {
 
-class IMGUI_API CImGuiModule : public CModule
+class IMGUI_API CImGuiModule : public ZE::Module::CModule
 {
 public:
-	void Initialize() override;
-	void Destroy() override;
+	CImGuiModule();
+	~CImGuiModule();
 };
 
 struct SImGuiAutoStyleColor

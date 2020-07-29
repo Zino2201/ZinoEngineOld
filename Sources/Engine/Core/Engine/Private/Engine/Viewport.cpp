@@ -14,7 +14,7 @@ CViewport::CViewport(void* InWindowHandle, const uint32_t& InWidth,
 		WindowHandle, Width,
 		Height, bInVSync});
 	if (!Surface)
-		LOG(ELogSeverity::Fatal, Viewport, "Failed to create viewport");
+		ZE::Logger::Fatal("Failed to create viewport");
 }
 
 bool CViewport::Begin()
@@ -42,7 +42,7 @@ void CViewport::SetVSync(const bool& bInVSync)
 		WindowHandle, Width,
 		Height, bInVSync });
 	if (!Surface)
-		LOG(ELogSeverity::Fatal, Viewport, "Failed to create viewport");
+		ZE::Logger::Fatal("Failed to create viewport");
 }
 
 } /* namespace ZE */

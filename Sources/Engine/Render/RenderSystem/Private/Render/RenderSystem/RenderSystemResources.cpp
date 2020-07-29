@@ -6,7 +6,7 @@
 namespace ZE
 {
 
-DEFINE_MODULE(CDefaultModule, RenderSystem)
+DEFINE_MODULE(ZE::Module::CDefaultModule, RenderSystem)
 
 RENDERSYSTEM_API extern IRenderSystem* GRenderSystem = nullptr;
 RENDERSYSTEM_API extern IRenderSystemContext* GRSContext = nullptr;

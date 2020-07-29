@@ -41,7 +41,7 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice& InDevice,
 
 	if(!Device.GetPhysicalDevice().getSurfaceSupportKHR(
 		Device.GetPresentQueue()->GetFamilyIndex(), Surface).value)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Selected present queue doesn't support presentation !");
+		ZE::Logger::Fatal("Selected present queue doesn't support presentation !");
 
 	/**
 	 * Create swapchain handle
@@ -66,7 +66,7 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice& InDevice,
 		InOldSwapchain);
 	Swapchain = Device.GetDevice().createSwapchainKHRUnique(CreateInfos).value;
 	if (!Swapchain)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create swap chain");
+		ZE::Logger::Fatal("Failed to create swap chain");
 
 	/** Get swapchain images */
 	Images = Device.GetDevice().getSwapchainImagesKHR(*Swapchain).value;
@@ -78,7 +78,7 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice& InDevice,
 	{
 		ImageViews[i] = new CVulkanTexture(Device, {
 			ERSTextureType::Tex2D,
-			ERSTextureUsage::RenderTarget,
+			ERSTextureUsageFlagBits::RenderTarget,
 			ERSMemoryUsage::DeviceLocal,
 			VulkanUtil::VkFormatToFormat(SurfaceFormat.format),
 			Width,
@@ -90,7 +90,7 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice& InDevice,
 			Images[i]);
 
 		if(!ImageViews[i])
-			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create swap chain image view for image %i", i);
+			ZE::Logger::Fatal("Failed to create swap chain image view for image {}", i);
 
 		ImageViews[i]->SetName("Swapchain Backbuffer");
 	}
@@ -101,11 +101,11 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice& InDevice,
 
 		ImageAcquired = Device.GetDevice().createSemaphoreUnique(CreateInfo).value;
 		if (!ImageAcquired)
-			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image acquired semaphore");
+			ZE::Logger::Fatal("Failed to create image acquired semaphore");
 
 		RenderFinished = Device.GetDevice().createSemaphoreUnique(CreateInfo).value;
 		if (!RenderFinished)
-			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create render finished semaphore");
+			ZE::Logger::Fatal("Failed to create render finished semaphore");
 	}
 }
 

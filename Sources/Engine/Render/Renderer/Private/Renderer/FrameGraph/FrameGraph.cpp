@@ -23,15 +23,14 @@ bool CFrameGraph::ValidateRenderPass(const CRenderPass& InRenderPass)
 	 */
 	for(const auto& Texture : InRenderPass.Textures)
 	{
-		if(HAS_FLAG(Texture.TextureInfos.Usage, ERSTextureUsage::RenderTarget) ||
-			HAS_FLAG(Texture.TextureInfos.Usage, ERSTextureUsage::DepthStencil))
+		if(Texture.TextureInfos.Usage & ERSTextureUsageFlagBits::RenderTarget ||
+			Texture.TextureInfos.Usage & ERSTextureUsageFlagBits::DepthStencil)
 		{
 		
 		}
 		else
 		{
-			LOG(ELogSeverity::Error, FrameGraph,
-				"Invalid usage flags for texture %d inside render pass %s",
+			ZE::Logger::Error("Invalid usage flags for texture {} inside render pass {}",
 				Texture.ID,
 				InRenderPass.Name.c_str());
 		}
@@ -154,7 +153,7 @@ void CFrameGraph::BuildPhysicalRenderPass(CRenderPass& InRenderPass)
 		/**
 		 * Determine layout based on texture usage
 		 */
-		if (HAS_FLAG(Texture.TextureInfos.Usage, ERSTextureUsage::RenderTarget))
+		if (Texture.TextureInfos.Usage & ERSTextureUsageFlagBits::RenderTarget)
 		{
 			Attachment.InitialLayout = TextureLastLayout.count(Texture.ID) ?
 				TextureLastLayout[Texture.ID] : ERSRenderPassAttachmentLayout::Undefined;
@@ -231,8 +230,7 @@ bool CFrameGraph::Compile()
 	{
 		if(!ValidateRenderPass(*RenderPass.get()))
 		{
-			LOG(ELogSeverity::Fatal, FrameGraph, 
-				"Validation of render pass %s failed ! Frame will be skipped !",
+			ZE::Logger::Error("Validation of render pass {} failed ! Frame will be skipped !",
 				RenderPass->Name.c_str());
 			return false;
 		}
@@ -273,7 +271,7 @@ void CFrameGraph::Execute()
 			CRSTexture* Tex = TextureResourceMap[TextureID].get();
 			auto& Resource = ResourceMap[TextureID];
 
-			if (HAS_FLAG(Resource.TextureInfos.Usage, ERSTextureUsage::DepthStencil))
+			if (Resource.TextureInfos.Usage & ERSTextureUsageFlagBits::DepthStencil)
 			{
 				Framebuffer.DepthRTs[DIdx++] = Tex;
 			}
@@ -307,7 +305,7 @@ SRenderPassResource& CFrameGraph::CreateResource(ERenderPassResourceType InType)
 ERSRenderPassAttachmentLayout CFrameGraph::TexLayoutToRSLayout(
 	const SRenderPassTextureInfos& InInfos, ERenderPassResourceLayout InLayout) const
 {
-	bool bIsDepthStencil = HAS_FLAG(InInfos.Usage, ERSTextureUsage::DepthStencil);
+	bool bIsDepthStencil = (InInfos.Usage & ERSTextureUsageFlagBits::DepthStencil) != ERSTextureUsageFlags(0);
 
 	switch(InLayout)
 	{

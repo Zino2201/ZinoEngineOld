@@ -78,8 +78,7 @@ void CRenderableComponentSystem::CreateProxy(ECS::CEntityManager& InEntityManage
 	else
 	{
 		must(false);
-		LOG(ELogSeverity::Error, Engine, 
-			"Error! You must add a Transform Component to entity ID %d to render things.",
+		ZE::Logger::Error("Error! You must add a Transform Component to entity ID {} to render things.",
 			InEntityID);
 	}
 }

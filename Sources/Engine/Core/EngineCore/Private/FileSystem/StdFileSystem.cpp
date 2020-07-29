@@ -3,8 +3,6 @@
 namespace ZE::FileSystem
 {
 
-DECLARE_LOG_CATEGORY(StdFileSystem);
-
 /** File */
 CStdFile::CStdFile(const std::string_view& InPath,
 	const bool& bInIsReading,
@@ -25,7 +23,8 @@ CStdFile::CStdFile(const std::string_view& InPath,
 	if(!Stream.is_open())
 	{
 		char ErrBuf[512];
-		LOG(ELogSeverity::Error, StdFileSystem, "%s", strerror_s(ErrBuf, errno));
+		UNUSED_VARIABLE(ErrBuf);
+		ZE::Logger::Error("{}", strerror_s(ErrBuf, errno));
 		return;
 	}
 
@@ -65,7 +64,7 @@ CStdFileSystem::CStdFileSystem(const std::string& InAlias,
 	const uint8_t& InPriority, const std::string& InPath) : IFileSystem(InAlias,
 		InPriority), Root(InPath)
 {
-	LOG(ELogSeverity::Debug, StdFileSystem, "New std file system: %s", InPath.c_str());
+	ZE::Logger::Verbose("New std file system: {}", InPath.c_str());
 }
 
 TOwnerPtr<IFile> CStdFileSystem::Read(const std::string_view& InPath, const bool& bIsBinary)
@@ -75,7 +74,7 @@ TOwnerPtr<IFile> CStdFileSystem::Read(const std::string_view& InPath, const bool
 	TOwnerPtr<CStdFile> File = new CStdFile(Path.string(), true, bIsBinary);
 	if (!File->GetStream().is_open())
 	{
-		LOG(ELogSeverity::Error, StdFileSystem, "Failed to open file %s",
+		ZE::Logger::Error("Failed to open file {}",
 			InPath.data());
 		delete File;
 		File = nullptr;
@@ -91,7 +90,7 @@ TOwnerPtr<IFile> CStdFileSystem::Write(const std::string_view& InPath, const boo
 	TOwnerPtr<CStdFile> File = new CStdFile(Path.string(), false, bIsBinary);
 	if(!File->GetStream().is_open())
 	{
-		LOG(ELogSeverity::Error, StdFileSystem, "Failed to open file %s", 
+		ZE::Logger::Error("Failed to open file {}", 
 			InPath.data());
 		delete File;
 		File = nullptr;

@@ -9,9 +9,9 @@ void ScheduleJob(const SJob& InJob)
 {
 	if(InJob.Type != EJobType::Lightweight)
 	{
-		/** Wake a sleeping worker */
 		GetWorker().GetJobQueue().Push(&InJob);	
 
+		/** Wake all workers */
 		CWorkerThread::GetSleepConditionVariable().notify_one();
 	}
 	else

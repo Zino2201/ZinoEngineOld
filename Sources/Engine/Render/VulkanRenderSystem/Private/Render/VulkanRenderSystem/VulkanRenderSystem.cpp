@@ -9,7 +9,7 @@
 #include <set>
 #include <assert.h>
 
-DEFINE_MODULE(CDefaultModule, VulkanRenderSystem)
+DEFINE_MODULE(ZE::Module::CDefaultModule, VulkanRenderSystem)
 
 extern class CVulkanRenderSystem* GVulkanRenderSystem = nullptr;
 extern class CVulkanRenderSystemContext* GRenderSystemContext = nullptr;
@@ -26,15 +26,16 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 	switch (InSeverity)
 	{
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+		ZE::Logger::Info(InCallbackData->pMessage);
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-		LOG(ELogSeverity::Debug, VulkanRS, InCallbackData->pMessage);
+		ZE::Logger::Verbose(InCallbackData->pMessage);
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-		LOG(ELogSeverity::Warn, VulkanRS, InCallbackData->pMessage);
+		ZE::Logger::Warn(InCallbackData->pMessage);
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-		LOG(ELogSeverity::Fatal, VulkanRS, InCallbackData->pMessage);
+		ZE::Logger::Fatal(InCallbackData->pMessage);
 		__debugbreak();
 		return VK_TRUE;
 	}
@@ -90,12 +91,12 @@ void CVulkanRenderSystem::Initialize()
 		vk::ApplicationInfo ApplicationInfos(nullptr,
 			0, nullptr, 0, VK_API_VERSION_1_1);
 
-		LOG(ELogSeverity::Info, VulkanRS, "Validation layers: %s",
+		ZE::Logger::Info("Validation layers: {}",
 			GVulkanEnableValidationLayers ? "Yes": "No");
 
 		if constexpr(GVulkanEnableValidationLayers)
 		{
-			LOG(ELogSeverity::Warn, VulkanRS, "Validation layers are enabled! Except bad performances !");
+			ZE::Logger::Warn("Validation layers are enabled! Except bad performances !");
 		}
 
 		/** Get required extensions */
@@ -106,7 +107,7 @@ void CVulkanRenderSystem::Initialize()
 			vk::enumerateInstanceExtensionProperties().value;
 
 		/** Check if required extensions are supported */
-		LOG(ELogSeverity::Debug, VulkanRS, "--- Extensions ---");
+		ZE::Logger::Verbose("--- Vulkan Extensions ---");
 		int FoundExtensionCount = 0;
 		for (const char* RequiredExtension : RequiredExtensions)
 		{
@@ -115,8 +116,7 @@ void CVulkanRenderSystem::Initialize()
 			for (const vk::ExtensionProperties& Extension : SupportedExtensions)
 			{
 				if (FoundExtensionCount == 0)
-					LOG(ELogSeverity::Debug, VulkanRS,
-						"- %s", Extension.extensionName);
+					ZE::Logger::Verbose("- {}", Extension.extensionName);
 
 				if (strcmp(Extension.extensionName, RequiredExtension) == 0)
 				{
@@ -132,15 +132,13 @@ void CVulkanRenderSystem::Initialize()
 
 		if (FoundExtensionCount < RequiredExtensions.size())
 		{
-			LOG(ELogSeverity::Fatal, VulkanRS,
-				"This system doesn't support required extensions (%d found, %d required)",
+			ZE::Logger::Fatal("This system doesn't support required Vulkan extensions ({} found, {} required)",
 				FoundExtensionCount,
 				RequiredExtensions.size());
 		}
 		else
 		{
-			LOG(ELogSeverity::Info, VulkanRS,
-				"Found all required extensions!");
+			ZE::Logger::Info("Found all required Vulkan extensions!");
 		}
 
 		vk::InstanceCreateInfo CreateInfos(
@@ -152,7 +150,7 @@ void CVulkanRenderSystem::Initialize()
 			RequiredExtensions.data());
 		auto [Result, InstanceHandle] = vk::createInstance(CreateInfos);
 		if (Result != vk::Result::eSuccess)
-			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan instance: %s",
+			ZE::Logger::Fatal("Failed to create Vulkan instance: {}",
 				vk::to_string(Result).c_str());
 		Instance.reset(InstanceHandle);
 	}
@@ -162,7 +160,6 @@ void CVulkanRenderSystem::Initialize()
 	{
 		vk::DebugUtilsMessengerCreateInfoEXT CreateInfos(
 			vk::DebugUtilsMessengerCreateFlagsEXT(),
-			vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo |
 			vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
 			vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
 			vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
@@ -191,8 +188,7 @@ void CVulkanRenderSystem::Initialize()
 		}
 
 		if (!PhysicalDevice)
-			LOG(ELogSeverity::Fatal, VulkanRS, 
-				"Failed to find a Vulkan compatible GPU.");
+			ZE::Logger::Fatal("Failed to find a Vulkan compatible GPU.");
 
 		Device = std::make_unique<CVulkanDevice>(PhysicalDevice);
 		GRenderSystemContext = Device->GetContext();

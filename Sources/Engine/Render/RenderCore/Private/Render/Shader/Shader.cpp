@@ -2,8 +2,6 @@
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/RenderSystem/Resources/Shader.h"
 
-DECLARE_LOG_CATEGORY(Shader);
-
 namespace ZE
 {
 
@@ -31,7 +29,7 @@ CShader::CShader(const CShaderType* InShaderType, const SShaderCompilerOutput& I
 		InOutput.Bytecode.data(),
 		InOutput.ReflectionData.ParameterMap });
 	if(!Shader)
-		LOG(ELogSeverity::Error, Shader, "Failed to create RS shader");
+		ZE::Logger::Error("Failed to create RS shader");
 }
 
 CShader::~CShader() = default;

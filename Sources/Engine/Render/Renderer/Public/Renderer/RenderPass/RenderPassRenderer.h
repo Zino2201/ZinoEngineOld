@@ -26,7 +26,7 @@ public:
 	/**
 	 * Prepare drawcalls (parallel)
 	 */
-	void PrepareDrawcalls(SWorldView& InView, const ERenderPass& InRenderPass,
+	void PrepareDrawcalls(SWorldView& InView, const ERenderPassFlagBits& InRenderPass,
 		CRenderPassDrawcallFactory& InDrawcallFactory);
 	void Draw(IRenderSystemContext& InContext) const;
 private:

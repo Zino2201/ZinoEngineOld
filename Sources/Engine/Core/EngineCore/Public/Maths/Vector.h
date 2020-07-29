@@ -17,6 +17,17 @@ struct TVector2
 	TVector2() : X(0), Y(0) {}
 	TVector2(const T& InX) : X(InX), Y(InX) {}
 	TVector2(const T& InX, const T& InY) : X(InX), Y(InY) {}
+
+	bool operator==(const TVector2& InOther) const
+	{
+		return X == InOther.X && Y == InOther.Y;
+	}
+
+	bool operator!=(const TVector2& InOther) const
+	{
+		return X != InOther.X ||
+			Y != InOther.Y;
+	}
 };
 
 using SVector2f = TVector2<float>;

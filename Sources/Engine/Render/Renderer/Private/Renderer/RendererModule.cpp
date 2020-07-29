@@ -25,41 +25,40 @@ const std::array<uint16_t, 6> QuadIndices =
 	 2, 3, 0
 };
 
-CRendererModule::~CRendererModule() = default;
-
-
-CRendererModule& CRendererModule::Get()
-{
-	static CRendererModule& Module = *CModuleManager::LoadModule<CRendererModule>("Renderer");
-	return Module;
-}
-
-void CRendererModule::Initialize()
+CRendererModule::CRendererModule()
 {
 	QuadVBuffer = GRenderSystem->CreateBuffer({
-		ERSBufferUsage::VertexBuffer,
+		ERSBufferUsageFlagBits::VertexBuffer,
 		ERSMemoryUsage::DeviceLocal,
+		ERSMemoryHintFlagBits::None,
 		QuadVertices.size() * sizeof(QuadVertices.front()) });
 
 	QuadIBuffer = GRenderSystem->CreateBuffer({
-		ERSBufferUsage::IndexBuffer,
+		ERSBufferUsageFlagBits::IndexBuffer,
 		ERSMemoryUsage::DeviceLocal,
+		ERSMemoryHintFlagBits::None,
 		QuadIndices.size() * sizeof(QuadIndices.front()) });
-	
+
 	RSUtils::Copy(QuadVertices.data(), QuadVBuffer.get());
 	RSUtils::Copy(QuadIndices.data(), QuadIBuffer.get());
+}
+
+CRendererModule::~CRendererModule() 
+{
+	QuadVBuffer.reset();
+	QuadIBuffer.reset();
+	CRenderPassPersistentResourceManager::Get().Destroy();
+}
+
+CRendererModule& CRendererModule::Get()
+{
+	static CRendererModule& Module = *ZE::Module::LoadModule<CRendererModule>("Renderer");
+	return Module;
 }
 
 void CRendererModule::CreateImGuiRenderer()
 {
 	ImGuiRenderer = std::make_unique<UI::CImGuiRender>();
-}
-
-void CRendererModule::Destroy()
-{
-	QuadVBuffer.reset();
-	QuadIBuffer.reset();
-	CRenderPassPersistentResourceManager::Get().Destroy();
 }
 
 void CRendererModule::EnqueueView(const SWorldView& InView)

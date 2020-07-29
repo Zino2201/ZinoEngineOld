@@ -4,7 +4,7 @@
 #include "Reflection/Class.h"
 #include "Reflection/Builders.h"
 
-DEFINE_MODULE(ZE::CDefaultModule, Reflection);
+DEFINE_MODULE(ZE::Module::CDefaultModule, Reflection);
 
 namespace ZE::Refl
 {

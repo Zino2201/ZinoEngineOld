@@ -1,14 +1,8 @@
 #include "Threading/JobSystem/JobSystem.h"
 #include "Threading/JobSystem/WorkerThread.h"
 #include "Threading/JobSystem/Job.h"
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#include "Threading/Thread.h"
 #include <sstream>
-#endif
-
-DECLARE_LOG_CATEGORY(JobSystem);
-
 namespace ZE::JobSystem
 {
 
@@ -46,9 +40,8 @@ void Initialize()
 	uint32_t WorkerThreadCount = std::max<uint32_t>(1, NumCores);
 	WorkerCount = WorkerThreadCount;
 	
-	LOG(ZE::ELogSeverity::Info, JobSystem, 
-		"%d hardware cores detected, spawning %d workers (engine limit: %d) + 1 partial (main thread)", 
-		NumCores, WorkerThreadCount - 1, Workers.size());
+	ZE::Logger::Info("{} hardware cores detected, spawning {} workers", 
+		NumCores, WorkerThreadCount - 1);
 
 	/** Add main thread */
 	InitThreadLocalIdx();
@@ -65,12 +58,9 @@ void Initialize()
 				auto& Worker = GetWorker();
 
 				/** Set a name to this thread */
-#ifdef _WIN32
-				HANDLE ThreadHandle = reinterpret_cast<HANDLE>(Worker.GetThread().native_handle());
-				std::wstringstream Name;
-				Name << "ZE WorkerThread " << i;
-				must(SUCCEEDED(SetThreadDescription(ThreadHandle, Name.str().c_str())));
-#endif
+				std::stringstream Name;
+				Name << "Worker Thread " << i;
+				ZE::Threading::SetThreadName(Name.str());
 
 				while(Worker.IsActive())
 				{

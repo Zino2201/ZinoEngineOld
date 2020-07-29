@@ -26,18 +26,18 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice& InDevice,
 		vk::ImageUsageFlags UsageFlags =
 			vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst;
 
-		if (HAS_FLAG(InCreateInfo.Usage, ERSTextureUsage::Sampled))
+		if (InCreateInfo.Usage & ERSTextureUsageFlagBits::Sampled)
 		{
 			UsageFlags |= vk::ImageUsageFlagBits::eSampled;
 		}
 
-		if (HAS_FLAG(InCreateInfo.Usage, ERSTextureUsage::RenderTarget))
+		if (InCreateInfo.Usage & ERSTextureUsageFlagBits::RenderTarget)
 		{
 			UsageFlags |= vk::ImageUsageFlagBits::eColorAttachment;
 			UsageFlags |= vk::ImageUsageFlagBits::eInputAttachment;
 		}
 
-		if (HAS_FLAG(InCreateInfo.Usage, ERSTextureUsage::DepthStencil))
+		if (InCreateInfo.Usage & ERSTextureUsageFlagBits::DepthStencil)
 		{
 			UsageFlags |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
 			UsageFlags |= vk::ImageUsageFlagBits::eInputAttachment;
@@ -86,7 +86,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice& InDevice,
 			if(Res == VK_ERROR_EXTENSION_NOT_PRESENT)
 				ErrorMsg = "No memory type meeting all requirements has been found";
 
-			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan image: %s", ErrorMsg);
+			ZE::Logger::Fatal("Failed to create Vulkan image: {}", ErrorMsg);
 		}
 	}
 
@@ -119,7 +119,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice& InDevice,
 			nullptr,
 			&ImageView);
 		if (!ImageView)
-			LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image view: %s",
+			ZE::Logger::Fatal("Failed to create image view: {}",
 				vk::to_string(ResView).c_str());
 	}
 }
@@ -159,7 +159,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice& InDevice,
 		nullptr,
 		&ImageView);
 	if (!ImageView)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create image view: %s",
+		ZE::Logger::Fatal("Failed to create image view: {}",
 			vk::to_string(ResView).c_str());
 }
 
@@ -369,7 +369,7 @@ void CVulkanTexture::TransitionImageLayout(const vk::ImageLayout& InOldLayout,
 	}
 	else
 	{
-		LOG(ELogSeverity::Fatal, VulkanRS, "Unsupported transition layout");
+		ZE::Logger::Fatal("Unsupported transition layout");
 	}
 
 	CmdBuffer.pipelineBarrier(

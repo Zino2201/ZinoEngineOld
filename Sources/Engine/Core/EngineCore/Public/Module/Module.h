@@ -2,36 +2,35 @@
 
 #include <string>
 #include "NonCopyable.h"
-#include <unordered_map>
+#include <robin_hood.h>
 #include <functional>
 #include "ModuleManager.h"
 
-namespace ZE
+namespace ZE::Module
 {
 
-typedef class CModule*(*PFN_InstantiateModule)();
+using InstantiateModuleFunc = CModule*();
+using PFN_InstantiateModuleFunc = CModule*(*)();
 
 /**
  * Module interface
  */
 class ENGINECORE_API CModule : public CNonCopyable
 {
-    friend class CModuleManager;
-
 public:
     virtual ~CModule() = default;
 
-    virtual void Initialize();
-    virtual void Destroy() {}
     const std::string& GetName() const { return Name; }
     void SetName(const char* InName) { Name = InName; }
     void* GetHandle() const { return Handle; }
 
     /** Used for monolithic builds */
-    inline static std::unordered_map<std::string, std::function<CModule*()>> InstantiateModuleFuncs;
+    inline static robin_hood::unordered_map<std::string_view, 
+        std::function<InstantiateModuleFunc>> InstantiateModuleFuncs;
+public:
+    void* Handle;
 private:
     std::string Name;
-    void* Handle;
 };
 
 /**
@@ -45,25 +44,25 @@ constexpr const char* GInstantiateModuleFuncName = "InstantiateModule";
 
 struct SMonolithicRegister
 {
-    SMonolithicRegister(const char* InName, PFN_InstantiateModule InInstantiateFunc)
+    SMonolithicRegister(const char* InName, InstantiateModuleFunc InInstantiateFunc)
     {
         CModule::InstantiateModuleFuncs.insert({InName, InInstantiateFunc});
     }
 };
 
 #define DEFINE_MODULE(Class, Name) \
-    ZE::CModule* InstantiateModule_##Name() \
+    ZE::Module::CModule* InstantiateModule_##Name() \
     { \
-        ZE::CModule* Module = new Class;\
+        ZE::Module::CModule* Module = new Class;\
         Module->SetName(#Name); \
         return Module; \
     } \
-    static ZE::SMonolithicRegister ModuleAutoInit##Name(#Name, &InstantiateModule_##Name);
+    static ZE::Module::SMonolithicRegister ModuleAutoInit##Name(#Name, &InstantiateModule_##Name);
 #else
 #define DEFINE_MODULE(Class, Name) \
-    extern "C" __declspec(dllexport) ZE::CModule* InstantiateModule_##Name() \
+    extern "C" __declspec(dllexport) ZE::Module::CModule* InstantiateModule_##Name() \
     { \
-        ZE::CModule* Module = new Class;\
+        ZE::Module::CModule* Module = new Class;\
         Module->SetName(#Name); \
         return Module; \
     }

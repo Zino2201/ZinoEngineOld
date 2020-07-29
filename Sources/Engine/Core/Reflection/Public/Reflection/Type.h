@@ -34,7 +34,7 @@ public:
         bool bDoesTypeExist = Get(InName);
         must(!bDoesTypeExist); // Duplicated type
         if(bDoesTypeExist)
-            LOG(ELogSeverity::Fatal, None, "Error! Type %s (%d) is already registered",
+            ZE::Logger::Fatal("Error! Type {} ({}) is already registered",
                 InName, InSize);
 
         T* Type = new T(InName, InSize);

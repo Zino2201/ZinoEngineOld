@@ -5,14 +5,14 @@ DEFINE_MODULE(ZE::UI::CImGuiModule, ImGui);
 namespace ZE::UI
 {
 
-void CImGuiModule::Initialize()
+CImGuiModule::CImGuiModule() 
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 }
 
-void CImGuiModule::Destroy()
+CImGuiModule::~CImGuiModule()
 {
 	ImGui::DestroyContext();
 }

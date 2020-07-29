@@ -85,15 +85,19 @@ TOwnerPtr<IFile> Write(const std::string_view& InPath,
 	{
 		if(InFS->Exists(InPath))
 		{
-			if (HASN_FLAG(InWriteFlags, EFileWriteFlags::ReplaceExisting))
+			if (!(InWriteFlags & EFileWriteFlagBits::ReplaceExisting))
 			{
-				LOG(ELogSeverity::Error, ZFS, "Can't write to file %s: file already exists",
+				ZE::Logger::Error("Can't write to file {}: file already exists",
 					InPath.data());
 				return nullptr;
 			}
 		}
 
-		return InFS->Write(InPath, HAS_FLAG(InWriteFlags, EFileWriteFlags::Binary));
+		bool bIsBinary = false;
+		if(InWriteFlags & EFileWriteFlagBits::Binary)
+			bIsBinary = true;
+
+		return InFS->Write(InPath, bIsBinary);
 	});
 }
 

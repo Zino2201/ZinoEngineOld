@@ -87,7 +87,7 @@ void CClusteredForwardRenderingPath::Draw(const SWorldView& InView)
 		ColorInfos.Format = InView.TargetRT->GetCreateInfo().Format;
 		ColorInfos.Width = InView.TargetRT->GetCreateInfo().Width;
 		ColorInfos.Height = InView.TargetRT->GetCreateInfo().Height;
-		ColorInfos.Usage = ERSTextureUsage::RenderTarget | ERSTextureUsage::Sampled;
+		ColorInfos.Usage = ERSTextureUsageFlagBits::RenderTarget | ERSTextureUsageFlagBits::Sampled;
 
 		SRenderPassTextureInfos DepthInfos;
 		DepthInfos.Format = EFormat::D32SfloatS8Uint;
@@ -106,7 +106,7 @@ void CClusteredForwardRenderingPath::Draw(const SWorldView& InView)
 		InContext->SetScissors({ InView.Scissor });
 		InContext->SetViewports({ InView.Viewport });
 
-		InView.RenderPassRendererMap.at(ERenderPass::BasePass).Draw(*InContext);
+		InView.RenderPassRendererMap.at(ERenderPassFlagBits::BasePass).Draw(*InContext);
 		/** Render UI */
 		CRendererModule::Get().GetImGuiRenderer()->Update();
 		CRendererModule::Get().GetImGuiRenderer()->Draw(GRSContext);

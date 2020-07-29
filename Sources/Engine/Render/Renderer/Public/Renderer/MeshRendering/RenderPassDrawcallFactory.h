@@ -51,17 +51,20 @@ namespace RenderPassDrawcallFactory
 struct IRenderPassDrawcallFactoryCreator 
 { 
 	virtual TOwnerPtr<CRenderPassDrawcallFactory> Instantiate(CWorldProxy& InWorld) = 0; 
-	virtual ERenderPass GetRenderPass() const = 0;
+	virtual ERenderPassFlagBits GetRenderPass() const = 0;
+
+	inline static robin_hood::unordered_map<ERenderPassFlagBits, IRenderPassDrawcallFactoryCreator*> Creators;
 };
 
-void RegisterDrawcallFactory(const ERenderPass& InRenderPass,
+void RegisterDrawcallFactory(const ERenderPassFlagBits& InRenderPass,
 	IRenderPassDrawcallFactoryCreator* Creator);
-IRenderPassDrawcallFactoryCreator* GetCreatorForRenderPass(const ERenderPass& InRenderPass);
-const robin_hood::unordered_map<ERenderPass, IRenderPassDrawcallFactoryCreator*>& GetCreators();
+IRenderPassDrawcallFactoryCreator* GetCreatorForRenderPass(const ERenderPassFlagBits& InRenderPass);
+const robin_hood::unordered_map<ERenderPassFlagBits, IRenderPassDrawcallFactoryCreator*>& GetCreators();
+
 /**
  * Helper struct
  */
-template<ERenderPass RenderPass, typename T>
+template<ERenderPassFlagBits RenderPass, typename T>
 struct TRenderPassDrawcallFactoryCreator : public IRenderPassDrawcallFactoryCreator
 {
 	TRenderPassDrawcallFactoryCreator()
@@ -74,7 +77,7 @@ struct TRenderPassDrawcallFactoryCreator : public IRenderPassDrawcallFactoryCrea
 		return new T(InWorld);
 	}
 
-	ERenderPass GetRenderPass() const override
+	ERenderPassFlagBits GetRenderPass() const override
 	{
 		return RenderPass;
 	}
@@ -82,6 +85,6 @@ struct TRenderPassDrawcallFactoryCreator : public IRenderPassDrawcallFactoryCrea
 
 }
 
-#define DEFINE_RENDER_PASS_DRAWCALL_FACTORY(RenderPass, FactoryClass) inline static ZE::Renderer::RenderPassDrawcallFactory::TRenderPassDrawcallFactoryCreator<RenderPass, FactoryClass> G##FactoryClass;
+#define DEFINE_RENDER_PASS_DRAWCALL_FACTORY(RenderPass, FactoryClass) ZE::Renderer::RenderPassDrawcallFactory::TRenderPassDrawcallFactoryCreator<RenderPass, FactoryClass> G##FactoryClass;
 
 }

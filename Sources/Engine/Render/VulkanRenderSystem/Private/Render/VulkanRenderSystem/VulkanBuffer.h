@@ -33,7 +33,12 @@ public:
     void SetName(const char* InName) override;
 
     const vk::Buffer& GetBuffer() const { return Buffer; }
-    void* GetMappedData() const override { return AllocationInfo.pMappedData; }
+    void* GetMappedData() const override 
+    { 
+        /** GetMappedData() require Mapped hint */
+        verify(CreateInfo.Hints & ERSMemoryHintFlagBits::Mapped);
+        return AllocationInfo.pMappedData;
+    }
 private:
     vk::Buffer Buffer;
     VmaAllocation Allocation;

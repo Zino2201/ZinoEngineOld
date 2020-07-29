@@ -13,8 +13,6 @@ namespace ZE { class IRenderSystemContext; }
 namespace ZE::Renderer
 {
 
-DECLARE_LOG_CATEGORY(FrameGraph);
-
 class CFrameGraph;
 
 /**
@@ -23,7 +21,7 @@ class CFrameGraph;
 struct SRenderPassTextureInfos
 {
     ERSTextureType Type;
-    ERSTextureUsage Usage;
+    ERSTextureUsageFlags Usage;
     ERSMemoryUsage MemoryUsage;
     EFormat Format;
     uint32_t Width;
@@ -36,7 +34,7 @@ struct SRenderPassTextureInfos
 
 	SRenderPassTextureInfos() :
 		Type(ERSTextureType::Tex2D),
-        Usage(ERSTextureUsage::None),
+        Usage(ERSTextureUsageFlagBits::None),
         MemoryUsage(ERSMemoryUsage::DeviceLocal),
         Format(EFormat::R8G8B8A8UNorm), Width(1), Height(1), Depth(1), ArraySize(1),
         MipLevels(1), SampleCount(ESampleCount::Sample1), 

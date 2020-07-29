@@ -5,13 +5,38 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
-#include "Logger.h"
+#include "Logger/Logger.h"
 
-namespace ZE
+namespace ZE::Module
 {
-void CModule::Initialize() {}
 
-CModule* CModuleManager::LoadModule(const std::string& InName)
+std::vector<CModule*> Modules;
+OnModuleLoadedDelegate OnModuleLoaded;
+
+void* LoadModuleHandle(const std::string& InPath)
+{
+#ifdef _WIN32
+	// TODO: Update
+	char Buffer[MAX_PATH];
+	::GetCurrentDirectoryA(MAX_PATH, Buffer);
+	std::string Path = Buffer;
+	Path += "\\Binaries\\";
+	Path += ZE_CONFIGURATION_NAME;
+	Path += "\\";
+	Path += InPath;
+
+	return (void*) LoadLibraryA(Path.c_str());
+#endif
+}
+
+void FreeModuleHandle(void* InHandle)
+{
+#ifdef _WIN32
+	FreeLibrary((HMODULE) InHandle);
+#endif
+}
+
+CModule* LoadModule(const std::string_view& InName)
 {
 	/**
 	 * Search the module
@@ -22,18 +47,18 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 			return Module;
 	}
 
-	/**
-	 * Load the module
-	 */
-
+	/** Load it */
 #ifndef ZE_MONOLITHIC
 
 	/**
 	 * Load the library
 	 */
 	std::string Extension = ".dll";
-	std::string Path = "ZinoEngine-" + InName + Extension;
-	void* Handle = LoadDLL(Path.c_str());
+	std::string Path = "ZinoEngine-";
+	Path += InName;
+	Path += Extension;
+	
+	void* Handle = LoadModuleHandle(Path.c_str());
 	if(!Handle)
 	{
 		DWORD ErrMsg = GetLastError();
@@ -51,12 +76,9 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 
 		std::string Msg(Buf, Size);
 
-		LOG(ELogSeverity::Error, ModuleManager, "Failed to load module %s: %s", InName.c_str(),
-			Msg.c_str());
-
+		ZE::Logger::Error("Failed to load module {}: {}", InName,
+			Msg);
 		LocalFree(Buf);
-
-		__debugbreak();
 		return nullptr;
 	}
 
@@ -69,12 +91,12 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 	std::string FuncName = GInstantiateModuleFuncName;
 	FuncName += "_";
 	FuncName += InName;
-	PFN_InstantiateModule InstantiateFunc = (PFN_InstantiateModule) GetProcAddress(
+	PFN_InstantiateModuleFunc InstantiateFunc = (PFN_InstantiateModuleFunc) GetProcAddress(
 		static_cast<HMODULE>(Handle), FuncName.c_str());
 	Module = InstantiateFunc(); /** This indicate that your module doesn't have a DEFINE_MODULE */
 	if (!Module)
 	{
-		LOG(ELogSeverity::Error, ModuleManager, "Failed to instantiate module %s", InName.c_str());
+		ZE::Logger::Verbose("Failed to instantiate module {}", InName);
 		return nullptr;
 	}
 	
@@ -86,7 +108,7 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 	Module = InstantiateFunc(); /** This indicate that your module doesn't have a DEFINE_MODULE */
 	if (!Module)
 	{
-		LOG(ELogSeverity::Error, ModuleManager, "Failed to instantiate module %s", InName.c_str());
+		ZE::Logger::Verbose("Failed to instantiate module {}", InName);
 		return nullptr;
 	}
 
@@ -95,59 +117,22 @@ CModule* CModuleManager::LoadModule(const std::string& InName)
 
 	Modules.push_back(Module);
 	
-	LOG(ELogSeverity::Info, ModuleManager, "Loaded module %s", InName.c_str());
+	ZE::Logger::Verbose("Loaded module {}", InName);
 
-	Module->Initialize();
-
-	OnModuleLoaded.Broadcast(InName.c_str());
+	OnModuleLoaded.Broadcast(InName.data());
 
 	return Module;
 }
 
-void* CModuleManager::LoadDLL(const std::string& InPath)
-{
-#ifdef _WIN32
-	// TODO: Update
-	char Buffer[MAX_PATH];
-	::GetCurrentDirectoryA(MAX_PATH, Buffer);
-	std::string Path = Buffer;
-	Path += "\\Binaries\\";
-	Path += ZE_CONFIGURATION_NAME;
-	Path += "\\";
-	Path += InPath;
-
-	return (void*) LoadLibraryA(Path.c_str());
-#endif
-}
-
-void CModuleManager::FreeDLL(void* InHandle)
-{
-#ifdef _WIN32
-	FreeLibrary((HMODULE) InHandle);
-#endif
-}
-
-void CModuleManager::UnloadModules()
-{
-	for (size_t i = Modules.size() - 1; i > 0; --i)
-	{
-		CModule* Module = Modules[i];
-		UnloadModule(Module->GetName());
-	}
-
-	Modules.clear();
-}
-
-void CModuleManager::UnloadModule(const std::string& InName)
+void UnloadModule(const std::string_view& InName)
 {
 	size_t Idx = 0;
 	for (auto& Module : Modules)
 	{
-		if(Module->GetName() == InName)
+		if (Module->GetName() == InName)
 		{
-			Module->Destroy();
 #ifndef ZE_MONOLITHIC
-			FreeDLL(Module->GetHandle());
+			FreeModuleHandle(Module->GetHandle());
 #endif
 			delete Module;
 			Modules.erase(Modules.begin() + Idx);
@@ -158,4 +143,20 @@ void CModuleManager::UnloadModule(const std::string& InName)
 	}
 }
 
-} /* namespace ZE */
+void UnloadModules()
+{
+	for (size_t i = Modules.size() - 1; i > 0; --i)
+	{
+		CModule* Module = Modules[i];
+		UnloadModule(Module->GetName());
+	}
+
+	Modules.clear();
+}
+
+OnModuleLoadedDelegate& GetOnModuleLoadedDelegate()
+{
+	return OnModuleLoaded;
+}
+
+}

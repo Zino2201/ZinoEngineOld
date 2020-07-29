@@ -20,7 +20,7 @@ public:
 	void Draw();
 private:
 	int OnTextEdited(ImGuiInputTextCallbackData* InData);
-	ImVec4 ToColor(const ELogSeverity& InSeverity) const;
+	ImVec4 ToColor(const Logger::ESeverityFlagBits& InSeverity) const;
 private:
 	std::array<char, 32> Input;
 	size_t CurrentConsoleSize;

@@ -18,7 +18,7 @@ CWorkerThread::CWorkerThread(EWorkerThreadType InType,
 
 }
 
-const SJob* CWorkerThread::TryGetOrStealJob()
+const SJob* CWorkerThread::TryGetOrStealJob(const size_t& InWorkerIdx)
 {
 	const SJob* Job = JobQueue.Pop();
 	if(!Job && Type != EWorkerThreadType::Partial)
@@ -28,7 +28,7 @@ const SJob* CWorkerThread::TryGetOrStealJob()
 		 */
 		std::uniform_int_distribution<size_t> Distribution(0, GetWorkerCount());
 
-		size_t WorkerIdx = Distribution(std::random_device());
+		size_t WorkerIdx = InWorkerIdx == -1 ? Distribution(std::random_device()) : InWorkerIdx;
 		auto& WorkerToSteal = GetWorkerByIdx(WorkerIdx);
 		
 		/**
@@ -50,17 +50,26 @@ const SJob* CWorkerThread::TryGetOrStealJob()
 
 void CWorkerThread::Flush()
 {
-	const SJob* Job = TryGetOrStealJob();
+	/** Try steal from the main worker, if no job found try again */
+	const SJob* Job = TryGetOrStealJob(GetMainWorkerIdx());
 	if (Job)
 	{
 		Internal::ExecuteJob(*Job);
 	}
 	else
 	{
-		if(Type != EWorkerThreadType::Partial)
+		const SJob* Job = TryGetOrStealJob();
+		if(Job)
 		{
-			std::unique_lock<std::mutex> Lock(SleepMutex);
-			SleepConditionVariable.wait(Lock);
+			Internal::ExecuteJob(*Job);
+		}
+		else
+		{
+			if (Type != EWorkerThreadType::Partial)
+			{
+				std::unique_lock<std::mutex> Lock(SleepMutex);
+				SleepConditionVariable.wait(Lock);
+			}
 		}
 	}
 }

@@ -9,8 +9,6 @@
 
 using namespace ZE;
 
-DECLARE_LOG_CATEGORY(VulkanShaderCompiler);
-
 static constexpr std::array<const char*, 1> GIncludeDirs =
 {
 	"/Shaders"
@@ -126,7 +124,7 @@ public:
 				reinterpret_cast<const char*>(Result.errorWarningMsg->Data()), 
 				Result.errorWarningMsg->Size());
 			Output.ErrMsg = ErrMsg;
-			LOG(ELogSeverity::Error, VulkanShaderCompiler, "Failed to compile shader %s: %s",
+			ZE::Logger::Error("Failed to compile shader {}: {}",
 				InShaderFilename.data(), Output.ErrMsg.c_str());
 			return Output;
 		}
@@ -210,10 +208,10 @@ public:
 	}
 };
 
-class CVulkanShaderCompilerModule : public CModule
+class CVulkanShaderCompilerModule : public ZE::Module::CModule
 {
 public:
-	void Initialize() override
+	CVulkanShaderCompilerModule()
 	{
 		CGlobalShaderCompiler::Get()
 			.Register<CVulkanShaderCompiler>(EShaderCompilerTarget::VulkanSpirV);

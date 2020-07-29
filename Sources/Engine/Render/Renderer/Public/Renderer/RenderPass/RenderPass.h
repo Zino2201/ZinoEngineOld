@@ -8,15 +8,16 @@ namespace ZE::Renderer
 /**
  * Render pass flags
  */
-enum class ERenderPass
+enum class ERenderPassFlagBits
 {
-	None = 1 << 0,
+	None = 0,
 	
-	BasePass = 1 << 1,
+	BasePass = 1 << 0,
 
 	Count = 1,
 };
-DECLARE_FLAG_ENUM(ERenderPass);
+ENABLE_FLAG_ENUMS(ERenderPassFlagBits, ERenderPassFlags);
+
 
 
 }

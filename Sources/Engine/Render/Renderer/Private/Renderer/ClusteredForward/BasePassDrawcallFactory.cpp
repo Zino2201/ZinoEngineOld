@@ -68,6 +68,6 @@ private:
 	SRSGraphicsPipeline Test;
 };
 
-DEFINE_RENDER_PASS_DRAWCALL_FACTORY(ERenderPass::BasePass, CBasePassDrawcallFactory);
+DEFINE_RENDER_PASS_DRAWCALL_FACTORY(ERenderPassFlagBits::BasePass, CBasePassDrawcallFactory);
 
 }

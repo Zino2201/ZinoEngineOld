@@ -103,7 +103,7 @@ std::pair<vk::DescriptorSet, bool> CVulkanDescriptorSetManager::GetSet(const uin
 						&PipelineLayout.GetLayoutForSet(InSet))).value.front();
 				if(!Set)
 				{
-					LOG(ELogSeverity::Error, VulkanRS, "VulkanDescSetManager: Failed to allocate set");
+					ZE::Logger::Fatal("Failed to allocate descriptor set for set {}", InSet);
 					return { Set, false };
 				}
 				Pool.Allocations++;
@@ -127,7 +127,7 @@ std::pair<vk::DescriptorSet, bool> CVulkanDescriptorSetManager::GetSet(const uin
 					&PipelineLayout.GetLayoutForSet(InSet))).value.front();
 			if (!Set)
 			{
-				LOG(ELogSeverity::Error, VulkanRS, "VulkanDescSetManager: Failed to allocate set");
+				ZE::Logger::Error("Failed to allocate descriptor set for set {}", InSet);
 				return { Set, false };
 			}
 			Pool->Allocations++;
@@ -150,7 +150,7 @@ CVulkanDescriptorSetManager::SDescriptorPoolEntry* CVulkanDescriptorSetManager::
 
 	if(!Pool)
 	{
-		LOG(ELogSeverity::Error, VulkanRS, "VulkanDescSetManager: Failed to create pool");
+		ZE::Logger::Error("Failed to create descriptor pool");
 		return nullptr;
 	}
 
@@ -210,7 +210,7 @@ CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice& Device,
 
  	PipelineLayout = Device.GetDevice().createPipelineLayoutUnique(CreateInfo).value;
 	if (!PipelineLayout)
-		LOG(ELogSeverity::Fatal, VulkanRS, "Failed to create Vulkan pipeline layout");
+		ZE::Logger::Fatal("Failed to create Vulkan pipeline layout");
 }
 
 CVulkanPipelineLayout::~CVulkanPipelineLayout() {}

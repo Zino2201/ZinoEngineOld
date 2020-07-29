@@ -8,7 +8,7 @@ namespace ZE::Refl
 
 // A C++ class
 ZCLASS()
-class CClass : public CStruct
+class REFLECTION_API CClass : public CStruct
 {
 	REFL_BODY()
 

@@ -1,40 +1,27 @@
 #pragma once
 
-#include "Logger.h"
+#include "Logger/Logger.h"
 #include <vector>
+#include "Delegates/MulticastDelegate.h"
 
-namespace ZE
+namespace ZE::Module
 {
 
 class CModule;
 
-typedef class CModule*(*PFN_InstantiateModule)();
+using OnModuleLoadedDelegate = TMulticastDelegate<const std::string_view&>;
 
-DECLARE_LOG_CATEGORY(ModuleManager);
+ENGINECORE_API CModule* LoadModule(const std::string_view& InName);
 
-class CModuleManager
+template<typename T>
+T* LoadModule(const std::string& InName)
 {
-	using TOnModuleLoaded = TMulticastDelegate<const std::string_view&>;
+	return reinterpret_cast<T*>(LoadModule(InName));
+}
 
-public:
-	ENGINECORE_API static CModule* LoadModule(const std::string& InName);
-	ENGINECORE_API static void UnloadModule(const std::string& InName);
+ENGINECORE_API void UnloadModule(const std::string_view& InName);
+ENGINECORE_API void UnloadModules();
 
-	template<typename T>
-	static T* LoadModule(const std::string& InName)
-	{
-		return reinterpret_cast<T*>(LoadModule(InName));
-	}
+ENGINECORE_API OnModuleLoadedDelegate& GetOnModuleLoadedDelegate();
 
-	ENGINECORE_API static void UnloadModules();
-
-	static TOnModuleLoaded& GetOnModuleLoadedDelegate() { return OnModuleLoaded; }
-private:
-	ENGINECORE_API static void* LoadDLL(const std::string& InPath);
-	ENGINECORE_API static void FreeDLL(void* InHandle);
-private:
-	inline static std::vector<CModule*> Modules;
-	ENGINECORE_API inline static TOnModuleLoaded OnModuleLoaded;
-};
-
-} /* namespace ZE */
+}

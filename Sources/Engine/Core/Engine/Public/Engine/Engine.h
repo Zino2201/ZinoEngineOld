@@ -2,43 +2,43 @@
 
 #include "EngineCore.h"
 #include "Engine/TickSystem.h"
+#include "App.h"
 
 union SDL_Event;
 
 namespace ZE
 {
 
-class CEntityComponentSystemManager;
-
 /**
- * Basic engine class
- * Contains system used by the whole Engine
+ * Base abstract class for ZinoEngine apps (like editor or game)
+ * Manage ticking tickable objects and fps limit
  */
-class ENGINE_API CEngine
+class ENGINE_API CZinoEngineApp : public CApp
 {
 public:
-    virtual ~CEngine() = default;
+    CZinoEngineApp(const bool& bInWaitForEvents);
+    ~CZinoEngineApp();
 
-    /** Initialize engine */
-    virtual void Initialize();
+    static CZinoEngineApp* Get()
+    {
+        return static_cast<CZinoEngineApp*>(CApp::GetCurrentApp());
+    }
 
-    virtual void ProcessEvent(SDL_Event* InEvent) {}
+    void ProcessEvents() final;
+    virtual void ProcessEvent(SDL_Event& InEvent);
 
-    /** Tick */
-    virtual void Tick(const float& InDeltaTime);
-
-    /** Trigger frame rendering */
-    virtual void Draw();
-
-    virtual void Exit() {}
-
-    virtual bool ShouldExit() const { return false; }
-
-    virtual bool ShouldWaitForEvents() const { return false; }
+    CTickSystem& GetTickSystem() { return TickSystem; }
 protected:
-    //std::unique_ptr<CEntityComponentSystemManager> ECSManager;
+    void Loop() final;
+    virtual void Draw() = 0;
+protected:
+    bool bWaitForEvents;
+private:
+    CTickSystem TickSystem;
+    uint64_t Now;
+    uint64_t Last;
 };
 
-ENGINE_API CEngine* CreateEngine();
+ENGINE_API CZinoEngineApp* CreateGameApp();
 
 } /* namespace ZE */

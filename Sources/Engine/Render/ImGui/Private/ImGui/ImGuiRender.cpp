@@ -8,8 +8,6 @@
 #include "Render/Shader/BasicShader.h"
 #include "Module/ModuleManager.h"
 
-DECLARE_LOG_CATEGORY(ImGuiRender);
-
 namespace ZE::UI
 {
 
@@ -58,7 +56,7 @@ CImGuiRender::CImGuiRender()
 		reinterpret_cast<int*>(&FontHeight));
 	Font = GRenderSystem->CreateTexture({
 		ERSTextureType::Tex2D,
-		ERSTextureUsage::Sampled,
+		ERSTextureUsageFlagBits::Sampled,
 		ERSMemoryUsage::DeviceLocal,
 		EFormat::R8G8B8A8UNorm,
 		FontWidth,
@@ -69,7 +67,7 @@ CImGuiRender::CImGuiRender()
 		ESampleCount::Sample1});
 	if(!Font)
 	{
-		LOG(ELogSeverity::Error, ImGuiRender, "Failed to create ImGui font, will not render");
+		ZE::Logger::Error("Failed to create ImGui font, will not render");
 		return;
 	}
 
@@ -80,12 +78,13 @@ CImGuiRender::CImGuiRender()
 
 	/** UBO */
 	GlobalData = GRenderSystem->CreateBuffer({
-		ERSBufferUsage::UniformBuffer,
-		ERSMemoryUsage::HostVisible | ERSMemoryUsage::UsePersistentMapping,
+		ERSBufferUsageFlagBits::UniformBuffer,
+		ERSMemoryUsage::HostVisible,
+		ERSMemoryHintFlagBits::Mapped,
 		sizeof(SGlobalData) });
 	if(!GlobalData)
 	{
-		LOG(ELogSeverity::Error, ImGuiRender, "Failed to create ImGui ubo, will not render");
+		ZE::Logger::Error("Failed to create ImGui ubo, will not render");
 		return;
 	}
 	GlobalData->SetName("ImGuiRender Global Data UBO");
@@ -94,7 +93,7 @@ CImGuiRender::CImGuiRender()
 	Sampler = GRenderSystem->CreateSampler(SRSSamplerCreateInfo());
 	if (!Sampler)
 	{
-		LOG(ELogSeverity::Error, ImGuiRender, "Failed to create ImGui sampler, will not render");
+		ZE::Logger::Error("Failed to create ImGui sampler, will not render");
 		return;
 	}
 
@@ -178,12 +177,13 @@ void CImGuiRender::Update()
 	if (!VertexBuffer || LastVertexSize < VertexSize)
 	{
 		VertexBuffer = GRenderSystem->CreateBuffer( {
-			ERSBufferUsage::VertexBuffer,
+			ERSBufferUsageFlagBits::VertexBuffer,
 			ERSMemoryUsage::HostVisible,
+			ERSMemoryHintFlagBits::None,
 			VertexSize });
 		if (!VertexBuffer)
 		{
-			LOG(ELogSeverity::Error, ImGuiRender, "Failed to create ImGui vertex buffer");
+			ZE::Logger::Error("Failed to create ImGui vertex buffer");
 			return;
 		}
 
@@ -196,12 +196,13 @@ void CImGuiRender::Update()
 	if (!IndexBuffer || LastIndexSize < IndexSize)
 	{
 		IndexBuffer = GRenderSystem->CreateBuffer({
-			ERSBufferUsage::IndexBuffer,
+			ERSBufferUsageFlagBits::IndexBuffer,
 			ERSMemoryUsage::HostVisible,
+			ERSMemoryHintFlagBits::None,
 			IndexSize });
 		if (!IndexBuffer)
 		{
-			LOG(ELogSeverity::Error, ImGuiRender, "Failed to create ImGui index buffer");
+			ZE::Logger::Error("Failed to create ImGui index buffer");
 			return;
 		}
 

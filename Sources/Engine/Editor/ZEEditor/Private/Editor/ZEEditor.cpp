@@ -15,14 +15,10 @@
 #include <SDL2/SDL.h>
 #include "Editor/Widgets/MapTabWidget.h"
 
-DEFINE_MODULE(ZE::CModule, Editor);
+DEFINE_MODULE(ZE::Module::CDefaultModule, Editor);
 
 namespace ZE::Editor
 {
-
-CZEEditor::~CZEEditor() = default;
-
-SRSRenderPass MainRenderPass;
 
 int StaticOnWindowResized(void* InUserData, SDL_Event* InEvent)
 {
@@ -31,15 +27,15 @@ int StaticOnWindowResized(void* InUserData, SDL_Event* InEvent)
 	return reinterpret_cast<CZEEditor*>(InUserData)->OnWindowResized(InEvent);
 }
 
-void CZEEditor::Initialize()
-{
-	bShouldRun = true;
+SRSRenderPass MainRenderPass;
 
+CZEEditor::CZEEditor() : CZinoEngineApp(true) 
+{
 	SDL_Rect WindowSize;
 	SDL_GetDisplayUsableBounds(0, &WindowSize);
 
 	MainWindow = std::make_unique<CWindow>("ZinoEngine Editor", WindowSize.w, WindowSize.h,
-		EWindowFlags::Borderless | EWindowFlags::Resizable);
+		EWindowFlagBits::Resizable | EWindowFlagBits::Centered | EWindowFlagBits::Maximized);
 	MainViewport = std::make_unique<CViewport>(MainWindow->GetHandle(), MainWindow->GetWidth(),
 		MainWindow->GetHeight(), true);
 
@@ -102,6 +98,7 @@ void CZEEditor::Initialize()
 	};
 }
 
+CZEEditor::~CZEEditor() { ImGui_ImplSDL2_Shutdown(); }
 
 int CZEEditor::OnWindowResized(SDL_Event* InEvent)
 {
@@ -112,6 +109,9 @@ int CZEEditor::OnWindowResized(SDL_Event* InEvent)
 		MainWindow->SetWidth(static_cast<uint32_t>(InEvent->window.data1));
 		MainWindow->SetHeight(static_cast<uint32_t>(InEvent->window.data2));
 
+		ImGuiIO& IO = ImGui::GetIO();
+		IO.DisplaySize = ImVec2(MainWindow->GetWidth(), MainWindow->GetHeight());
+
 		// Resize viewport
 		MainViewport->Resize(MainWindow->GetWidth(), MainWindow->GetHeight());
 
@@ -121,9 +121,9 @@ int CZEEditor::OnWindowResized(SDL_Event* InEvent)
 	return SDL_FALSE;
 }
 
-void CZEEditor::ProcessEvent(SDL_Event* InEvent)
+void CZEEditor::ProcessEvent(SDL_Event& InEvent)
 {
-	ImGui_ImplSDL2_ProcessEvent(InEvent);
+	ImGui_ImplSDL2_ProcessEvent(&InEvent);
 }
 
 void CZEEditor::DrawMainTab()
@@ -144,7 +144,8 @@ void CZEEditor::Tick(const float& InDeltaTime)
 	ImGui::NewFrame();
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight())));
+	ImGui::SetNextWindowSize(ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight())), 
+		ImGuiCond_Once);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -159,9 +160,6 @@ void CZEEditor::Tick(const float& InDeltaTime)
 		{
 			ImGui::SameLine(ImGui::GetColumnWidth() - 200);
 			ImGui::Text("ZinoEngine");
-			ImGui::SameLine(ImGui::GetColumnWidth() - 40);
-			if (ImGui::Button("X"))
-				bShouldRun = false;
 			DrawMainTab();
 			ImGui::EndTabBar();
 		}
@@ -192,12 +190,7 @@ void CZEEditor::Draw()
 	}
 }
 
-void CZEEditor::Exit()
-{
-	ImGui_ImplSDL2_Shutdown();
-}
-
-TOwnerPtr<CEngine> CreateEditor()
+TOwnerPtr<CZinoEngineApp> CreateEditor()
 {
 	return new CZEEditor;
 }

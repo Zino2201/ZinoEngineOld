@@ -4,8 +4,6 @@
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "Render/RenderSystem/Resources/Shader.h"
 
-DECLARE_LOG_CATEGORY(BasicShader);
-
 namespace ZE
 {
 
@@ -15,8 +13,7 @@ CBasicShaderType::CBasicShaderType(const char* InName, const char* InFilename,
 	CShaderType(InName, InFilename, InEntryPoint, InStage, InFunc)
 {
 	if (bBasicShadersCompiled)
-		LOG(ELogSeverity::Fatal, None,
-			"Basic shader type created after basic shaders compilation ! Aborting.");
+		ZE::Logger::Fatal("Basic shader type created after basic shaders compilation ! Aborting.");
 
 	CBasicShaderManager::Get().AddShaderType(this);
 }
@@ -46,12 +43,11 @@ void CBasicShaderManager::CompileShaders()
 			ShaderType->GetFilename(),
 			ShaderType->GetEntryPoint(),
 			EShaderCompilerTarget::VulkanSpirV);
-
+	
 		auto Output = Future.get();
 		if(!Output.bSucceed)
 		{
-			LOG(ELogSeverity::FatalRetryDebug, BasicShader, 
-				"Failed to compile basic shader %s (%s), can't continue.\n\n%s",
+			ZE::Logger::Fatal("Failed to compile basic shader {} ({}), can't continue.\n\n{}",
 				ShaderType->GetName(), ShaderType->GetFilename(), Output.ErrMsg.c_str());
 
 			goto Compile;
@@ -60,7 +56,7 @@ void CBasicShaderManager::CompileShaders()
 		{
 			CShader* Shader = ShaderType->InstantiateShader(Output);
 			if(!Shader)
-				LOG(ELogSeverity::Fatal, BasicShader, "Failed to instantiate basic shader %s (%s), exiting",
+				ZE::Logger::Fatal("Failed to instantiate basic shader {} ({}), exiting",
 					ShaderType->GetName(), ShaderType->GetFilename());
 
 			ShaderMap.insert( { ShaderType->GetName(), Shader });
