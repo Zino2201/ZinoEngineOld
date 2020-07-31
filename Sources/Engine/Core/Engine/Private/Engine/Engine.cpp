@@ -46,7 +46,7 @@ void CZinoEngineApp::ProcessEvents()
 {
 	SDL_Event Event;
 	
-	if(bWaitForEvents)
+	if (bWaitForEvents)
 	{
 		if (SDL_WaitEvent(&Event))
 		{
@@ -86,6 +86,7 @@ void CZinoEngineApp::Loop()
 
 	float DeltaTimeAsSec = static_cast<float>(DeltaTime * 0.001f);
 
+	Tick(DeltaTimeAsSec);
 	TickSystem.Tick(ETickFlagBits::Variable, DeltaTimeAsSec);
 	TickSystem.Tick(ETickFlagBits::EndOfSimulation, DeltaTimeAsSec);
 	Draw();

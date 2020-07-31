@@ -13,8 +13,7 @@ class CViewport;
 namespace ZE::Editor
 {
 
-class CZEEditor final : public CZinoEngineApp,
-	public CTickable
+class CZEEditor final : public CZinoEngineApp
 {
 public:
 	CZEEditor();

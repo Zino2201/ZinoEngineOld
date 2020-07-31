@@ -30,6 +30,7 @@ public:
     CTickSystem& GetTickSystem() { return TickSystem; }
 protected:
     void Loop() final;
+    virtual void Tick(const float& InDeltaTime) = 0;
     virtual void Draw() = 0;
 protected:
     bool bWaitForEvents;

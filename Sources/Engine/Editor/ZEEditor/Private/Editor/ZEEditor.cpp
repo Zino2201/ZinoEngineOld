@@ -123,6 +123,8 @@ int CZEEditor::OnWindowResized(SDL_Event* InEvent)
 
 void CZEEditor::ProcessEvent(SDL_Event& InEvent)
 {
+	CZinoEngineApp::ProcessEvent(InEvent);
+
 	ImGui_ImplSDL2_ProcessEvent(&InEvent);
 }
 

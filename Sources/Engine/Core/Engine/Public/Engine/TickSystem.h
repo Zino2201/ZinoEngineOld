@@ -3,6 +3,7 @@
 #include "EngineCore.h"
 #include "NonCopyable.h"
 #include <robin_hood.h>
+#include "Containers/CoherentArray.h"
 
 /**
  * Tick system
@@ -41,6 +42,8 @@ ENABLE_FLAG_ENUMS(ETickFlagBits, ETickFlags);
  */
 class ENGINE_API CTickable
 {
+    friend class CTickSystem;
+
 public:
     CTickable();
     virtual ~CTickable();
@@ -67,6 +70,8 @@ protected:
     bool bCanEverTick;
     bool bIsTickEnabled;
     ETickFlags TickFlags;
+private:
+    size_t TickableIdx;
 };
 
 /**
@@ -83,7 +88,7 @@ public:
 
     ETickFlagBits GetCurrentTick() const { return CurrentTick; }
 private:
-    robin_hood::unordered_map<ETickFlagBits, std::vector<CTickable*>> TickablesMap;
+    robin_hood::unordered_map<ETickFlagBits, TCoherentArray<CTickable*>> TickablesMap;
     std::vector<CTickable*> TickablesToAdd;
     ETickFlagBits CurrentTick;
 };

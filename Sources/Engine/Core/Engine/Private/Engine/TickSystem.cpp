@@ -25,25 +25,28 @@ void CTickSystem::Tick(ETickFlagBits InFlag, const float& InDeltaTime)
 			{
 				auto& Tickables = TickablesMap[ETickFlagBits::Variable];
 				must(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
-				Tickables.push_back(Tickable);
+				Tickables.Add(Tickable);
+				Tickable->TickableIdx = Tickables.GetSize() - 1;
 			}
 			
 			if(Tickable->GetTickFlags() & ETickFlagBits::Fixed)
 			{
 				auto& Tickables = TickablesMap[ETickFlagBits::Fixed];
 				must(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
-				Tickables.push_back(Tickable);
+				Tickables.Add(Tickable);
+				Tickable->TickableIdx = Tickables.GetSize() - 1;
 			}
 
 			if(Tickable->GetTickFlags() & ETickFlagBits::EndOfSimulation)
 			{
 				auto& Tickables = TickablesMap[ETickFlagBits::EndOfSimulation];
 				must(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
-				Tickables.push_back(Tickable);
+				Tickables.Add(Tickable);
+				Tickable->TickableIdx = Tickables.GetSize() - 1;
 			}	
 		}
 
-		TickablesToAdd.clear();
+		TickablesToAdd.resize(0);
 	}
 
 	switch(InFlag)
@@ -87,12 +90,20 @@ void CTickSystem::Register(CTickable& InTickable)
 void CTickSystem::Unregister(CTickable& InTickable)
 {
 	for(auto& [Order, Tickables] : TickablesMap)
-		Tickables.erase(std::remove(Tickables.begin(), Tickables.end(), &InTickable),
-			Tickables.end());
+		Tickables.Remove(InTickable.TickableIdx);
 }
 
 CTickable::CTickable() : bCanEverTick(true), 
-	bIsTickEnabled(true), TickFlags(ETickFlagBits::Variable) { CZinoEngineApp::Get()->GetTickSystem().Register(*this); }
-CTickable::~CTickable() { CZinoEngineApp::Get()->GetTickSystem().Unregister(*this); }
+	bIsTickEnabled(true), TickFlags(ETickFlagBits::Variable) 
+{ 
+	if(bCanEverTick)
+		CZinoEngineApp::Get()->GetTickSystem().Register(*this); 
+}
+
+CTickable::~CTickable() 
+{ 
+	if(bCanEverTick)
+		CZinoEngineApp::Get()->GetTickSystem().Unregister(*this); 
+}
 
 };
