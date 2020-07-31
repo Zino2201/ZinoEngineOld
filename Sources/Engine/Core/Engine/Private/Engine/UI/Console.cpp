@@ -3,6 +3,9 @@
 #include <iostream>
 #include "Console/Console.h"
 #include <sstream>
+#include "Threading/Thread.h"
+#include <ctime>
+#include <iomanip>
 
 namespace ZE
 {
@@ -90,8 +93,24 @@ void CConsoleWidget::Draw()
 		const auto& Messages = Sink->GetMessages();
 		for (const auto& Msg : Messages)
 		{
-			UI::SImGuiAutoStyleColor TextCol(ImGuiCol_Text, ToColor(Msg.Severity));
-			ImGui::TextWrapped("%s", Msg.Message.c_str());
+			{
+				UI::SImGuiAutoStyleColor TextCol(ImGuiCol_Text, ToColor(Msg.Severity));
+				ImGui::TextWrapped("%s", Msg.Message.c_str());
+			}
+
+			if (ImGui::IsItemHovered())
+			{
+				// TODO: Optimize ?
+				std::time_t Time = std::chrono::system_clock::to_time_t(Msg.Time);
+				std::tm LocalTime;
+				localtime_s(&LocalTime, &Time);
+
+				std::stringstream TimeStr;
+				TimeStr << std::put_time(&LocalTime, "%H:%M:%S");
+
+				ImGui::SetTooltip("%s - %s", TimeStr.str().c_str(), 
+					ZE::Threading::GetThreadName(Msg.ThreadId).data());
+			}
 		}
 
 		if (CurrentConsoleSize != Messages.size() &&
