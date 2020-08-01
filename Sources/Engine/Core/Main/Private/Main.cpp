@@ -34,7 +34,7 @@ namespace FS = ZE::FileSystem;
 
 
 /** Forward decls */
-void Init();
+int Init();
 void Exit();
 
 /** Global variables */
@@ -68,9 +68,9 @@ int CALLBACK WinMain(HINSTANCE hInstance,
 	LPSTR lpCmdLine,
 	int nCmdShow)
 {
-	Init();
-
-	return 0;
+	int Err = Init();
+	Exit();
+	return Err;
 }
 #endif
 
@@ -164,7 +164,7 @@ void PreInit()
 	}
 }
 
-void Init()
+int Init()
 {
 	PreInit();
 
@@ -175,19 +175,20 @@ void Init()
 	Engine.reset(ZE::Editor::CreateEditor());
 
 	/** START GAME LOOP */
-	Engine->Run();
+	return Engine->Run();
 }
 
 void Exit()
 {
 	ZE::Logger::Info("Exiting engine");
 
+	/** Unload renderer to free all renderer data */
+	ZE::Module::UnloadModule("Renderer");
+
 	/** Delete engine */
 	Engine.reset();
 
 	RenderSystem->WaitGPU();
-
-	ZE::Module::UnloadModule("Renderer");
 
 	ZE::CBasicShaderManager::Get().DestroyAll();
 

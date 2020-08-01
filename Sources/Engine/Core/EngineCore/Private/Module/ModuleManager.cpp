@@ -10,7 +10,7 @@
 namespace ZE::Module
 {
 
-std::vector<CModule*> Modules;
+std::vector<std::unique_ptr<CModule>> Modules;
 OnModuleLoadedDelegate OnModuleLoaded;
 
 void* LoadModuleHandle(const std::string& InPath)
@@ -44,7 +44,7 @@ CModule* LoadModule(const std::string_view& InName)
 	for(const auto& Module : Modules)
 	{
 		if(Module->GetName() == InName)
-			return Module;
+			return Module.get();
 	}
 
 	/** Load it */
@@ -115,7 +115,7 @@ CModule* LoadModule(const std::string_view& InName)
 	Module->Handle = nullptr;
 #endif /** ZE_MONOLITHIC */
 
-	Modules.push_back(Module);
+	Modules.emplace_back(Module);
 	
 	ZE::Logger::Verbose("Loaded module {}", InName);
 
@@ -131,11 +131,13 @@ void UnloadModule(const std::string_view& InName)
 	{
 		if (Module->GetName() == InName)
 		{
-#ifndef ZE_MONOLITHIC
-			FreeModuleHandle(Module->GetHandle());
-#endif
-			delete Module;
+			void* Handle = Module->GetHandle();
 			Modules.erase(Modules.begin() + Idx);
+#ifndef ZE_MONOLITHIC
+			FreeModuleHandle(Handle);
+#else
+			UNUSED_VARIABLE(Handle);
+#endif
 			break;
 		}
 
@@ -147,7 +149,7 @@ void UnloadModules()
 {
 	for (size_t i = Modules.size() - 1; i > 0; --i)
 	{
-		CModule* Module = Modules[i];
+		CModule* Module = Modules[i].get();
 		UnloadModule(Module->GetName());
 	}
 

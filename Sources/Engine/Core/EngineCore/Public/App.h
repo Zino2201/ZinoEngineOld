@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "Delegates/Delegate.h"
 
 namespace ZE
 {
@@ -25,7 +26,8 @@ public:
 	virtual ~CApp() = default;
 
 	/** Run the main loop, will return only when Exit is called */
-	void Run();
+	int Run();
+	void Exit(const int& InErrCode);
 
 	/** Process all pending events, called by Run() loop by default but can be called if needed */
 	virtual void ProcessEvents() = 0;
@@ -35,6 +37,7 @@ protected:
 	virtual void Loop() = 0;
 private:
 	inline static CApp* CurrentApp = nullptr;
+	int ErrCode;
 protected:
 	bool bRun;
 };

@@ -5,18 +5,26 @@ namespace ZE
 {
 
 
-CApp::CApp(const int& InArgc, const char** InArgv) : bRun(true) 
+CApp::CApp(const int& InArgc, const char** InArgv) : bRun(true), ErrCode(0)
 { 
 	must(!CurrentApp); CurrentApp = this; 
 }
 
-void CApp::Run()
+int CApp::Run()
 {
 	while(bRun)
 	{
 		ProcessEvents();
 		Loop();
 	}
+
+	return ErrCode;
+}
+
+void CApp::Exit(const int& InErrCode)
+{
+	ErrCode = InErrCode;
+	bRun = false;
 }
 
 namespace App
@@ -24,8 +32,7 @@ namespace App
 
 void Exit(const int& InErrCode)
 {
-	CApp::GetCurrentApp()->~CApp();
-	exit(InErrCode);
+	CApp::GetCurrentApp()->Exit(InErrCode);
 }
 
 }

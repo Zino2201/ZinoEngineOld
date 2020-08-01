@@ -148,11 +148,11 @@ void CVulkanRenderSystem::Initialize()
 			GVulkanEnableValidationLayers ? GVulkanValidationLayers.data() : 0,
 			static_cast<uint32_t>(RequiredExtensions.size()),
 			RequiredExtensions.data());
-		auto [Result, InstanceHandle] = vk::createInstance(CreateInfos);
+		auto [Result, InstanceHandle] = vk::createInstanceUnique(CreateInfos);
 		if (Result != vk::Result::eSuccess)
 			ZE::Logger::Fatal("Failed to create Vulkan instance: {}",
 				vk::to_string(Result).c_str());
-		Instance.reset(InstanceHandle);
+		Instance = std::move(InstanceHandle);
 	}
 
 	/** Create debug callback */

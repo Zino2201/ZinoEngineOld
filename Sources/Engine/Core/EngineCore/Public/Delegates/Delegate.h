@@ -11,7 +11,6 @@ class TDelegate
 {
 	using TSignature = Ret(Args...);
 
-	
 public:
 	TDelegate() {}
 	template<typename Lambda>
