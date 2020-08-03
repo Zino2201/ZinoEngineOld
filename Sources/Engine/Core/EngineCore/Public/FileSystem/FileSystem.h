@@ -70,6 +70,7 @@ public:
 	virtual bool IterateDirectories(const std::string_view& InPath, 
 		const TDirectoryIterator& InIt) = 0;
 	virtual bool Exists(const std::string_view& InPath) = 0;
+	virtual bool IsDirectory(const std::string_view& InPath) = 0;
 	virtual bool IsReadOnly() const = 0;
 };
 

@@ -50,6 +50,7 @@ public:
 		const TDirectoryIterator& InIt) override;
 
 	bool Exists(const std::string_view& InPath) override;
+	bool IsDirectory(const std::string_view& InPath) override;
 
 	bool IsReadOnly() const override { return true; }
 private:

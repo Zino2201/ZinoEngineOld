@@ -110,6 +110,15 @@ bool Exists(const std::string_view& InPath)
 		});
 }
 
+bool IsDirectory(const std::string_view& InPath)
+{
+	return Execute(InPath,
+		[InPath](IFileSystem* InFS) -> bool
+	{
+		return InFS->IsDirectory(InPath);
+	});
+}
+
 bool IterateDirectories(const std::string_view& InPath,
 	const TDirectoryIterator& InIt)
 {

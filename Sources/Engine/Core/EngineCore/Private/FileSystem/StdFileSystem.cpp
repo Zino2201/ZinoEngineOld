@@ -118,6 +118,11 @@ bool CStdFileSystem::Exists(const std::string_view& InPath)
 	return std::filesystem::exists(GetCorrectPath(InPath));
 }
 
+bool CStdFileSystem::IsDirectory(const std::string_view& InPath)
+{
+	return std::filesystem::is_directory(GetCorrectPath(InPath));
+}
+
 std::filesystem::path CStdFileSystem::GetCorrectPath(const std::string_view& InPath) const
 {
 	std::filesystem::path Path = InPath;
