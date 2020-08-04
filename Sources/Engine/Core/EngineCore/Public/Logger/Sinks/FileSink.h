@@ -1,7 +1,8 @@
 #pragma once
 
 #include "Logger/Sink.h"
-#include "Serialization/FileArchive.h"
+#include "Streams/FileStream.h"
+#include <ostream>
 
 namespace ZE::Logger::Sinks
 {
@@ -18,7 +19,8 @@ public:
 	void Log(const SMessage& InMessage) override;
 private:
 	std::string Filename;
-	Serialization::CFileArchive Archive;
+	Streams::COFileStream FileStream;
+	std::ostream Stream;
 };
 
 }

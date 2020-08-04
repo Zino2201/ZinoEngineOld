@@ -54,6 +54,9 @@ ENGINECORE_API TOwnerPtr<IFile> Write(const std::string_view& InPath,
  */
 ENGINECORE_API bool Exists(const std::string_view& InPath);
 
+/** Check if the specified path is a directory */
+ENGINECORE_API bool IsDirectory(const std::string_view& InPath);
+
 /**
  * Iterate over all directories
  */

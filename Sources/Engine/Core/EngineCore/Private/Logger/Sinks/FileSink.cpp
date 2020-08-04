@@ -6,14 +6,15 @@ namespace ZE::Logger::Sinks
 {
 
 CFileSink::CFileSink(const std::string& InName,
-	const std::string& InFileName) : CSink(InName), Archive(ZE::FileSystem::Write(InFileName)) {}
+	const std::string& InFileName) : 
+	CSink(InName), FileStream(InFileName), Stream(&FileStream) {}
 
 void CFileSink::Log(const SMessage& InMessage)
 {
 	std::string Msg = Format(InMessage);
 
-	Archive << Msg;
-	Archive.Flush();
+	Stream << Msg;
+	Stream.flush();
 }
 
 }
