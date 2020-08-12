@@ -102,11 +102,10 @@ void CConsoleWidget::Draw()
 			{
 				// TODO: Optimize ?
 				std::time_t Time = std::chrono::system_clock::to_time_t(Msg.Time);
-				std::tm LocalTime;
-				localtime_s(&LocalTime, &Time);
+				std::tm* LocalTime = localtime(&Time);
 
 				std::stringstream TimeStr;
-				TimeStr << std::put_time(&LocalTime, "%H:%M:%S");
+				TimeStr << std::put_time(LocalTime, "%H:%M:%S");
 
 				ImGui::SetTooltip("%s - %s", TimeStr.str().c_str(), 
 					ZE::Threading::GetThreadName(Msg.ThreadId).data());

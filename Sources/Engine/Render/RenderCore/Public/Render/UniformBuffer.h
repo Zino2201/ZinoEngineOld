@@ -30,12 +30,12 @@ struct TUniformBuffer
      * Copy InData to the buffer
      * If InSize == 0 then copy sizeof(T)
      */
-    void Copy(const void* RESTRICT InData, uint64_t InSize = 0)
+    void Copy(const void* ZE_RESTRICT InData, uint64_t InSize = 0)
     {
         if (InSize == 0)
             InSize = sizeof(T);
 
-        void* RESTRICT Dst = Buffer->GetMappedData();
+        void* ZE_RESTRICT Dst = Buffer->GetMappedData();
 
         if constexpr(!bUsePersistantMapping)
             Dst = Buffer->Map(ERSBufferMapMode::WriteOnly);
@@ -46,12 +46,12 @@ struct TUniformBuffer
             Buffer->Unmap();
     }
 
-	FORCEINLINE void Copy(const T& InData)
+	ZE_FORCEINLINE void Copy(const T& InData)
 	{
 		Copy(reinterpret_cast<const void*>(&InData));
 	}
 
-    FORCEINLINE CRSBuffer* GetBuffer() const { return Buffer.get(); }
+    ZE_FORCEINLINE CRSBuffer* GetBuffer() const { return Buffer.get(); }
 private:
 	CRSBufferPtr Buffer;
 };

@@ -60,7 +60,7 @@ struct SMonolithicRegister
     static ZE::Module::SMonolithicRegister ModuleAutoInit##Name(#Name, &InstantiateModule_##Name);
 #else
 #define DEFINE_MODULE(Class, Name) \
-    extern "C" __declspec(dllexport) ZE::Module::CModule* InstantiateModule_##Name() \
+    extern "C" ZE_DLLEXPORT ZE::Module::CModule* InstantiateModule_##Name() \
     { \
         ZE::Module::CModule* Module = new Class;\
         Module->SetName(#Name); \

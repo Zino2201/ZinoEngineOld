@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MinimalMacros.h"
+
 /**
  * Base class for non copyable objects
  */

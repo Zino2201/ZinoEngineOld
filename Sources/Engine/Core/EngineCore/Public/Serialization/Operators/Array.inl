@@ -2,7 +2,7 @@
  * Operators for std::array
  */
 template<typename T, size_t Count>
-FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::array<T, Count>& InValue)
+ZE_FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::array<T, Count>& InValue)
 {
 	if (!InArchive.IsSaving())
 		return InArchive;
@@ -14,7 +14,7 @@ FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::array<T, Count>
 }
 
 template<typename T, size_t Count>
-FORCEINLINE IArchive& operator>>(IArchive& InArchive, std::array<T, Count>& InValue)
+ZE_FORCEINLINE IArchive& operator>>(IArchive& InArchive, std::array<T, Count>& InValue)
 {
 	if (InArchive.IsSaving())
 		return InArchive;

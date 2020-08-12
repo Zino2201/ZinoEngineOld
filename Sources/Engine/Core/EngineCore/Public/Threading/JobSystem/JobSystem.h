@@ -92,6 +92,6 @@ ENGINECORE_API CWorkerThread& GetWorkerByIdx(const size_t& InIdx);
 ENGINECORE_API CWorkerThread& GetWorker();
 ENGINECORE_API size_t GetWorkerIdx();
 ENGINECORE_API size_t GetWorkerCount();
-FORCEINLINE size_t GetMainWorkerIdx() { return 0; }
+ZE_FORCEINLINE size_t GetMainWorkerIdx() { return 0; }
 
 }

@@ -7,6 +7,7 @@
 #include "Parser.h"
 #include "Writer.h"
 #include <fstream>
+#include <sys/stat.h>
 
 void Fatal(std::string_view InMessage, ...)
 {
@@ -14,7 +15,7 @@ void Fatal(std::string_view InMessage, ...)
 	va_start(InArgs, InMessage);
 
 	char PrintfBuffer[2048];
-	vsprintf_s(PrintfBuffer, InMessage.data(), InArgs);
+	vsprintf(PrintfBuffer, InMessage.data(), InArgs);
 	std::cerr << PrintfBuffer;
 	std::cerr << std::endl;
 
@@ -30,6 +31,15 @@ std::string_view ParseCommandLineArg(const std::string_view& InArg)
 }
 
 using HighResClock = std::chrono::high_resolution_clock;
+
+// stat
+#ifdef _WIN64
+#define STAT _stat
+using STAT_TIME = __time64_t;
+#else
+#define STAT stat
+using STAT_TIME = __int64_t;
+#endif
 
 int main(int argc, char** argv)
 {
@@ -89,11 +99,11 @@ int main(int argc, char** argv)
 			if(std::filesystem::exists(DateFile))
 			{
 				std::ifstream File(DateFile);
-				__time64_t Time;
+				STAT_TIME Time;
 				File >> Time;
 
-				struct _stat WriteTime;
-				_stat(Path.string().c_str(), &WriteTime);
+				struct STAT WriteTime;
+				STAT(Path.string().c_str(), &WriteTime);
 				if(Time == WriteTime.st_mtime)
 					continue;
 				
@@ -101,8 +111,8 @@ int main(int argc, char** argv)
 			}
 			
 			std::ofstream File(DateFile);
-			struct _stat WriteTime;
-			_stat(Path.string().c_str(), &WriteTime);
+			struct STAT WriteTime;
+			STAT(Path.string().c_str(), &WriteTime);
 			File << WriteTime.st_mtime;
 			File.close();
 
@@ -125,7 +135,7 @@ int main(int argc, char** argv)
 			{
 				if (!CTypeDatabase::Get().HasType(Property.Type))
 				{
-					auto& Known = GKnownUnsupportedTypes.find(Property.Type);
+					const auto& Known = GKnownUnsupportedTypes.find(Property.Type);
 					if(Known != GKnownUnsupportedTypes.end())
 					{
 						Fatal("%s: error: Unsupported type \"%s\" of property \"%s\", use \"%s\" (%s)",
@@ -151,7 +161,7 @@ int main(int argc, char** argv)
 			{
 				if (!CTypeDatabase::Get().HasType(Property.Type))
 				{
-					auto& Known = GKnownUnsupportedTypes.find(Property.Type);
+					const auto& Known = GKnownUnsupportedTypes.find(Property.Type);
 					if (Known != GKnownUnsupportedTypes.end())
 					{
 						Fatal("%s: error: Unsupported type \"%s\" of property \"%s\", use \"%s\" (%s)",

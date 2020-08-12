@@ -16,10 +16,8 @@ void CRenderPassDrawcallFactory::ComputeDrawcalls(const SMesh& InMesh,
 		InMesh.VertexBuffer,
 		InMesh.IndexBuffer,
 		InMesh.IndexFormat,
-		InMesh.VertexCount,
-		InMesh.IndexCount,
+		InMesh.VertexCount == 0 ? InMesh.IndexCount : InMesh.VertexCount,
 		1,
-		0,
 		0,
 		0);
 

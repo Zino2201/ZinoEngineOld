@@ -1,9 +1,10 @@
 -- Useful globals
 SrcDir = os.getcwd()
-LibDir = SrcDir.."/Libs/"
-BuildDir = SrcDir.."/../Build/"
-IntermediateDir = BuildDir.."Intermediates/"
-BinDir = SrcDir.."/../Binaries/"
+RootDir = path.join(SrcDir, "../")
+LibDir = path.join(SrcDir, "Libs")
+BuildDir = path.join(RootDir, "Build")
+IntermediateDir = path.join(BuildDir, "Intermediates")
+BinDir = path.join(RootDir, "Binaries")
 
 -- Src engine path
 SrcEnginePaths = os.matchdirs(SrcDir.."/Engine/**")
@@ -22,17 +23,17 @@ Module.__index = Module
 -- Required libs
 RequiredIncludes = 
 	{ 
-		LibDir.."glm",
-		LibDir.."stb_image",
-		LibDir.."SDL2/include",
-		LibDir.."boost",
-		LibDir.."imgui",
-		LibDir.."robin-hood-hashing/src/include",
-		LibDir.."fmt/include",
+		LibDir.."/glm",
+		LibDir.."/stb_image",
+		LibDir.."/SDL/include",
+		LibDir.."/boost",
+		LibDir.."/imgui",
+		LibDir.."/robin-hood-hashing/src/include",
+		LibDir.."/fmt/include",
 	}
 RequiredLibDirs = 
 	{
-		LibDir.."SDL2/lib"
+		LibDir.."/SDL/build/build/.libs"
 	}
 RequiredLibs = 
 	{
@@ -130,6 +131,11 @@ end
 local currentModule = nil
 
 function Module:new(name, modKind)
+	-- Skip module if it is none and we are on Linux
+	if os.istarget("linux") and modKind == "None" then
+		return
+	end
+
 	-- Initialize module class
 	local mod = {}
 	setmetatable(mod, Module)
@@ -142,7 +148,7 @@ function Module:new(name, modKind)
 	mod.libs = {}
 	mod.publicHeaders = {}
 	mod.root = os.getcwd()
-	
+
 	-- Used by monolithic builds
 	mod.debugLibDirs = {}
 	mod.debugLibs = {}
@@ -152,12 +158,10 @@ function Module:new(name, modKind)
 	mod.bothLibs = {}
 	
 	-- Initialize project
-	
-	-- Base configuration
+
 	project(name)
-	
 	kind(mod.kind)
-	
+
 	filterMonolithicOnly()
 		if mod.kind == "SharedLib" then
 			kind("StaticLib")
@@ -167,7 +171,7 @@ function Module:new(name, modKind)
 		defines(string.upper(mod.name).."_API=")
 		defines("ZE_MONOLITHIC")
 	filterModularOnly()
-		defines(string.upper(mod.name).."_API=__declspec(dllexport)")
+		defines(string.upper(mod.name).."_API=ZE_DLLEXPORT")
 	filterReset()
 	
 	-- Add a define for each configurations
@@ -192,7 +196,14 @@ function Module:new(name, modKind)
 	filter {}
 	
 	language "C++"
-	cppdialect "C++latest"
+	
+	-- C++20 not properly supported yet by premake5
+	filter { "toolset:msc"}
+		cppdialect "c++latest"
+	filter { "action:gmake*" }
+		buildoptions { "-std=c++20" }
+	filter {}
+
 	files { "**.h", "**.cpp", "**.hpp", "**.cxx", "**.inl" }
 	vpaths { ["Sources/*"] = "**.h" }
 	vpaths { ["Sources/*"] = "**.cpp" }
@@ -200,14 +211,15 @@ function Module:new(name, modKind)
 	vpaths { ["Sources/*"] = "**.hpp" }
 	vpaths { ["Sources/*"] = "**.cxx" }
 	
-	targetdir (BinDir.."%{cfg.longname}")
-	objdir (IntermediateDir.."%{prj.name}/".."%{cfg.longname}")
-	debugdir(SrcDir.."/../")
+	targetdir (BinDir.."/%{cfg.longname}")
+	objdir (IntermediateDir.."/%{prj.name}/".."%{cfg.longname}")
+	debugdir(RootDir)
 	
 	-- Default includes & libs
 	includedirs "Public"
 	includedirs "Private"
 	libdirs(BinDir.."/%{cfg.longname}")
+	--linkoptions("-Wl,-rpath,"..BinDir.."/%{cfg.longname}")
 	
 	-- Compiler
 	exceptionhandling("Off")
@@ -222,7 +234,7 @@ function Module:new(name, modKind)
 	mod.publicHeaders = os.matchfiles("Public/**.h")
 	
 	-- Generate ZRT file + pre-create .gen.cpp to includes them into vs sln
-	local ReflDir = BuildDir.."Reflection/"
+	local ReflDir = BuildDir.."/Reflection/"
 	local modFile = io.open(ReflDir..mod.name..".zrt", "w+")
 	
 	configs = { "Debug", "Debug Monolithic", "Release", "Release Monolithic" }
@@ -239,7 +251,7 @@ function Module:new(name, modKind)
 			for _, c in pairs(configs) do
 				local headerName = fullHeaderPath:match("^.+/(.+)$")
 				local headerNameNoExt = headerName:match("^.+(%..+)$")
-				local genCppPath = IntermediateDir..mod.name.."/"..c.."/Reflection/"..headerName:sub(1, -3)..".gen.cpp"
+				local genCppPath = IntermediateDir.."/"..mod.name.."/"..c.."/Reflection/"..headerName:sub(1, -3)..".gen.cpp"
 				if not os.isfile(genCppPath) then
 					local genCpp = io.open(genCppPath, "w+")
 					genCpp:write("/** DON'T MODIFY! */")
@@ -253,8 +265,8 @@ function Module:new(name, modKind)
 	modFile:close()
 	
 	-- Reflection related
-	includedirs { IntermediateDir..mod.name.."/%{cfg.longname}/Reflection/" }
-	files { IntermediateDir..mod.name.."/%{cfg.longname}/Reflection/*.gen.cpp" }
+	includedirs { IntermediateDir.."/"..mod.name.."/%{cfg.longname}/Reflection/" }
+	files { IntermediateDir.."/"..mod.name.."/%{cfg.longname}/Reflection/*.gen.cpp" }
 
 	currentModule = mod
 	
@@ -263,18 +275,20 @@ function Module:new(name, modKind)
 	return mod
 end
 
+
 function Module:addModules(deps)
 	appendTables(self.deps, deps)
 	
 	for k, v in pairs(deps) do
 		local path = searchModulePath(v)
+		
 		if path then
 			includedirs(path.."/Public")
-			includedirs { IntermediateDir..v.."/%{cfg.longname}/Reflection/" }
+			includedirs { IntermediateDir.."/"..v.."/%{cfg.longname}/Reflection/" }
 			dependson(v)
 			filterModularOnly()
-				defines(string.upper(v).."_API=__declspec(dllimport)")
-				links("ZinoEngine-"..v)
+				defines(string.upper(v).."_API=ZE_DLLIMPORT")
+				links(v)
 			filterMonolithicOnly()
 				defines(string.upper(v).."_API=")
 			filterReset()
@@ -309,6 +323,8 @@ function Module:addLibDirs(libDirs)
 	end
 
 	for k, v in pairs(libDirs) do
+		filter { "action:gmake*" }
+		linkoptions("-Wl,-rpath-link,"..v)
 		libdirs(v)
 	end
 	
@@ -345,11 +361,18 @@ function searchModulePath(name)
 end
 
 local function finishModule()
+	if not currentModule then return end
+
 	if currentModule.kind == "SharedLib" then
 		-- Reflection command for this module
-		zrtFileString = BuildDir.."Reflection/"..currentModule.name..".zrt "
+		zrtFileString = BuildDir.."/Reflection/"..currentModule.name..".zrt "
+		filter { "toolset: msc" }
+			prebuildcommands { 
+				"\""..BinDir.."/%{cfg.longname}/ZinoReflectionTool.exe\" -Module="..currentModule.name.." -SrcDir=\""..currentModule.root.."\" -OutDir=\""..IntermediateDir.."/"..currentModule.name.."/%{cfg.longname}/Reflection/\" "..zrtFileString }
+		filter { "action:gmake*"}
 		prebuildcommands { 
-			"\""..BinDir.."%{cfg.longname}/ZinoEngine-ZinoReflectionTool.exe\" -Module="..currentModule.name.." -SrcDir=\""..currentModule.root.."\" -OutDir=\""..IntermediateDir..currentModule.name.."/%{cfg.longname}/Reflection/\" "..zrtFileString }
+			"\""..BinDir.."/%{cfg.longname}/ZinoReflectionTool\" -Module="..currentModule.name.." -SrcDir=\""..currentModule.root.."\" -OutDir=\""..IntermediateDir.."/"..currentModule.name.."/%{cfg.longname}/Reflection/\" "..zrtFileString }
+		filter {}
 	end
 end
 
@@ -377,8 +400,12 @@ workspace "ZinoEngine"
 		optimize "On"
 	filter { }
 	startproject "Main"
-	
-	targetprefix ("ZinoEngine-")
+
+	-- Use clang by default on gmake compatible platforms
+	filter { "action:gmake*"}
+		toolset "clang"
+	filter {}
+
 	group "Engine/Core"
 		executeModule("EngineCore")
 		executeModule("Engine")

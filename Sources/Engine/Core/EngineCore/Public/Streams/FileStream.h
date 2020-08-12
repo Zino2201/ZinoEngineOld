@@ -20,6 +20,8 @@ public:
 			File = std::unique_ptr<ZE::FileSystem::IFile>(ZE::FileSystem::Write(InPath, InWriteFlags));
 		else
 			File = std::unique_ptr<ZE::FileSystem::IFile>(ZE::FileSystem::Read(InPath, InReadFlags));
+	
+		verify(File);
 	}
 protected:
 	int sync() override

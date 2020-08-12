@@ -28,7 +28,6 @@ REFLECTION_API std::vector<CClass*> GetDerivedClassesFrom(CClass* InParent);
 
 /** Basic types specializations */
 REFL_SPECIALIZE_TYPE_NAME(bool, "bool");
-REFL_SPECIALIZE_TYPE_NAME(long, "long");
 REFL_SPECIALIZE_TYPE_NAME(float, "float");
 REFL_SPECIALIZE_TYPE_NAME(double, "double");
 

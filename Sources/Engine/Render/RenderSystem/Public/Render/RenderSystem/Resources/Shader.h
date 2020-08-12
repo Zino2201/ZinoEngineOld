@@ -30,7 +30,7 @@ public:
     CRSShader(const SRSShaderCreateInfo& InCreateInfo) :
         CreateInfo(InCreateInfo) {}
 
-    FORCEINLINE const SRSShaderCreateInfo& GetCreateInfo() const { return CreateInfo; }
+    ZE_FORCEINLINE const SRSShaderCreateInfo& GetCreateInfo() const { return CreateInfo; }
 protected:
     SRSShaderCreateInfo CreateInfo;
 };

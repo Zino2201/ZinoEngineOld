@@ -34,7 +34,7 @@ public:
     virtual void Resize(const uint32_t& InWidth, const uint32_t& InHeight) = 0;
     virtual CRSTexture* GetBackbufferTexture() = 0;
     
-    FORCEINLINE const SRSSurfaceCreateInfo& GetCreateInfo() const { return CreateInfo; }
+    ZE_FORCEINLINE const SRSSurfaceCreateInfo& GetCreateInfo() const { return CreateInfo; }
 protected:
     SRSSurfaceCreateInfo CreateInfo;
 };

@@ -22,7 +22,7 @@ std::future<SShaderCompilerOutput> CGlobalShaderCompiler::CompileShader(
 	const EShaderCompilerTarget& InTargetFormat,
 	const bool& bInShouldOptimize)
 {
-	auto& Result = ShaderCompilers.find(InTargetFormat);
+	auto Result = ShaderCompilers.find(InTargetFormat);
 
 	if(Result != ShaderCompilers.end())
 	{
@@ -33,7 +33,7 @@ std::future<SShaderCompilerOutput> CGlobalShaderCompiler::CompileShader(
 		// TODO: SET DEFINES
 
 		std::string Path;
-		Path += "/Shaders";
+		Path += "Shaders/";
 		Path += InShaderFilename;
 
 		return ZE::Async<SShaderCompilerOutput>(
@@ -48,10 +48,10 @@ std::future<SShaderCompilerOutput> CGlobalShaderCompiler::CompileShader(
 					bInShouldOptimize);
 
 				if(Output.bSucceed)
-					ZE::Logger::Info("Shader {} compiled!",
+					ZE::Logger::Verbose("Shader {} compiled!",
 						Path.c_str());
 				else
-					ZE::Logger::Info("Failed to compile shader {}!",
+					ZE::Logger::Error("Failed to compile shader {} !",
 						Path.c_str());
 
 				return Output;

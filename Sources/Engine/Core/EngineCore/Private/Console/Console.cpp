@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Console/Console.h"
 #include <charconv>
 
@@ -53,14 +51,16 @@ void CConsole::Execute(const std::string_view& InCmdName,
 				}
 				case SConVar::DataTypeFloat:
 				{
-					float Float = 0;
-					auto Result = std::from_chars(Arg.data(), Arg.data() + Arg.size(), Float);
-					if (Result.ec == std::errc::invalid_argument)
+					// For some reasons
+					// Clang doesn't have std::from_chars for floats
+					float Float = static_cast<float>(std::atof(Arg.data()));
+
+					/*if (Result.ec == std::errc::invalid_argument)
 					{
 						ZE::Logger::Error("Invalid argument \"{}\"", InParams[0].data());
 						return;
 					}
-					else
+					else*/
 						ConVar.SetFloat(Float);
 					break;
 				}

@@ -6,9 +6,6 @@
 #include "Render/RenderSystem/RenderSystemContext.h"
 #include "Engine/Viewport.h"
 #include <array>
-#include <assimp/scene.h>
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
 #include "Engine/Assets/StaticMesh.h"
 #include <SDL2/SDL.h>
 #include "Engine/World.h"
@@ -71,59 +68,6 @@ void LoadModelUsingTinyObjLoader(const std::string_view& InPath,
 			OutIndices.push_back(UniqueVertices[Vertex]);
 		}
 	}
-}
-
-void LoadModelUsingAssimp(const std::string_view& InPath,
-	std::vector<SStaticMeshVertex>& OutVertices,
-	std::vector<uint32_t>& OutIndices)
-{
-	static std::vector<Math::SVector3Float> Colors = 
-	{
-		Math::SVector3Float(1, 0, 0),
-		Math::SVector3Float(0, 1, 0),
-		Math::SVector3Float(0, 0, 1)
-	};
-	static size_t CurrentColor = 0;
-	static size_t CurrentVtx = 0;
-
-	Assimp::Importer Importer;
-	const aiScene* Scene = Importer.ReadFile(InPath.data(), aiProcess_Triangulate
-		| aiProcess_FlipUVs
-		| aiProcess_CalcTangentSpace
-		| aiProcess_GenNormals);
-	if(!Scene)
-		ZE::Logger::Fatal("Failed to load model {}", InPath.data());
-
-	aiMesh* Mesh = Scene->mMeshes[0];
-
-	OutVertices.reserve(Mesh->mNumVertices);
-	
-	std::unordered_map<SStaticMeshVertex, uint32_t, SStaticMeshVertexHash> UniqueVertices;
-
-	for(uint32_t i = 0; i < Mesh->mNumVertices; ++i)
-	{
-		aiVector3D& Position = Mesh->mVertices[i];
-		aiVector3D& Normal = Mesh->mNormals[i];
-
-		SStaticMeshVertex Vertex;
-		Vertex.Position = { Position.x, Position.y, Position.z };
-		Vertex.Normal = { Normal.x, Normal.y, Normal.z };
-
-		if(UniqueVertices.count(Vertex) == 0)
-		{
-			UniqueVertices[Vertex] = static_cast<uint32_t>(OutVertices.size());
-			CurrentVtx++;
-			if(CurrentVtx == 32)
-			{
-				CurrentColor = (CurrentColor + 1) % Colors.size();
-				CurrentVtx = 0;
-			}
-			OutVertices.push_back(Vertex);
-		}
-
-		OutIndices.emplace_back(UniqueVertices[Vertex]);
-	}
-
 }
 
 struct test

@@ -23,7 +23,7 @@
 #include "Threading/Thread.h"
 #include "Logger/Sinks/WinDbgSink.h"
 #include "Logger/Sinks/FileSink.h"
-#ifdef _WIN32
+#if ZE_PLATFORM(WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <cstdlib>
@@ -62,7 +62,7 @@ bool bRun = true;
 /**
  * ZinoEngine main
  */
-#ifdef _WIN32 
+#if ZE_PLATFORM(WINDOWS) 
 int CALLBACK WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPSTR lpCmdLine,
@@ -71,6 +71,13 @@ int CALLBACK WinMain(HINSTANCE hInstance,
 	int Err = Init();
 	Exit();
 	return Err;
+}
+#else
+int main(int argc, char** argv)
+{
+	int Err = Init();
+	Exit();
+	return Err;	
 }
 #endif
 
@@ -91,20 +98,19 @@ void PreInit()
 		FS::SetWriteFS(Root);
 
 		/** Setup default sinks */
-#if defined _WIN32 && defined ZE_DEBUG
+#if ZE_PLATFORM(WINDOWS) && defined ZE_DEBUG
 		ZE::Logger::AddSink(std::make_unique<ZE::Logger::Sinks::CWinDbgSink>("WinDbg"));
 #endif
 
 		/** Log file sink */
 		{
 			std::time_t Time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-			std::tm LocalTime;
-			localtime_s(&LocalTime, &Time);
+			std::tm* LocalTime = localtime(&Time);
 
 			std::filesystem::create_directories("Logs/");
 			
 			std::stringstream ss;
-			ss << std::put_time(&LocalTime, "/Logs/ZinoEngine_%H_%M_%S.log");
+			ss << std::put_time(LocalTime, "Logs/ZinoEngine_%H_%M_%S.log");
 			ZE::Logger::AddSink(std::make_unique<ZE::Logger::Sinks::CFileSink>("File", ss.str()));
 		}
 		ZE::Logger::Info("=== ZinoEngine {} Build ===", ZE_CONFIGURATION_NAME);
@@ -116,8 +122,8 @@ void PreInit()
 		/** Check if required directories/files are presents */
 		const std::array<const char*, 2> RequiredObjects = 
 		{
-			"/Shaders",
-			"/Assets"
+			"Shaders",
+			"Assets"
 		};
 
 		for(const auto& Obj : RequiredObjects)

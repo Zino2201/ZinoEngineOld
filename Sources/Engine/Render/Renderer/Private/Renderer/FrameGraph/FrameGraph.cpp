@@ -127,8 +127,8 @@ void CFrameGraph::BuildPhysicalRenderPass(CRenderPass& InRenderPass)
 	for (const auto& Resource : InRenderPass.Attachments)
 	{
 		SRenderPassResource& Texture = ResourceMap[Resource];
-		auto& ReadInfos = InRenderPass.GetReadInfos(Texture);
-		auto& WriteInfos = InRenderPass.GetWriteInfos(Texture);
+		auto ReadInfos = InRenderPass.GetReadInfos(Texture);
+		auto WriteInfos = InRenderPass.GetWriteInfos(Texture);
 
 		SRSRenderPassAttachment Attachment;
 		Attachment.Format = Texture.TextureInfos.Format;

@@ -22,9 +22,7 @@ CStdFile::CStdFile(const std::string_view& InPath,
 
 	if(!Stream.is_open())
 	{
-		char ErrBuf[512];
-		UNUSED_VARIABLE(ErrBuf);
-		ZE::Logger::Error("{}", strerror_s(ErrBuf, errno));
+		ZE::Logger::Error("{}", strerror(errno));
 		return;
 	}
 
@@ -127,7 +125,7 @@ std::filesystem::path CStdFileSystem::GetCorrectPath(const std::string_view& InP
 {
 	std::filesystem::path Path = InPath;
 	if(Path.is_relative())
-		Path = Root + std::string(InPath);
+		Path = Root / std::string(InPath);
 
 	return Path;
 }

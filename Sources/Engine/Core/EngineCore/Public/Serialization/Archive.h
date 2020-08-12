@@ -30,7 +30,7 @@ protected:
  * Basic operator<<
  */
 template<typename T>
-FORCEINLINE IArchive& operator<<(IArchive& InArchive, const T& InValue)
+ZE_FORCEINLINE IArchive& operator<<(IArchive& InArchive, const T& InValue)
 {
 	static_assert(std::is_trivially_copyable_v<T>, "No operator<< found which can use T");
 	if (!InArchive.IsSaving())
@@ -45,7 +45,7 @@ FORCEINLINE IArchive& operator<<(IArchive& InArchive, const T& InValue)
  * Basic operator>>
  */
 template<typename T>
-FORCEINLINE IArchive& operator>>(IArchive& InArchive, T& InValue)
+ZE_FORCEINLINE IArchive& operator>>(IArchive& InArchive, T& InValue)
 {
 	static_assert(std::is_trivially_copyable_v<T>, "No operator>> found which can use T");
 	if (InArchive.IsSaving())

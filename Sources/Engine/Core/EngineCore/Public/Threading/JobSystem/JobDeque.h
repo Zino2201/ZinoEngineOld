@@ -51,7 +51,7 @@ public:
 		return Deque.empty();
 	}
 
-	const size_t& GetSize()
+	size_t GetSize()
 	{
 		std::lock_guard<std::mutex> Guard(Mutex);
 		return Deque.size();

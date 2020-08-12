@@ -44,6 +44,18 @@
 		 return *this;
 	 }
   
+    TCoherentArrayIterator& operator-(difference_type InDiff)
+    {
+        CurrentIdx -= InDiff;
+        verify(CurrentIdx > 0 && CurrentIdx <= Elements.size() - 1);
+    }
+
+    friend difference_type operator-(const TCoherentArrayIterator& InLeft, const TCoherentArrayIterator& InRight)
+    {
+        return std::distance(InLeft.Elements[InLeft.CurrentIdx],
+            InRight.Elements[InRight.CurrentIdx]);        
+    }
+
 	 friend bool operator==(const TCoherentArrayIterator& Left, const TCoherentArrayIterator& Right)
 	 {
 		 return Left.CurrentIdx == Right.CurrentIdx;

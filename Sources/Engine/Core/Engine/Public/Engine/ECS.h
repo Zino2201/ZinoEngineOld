@@ -37,7 +37,7 @@ public:
 	std::vector<std::unique_ptr<ECS::IEntityComponentSystem>>& GetSystems() { return Systems; }
     std::optional<std::vector<ECS::IEntityComponentSystem*>*> GetSystemsByOrder(ETickFlagBits InOrder)
     {
-        auto& Set = GroupMap.find(InOrder);
+        auto Set = GroupMap.find(InOrder);
 
         if(Set != GroupMap.end())
             return std::make_optional(&Set->second);
@@ -149,6 +149,8 @@ class IEntityComponentSystem
     REFL_BODY()
 
 public:
+    virtual ~IEntityComponentSystem() = default;
+
     /**
      * Called when a entity manager is created
      */
@@ -236,7 +238,7 @@ public:
 
     CEntity* TryGetEntityByID(const EntityID& InID) 
     { 
-        auto& It = Entities.find(InID);
+        auto It = Entities.find(InID);
         if(It != Entities.end())
             return &It->second;
 
@@ -254,7 +256,7 @@ public:
     auto& GetOnComponentRemoved() { return OnComponentRemoved; }
     std::vector<ECS::SEntityComponent*>* GetComponents(ZE::Refl::CStruct* InStruct)
     {
-        auto& It = ComponentVecMap.find(InStruct);
+        auto It = ComponentVecMap.find(InStruct);
 
         if(It != ComponentVecMap.end())
             return &It->second;

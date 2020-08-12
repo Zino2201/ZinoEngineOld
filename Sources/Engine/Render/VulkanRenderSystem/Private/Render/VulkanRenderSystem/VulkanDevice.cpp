@@ -127,7 +127,7 @@ void CVulkanRenderPassFramebufferManager::NewFrame()
 
 vk::RenderPass CVulkanRenderPassFramebufferManager::GetRenderPass(const SRSRenderPass& InRenderPass)
 {
-	auto& FoundRenderPass = RenderPasses.find(InRenderPass);
+	auto FoundRenderPass = RenderPasses.find(InRenderPass);
 
 	if(FoundRenderPass != RenderPasses.end())
 	{
@@ -259,7 +259,7 @@ vk::Framebuffer CVulkanRenderPassFramebufferManager::GetFramebuffer(const SRSFra
 					static_cast<VkImageView>(static_cast<CVulkanTexture*>(InFramebuffer.DepthRTs[i])->GetImageView()));
 	}
 
-	auto& PossibleFramebuffer = Framebuffers.find(Key);
+	auto PossibleFramebuffer = Framebuffers.find(Key);
 	if (PossibleFramebuffer != Framebuffers.end())
 	{
 		PossibleFramebuffer->second.LifetimeCounter = 0;

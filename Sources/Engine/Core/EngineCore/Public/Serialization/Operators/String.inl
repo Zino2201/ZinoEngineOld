@@ -1,7 +1,7 @@
 /**
  * Operators for std::string
  */
-FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::string& InValue)
+ZE_FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::string& InValue)
 {
 	if (!InArchive.IsSaving())
 		return InArchive;
@@ -13,7 +13,7 @@ FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::string& InValue
 	return InArchive;
 }
 
-FORCEINLINE IArchive& operator>>(IArchive& InArchive, std::string& InValue)
+ZE_FORCEINLINE IArchive& operator>>(IArchive& InArchive, std::string& InValue)
 {
 	must(InArchive.IsBinary()); // Not supported for text
 

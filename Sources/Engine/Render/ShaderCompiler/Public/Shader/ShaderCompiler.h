@@ -52,6 +52,7 @@ class SHADERCOMPILER_API IShaderCompiler
 {
 public:
     IShaderCompiler(const EShaderCompilerTarget& InTarget);
+    virtual ~IShaderCompiler() = default;
 
 	virtual SShaderCompilerOutput CompileShader(
 		const EShaderStage& InStage,

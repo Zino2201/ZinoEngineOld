@@ -57,7 +57,7 @@ public:
 	virtual void* Map(ERSBufferMapMode InMapMode) { return nullptr; }
 	virtual void Unmap() {}
 
-	FORCEINLINE const SRSBufferCreateInfo& GetCreateInfo() const { return CreateInfo; }
+	ZE_FORCEINLINE const SRSBufferCreateInfo& GetCreateInfo() const { return CreateInfo; }
 
     /**
      * Get mapped buffer data (only valid when using Mapped hint !)

@@ -1,4 +1,5 @@
 #include "Module/Module.h"
+#define SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS 1
 #include "Shader/ShaderCompiler.h"
 #include <spirv_glsl.hpp>
 #include "ShaderConductor/ShaderConductor.hpp"
@@ -11,7 +12,7 @@ using namespace ZE;
 
 static constexpr std::array<const char*, 1> GIncludeDirs =
 {
-	"/Shaders"
+	"Shaders"
 };
 
 /**
@@ -86,7 +87,8 @@ public:
 						return nullptr;
 				}
 
-				TOwnerPtr<ZE::FileSystem::IFile> File = ZE::FileSystem::Read(Path);
+				std::unique_ptr<ZE::FileSystem::IFile> File = 
+					std::unique_ptr<ZE::FileSystem::IFile>(ZE::FileSystem::Read(Path));
 
 				std::vector<uint8_t> Array;
 				Array.resize(File->GetSize() / sizeof(uint8_t));
@@ -101,11 +103,11 @@ public:
 
 		ShaderConductor::Compiler::Options Options;
 		Options.disableOptimizations = bInShouldOptimize;
-#ifdef _DEBUG
+#ifdef ZE_DEBUG
 		Options.enableDebugInfo = true;
 		Options.optimizationLevel = 1;
 #else
-		Options.optimizationLevel = 1;
+		Options.optimizationLevel = 3;
 #endif
 
 		std::array<ShaderConductor::Compiler::TargetDesc, 1> Targets = 

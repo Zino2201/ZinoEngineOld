@@ -36,7 +36,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
 		ZE::Logger::Fatal(InCallbackData->pMessage);
-		__debugbreak();
+		ZE_DEBUGBREAK();
 		return VK_TRUE;
 	}
 

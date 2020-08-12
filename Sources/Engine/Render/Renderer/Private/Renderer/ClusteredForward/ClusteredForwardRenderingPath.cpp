@@ -90,7 +90,7 @@ void CClusteredForwardRenderingPath::Draw(const SWorldView& InView)
 		ColorInfos.Usage = ERSTextureUsageFlagBits::RenderTarget | ERSTextureUsageFlagBits::Sampled;
 
 		SRenderPassTextureInfos DepthInfos;
-		DepthInfos.Format = EFormat::D32SfloatS8Uint;
+		DepthInfos.Format = EFormat::D24UnormS8Uint;
 		DepthInfos.Width = InView.TargetRT->GetCreateInfo().Width;
 		DepthInfos.Height = InView.TargetRT->GetCreateInfo().Height;
 

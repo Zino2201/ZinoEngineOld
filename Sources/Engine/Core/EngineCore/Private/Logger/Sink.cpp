@@ -15,11 +15,10 @@ std::string CSink::Format(const SMessage& InMessage)
 	using namespace fmt::literals;
 	
 	std::time_t Time = std::chrono::system_clock::to_time_t(InMessage.Time);
-	std::tm LocalTime;
-	localtime_s(&LocalTime, &Time);
+	std::tm* LocalTime = localtime(&Time);
 
 	std::stringstream TimeStr;
-	TimeStr << std::put_time(&LocalTime, "%H:%M:%S");
+	TimeStr << std::put_time(LocalTime, "%H:%M:%S");
 
 	// TODO: Allow custom formats per sink
 	return fmt::format("({time}) [{severity}/{thread_name}] {message}\n",

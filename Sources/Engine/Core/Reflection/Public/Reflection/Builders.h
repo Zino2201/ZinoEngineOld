@@ -46,7 +46,7 @@ class TStructBuilder : public TTypeBuilder<T, U>
 public:
     TStructBuilder(const char* InName) : TTypeBuilder<T, U>(InName)
     {
-        Struct = static_cast<CStruct*>(Type);
+        Struct = static_cast<CStruct*>(TStructBuilder::Type);
 
         CStruct::AddStruct(Struct);
     }
@@ -56,10 +56,10 @@ public:
 	{
         if constexpr(!std::is_abstract_v<T>)
         {
-			std::function<void* (Args...)> Functor = &T::Refl_InternalInstantiate<Args...>;
+			std::function<void* (Args...)> Functor = &T::template Refl_InternalInstantiate<Args...>;
 			Struct->AddInstantiateFunc<Args...>(Functor);
 
-			std::function<void(void*, Args...)> Functor2 = &T::Refl_InternalPlacementNew<Args...>;
+			std::function<void(void*, Args...)> Functor2 = &T::template Refl_InternalPlacementNew<Args...>;
 			Struct->AddPlacementNewFunc<Args...>(Functor2);
         }
 
@@ -101,7 +101,7 @@ class TClassBuilder final : public TStructBuilder<T, U>
 public:
 	TClassBuilder(const char* InName) : TStructBuilder<T, U>(InName), Class(nullptr)
 	{  
-        Class = static_cast<CClass*>(Struct);
+        Class = static_cast<CClass*>(TClassBuilder::Struct);
 
 		CClass::AddClass(Class);
 	}

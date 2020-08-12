@@ -17,7 +17,7 @@ public:
 
 	void Log(const Logger::SMessage& InMessage) override;
 
-	FORCEINLINE const auto& GetMessages() const { return Messages; }
+	ZE_FORCEINLINE const auto& GetMessages() const { return Messages; }
 private:
 	std::vector<Logger::SMessage> Messages;
 };

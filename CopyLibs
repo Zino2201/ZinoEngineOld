@@ -1,0 +1,23 @@
+#!/bin/bash
+
+mkdir Binaries/Debug
+mkdir Binaries/Release
+mkdir "Binaries/Debug Monolithic"
+mkdir "Binaries/Release Monolithic"
+
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Debug/Lib/libdxcompiler.so Binaries/Debug/libdxcompiler.so
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Debug/Lib/libShaderConductor.so Binaries/Debug/libShaderConductor.so
+
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Debug/Lib/libdxcompiler.so "Binaries/Debug Monolithic/libdxcompiler.so"
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Debug/Lib/libShaderConductor.so "Binaries/Debug Monolithic/libShaderConductor.so"
+
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libdxcompiler.so Binaries/Release/libdxcompiler.so
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libShaderConductor.so Binaries/Release/libShaderConductor.so
+
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libdxcompiler.so "Binaries/Release Monolithic/libdxcompiler.so"
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libShaderConductor.so "Binaries/Release Monolithic/libShaderConductor.so"
+
+cp Sources/Libs/SDL/build/build/.libs/libSDL2.so Binaries/Debug/libSDL2.so
+cp Sources/Libs/SDL/build/build/.libs/libSDL2.so "Binaries/Debug Monolithic/libSDL2.so"
+cp Sources/Libs/SDL/build/build/.libs/libSDL2.so Binaries/Release/libSDL2.so
+cp Sources/Libs/SDL/build/build/.libs/libSDL2.so "Binaries/Release Monolithic/libSDL2.so"

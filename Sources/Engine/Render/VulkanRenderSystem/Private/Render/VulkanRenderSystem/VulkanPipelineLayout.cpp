@@ -9,7 +9,7 @@ CVulkanPipelineLayoutManager::~CVulkanPipelineLayoutManager() { }
 CVulkanPipelineLayout* CVulkanPipelineLayoutManager::GetPipelineLayout(
 	const SVulkanPipelineLayoutDesc& InEntry)
 {
-	auto& Result = Layouts.find(InEntry);
+	auto Result = Layouts.find(InEntry);
 	if (Result != Layouts.end())
 	{
 		return Result->second.get();
@@ -71,7 +71,7 @@ std::pair<vk::DescriptorSet, bool> CVulkanDescriptorSetManager::GetSet(const uin
 	Key.Handles = std::move(InHandles);
 	Key.Set = InSet;
 
-	auto& PossibleSet = Sets.find(Key);
+	auto PossibleSet = Sets.find(Key);
 	if(PossibleSet != Sets.end())
 		return { PossibleSet->second.SetHandle, false };
 

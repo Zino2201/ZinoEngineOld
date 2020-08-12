@@ -74,7 +74,7 @@ class CRSSampler : public CRSResource
 public:
     CRSSampler(const SRSSamplerCreateInfo& InCreateInfo) : CreateInfo(InCreateInfo) {}
 
-    FORCEINLINE const SRSSamplerCreateInfo& GetCreateInfo() const { return CreateInfo; }
+    ZE_FORCEINLINE const SRSSamplerCreateInfo& GetCreateInfo() const { return CreateInfo; }
 protected:
     SRSSamplerCreateInfo CreateInfo;
 };

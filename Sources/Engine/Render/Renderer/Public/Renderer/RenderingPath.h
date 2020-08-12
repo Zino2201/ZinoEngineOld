@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MinimalMacros.h"
+
 namespace ZE::Renderer
 {
 

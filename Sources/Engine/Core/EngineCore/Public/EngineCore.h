@@ -1,17 +1,20 @@
 #pragma once
 
+/**
+ * Minimal include
+ */
+
+#include "MinimalMacros.h"
+
 /** Detect unsupported compilers/platforms */
-#ifndef _MSC_VER
+#if !ZE_COMPILER(MSVC) && !ZE_COMPILER(CLANG)
 #error "This compiler is not yet supported"
 #endif
 
-#ifndef _WIN32
+#if !ZE_PLATFORM(WIN64) && !ZE_PLATFORM(LINUX)
 #error "ZinoEngine doesn't support this platform yet"
 #endif
 
-/**
- * Minimal include for classes
- */
 #include <cstdint>
 
 /** Maths */
@@ -22,39 +25,28 @@
 /** Memory */
 #include "Memory/SmartPointers.h"
 
-#include "Logger/Logger.h"
-
 /** Macros */
 #define SDL_MAIN_HANDLED
 #define UNUSED_VARIABLE(Var) (void)(Var)
 
+/** Portable __debugbreak */
+#if ZE_COMPILER(MSVC)
+#define ZE_DEBUGBREAK() __debugbreak();
+#elif ZE_COMPILER(GCC) || ZE_COMPILER(CLANG)
+#define ZE_DEBUGBREAK() __asm volatile ("int $0x3");
+#endif /** ZE_COMPILER(MSVC */
+
 /** Platform specific thing */
-#ifdef _WIN32
+#if ZE_PLATFORM(WINDOWS)
 #define NOMINMAX
 #endif
 
-/** Compiler specific things */
-#ifdef _MSC_FULL_VER
-#define FORCEINLINE __forceinline
-#define RESTRICT __restrict
-
-/** Fix for __declspec(dllexport) templates on MSVC */
-#pragma warning(disable: 4251)
-
-/** Dllexport/dllimport */
-#ifdef ZE_MONOLITHIC
-#define DLLEXPORT
-#define DLLIMPORT
-#else
-#define DLLEXPORT __declspec(dllexport)
-#define DLLIMPORT __declspec(dllimport)
-#endif /** ZE_MONOLITHIC */
-#endif /** _MSC_VER */
+#include "Logger/Logger.h"
 
 /** Assertions */
 #define must(condition) if(!(condition)) { ZE::Logger::Fatal("Assertion failed: {}", #condition); }
-#ifdef _DEBUG
-#define verify(condition) if(!(condition)) __debugbreak()
+#ifdef ZE_DEBUG
+#define verify(condition) if(!(condition)) { ZE::Logger::Error("Verify assertion failed: {}", #condition); ZE_DEBUGBREAK(); }
 #else
 #define verify(condition)
 #endif

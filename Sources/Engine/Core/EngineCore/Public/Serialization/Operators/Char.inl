@@ -2,7 +2,7 @@
  * Operators for char[N]
  */
 template<size_t N>
-FORCEINLINE IArchive& operator<<(IArchive& InArchive, const char InChar[N])
+ZE_FORCEINLINE IArchive& operator<<(IArchive& InArchive, const char InChar[N])
 {
 	if (!InArchive.IsSaving())
 		return InArchive;
@@ -13,7 +13,7 @@ FORCEINLINE IArchive& operator<<(IArchive& InArchive, const char InChar[N])
 }
 
 template<size_t N>
-FORCEINLINE IArchive& operator>>(IArchive& InArchive, const char InChar[N])
+ZE_FORCEINLINE IArchive& operator>>(IArchive& InArchive, const char InChar[N])
 {
 	if (InArchive.IsSaving())
 		return InArchive;
@@ -26,7 +26,7 @@ FORCEINLINE IArchive& operator>>(IArchive& InArchive, const char InChar[N])
 /**
  * Operators for char*
  */
-FORCEINLINE IArchive& operator<<(IArchive& InArchive, const char* InChar)
+ZE_FORCEINLINE IArchive& operator<<(IArchive& InArchive, const char* InChar)
 {
 	if (!InArchive.IsSaving())
 		return InArchive;

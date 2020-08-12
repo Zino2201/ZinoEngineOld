@@ -9,7 +9,7 @@
 #include <filesystem>
 #include "Threading/Thread.h"
 #include "Logger/Sink.h"
-#ifdef _WIN32
+#if ZE_PLATFORM(WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
@@ -72,7 +72,7 @@ void Log(ESeverityFlagBits InSeverity, const std::string& InMessage)
 	{
 		MsgBox(Message);
 #ifdef ZE_DEBUG
-		__debugbreak();
+		ZE_DEBUGBREAK();
 #endif
 		App::Exit(-1);
 	}

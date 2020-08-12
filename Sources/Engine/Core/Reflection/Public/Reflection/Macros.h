@@ -21,7 +21,7 @@ namespace ZE::Refl
 {
 
 /** Forward decls */
-void Refl_InitReflectedClassesAndStructs();
+static void Refl_InitReflectedClassesAndStructs();
 
 class CType;
 class CStruct;
@@ -91,13 +91,23 @@ namespace Internal
     static ZE::Refl::CStruct* GetStaticStruct(); \
     virtual ZE::Refl::CStruct* GetStruct() const { return ZE::Refl::Internal::GetStructByName(StructName); }
 
+#define DECLARE_ABSTRACT_CLASS(Class, ClassName) \
+    public: \
+    friend ZE::Refl::CType; \
+    friend void ZE::Refl::Refl_InitReflectedClassesAndStructs(); \
+    static ZE::Refl::CClass* GetStaticClass(); \
+    virtual ZE::Refl::CClass* GetClass() const { return ZE::Refl::Internal::GetClassByName(ClassName); } \
+    private:
+
 #define DECLARE_CLASS(Class, ClassName) \
     public: \
     friend ZE::Refl::CType; \
     friend void ZE::Refl::Refl_InitReflectedClassesAndStructs(); \
     template<typename... Args> \
+        requires (!std::is_abstract_v<Class>) \
     static void* Refl_InternalInstantiate(Args&&... InArgs) { return new Class(std::forward<Args>(InArgs)...); } \
     template<typename... Args> \
+        requires (!std::is_abstract_v<Class>) \
     static void Refl_InternalPlacementNew(void* InPtr, Args&&... InArgs) { new (InPtr) Class(std::forward<Args>(InArgs)...); } \
     static ZE::Refl::CClass* GetStaticClass(); \
     virtual ZE::Refl::CClass* GetClass() const { return ZE::Refl::Internal::GetClassByName(ClassName); } \

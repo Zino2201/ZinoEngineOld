@@ -4,6 +4,7 @@
 #include "NonCopyable.h"
 #include "JobDeque.h"
 #include <atomic>
+#include <condition_variable>
 
 namespace ZE::JobSystem
 {
@@ -44,12 +45,12 @@ public:
 
 	static std::condition_variable& GetSleepConditionVariable();
 
-	FORCEINLINE const EWorkerThreadType& GetType() const { return Type; }
-	FORCEINLINE std::thread& GetThread() { return Thread; }
-	FORCEINLINE const std::thread::id& GetThreadId() const { return ThreadId; }
-	FORCEINLINE TJobDeque& GetJobQueue() { return JobQueue; }
-	FORCEINLINE bool IsActive() const { return Active; }
-	FORCEINLINE bool HasJobs() const { return !JobQueue.IsEmpty(); }
+	ZE_FORCEINLINE const EWorkerThreadType& GetType() const { return Type; }
+	ZE_FORCEINLINE std::thread& GetThread() { return Thread; }
+	ZE_FORCEINLINE const std::thread::id& GetThreadId() const { return ThreadId; }
+	ZE_FORCEINLINE TJobDeque& GetJobQueue() { return JobQueue; }
+	ZE_FORCEINLINE bool IsActive() const { return Active; }
+	ZE_FORCEINLINE bool HasJobs() const { return !JobQueue.IsEmpty(); }
 
 	bool operator==(const CWorkerThread& InOther) const
 	{

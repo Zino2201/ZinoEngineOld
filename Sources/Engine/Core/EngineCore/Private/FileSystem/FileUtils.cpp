@@ -1,5 +1,3 @@
-#pragma once
-
 #include "FileSystem/FileUtils.h"
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/ZFS.h"

@@ -13,13 +13,13 @@ namespace ZE
 template<typename T>
 struct TNoSplit
 {
-	FORCEINLINE bool Split(const size_t& InDataSize) { return false; }
+	ZE_FORCEINLINE bool Split(const size_t& InDataSize) { return false; }
 };
 
 /**
- * Split on a threshold (default is worker count)
+ * Split on a threshold (default is 4)
  */
-template<typename T, size_t Threshold = -1>
+template<typename T, size_t Threshold = 4>
 struct TCountSplitter
 {
 	size_t Count;
@@ -27,10 +27,7 @@ struct TCountSplitter
 
 	TCountSplitter() : Count(1)
 	{
-		if(Threshold == -1)
-			MaxThreshold = ZE::JobSystem::GetWorkerCount();
-		else 
-			MaxThreshold = Threshold;
+		MaxThreshold = Threshold;
 	}
 
 	bool Split(const size_t& InDataSize) 
@@ -124,7 +121,7 @@ const ZE::JobSystem::SJob& ParallelFor(const size_t& InSize, T* InData, const La
 	const ZE::JobSystem::SJob& Job =
 		ZE::JobSystem::CreateJobUserdata<ParallelForInternal::SParallelForJobData<T, Lambda,
 			Splitter>>(
-			EJobType::Normal,
+			ZE::JobSystem::EJobType::Normal,
 			&ParallelForInternal::ParellelForJobFunc<T, Lambda, Splitter>,
 			std::span<T>(InData, InSize),
 			0,
@@ -150,6 +147,7 @@ template<typename T, typename Lambda, bool bSchedule = true,
 	const ZE::JobSystem::SJob& Job =
 		ZE::JobSystem::CreateJobUserdata<ParallelForInternal::SParallelForJobData<T, Lambda,
 		Splitter>>(
+			ZE::JobSystem::EJobType::Normal,
 			&ParallelForInternal::ParellelForJobFunc<T, Lambda, Splitter>,
 			std::span<T>(InData, InSize),
 			0,

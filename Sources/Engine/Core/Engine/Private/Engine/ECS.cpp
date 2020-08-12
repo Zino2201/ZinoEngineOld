@@ -19,7 +19,7 @@ void CECSManager::OnModuleLoaded(const std::string_view& InName)
 	using namespace ECS;
 
 	/** Search all IEntityComponentSystems */
-	auto& SystemClasses = Refl::GetDerivedClassesFrom(
+	auto SystemClasses = Refl::GetDerivedClassesFrom(
 		Refl::CClass::Get<IEntityComponentSystem>());
 
 	for(const auto& SystemClass : SystemClasses)
@@ -266,7 +266,7 @@ void CEntityManager::AttachEntity(const EntityID& InEntity, const EntityID& InPa
 SEntityComponent* CEntityManager::GetComponent(const EntityID& InID,
 	Refl::CStruct* InComponent)
 {
-	auto& It = Entities.find(InID);
+	auto It = Entities.find(InID);
 
 	if(It != Entities.end())
 	{

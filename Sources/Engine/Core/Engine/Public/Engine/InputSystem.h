@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL_keycode.h>
+#include "EngineCore.h"
 
 union SDL_Event;
 

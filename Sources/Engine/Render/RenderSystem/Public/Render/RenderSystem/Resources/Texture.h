@@ -70,7 +70,7 @@ public:
 
     virtual void Copy(const void* Src) = 0;
 
-    FORCEINLINE const SRSTextureCreateInfo& GetCreateInfo() const { return CreateInfo; }
+    ZE_FORCEINLINE const SRSTextureCreateInfo& GetCreateInfo() const { return CreateInfo; }
 protected:
     SRSTextureCreateInfo CreateInfo;
 };

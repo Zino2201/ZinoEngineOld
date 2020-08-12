@@ -4,6 +4,7 @@
 #include "RenderPass.h"
 #include "Renderer/RendererModule.h"
 #include <robin_hood.h>
+#include "Render/RenderSystem/RenderSystemContext.h"
 
 namespace ZE::Renderer
 {
@@ -44,7 +45,7 @@ public:
 				SVertexInputAttributeDescription(0, 1, EFormat::R32G32Sfloat,
 					offsetof(SQuadVertex, TexCoord)),
 			},
-			SRSBlendState({}),
+			SRSBlendState(),
 			SRSRasterizerState(
 				EPolygonMode::Fill,
 				ECullMode::None,

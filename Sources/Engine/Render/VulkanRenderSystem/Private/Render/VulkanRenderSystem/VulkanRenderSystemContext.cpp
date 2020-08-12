@@ -373,11 +373,11 @@ void CVulkanRenderSystemContext::BindDescriptorSets()
 {
 	must(CurrentLayout);
 
-	for(const auto& [Set, Writes] : WriteMap)
+	for(const auto& [SetIdx, Writes] : WriteMap)
 	{
-		const auto& Handles = HandleMap[Set];
+		const auto& Handles = HandleMap[SetIdx];
 
-		auto [Set, bMustUpdate] = CurrentLayout->GetSetManager().GetSet(Set,
+		auto [Set, bMustUpdate] = CurrentLayout->GetSetManager().GetSet(SetIdx,
 			Handles);
 
 		if(bMustUpdate)

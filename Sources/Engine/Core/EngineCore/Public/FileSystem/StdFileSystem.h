@@ -56,7 +56,7 @@ public:
 private:
 	std::filesystem::path GetCorrectPath(const std::string_view& InPath) const;
 private:
-	std::string Root;
+	std::filesystem::path Root;
 };
 
 }

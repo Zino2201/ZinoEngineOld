@@ -26,9 +26,11 @@ const SJob* CWorkerThread::TryGetOrStealJob(const size_t& InWorkerIdx)
 		/** 
 		 * Try to steal it from another worker
 		 */
+		std::random_device Device;
+		std::mt19937 Gen(Device());
 		std::uniform_int_distribution<size_t> Distribution(0, GetWorkerCount());
 
-		size_t WorkerIdx = InWorkerIdx == -1 ? Distribution(std::random_device()) : InWorkerIdx;
+		size_t WorkerIdx = InWorkerIdx == -1 ? Distribution(Gen) : InWorkerIdx;
 		auto& WorkerToSteal = GetWorkerByIdx(WorkerIdx);
 		
 		/**

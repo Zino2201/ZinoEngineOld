@@ -1,9 +1,12 @@
 #include "EngineCore.h"
 #include "Module/ModuleManager.h"
 #include "Module/Module.h"
-#ifdef _WIN32
+#if ZE_PLATFORM(WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#elif ZE_PLATFORM(OSX) || ZE_PLATFORM(LINUX)
+#include <dlfcn.h>
+#include <unistd.h>
 #endif
 #include "Logger/Logger.h"
 
@@ -15,7 +18,7 @@ OnModuleLoadedDelegate OnModuleLoaded;
 
 void* LoadModuleHandle(const std::string& InPath)
 {
-#ifdef _WIN32
+#if ZE_PLATFORM(WINDOWS)
 	// TODO: Update
 	char Buffer[MAX_PATH];
 	::GetCurrentDirectoryA(MAX_PATH, Buffer);
@@ -26,15 +29,35 @@ void* LoadModuleHandle(const std::string& InPath)
 	Path += InPath;
 
 	return (void*) LoadLibraryA(Path.c_str());
+#elif ZE_PLATFORM(OSX) || ZE_PLATFORM(LINUX)
+	//char Buffer[PATH_MAX];
+	//getcwd(Buffer, PATH_MAX);
+
+	std::string Path = InPath;
+	//Path += "/Binaries/";
+	//Path += ZE_CONFIGURATION_NAME;
+	//Path += "/";
+	//Path += InPath;
+
+	return dlopen(Path.c_str(), RTLD_LAZY);
 #endif
 }
 
 void FreeModuleHandle(void* InHandle)
 {
-#ifdef _WIN32
+#if ZE_PLATFORM(WINDOWS)
 	FreeLibrary((HMODULE) InHandle);
-#endif
+#elif ZE_PLATFORM(OSX) || ZE_PLATFORM(LINUX)
+	dlclose(InHandle);
+#endif 
 }
+
+/** Platform specific variables */
+#if ZE_PLATFORM(WINDOWS)
+constexpr static std::string_view GetSharedLibExtension() { return "dll"; }
+#elif ZE_PLATFORM(OSX) || ZE_PLATFORM(LINUX)
+constexpr static std::string_view GetSharedLibExtension() { return "so"; }
+#endif
 
 CModule* LoadModule(const std::string_view& InName)
 {
@@ -53,11 +76,14 @@ CModule* LoadModule(const std::string_view& InName)
 	/**
 	 * Load the library
 	 */
-	std::string Extension = ".dll";
+	CModule* Module = nullptr;
+
+#if ZE_PLATFORM(WINDOWS)
 	std::string Path = "ZinoEngine-";
 	Path += InName;
-	Path += Extension;
-	
+	Path += ".";
+	Path += GetSharedLibExtension();
+
 	void* Handle = LoadModuleHandle(Path.c_str());
 	if(!Handle)
 	{
@@ -82,12 +108,9 @@ CModule* LoadModule(const std::string_view& InName)
 		return nullptr;
 	}
 
-	CModule* Module = nullptr;
-
 	/**
 	 * Get proc address of InstantiateModule
 	 */
-#ifdef _WIN32
 	std::string FuncName = GInstantiateModuleFuncName;
 	FuncName += "_";
 	FuncName += InName;
@@ -101,8 +124,37 @@ CModule* LoadModule(const std::string_view& InName)
 	}
 	
 	Module->Handle = Handle;
-#endif
-#else
+#elif ZE_PLATFORM(OSX) || ZE_PLATFORM(LINUX)
+	std::string Path = "lib";
+	Path += InName;
+	Path += ".";
+	Path += GetSharedLibExtension();
+
+	void* Handle = LoadModuleHandle(Path.c_str());
+	if(!Handle)
+	{
+		ZE::Logger::Fatal("Failed to load module {}", InName);
+	}
+
+	/**
+	 * Get proc address of InstantiateModule
+	 */
+	std::string FuncName = GInstantiateModuleFuncName;
+	FuncName += "_";
+	FuncName += InName;
+	PFN_InstantiateModuleFunc InstantiateFunc = (PFN_InstantiateModuleFunc) dlsym(Handle,
+		FuncName.c_str());
+	Module = InstantiateFunc();
+	if (!Module)
+	{
+		ZE::Logger::Verbose("Failed to instantiate module {}", InName);
+		return nullptr;
+	}
+
+	Module->Handle = Handle;
+#endif /** ZE_PLATFORM(WINDOWS) */
+
+#else /** ZE_MONOLITHIC */
 	CModule* Module = nullptr;
 	auto InstantiateFunc = CModule::InstantiateModuleFuncs[InName];
 	Module = InstantiateFunc(); /** This indicate that your module doesn't have a DEFINE_MODULE */

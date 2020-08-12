@@ -119,8 +119,8 @@ public:
 
 	void SetWriteFS(IFileSystem* InNew) { WriteFS = InNew; }
 
-	FORCEINLINE const auto& GetFilesystems() const { return Filesystems; }
-	FORCEINLINE IFileSystem* GetWriteFS() const { return WriteFS; }
+	ZE_FORCEINLINE const auto& GetFilesystems() const { return Filesystems; }
+	ZE_FORCEINLINE IFileSystem* GetWriteFS() const { return WriteFS; }
 private:
 	CFileSystemManager() : WriteFS(nullptr) {}
 public:

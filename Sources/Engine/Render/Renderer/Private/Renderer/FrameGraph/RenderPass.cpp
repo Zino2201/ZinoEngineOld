@@ -121,7 +121,7 @@ bool CRenderPass::IsOutput(const SRenderPassResource& InResource) const
 CRSTexture* CRenderPassPersistentResourceManager::GetOrCreateTexture(
 	const uint32_t& InID, const SRenderPassTextureInfos& InInfos)
 {
-	auto& Find = TextureMap.find(InID);
+	auto Find = TextureMap.find(InID);
 	if(Find != TextureMap.end())
 	{
 		/** If the texture infos has changed, delete the old one and recreate a new */

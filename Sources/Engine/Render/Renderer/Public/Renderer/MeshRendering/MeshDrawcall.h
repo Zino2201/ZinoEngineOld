@@ -61,23 +61,22 @@ struct SMeshDrawcall
 	uint32_t FirstInstance;
 	
 	SMeshDrawcall() : VertexBuffer(nullptr), IndexBuffer(nullptr), IndexFormat(EIndexFormat::Uint16),
-		VertexCount(0), IndexCount(0), InstanceCount(1), FirstVertex(0), FirstIndex(0),
+		VertexCount(0), InstanceCount(1), FirstVertex(0),
 		FirstInstance(0) {}
 
 	SMeshDrawcall(const SRSGraphicsPipeline& InPipeline,
 		CRSBuffer* InVertexBuffer,
 		CRSBuffer* InIndexBuffer,
 		const EIndexFormat& InIndexFormat,
-		const uint32_t& InVertexCount,
-		const uint32_t& InIndexCount,
+		const uint32_t& InVertexOrIndexCount,
 		const uint32_t& InInstanceCount,
-		const uint32_t& InFirstVertex,
-		const uint32_t& InFirstIndex,
+		const uint32_t& InFirstVertexOrIndex,
 		const uint32_t& InFirstInstance) :
 		Pipeline(InPipeline), VertexBuffer(InVertexBuffer),
-		IndexBuffer(InIndexBuffer), IndexFormat(InIndexFormat), VertexCount(InVertexCount),
-		IndexCount(InIndexCount), InstanceCount(InInstanceCount),
-		FirstVertex(InFirstVertex), FirstIndex(InFirstIndex), FirstInstance(InFirstInstance) {}
+		IndexBuffer(InIndexBuffer), IndexFormat(InIndexFormat), 
+		VertexCount(InVertexOrIndexCount),
+		InstanceCount(InInstanceCount),
+		FirstVertex(InFirstVertexOrIndex), FirstInstance(InFirstInstance) {}
 };
 
 using TDrawcallList = TCoherentArray<SMeshDrawcall>;

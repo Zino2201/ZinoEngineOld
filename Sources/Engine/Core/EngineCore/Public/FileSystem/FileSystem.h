@@ -64,7 +64,8 @@ class ENGINECORE_API IFileSystem
 public:
 	IFileSystem(const std::string& InAlias,
 		const uint8_t& InPriority) {}
-	
+	virtual ~IFileSystem() = default;
+
 	virtual TOwnerPtr<IFile> Read(const std::string_view& InPath, const bool& bIsBinary) = 0;
 	virtual TOwnerPtr<IFile> Write(const std::string_view& InPath, const bool& bIsBinary) = 0;
 	virtual bool IterateDirectories(const std::string_view& InPath, 

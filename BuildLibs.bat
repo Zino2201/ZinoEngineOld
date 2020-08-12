@@ -20,6 +20,12 @@ git submodule update --init --recursive
 
 echo Building 3rd party libs for VS2019 x64... (requires CMake, Python 3 and Git)
 
+echo Building SDL2...
+cd Sources/Libs/SDL
+mkdir build
+cd build
+cmake ../
+
 REM Shader Conductor
 cd Sources/Libs/ShaderConductor/
 echo Building Shader Conductor

@@ -30,10 +30,10 @@ public:
 };
 
 IMPLEMENT_SHADER(CImGuiVS, "ImGuiVS", 
-	"/UI/ImGuiVS.hlsl", "Main", EShaderStage::Vertex);
+	"UI/ImGuiVS.hlsl", "Main", EShaderStage::Vertex);
 
 IMPLEMENT_SHADER(CImGuiFS, "ImGuiFS",
-	"/UI/ImGuiFS.hlsl", "Main", EShaderStage::Fragment);
+	"UI/ImGuiFS.hlsl", "Main", EShaderStage::Fragment);
 
 struct SGlobalData
 {

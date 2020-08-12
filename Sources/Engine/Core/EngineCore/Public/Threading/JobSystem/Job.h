@@ -3,11 +3,16 @@
 #include "EngineCore.h"
 #include <atomic>
 #include <array>
+#include <memory>
 
 namespace ZE::JobSystem
 {
 
+#if __cpp_lib_hardware_interference_size >= 201603
 static constexpr size_t GJobAlignement = std::hardware_destructive_interference_size;
+#else
+static constexpr size_t GJobAlignement = 64;
+#endif
 
 enum class EJobType
 {
@@ -61,12 +66,12 @@ struct alignas(GJobAlignement) ENGINECORE_API SJob
 	 * Get casted user data
 	 */
 	template<typename T>
-	FORCEINLINE T* GetUserdata() const
+	ZE_FORCEINLINE T* GetUserdata() const
 	{
 		return reinterpret_cast<T*>(Userdata.data());
 	}
 
-	FORCEINLINE bool IsFinished() const { return UnfinishedJobs == 0; }
+	ZE_FORCEINLINE bool IsFinished() const { return UnfinishedJobs == 0; }
 };
 
 /** Schedule the job */

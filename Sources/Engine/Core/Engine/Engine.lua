@@ -1,5 +1,4 @@
 local Mod = Module:new("Engine")
 Mod:addModules({ "EngineCore", "RenderCore", "ShaderCore", "RenderSystem", "ShaderCompiler", "Reflection", "ImGui", "Renderer" })
-Mod:addIncludeDirs({ LibDir.."assimp/include", LibDir.."tinyobjloader" })
-Mod:addLibDirs({ LibDir.."assimp/lib" })
-Mod:addLibs({ "assimp-vc142-mt", "SDL2" })
+Mod:addIncludeDirs({ LibDir.."/tinyobjloader" })
+Mod:addLibs({ "SDL2" })

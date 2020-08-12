@@ -137,45 +137,45 @@ struct SVulkanQueueFamilyIndices
 namespace VulkanUtil
 {
     VmaMemoryUsage BufferUsageFlagsToMemoryUsage(ERSMemoryUsage BufferUsage);
-	FORCEINLINE SVulkanSwapChainSupportDetails QuerySwapChainDetails(const vk::PhysicalDevice& InPhysicalDevice,
+	ZE_FORCEINLINE SVulkanSwapChainSupportDetails QuerySwapChainDetails(const vk::PhysicalDevice& InPhysicalDevice,
         const vk::SurfaceKHR& InSurface);
 	SVulkanQueueFamilyIndices GetQueueFamilyIndices(const vk::PhysicalDevice& InDevice);
-    FORCEINLINE vk::Format FormatToVkFormat(const EFormat& InFormat);
-    FORCEINLINE EFormat VkFormatToFormat(const vk::Format& InFormat);
-	FORCEINLINE vk::SampleCountFlagBits SampleCountToVkSampleCount(
+    ZE_FORCEINLINE vk::Format FormatToVkFormat(const EFormat& InFormat);
+    ZE_FORCEINLINE EFormat VkFormatToFormat(const vk::Format& InFormat);
+	ZE_FORCEINLINE vk::SampleCountFlagBits SampleCountToVkSampleCount(
 		const ESampleCount& InSampleCount);
-    FORCEINLINE vk::ImageAspectFlagBits GetImageAspectFromFormat(const EFormat& InFormat);
-    FORCEINLINE vk::ShaderStageFlagBits ShaderStageToVkShaderStage(const EShaderStage& InShader);
-    FORCEINLINE vk::DescriptorType ShaderParameterTypeToVkDescriptorType(const EShaderParameterType& InType);
-	FORCEINLINE vk::VertexInputRate VertexInputRateToVkVertexInputRate(const EVertexInputRate& InRate);
+    ZE_FORCEINLINE vk::ImageAspectFlagBits GetImageAspectFromFormat(const EFormat& InFormat);
+    ZE_FORCEINLINE vk::ShaderStageFlagBits ShaderStageToVkShaderStage(const EShaderStage& InShader);
+    ZE_FORCEINLINE vk::DescriptorType ShaderParameterTypeToVkDescriptorType(const EShaderParameterType& InType);
+	ZE_FORCEINLINE vk::VertexInputRate VertexInputRateToVkVertexInputRate(const EVertexInputRate& InRate);
 
     /** Rasterizer */
-	FORCEINLINE vk::PolygonMode PolygonModeToVkPolygonMode(EPolygonMode InPolygonMode);
-	FORCEINLINE vk::CullModeFlags CullModeToVkCullMode(ECullMode InCullMode);
-	FORCEINLINE vk::FrontFace FrontFaceToVkFrontFace(EFrontFace InFrontFace);
+	ZE_FORCEINLINE vk::PolygonMode PolygonModeToVkPolygonMode(EPolygonMode InPolygonMode);
+	ZE_FORCEINLINE vk::CullModeFlags CullModeToVkCullMode(ECullMode InCullMode);
+	ZE_FORCEINLINE vk::FrontFace FrontFaceToVkFrontFace(EFrontFace InFrontFace);
 
 	vk::CompareOp ComparisonOpToVkCompareOp(const ERSComparisonOp& InOp);
 
 	/** Blend */
-	FORCEINLINE vk::BlendFactor BlendFactorToVkBlendFactor(EBlendFactor InFactor);
-	FORCEINLINE vk::BlendOp BlendOpToVkBlendOp(EBlendOp InOp);
-	FORCEINLINE vk::StencilOp StencilOpToVkStencilOp(EStencilOp InOp);
+	ZE_FORCEINLINE vk::BlendFactor BlendFactorToVkBlendFactor(EBlendFactor InFactor);
+	ZE_FORCEINLINE vk::BlendOp BlendOpToVkBlendOp(EBlendOp InOp);
+	ZE_FORCEINLINE vk::StencilOp StencilOpToVkStencilOp(EStencilOp InOp);
 
     /** Render pass related */
     namespace RenderPass
     {
-        FORCEINLINE vk::AttachmentLoadOp AttachmentLoadOpToVkAttachmentLoadOp(
+        ZE_FORCEINLINE vk::AttachmentLoadOp AttachmentLoadOpToVkAttachmentLoadOp(
             const ERSRenderPassAttachmentLoadOp& InOp);
-		FORCEINLINE vk::AttachmentStoreOp AttachmentStoreOpToVkAttachmentStoreOp(
+		ZE_FORCEINLINE vk::AttachmentStoreOp AttachmentStoreOpToVkAttachmentStoreOp(
 			const ERSRenderPassAttachmentStoreOp& InOp);
-        FORCEINLINE vk::ImageLayout AttachmentLayoutToVkImageLayout(
+        ZE_FORCEINLINE vk::ImageLayout AttachmentLayoutToVkImageLayout(
             const ERSRenderPassAttachmentLayout& InLayout);
     }
 
     /** Sampler */
-    FORCEINLINE vk::Filter FilterToVkFilter(const ERSFilter& InFilter);
-    FORCEINLINE vk::SamplerMipmapMode FilterToVkSamplerMipMapMode(const ERSFilter& InFilter);
-    FORCEINLINE vk::SamplerAddressMode AddressModeToVkSamplerAddressMode(const ERSSamplerAddressMode& InAddressMode);
+    ZE_FORCEINLINE vk::Filter FilterToVkFilter(const ERSFilter& InFilter);
+    ZE_FORCEINLINE vk::SamplerMipmapMode FilterToVkSamplerMipMapMode(const ERSFilter& InFilter);
+    ZE_FORCEINLINE vk::SamplerAddressMode AddressModeToVkSamplerAddressMode(const ERSSamplerAddressMode& InAddressMode);
 }
 
 /** Log category */

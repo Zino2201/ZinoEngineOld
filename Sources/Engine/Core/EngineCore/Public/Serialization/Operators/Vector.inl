@@ -2,7 +2,7 @@
  * Operators for std::vector
  */
 template<typename T>
-FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::vector<T>& InValue)
+ZE_FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::vector<T>& InValue)
 {
 	if (!InArchive.IsSaving())
 		return InArchive;
@@ -16,7 +16,7 @@ FORCEINLINE IArchive& operator<<(IArchive& InArchive, const std::vector<T>& InVa
 }
 
 template<typename T>
-FORCEINLINE IArchive& operator>>(IArchive& InArchive, std::vector<T>& InValue)
+ZE_FORCEINLINE IArchive& operator>>(IArchive& InArchive, std::vector<T>& InValue)
 {
 	if (InArchive.IsSaving())
 		return InArchive;

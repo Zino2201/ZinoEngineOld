@@ -16,7 +16,7 @@ CVulkanGraphicsPipeline* CVulkanPipelineManager::GetOrCreateGraphicsPipeline(
 	Entry.Pipeline = InPipeline;
 	Entry.RenderPass = InRenderPass;
 
-	auto& Result = GraphicsPipelines.find(Entry);
+	auto Result = GraphicsPipelines.find(Entry);
 	if(Result != GraphicsPipelines.end())
 		return Result->second.get();
 

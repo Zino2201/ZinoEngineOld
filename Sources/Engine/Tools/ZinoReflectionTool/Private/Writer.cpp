@@ -59,7 +59,16 @@ void ProcessHeaderStructOrClass(std::ofstream& File, const CStruct& InStruct,
 	/** Generate body macro */
 	File << "#define " << GReflBodyDefMacro << CurrentFileUniqueId << "_" <<
 		InStruct.GetBodyLine() << " ";
-	std::string_view M = bIsClass ? GDeclareClassMacro : GDeclareStructMacro;
+	std::string_view M = GDeclareStructMacro;
+	if(bIsClass)
+	{
+		const auto& Class = static_cast<const CClass&>(InStruct);
+		if(Class.IsAbstract())
+			M = "DECLARE_ABSTRACT_CLASS(";
+		else
+			M = GDeclareClassMacro;
+	}
+
 	File << M << Type << ", \"" << InStruct.GetName() << "\")";
 	File << "\n";
 	File << "\n";

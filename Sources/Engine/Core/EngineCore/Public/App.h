@@ -32,7 +32,7 @@ public:
 	/** Process all pending events, called by Run() loop by default but can be called if needed */
 	virtual void ProcessEvents() = 0;
 
-	FORCEINLINE static CApp* GetCurrentApp() { return CurrentApp; }
+	ZE_FORCEINLINE static CApp* GetCurrentApp() { return CurrentApp; }
 protected:
 	virtual void Loop() = 0;
 private:
@@ -45,17 +45,17 @@ protected:
 namespace App
 {
 
-[[noreturn]] ENGINECORE_API void Exit(const int& InErrCode);
+ENGINECORE_API void Exit(const int& InErrCode);
 
-FORCEINLINE constexpr EAppOS GetOS()
+ZE_FORCEINLINE constexpr EAppOS GetOS()
 {
-#ifdef _WIN64
+#ifdef ZE_WIN64
 	return EAppOS::Windows;
-#elif __APPLE__ || __MACH__
+#elif ZE_OSX
 	return EAppOS::Mac;
-#elif __LINUX__
+#elif ZE_LINUX
 	return EAppOS::Linux;
-#elif __FREEBSD__
+#elif ZE_FREEBSD
 	return EAppOS::FreeBSD;
 #else
 	return EAppOS::Unknown;

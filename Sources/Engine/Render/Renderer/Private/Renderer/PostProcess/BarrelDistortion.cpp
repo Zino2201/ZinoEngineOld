@@ -28,10 +28,10 @@ public:
 };
 
 IMPLEMENT_SHADER(CBarrelDistortionVS, "BarrelDistortionVS", 
-	"/PostProcess/BarrelDistortionVS.hlsl", "Main", EShaderStage::Vertex);
+	"PostProcess/BarrelDistortionVS.hlsl", "Main", EShaderStage::Vertex);
 
 IMPLEMENT_SHADER(CBarrelDistortionFS, "BarrelDistortionFS",
-	"/PostProcess/BarrelDistortionFS.hlsl", "Main", EShaderStage::Fragment);
+	"PostProcess/BarrelDistortionFS.hlsl", "Main", EShaderStage::Fragment);
 
 const SBarrelDistortionData& AddBarrelDistortionPass(CFrameGraph& InFrameGraph,
 	const RenderPassResourceID& InColor,
