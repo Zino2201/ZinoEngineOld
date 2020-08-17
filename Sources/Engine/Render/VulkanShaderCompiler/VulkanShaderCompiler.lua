@@ -5,7 +5,9 @@ filterDebugOnly()
 	if os.istarget("linux") then
 		Mod:addLibDirs({LibDir.."/ShaderConductor/Build/ninja-linux-clang-x64-Debug/Lib/"})
 		filterModularOnly()
-		linkoptions("-Wl,-whole-archive -lSPIRV-Tools -lSPIRV-Tools-opt -lspirv-cross-core -Wl,-no-whole-archive")
+			linkoptions("-Wl,-whole-archive -lSPIRV-Tools -lSPIRV-Tools-opt -lspirv-cross-core -Wl,-no-whole-archive")
+		filterMonolithicOnly()
+			Mod:addLibs( { "SPIRV-Tools", "SPIRV-Tools-opt", "spirv-cross-core"})
 	else
 		Mod:addLibDirs({LibDir.."/ShaderConductor/Build/vs2019-win-vc142-x64/Lib/Debug"})
 		Mod:addLibs({ "SPIRV-Tools",

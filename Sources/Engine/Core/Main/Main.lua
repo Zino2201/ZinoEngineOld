@@ -3,7 +3,12 @@ Mod:addModules({ "EngineCore", "RenderCore", "ShaderCore", "RenderSystem", "Vulk
 targetprefix("")
 targetname("ZinoEngine")
 
--- Link all modules if in monolithic mode
+if os.istarget("linux") then
+	filterMonolithicOnly()
+	linkoptions("-Wl,--start-group -Wl,-whole-archive")
+	filterReset()
+end
+
 for k, v in pairs(Modules) do
 	local name = v.name
 
@@ -18,6 +23,28 @@ for k, v in pairs(Modules) do
 				Mod:addLibDirs(v.debugLibDirs)
 			filterReleaseOnly()
 				Mod:addLibDirs(v.releaseLibDirs)
+
+			filterMonolithicOnly()
+				linkoptions("-l"..v.name)
+				dependson(v.name)
+
+			for k, v in pairs(v.bothLibs) do
+				linkoptions("-l"..v)
+			end
+
+			for k, v in pairs(v.bothLibDirs) do
+				libdirs(v)
+			end
+		filterDebugMonolithicOnly()
+			for k, v in pairs(v.debugLibs) do
+				linkoptions("-l"..v)
+			end
+
+		filterReleaseMonolithicOnly()
+			for k, v in pairs(v.releaseLibs) do
+				linkoptions("-l"..v)
+			end
+		filterReset()
 		else
 			filterMonolithicOnly()
 				linkoptions("/WHOLEARCHIVE:ZinoEngine-"..v.name..".lib")
@@ -50,4 +77,10 @@ for k, v in pairs(Modules) do
 			filterReset()
 		end
 	end
+end
+
+if os.istarget("linux") then
+	filterMonolithicOnly()
+	linkoptions("-Wl,--no-whole-archive -Wl,--end-group")
+	filterReset()
 end

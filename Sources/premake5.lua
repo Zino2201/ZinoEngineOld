@@ -44,49 +44,49 @@ currentFilter = -1
 
 -- Utils functions
 function filterDebugOnly()
-	filter { "Debug or Debug Monolithic" }
+	filter { "Debug or DebugMonolithic" }
 	
 	currentFilter = 0
 end
 
 function filterReleaseOnly()
-	filter { "Release or Release Editor or Release Monolithic" }
+	filter { "Release or ReleaseEditor or ReleaseMonolithic" }
 	
 	currentFilter = 1
 end
 
 function filterMonolithicOnly()
-	filter { "Debug Monolithic or Release Monolithic" }
+	filter { "DebugMonolithic or ReleaseMonolithic" }
 	
 	currentFilter = 2
 end
 
 function filterModularOnly()
-	filter { "Debug or Release or Release Editor" }
+	filter { "Debug or Release or ReleaseEditor" }
 	
 	currentFilter = 3
 end
 
 function filterDebugModularOnly()
-	filter { "Debug or Debug Editor" }
+	filter { "Debug or DebugEditor" }
 	
 	currentFilter = 4
 end
 
 function filterReleaseModularOnly()
-	filter { "Release or Release Editor" }
+	filter { "Release or ReleaseEditor" }
 	
 	currentFilter = 5
 end
 
 function filterDebugMonolithicOnly()
-	filter { "Debug Monolithic" }
+	filter { "DebugMonolithic" }
 	
 	currentFilter = 6
 end
 
 function filterReleaseMonolithicOnly()
-	filter { "Release Monolithic" }
+	filter { "ReleaseMonolithic" }
 	
 	currentFilter = 7
 end
@@ -178,21 +178,26 @@ function Module:new(name, modKind)
 	filter "Debug"
 		defines("ZE_CONFIGURATION_NAME=\"Debug\"")
 		defines("ZE_DEBUG")
-	filter "Debug Editor"
+	filter "DebugEditor"
 		defines("ZE_CONFIGURATION_NAME=\"Debug Editor\"")
 		defines("ZE_DEBUG")
-	filter "Debug Monolithic"
+		defines("ZE_EDITOR")
+	filter "DebugMonolithic"
 		defines("ZE_CONFIGURATION_NAME=\"Debug Monolithic\"")
 		defines("ZE_DEBUG")
 	filter "Release"
 		defines("ZE_CONFIGURATION_NAME=\"Release\"")
 		defines("NDEBUG")
-	filter "Release Editor"
+		defines("ZE_RELEASE")
+	filter "ReleaseEditor"
 		defines("ZE_CONFIGURATION_NAME=\"Release Editor\"")
 		defines("NDEBUG")
-	filter "Release Monolithic"
+		defines("ZE_RELEASE")
+		defines("ZE_EDITOR")
+	filter "ReleaseMonolithic"
 		defines("ZE_CONFIGURATION_NAME=\"Release Monolithic\"")
 		defines("NDEBUG")
+		defines("ZE_RELEASE")
 	filter {}
 	
 	language "C++"
@@ -219,7 +224,9 @@ function Module:new(name, modKind)
 	includedirs "Public"
 	includedirs "Private"
 	libdirs(BinDir.."/%{cfg.longname}")
-	--linkoptions("-Wl,-rpath,"..BinDir.."/%{cfg.longname}")
+	filter { "action:gmake* "}
+		linkoptions("-Wl,-rpath,./ -Wl,-rpath,Binaries/%{cfg.longname}")
+	filter {}
 	
 	-- Compiler
 	exceptionhandling("Off")
@@ -237,7 +244,7 @@ function Module:new(name, modKind)
 	local ReflDir = BuildDir.."/Reflection/"
 	local modFile = io.open(ReflDir..mod.name..".zrt", "w+")
 	
-	configs = { "Debug", "Debug Monolithic", "Release", "Release Monolithic" }
+	configs = { "Debug", "DebugMonolithic", "Release", "ReleaseMonolithic" }
 	
 	-- Parse all public headers and add them to the .zrt file
 	for _, h in pairs(mod.publicHeaders) do
@@ -326,6 +333,7 @@ function Module:addLibDirs(libDirs)
 		filter { "action:gmake*" }
 		linkoptions("-Wl,-rpath-link,"..v)
 		libdirs(v)
+		filter {}
 	end
 	
 	filterApplyByIdx(oldFilter)
@@ -391,12 +399,12 @@ end
 
 workspace "ZinoEngine"
 	location ("../Build/ProjectFiles")
-	configurations { "Debug", "Release", "Debug Monolithic", "Release Monolithic" }
+	configurations { "Debug", "Release", "DebugMonolithic", "ReleaseMonolithic" }
 	language "C++"
 	architecture "x86_64"
-	filter { "Debug or Release Editor or Debug Monolithic" }
+	filter { "Debug or ReleaseEditor or DebugMonolithic" }
 		symbols "On"
-	filter { "Release or Release Editor or Release Monolithic" }
+	filter { "Release or ReleaseEditor or ReleaseMonolithic" }
 		optimize "On"
 	filter { }
 	startproject "Main"

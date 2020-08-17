@@ -13,8 +13,8 @@ class TDelegate
 
 public:
 	TDelegate() {}
-	template<typename Lambda>
-	TDelegate(Lambda&& InFunction)
+	template<typename Func>
+	TDelegate(Func&& InFunction)
 		: Function(InFunction) {}
 
 	/**
