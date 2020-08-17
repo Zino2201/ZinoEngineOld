@@ -19,4 +19,4 @@
 	url = https://github.com/fmtlib/fmt
 [submodule "Sources/Libs/SDL"]
 	path = Sources/Libs/SDL
-	url = https://github.com/SDL-mirror/SDL.git
+	url = https://github.com/spurious/SDL-mirror.git
