@@ -1,0 +1,24 @@
+#!/bin/bash
+
+cd ../
+
+mkdir Binaries/Debug
+mkdir Binaries/Release
+mkdir Binaries/RelWithDebInfo
+mkdir Binaries/ReleaseMonolithic
+mkdir Binaries/RelWithDebInfoMonolithic
+
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Debug/Lib/libdxcompiler.so Binaries/Debug/libdxcompiler.so
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Debug/Lib/libShaderConductor.so Binaries/Debug/libShaderConductor.so
+
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libdxcompiler.so Binaries/Release/libdxcompiler.so
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libShaderConductor.so Binaries/Release/libShaderConductor.so
+
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libdxcompiler.so Binaries/ReleaseMonolithic/libdxcompiler.so
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libShaderConductor.so Binaries/ReleaseMonolithic/libShaderConductor.so
+
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libdxcompiler.so Binaries/ReleaseMonolithic/libdxcompiler.so
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libShaderConductor.so Binaries/ReleaseMonolithic/libShaderConductor.so
+
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libdxcompiler.so Binaries/RelWithDebInfoMonolithic/libdxcompiler.so
+cp Sources/Libs/ShaderConductor/Build/ninja-linux-clang-x64-Release/Lib/libShaderConductor.so Binaries/RelWithDebInfoMonolithic/libShaderConductor.so

@@ -17,6 +17,3 @@
 [submodule "Sources/Libs/fmt"]
 	path = Sources/Libs/fmt
 	url = https://github.com/fmtlib/fmt
-[submodule "Sources/Libs/SDL"]
-	path = Sources/Libs/SDL
-	url = https://github.com/spurious/SDL-mirror.git

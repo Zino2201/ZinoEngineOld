@@ -1,5 +1,0 @@
-#!/bin/bash
-
-echo Generating Makefiles for Clang..
-cd Sources
-../Tools/premake5 gmake2

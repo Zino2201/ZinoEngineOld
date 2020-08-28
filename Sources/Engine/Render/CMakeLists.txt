@@ -1,0 +1,8 @@
+add_subdirectory(ShaderCore)
+add_subdirectory(RenderCore)
+add_subdirectory(ShaderCompiler)
+add_subdirectory(ImGui)
+add_subdirectory(RenderSystem)
+add_subdirectory(Renderer)
+add_subdirectory(VulkanRenderSystem)
+add_subdirectory(VulkanShaderCompiler)

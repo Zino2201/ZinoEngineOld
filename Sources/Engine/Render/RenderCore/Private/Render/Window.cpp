@@ -1,5 +1,5 @@
 #include "Render/Window.h"
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "Module/Module.h"
 
 namespace ZE

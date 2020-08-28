@@ -346,3 +346,4 @@ Releases/
 Logs/
 imgui.ini
 .vscode/
+CMakeSettings.json

@@ -1,0 +1,3 @@
+add_subdirectory(AssetExplorer)
+add_subdirectory(MapEditor)
+add_subdirectory(ZEEditor)
