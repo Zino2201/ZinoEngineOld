@@ -11,6 +11,9 @@ on:
   schedule:
     - cron: '0 23 * * *'
 
+env:
+  vulkan_sdk: C:/VulkanSDK/1.2.148.1
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # Build for windows X64
@@ -25,6 +28,16 @@ jobs:
       with:
           submodules: recursive
     
+    # Download & install VulkanSDK 
+    - name: download-vulkan-sdk
+      run: curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
+      shell: cmd
+          
+    # Install vulkan sdk
+    - name: install-vulkan-sdk
+      run: VulkanSDK.exe /S
+      shell: cmd
+
     # Download vcpkg packages
     - run: vcpkg install sdl2[*]:x64-windows
       shell: cmd
@@ -57,6 +70,16 @@ jobs:
       with:
           submodules: recursive
     
+    # Download & install VulkanSDK 
+    - name: download-vulkan-sdk
+      run: curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
+      shell: cmd
+          
+    # Install vulkan sdk
+    - name: install-vulkan-sdk
+      run: VulkanSDK.exe /S
+      shell: cmd
+
     # Download vcpkg packages
     - run: vcpkg install sdl2[*]:x64-windows
       shell: cmd
@@ -89,6 +112,16 @@ jobs:
       with:
           submodules: recursive
 
+    # Download & install VulkanSDK 
+    - name: download-vulkan-sdk
+      run: curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
+      shell: cmd
+          
+    # Install vulkan sdk
+    - name: install-vulkan-sdk
+      run: VulkanSDK.exe /S
+      shell: cmd
+
     # Download vcpkg packages
     - run: vcpkg install sdl2[*]:x64-windows
       shell: cmd
@@ -120,18 +153,18 @@ jobs:
     # Prepare artifact
     - name: prepare-artifact
       run: |
-        mkdir Debug
-        copy "Binaries\Debug Monolithic\*.dll" "Debug\*.dll"
-        copy "Binaries\Debug Monolithic\ZinoEngine.exe" "Debug\ZinoEngine.exe"
-        xcopy "Assets\*" "Debug\Assets\" /E /H
-        xcopy "Shaders\*" "Debug\Shaders\" /E /H
+        mkdir RelWithDebInfo
+        copy "Binaries\RelWithDebInfo\*.dll" "RelWithDebInfo\*.dll"
+        copy "Binaries\RelWithDebInfo\ZinoEngine.exe" "RelWithDebInfo\ZinoEngine.exe"
+        xcopy "Assets\*" "RelWithDebInfo\Assets\" /E /H
+        xcopy "Shaders\*" "RelWithDebInfo\Shaders\" /E /H
       shell: cmd
       
      # Generate artifact
     - uses: actions/upload-artifact@v2
       with:
-        name: ZinoEngine Debug Monolithic Win64
-        path: Debug/
+        name: ZinoEngine RelWithDebInfo Monolithic Win64
+        path: RelWithDebInfo/
   build-windows-release:
     # The type of runner that the job will run on
     runs-on: windows-2019
@@ -143,6 +176,16 @@ jobs:
       with:
           submodules: recursive
     
+    # Download & install VulkanSDK 
+    - name: download-vulkan-sdk
+      run: curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
+      shell: cmd
+          
+    # Install vulkan sdk
+    - name: install-vulkan-sdk
+      run: VulkanSDK.exe /S
+      shell: cmd
+
     # Download vcpkg packages
     - run: vcpkg install sdl2[*]:x64-windows
       shell: cmd
@@ -176,6 +219,16 @@ jobs:
       with:
           submodules: recursive
     
+    # Download & install VulkanSDK 
+    - name: download-vulkan-sdk
+      run: curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
+      shell: cmd
+          
+    # Install vulkan sdk
+    - name: install-vulkan-sdk
+      run: VulkanSDK.exe /S
+      shell: cmd
+
     # Download vcpkg packages
     - run: vcpkg install sdl2[*]:x64-windows
       shell: cmd
@@ -230,8 +283,8 @@ jobs:
     # Download artifact
     - uses: actions/download-artifact@v2
       with:
-        name: ZinoEngine Debug Monolithic Win64
-        path: Debug/
+        name: ZinoEngine RelWithDebInfo Monolithic Win64
+        path: RelWithDebInfo/
       
     - uses: actions/download-artifact@v2
       with:
@@ -240,7 +293,7 @@ jobs:
       
     # Zip
     - run: |
-        powershell Compress-Archive -Path Debug\* -DestinationPath ZinoEngine-Debug.zip
+        powershell Compress-Archive -Path Debug\* -DestinationPath ZinoEngine-RelWithDebInfo.zip
         powershell Compress-Archive -Path Release\* -DestinationPath ZinoEngine-Release.zip
       shell: cmd
     
@@ -252,6 +305,6 @@ jobs:
         prerelease: true
         title: "ZinoEngine Windows Nightly"
         files: | 
-            ZinoEngine-Debug.zip
+            ZinoEngine-RelWithDebInfo.zip
             ZinoEngine-Release.zip
     
