@@ -1,6 +1,5 @@
 # This is a basic workflow to help you get started with Actions
-
-name: Windows
+name: Build
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -26,6 +25,10 @@ jobs:
       with:
           submodules: recursive
     
+    # Download vcpkg packages
+    - run: vcpkg install sdl2[*]:x64-windows
+      shell: cmd
+
     # Setup msbuild
     - name: setup-msbuild
       uses: microsoft/setup-msbuild@v1
@@ -40,11 +43,10 @@ jobs:
     # Generate and build sln
     - name: build-sln
       run: |
-        @echo | call GenerateVS2019.bat
-        msbuild -m Build/ProjectFiles/ZinoEngine.sln /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
+        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
       shell: cmd
-    # Build for windows X64
-  build-windows-debug-mono:
+  build-windows-relwithdebinfo:
     # The type of runner that the job will run on
     runs-on: windows-2019
 
@@ -55,6 +57,10 @@ jobs:
       with:
           submodules: recursive
     
+    # Download vcpkg packages
+    - run: vcpkg install sdl2[*]:x64-windows
+      shell: cmd
+
     # Setup msbuild
     - name: setup-msbuild
       uses: microsoft/setup-msbuild@v1
@@ -69,8 +75,40 @@ jobs:
     # Generate and build sln
     - name: build-sln
       run: |
-        @echo | call GenerateVS2019.bat
-        msbuild -m Build/ProjectFiles/ZinoEngine.sln /t:build /p:Configuration="Debug Monolithic" /p:Platform="x64" /p:BuildInParallel=true
+        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="RelWithDebInfo" /p:Platform="x64" /p:BuildInParallel=true
+      shell: cmd
+  build-windows-relwithdebinfo-mono:
+    # The type of runner that the job will run on
+    runs-on: windows-2019
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+      with:
+          submodules: recursive
+
+    # Download vcpkg packages
+    - run: vcpkg install sdl2[*]:x64-windows
+      shell: cmd
+
+    # Setup msbuild
+    - name: setup-msbuild
+      uses: microsoft/setup-msbuild@v1
+    
+    # Download and extract precompiled shader conductor lib
+    - name: download-extract-shaderconductor
+      run: | 
+        cd ${{ github.workspace }}
+        curl https://dl.dropboxusercontent.com/s/vn0js0up6hujz8m/Build.zip?dl=1 --output Build.zip
+        Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/ShaderConductor/
+    
+    # Generate and build sln
+    - name: build-sln
+      run: |
+        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="RelWithDebInfoMonolithic" /p:Platform="x64" /p:BuildInParallel=true
       shell: cmd
       
     # Copy DLLs
@@ -105,6 +143,10 @@ jobs:
       with:
           submodules: recursive
     
+    # Download vcpkg packages
+    - run: vcpkg install sdl2[*]:x64-windows
+      shell: cmd
+
     # Setup msbuild
     - name: setup-msbuild
       uses: microsoft/setup-msbuild@v1
@@ -119,8 +161,8 @@ jobs:
     # Generate and build sln
     - name: build-sln
       run: |
-        @echo | call GenerateVS2019.bat
-        msbuild -m Build/ProjectFiles/ZinoEngine.sln /t:build /p:Configuration="Release" /p:Platform="x64" /p:BuildInParallel=true
+        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="Release" /p:Platform="x64" /p:BuildInParallel=true
       shell: cmd
   # Build for windows X64
   build-windows-release-mono:
@@ -134,6 +176,10 @@ jobs:
       with:
           submodules: recursive
     
+    # Download vcpkg packages
+    - run: vcpkg install sdl2[*]:x64-windows
+      shell: cmd
+
     # Setup msbuild
     - name: setup-msbuild
       uses: microsoft/setup-msbuild@v1
@@ -148,8 +194,8 @@ jobs:
     # Generate and build sln
     - name: build-sln
       run: |
-        @echo | call GenerateVS2019.bat
-        msbuild -m Build/ProjectFiles/ZinoEngine.sln /t:build /p:Configuration="Release Monolithic" /p:Platform="x64" /p:BuildInParallel=true
+        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="ReleaseMonolithic" /p:Platform="x64" /p:BuildInParallel=true
       shell: cmd
       
     # Copy DLLs
