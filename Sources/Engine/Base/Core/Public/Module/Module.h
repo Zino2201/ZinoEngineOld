@@ -40,7 +40,7 @@ class CORE_API CDefaultModule : public CModule {};
 
 constexpr const char* GInstantiateModuleFuncName = "InstantiateModule";
 
-#ifdef ZE_MONOLITHIC
+#if ZE_MONOLITHIC
 
 struct SMonolithicRegister
 {

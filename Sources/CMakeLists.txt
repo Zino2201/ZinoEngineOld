@@ -1,6 +1,6 @@
-add_subdirectory(Editor)
+if(ZE_WITH_EDITOR)
+	add_subdirectory(Editor)
+endif()
 add_subdirectory(Engine)
 add_subdirectory(Tools)
-
-# Main at the end
 add_subdirectory(Engine/Main)

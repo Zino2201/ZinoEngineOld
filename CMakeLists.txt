@@ -18,13 +18,22 @@ endif()
 
 # Options
 option(ZE_MONOLITHIC "Build all modules as static libraries" OFF)
+option(ZE_WITH_EDITOR "Build with the editor" OFF)
 
 # Common variables used by Modules
 
 if(ZE_MONOLITHIC)
-	set(ZE_CONFIG_NAME "$<$<CONFIG:Debug>:DebugMonolithic>$<$<CONFIG:RelWithDebInfo>:RelWithDebInfoMonolithic>$<$<CONFIG:Release>:ReleaseMonolithic>")
+	if(ZE_WITH_EDITOR)
+		set(ZE_CONFIG_NAME "$<$<CONFIG:Debug>:Debug-Monolithic>$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo-Monolithic>$<$<CONFIG:Release>:Release-Monolithic>")
+	else()
+		set(ZE_CONFIG_NAME "$<$<CONFIG:Debug>:Debug-Monolithic-Editor>$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo-Monolithic-Editor>$<$<CONFIG:Release>:Release-Monolithic-Editor>")
+	endif()
 else()
-	set(ZE_CONFIG_NAME "$<$<CONFIG:Debug>:Debug>$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo>$<$<CONFIG:Release>:Release>")
+	if(ZE_WITH_EDITOR)
+		set(ZE_CONFIG_NAME "$<$<CONFIG:Debug>:Debug-Editor>$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo-Editor>$<$<CONFIG:Release>:Release-Editor>")
+	else()
+		set(ZE_CONFIG_NAME "$<$<CONFIG:Debug>:Debug>$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo>$<$<CONFIG:Release>:Release>")
+	endif()
 endif()
 
 # Util variable for linking third-party libs
@@ -87,9 +96,15 @@ function(_ze_base_module_def TARGET)
 		target_compile_definitions(${TARGET} PRIVATE "ZE_MONOLITHIC=0")
 	endif()
 
+	if(ZE_WITH_EDITOR)
+		target_compile_definitions(${TARGET} PRIVATE "ZE_WITH_EDITOR=1")
+	else()
+		target_compile_definitions(${TARGET} PRIVATE "ZE_WITH_EDITOR=0")
+	endif()
+
 	# Config specific defs
 	target_compile_definitions(${TARGET} PRIVATE ZE_CONFIGURATION_NAME="${ZE_CONFIG_NAME}")
-	target_compile_definitions(${TARGET} PRIVATE "$<$<CONFIG:Debug>:ZE_DEBUG>$<$<CONFIG:RelWithDebInfo>:ZE_RELEASE>$<$<CONFIG:Release>:ZE_RELEASE>")
+	target_compile_definitions(${TARGET} PRIVATE "$<$<CONFIG:Debug>:ZE_DEBUG>$<$<CONFIG:RelWithDebInfo>:ZE_RELWITHDEBINFO>$<$<CONFIG:Release>:ZE_RELEASE>")
 
 	# Disable RTTI & exceptions
 	# Enable SSE4.2
@@ -162,10 +177,7 @@ endfunction()
 # Helper function to add modules privately
 function(ze_add_private_modules TARGET)
 	target_include_directories(${TARGET} PRIVATE ${ARGN})
-	target_link_libraries(${TARGET} PRIVATE ${ARGN})
-	foreach(MODULE IN LISTS ARGN)
-		set_property(TARGET ${TARGET} APPEND_STRING PROPERTY LINK_FLAGS "/WHOLEARCHIVE:${MODULE}.lib ")
-	endforeach()		
+	target_link_libraries(${TARGET} PRIVATE ${ARGN})	
 endfunction()
 
 add_subdirectory(Sources)

@@ -1,5 +1,5 @@
 # This is a basic workflow to help you get started with Actions
-name: Build
+name: CI
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -17,7 +17,9 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # Build for windows X64
-  build-windows-debug:
+  windows-debug-ed:
+    name: Debug Windows (Modular/Editor)
+
     # The type of runner that the job will run on
     runs-on: windows-2019
 
@@ -28,38 +30,29 @@ jobs:
       with:
           submodules: recursive
     
-    # Download & install VulkanSDK 
-    - name: download-vulkan-sdk
-      run: curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
-      shell: cmd
-          
-    # Install vulkan sdk
-    - name: install-vulkan-sdk
-      run: VulkanSDK.exe /S
-      shell: cmd
-
-    # Download vcpkg packages
-    - run: vcpkg install sdl2[*]:x64-windows
-      shell: cmd
-
-    # Setup msbuild
-    - name: setup-msbuild
-      uses: microsoft/setup-msbuild@v1
-    
-    # Download and extract precompiled shader conductor lib
-    - name: download-extract-shaderconductor
-      run: | 
+    - name: Install dependencies
+      run: |
         cd ${{ github.workspace }}
         curl https://dl.dropboxusercontent.com/s/vn0js0up6hujz8m/Build.zip?dl=1 --output Build.zip
         Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/ShaderConductor/
+        curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
+        VulkanSDK.exe /S
+        vcpkg install sdl2[*]:x64-windows
+      shell: cmd
+
+    # Setup msbuild
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1
     
     # Generate and build sln
-    - name: build-sln
+    - name: Build
       run: |
-        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DZE_MONOLITHIC=OFF -DZE_WITH_EDITOR=ON -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
         msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
       shell: cmd
-  build-windows-relwithdebinfo:
+  windows-debug-mono-ed:
+    name: Debug Windows (Monolithic/Editor)
+
     # The type of runner that the job will run on
     runs-on: windows-2019
 
@@ -70,89 +63,63 @@ jobs:
       with:
           submodules: recursive
     
-    # Download & install VulkanSDK 
-    - name: download-vulkan-sdk
-      run: curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
-      shell: cmd
-          
-    # Install vulkan sdk
-    - name: install-vulkan-sdk
-      run: VulkanSDK.exe /S
-      shell: cmd
-
-    # Download vcpkg packages
-    - run: vcpkg install sdl2[*]:x64-windows
-      shell: cmd
-
-    # Setup msbuild
-    - name: setup-msbuild
-      uses: microsoft/setup-msbuild@v1
-    
-    # Download and extract precompiled shader conductor lib
-    - name: download-extract-shaderconductor
-      run: | 
+    - name: Install dependencies
+      run: |
         cd ${{ github.workspace }}
         curl https://dl.dropboxusercontent.com/s/vn0js0up6hujz8m/Build.zip?dl=1 --output Build.zip
         Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/ShaderConductor/
+        curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
+        VulkanSDK.exe /S
+        vcpkg install sdl2[*]:x64-windows
+      shell: cmd
+
+    # Setup msbuild
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1
     
     # Generate and build sln
-    - name: build-sln
+    - name: Build
       run: |
-        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DZE_MONOLITHIC=ON -DZE_WITH_EDITOR=ON -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="Debug" /p:Platform="x64" /p:BuildInParallel=true
+      shell: cmd
+  windows-relwithdebinfo-ed:
+    name: RelWithDebInfo Windows (Modular/With Editor)
+    # The type of runner that the job will run on
+    runs-on: windows-2019
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+      with:
+          submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        cd ${{ github.workspace }}
+        curl https://dl.dropboxusercontent.com/s/vn0js0up6hujz8m/Build.zip?dl=1 --output Build.zip
+        Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/ShaderConductor/
+        curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
+        VulkanSDK.exe /S
+        vcpkg install sdl2[*]:x64-windows
+      shell: cmd
+
+    # Setup msbuild
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1
+    
+    # Generate and build sln
+    - name: Build
+      run: |
+        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DZE_MONOLITHIC=ON -DZE_WITH_EDITOR=ON -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
         msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="RelWithDebInfo" /p:Platform="x64" /p:BuildInParallel=true
-      shell: cmd
-  build-windows-relwithdebinfo-mono:
-    # The type of runner that the job will run on
-    runs-on: windows-2019
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-      with:
-          submodules: recursive
-
-    # Download & install VulkanSDK 
-    - name: download-vulkan-sdk
-      run: curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
-      shell: cmd
-          
-    # Install vulkan sdk
-    - name: install-vulkan-sdk
-      run: VulkanSDK.exe /S
-      shell: cmd
-
-    # Download vcpkg packages
-    - run: vcpkg install sdl2[*]:x64-windows
-      shell: cmd
-
-    # Setup msbuild
-    - name: setup-msbuild
-      uses: microsoft/setup-msbuild@v1
-    
-    # Download and extract precompiled shader conductor lib
-    - name: download-extract-shaderconductor
-      run: | 
-        cd ${{ github.workspace }}
-        curl https://dl.dropboxusercontent.com/s/vn0js0up6hujz8m/Build.zip?dl=1 --output Build.zip
-        Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/ShaderConductor/
-    
-    # Generate and build sln
-    - name: build-sln
-      run: |
-        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DZE_MONOLITHIC=1 -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="RelWithDebInfoMonolithic" /p:Platform="x64" /p:BuildInParallel=true
-      shell: cmd
-      
-    # Copy DLLs
-    - name: copy-dlls
-      run: | 
-        @echo | call CopyDLLs.bat
       shell: cmd
       
     # Prepare artifact
-    - name: prepare-artifact
-      run: |
+    - name: Prepare artifact
+      run: | 
+        call Tools/CopyDLLs.bat
         mkdir RelWithDebInfo
         copy "Binaries\RelWithDebInfo\*.dll" "RelWithDebInfo\*.dll"
         copy "Binaries\RelWithDebInfo\ZinoEngine.exe" "RelWithDebInfo\ZinoEngine.exe"
@@ -161,11 +128,14 @@ jobs:
       shell: cmd
       
      # Generate artifact
-    - uses: actions/upload-artifact@v2
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
       with:
-        name: ZinoEngine RelWithDebInfo Monolithic Win64
+        name: ZinoEngine RelWithDebInfo Modular Editor Win64
         path: RelWithDebInfo/
-  build-windows-release:
+  windows-release-mono-noed:
+    name: Release Windows (Monolithic/No Editor)
+
     # The type of runner that the job will run on
     runs-on: windows-2019
 
@@ -176,126 +146,44 @@ jobs:
       with:
           submodules: recursive
     
-    # Download & install VulkanSDK 
-    - name: download-vulkan-sdk
-      run: curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
-      shell: cmd
-          
-    # Install vulkan sdk
-    - name: install-vulkan-sdk
-      run: VulkanSDK.exe /S
-      shell: cmd
-
-    # Download vcpkg packages
-    - run: vcpkg install sdl2[*]:x64-windows
-      shell: cmd
-
-    # Setup msbuild
-    - name: setup-msbuild
-      uses: microsoft/setup-msbuild@v1
-    
-    # Download and extract precompiled shader conductor lib
-    - name: download-extract-shaderconductor
-      run: | 
+    - name: Install dependencies
+      run: |
         cd ${{ github.workspace }}
         curl https://dl.dropboxusercontent.com/s/vn0js0up6hujz8m/Build.zip?dl=1 --output Build.zip
         Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/ShaderConductor/
+        curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
+        VulkanSDK.exe /S
+        vcpkg install sdl2[*]:x64-windows
+      shell: cmd
+
+    # Setup msbuild
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1
     
     # Generate and build sln
-    - name: build-sln
+    - name: Build
       run: |
-        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DZE_MONOLITHIC=ON -DZE_WITH_EDITOR=OFF -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
         msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="Release" /p:Platform="x64" /p:BuildInParallel=true
       shell: cmd
-  # Build for windows X64
-  build-windows-release-mono:
-    # The type of runner that the job will run on
-    runs-on: windows-2019
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-      with:
-          submodules: recursive
-    
-    # Download & install VulkanSDK 
-    - name: download-vulkan-sdk
-      run: curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
-      shell: cmd
-          
-    # Install vulkan sdk
-    - name: install-vulkan-sdk
-      run: VulkanSDK.exe /S
-      shell: cmd
-
-    # Download vcpkg packages
-    - run: vcpkg install sdl2[*]:x64-windows
-      shell: cmd
-
-    # Setup msbuild
-    - name: setup-msbuild
-      uses: microsoft/setup-msbuild@v1
-    
-    # Download and extract precompiled shader conductor lib
-    - name: download-extract-shaderconductor
-      run: | 
-        cd ${{ github.workspace }}
-        curl https://dl.dropboxusercontent.com/s/vn0js0up6hujz8m/Build.zip?dl=1 --output Build.zip
-        Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/ShaderConductor/
-    
-    # Generate and build sln
-    - name: build-sln
-      run: |
-        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DZE_MONOLITHIC=1 -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="ReleaseMonolithic" /p:Platform="x64" /p:BuildInParallel=true
-      shell: cmd
-      
-    # Copy DLLs
-    - name: copy-dlls
-      run: | 
-        @echo | call CopyDLLs.bat
-      shell: cmd
-      
-    # Prepare artifact
-    - name: prepare-artifact
-      run: |
-        mkdir Release
-        copy "Binaries\Release Monolithic\*.dll" "Release\*.dll"
-        copy "Binaries\Release Monolithic\ZinoEngine.exe" "Release\ZinoEngine.exe"
-        xcopy "Assets\*" "Release\Assets\" /E /H
-        xcopy "Shaders\*" "Release\Shaders\" /E /H
-      shell: cmd
-      
-    # Generate artifact
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ZinoEngine Release Monolithic Win64
-        path: Release/
   # Release
   build-nightly-win:
     if: ${{ github.event_name == 'schedule' }}
+    name: Build Nightly Windows
     runs-on: windows-2019
-    needs: [build-windows-debug, build-windows-relwithdebinfo, build-windows-relwithdebinfo-mono, build-windows-release, build-windows-release-mono]
+    needs: [windows-debug-ed, windows-debug-mono-ed, windows-relwithdebinfo-ed, windows-release-mono-noed]
     
     steps:
     
     # Download artifact
     - uses: actions/download-artifact@v2
       with:
-        name: ZinoEngine RelWithDebInfo Monolithic Win64
+        name: ZinoEngine RelWithDebInfo Modular Editor Win64
         path: RelWithDebInfo/
-      
-    - uses: actions/download-artifact@v2
-      with:
-        name: ZinoEngine Release Monolithic Win64
-        path: Release/
       
     # Zip
     - run: |
-        powershell Compress-Archive -Path Debug\* -DestinationPath ZinoEngine-RelWithDebInfo.zip
-        powershell Compress-Archive -Path Release\* -DestinationPath ZinoEngine-Release.zip
-      shell: cmd
+        powershell Compress-Archive -Path RelWithDebInfoEd\* -DestinationPath ZinoEngine-Editor-RelWithDebInfo.zip
     
     # Release
     - uses: "marvinpinto/action-automatic-releases@latest"
@@ -305,6 +193,5 @@ jobs:
         prerelease: true
         title: "ZinoEngine Windows Nightly"
         files: | 
-            ZinoEngine-RelWithDebInfo.zip
-            ZinoEngine-Release.zip
+            ZinoEngine-Editor-RelWithDebInfo.zip
     

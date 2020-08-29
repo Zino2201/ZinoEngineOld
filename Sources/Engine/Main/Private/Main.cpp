@@ -18,7 +18,11 @@
 #include "Render/RenderCore.h"
 #include "Engine/TickSystem.h"
 #include "Engine/InputSystem.h"
+
+#if ZE_WITH_EDITOR
 #include "Editor/ZEEditor.h"
+#endif
+
 #include "Shader/ShaderCore.h"
 #include "Threading/Thread.h"
 #include "Logger/Sinks/WinDbgSink.h"
@@ -194,9 +198,12 @@ int Init()
 	ZE::Logger::Info("Initializing and starting app");
 
 	/** INITIALIZE ENGINE CLASS */
-	//Engine.reset(ZE::CreateGameApp());
+#if ZE_WITH_EDITOR
 	LoadRequiredModule("ZEEditor");
 	Engine.reset(ZE::Editor::CreateEditor());
+#else
+	Engine.reset(ZE::CreateGameApp());
+#endif
 
 	/** START GAME LOOP */
 	return Engine->Run();

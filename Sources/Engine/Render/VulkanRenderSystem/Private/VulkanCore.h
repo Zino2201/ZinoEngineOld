@@ -49,7 +49,7 @@ const std::vector<const char*> GVulkanValidationLayers =
 	"VK_LAYER_KHRONOS_validation"
 };
 
-#ifdef NDEBUG
+#if ZE_FEATURE(DEVELOPMENT)
 constexpr bool GVulkanEnableValidationLayers = false;
 #else
 constexpr bool GVulkanEnableValidationLayers = true;

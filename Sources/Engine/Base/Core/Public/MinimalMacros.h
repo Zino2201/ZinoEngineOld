@@ -30,6 +30,14 @@ namespace ZE
 /** Return 1 if compiling with the specified compiler */
 #define ZE_COMPILER(X) ZE_COMPILER_PRIVATE_DEFINITION_##X()
 
+/** Features macros */
+
+/** Enable development-only code */
+#define ZE_FEATURE_PRIVATE_DEFINITION_DEVELOPMENT() ZE_DEBUG || ZE_RELWITHDEBINFO
+
+/** Return 1 if feature is enabled */
+#define ZE_FEATURE(X) ZE_FEATURE_PRIVATE_DEFINITION_##X()
+
 /** Dll symbol export/import */
 #if ZE_COMPILER(MSVC) || ZE_COMPILER(CLANG_CL)
 #define ZE_DLLEXPORT __declspec(dllexport)
