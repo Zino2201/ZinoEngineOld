@@ -127,10 +127,11 @@ jobs:
     # Prepare artifact
     - name: Prepare artifact
       run: | 
+        cd ${{ github.workspace }}
         call Tools/CopyDLLs.bat
         mkdir RelWithDebInfo
-        copy "Binaries\RelWithDebInfo\*.dll" "RelWithDebInfo\*.dll"
-        copy "Binaries\RelWithDebInfo\ZinoEngine.exe" "RelWithDebInfo\ZinoEngine.exe"
+        copy "Binaries\RelWithDebInfo-Editor\*.dll" "RelWithDebInfo\*.dll"
+        copy "Binaries\RelWithDebInfo-Editor\ZinoEngine.exe" "RelWithDebInfo\ZinoEngine.exe"
         xcopy "Assets\*" "RelWithDebInfo\Assets\" /E /H
         xcopy "Shaders\*" "RelWithDebInfo\Shaders\" /E /H
       shell: cmd
