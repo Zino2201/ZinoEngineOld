@@ -223,7 +223,7 @@ jobs:
   build-nightly-win:
     if: ${{ github.event_name == 'schedule' }}
     runs-on: windows-2019
-    needs: [build-windows-debug, build-windows-debug-mono, build-windows-release, build-windows-release-mono]
+    needs: [build-windows-debug, build-windows-relwithdebinfo, build-windows-relwithdebinfo-mono, build-windows-release, build-windows-release-mono]
     
     steps:
     
