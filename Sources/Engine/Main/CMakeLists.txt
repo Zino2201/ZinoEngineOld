@@ -7,6 +7,6 @@ ze_add_private_modules(ZinoEngine
 
 target_link_libraries(ZinoEngine PRIVATE SDL2::SDL2)
 
-if(MONOLITHIC)
+if(ZE_MONOLITHIC)
 	target_link_libraries(ZinoEngine PRIVATE AllModules)
 endif()

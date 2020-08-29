@@ -140,7 +140,7 @@ jobs:
     # Generate and build sln
     - name: build-sln
       run: |
-        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DZE_MONOLITHIC=1 -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
         msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="RelWithDebInfoMonolithic" /p:Platform="x64" /p:BuildInParallel=true
       shell: cmd
       
@@ -247,7 +247,7 @@ jobs:
     # Generate and build sln
     - name: build-sln
       run: |
-        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        cmake.exe -S . -B Build/ -A x64 -T ClangCL -DZE_MONOLITHIC=1 -DCMAKE_TOOLCHAIN_FILE:FILEPATH="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
         msbuild -m Build/ZinoEngine.sln /t:build /p:Configuration="ReleaseMonolithic" /p:Platform="x64" /p:BuildInParallel=true
       shell: cmd
       

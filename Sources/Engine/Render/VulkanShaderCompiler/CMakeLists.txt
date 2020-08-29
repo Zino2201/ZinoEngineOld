@@ -10,7 +10,7 @@ target_include_directories(VulkanShaderCompiler
         ${ZE_LIBS_DIR}/ShaderConductor/External/SPIRV-Cross)
 
 if(${ZE_CURRENT_COMPILER} STREQUAL "ClangCL")
-    if(MONOLITHIC)
+    if(ZE_MONOLITHIC)
         target_link_directories(VulkanShaderCompiler 
             PUBLIC 
                 ${ZE_LIBS_DIR}/ShaderConductor/Build/vs2019-win-vc142-x64/Lib/${ZE_CONFIG_NAME_DBGREL})
@@ -20,7 +20,7 @@ if(${ZE_CURRENT_COMPILER} STREQUAL "ClangCL")
                 ${ZE_LIBS_DIR}/ShaderConductor/Build/vs2019-win-vc142-x64/Lib/${ZE_CONFIG_NAME_DBGREL})
     endif()
 else()
-    if(MONOLITHIC)
+    if(ZE_MONOLITHIC)
         target_link_directories(VulkanShaderCompiler 
             PUBLIC 
             ${ZE_LIBS_DIR}/ShaderConductor/Build/ninja-linux-clang-x64-${ZE_CONFIG_NAME_DBGREL}/Lib)

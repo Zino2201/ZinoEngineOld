@@ -29,27 +29,13 @@
 #define SDL_MAIN_HANDLED
 #define UNUSED_VARIABLE(Var) (void)(Var)
 
-/** Portable __debugbreak */
-#if ZE_COMPILER(MSVC)
-#define ZE_DEBUGBREAK() __debugbreak();
-#elif ZE_COMPILER(GCC) || ZE_COMPILER(CLANG)
-#define ZE_DEBUGBREAK() __asm volatile ("int $0x3");
-#endif /** ZE_COMPILER(MSVC */
-
 /** Platform specific thing */
 #if ZE_PLATFORM(WINDOWS)
 #define NOMINMAX
 #endif
 
 #include "Logger/Logger.h"
-
-/** Assertions */
-#define must(condition) if(!(condition)) { ZE::Logger::Fatal("Assertion failed: {}", #condition); }
-#ifdef ZE_DEBUG
-#define verify(condition) if(!(condition)) { ZE::Logger::Error("Verify assertion failed: {}", #condition); ZE_DEBUGBREAK(); }
-#else
-#define verify(condition)
-#endif
+#include "Assertions.h"
 
 #define CONCAT_(x,y) x##y
 #define CONCAT(x,y) CONCAT_(x,y)

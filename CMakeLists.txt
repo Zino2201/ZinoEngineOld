@@ -17,11 +17,11 @@ else()
 endif()
 
 # Options
-option(MONOLITHIC "Build all modules as static libraries" OFF)
+option(ZE_MONOLITHIC "Build all modules as static libraries" OFF)
 
 # Common variables used by Modules
 
-if(MONOLITHIC)
+if(ZE_MONOLITHIC)
 	set(ZE_CONFIG_NAME "$<$<CONFIG:Debug>:DebugMonolithic>$<$<CONFIG:RelWithDebInfo>:RelWithDebInfoMonolithic>$<$<CONFIG:Release>:ReleaseMonolithic>")
 else()
 	set(ZE_CONFIG_NAME "$<$<CONFIG:Debug>:Debug>$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo>$<$<CONFIG:Release>:Release>")
@@ -45,7 +45,7 @@ add_library(AllModules INTERFACE)
 # This function is required to properly create a module
 # It adds some compile options and preprocessor definitions required
 function(ze_create_module TARGET)
-	if(MONOLITHIC)
+	if(ZE_MONOLITHIC)
 		add_library(${TARGET} STATIC ${ARGN})
 		target_link_libraries(AllModules INTERFACE ${TARGET})
 		target_link_options(AllModules INTERFACE "/WHOLEARCHIVE:${TARGET}.lib ")
@@ -77,7 +77,7 @@ function(_ze_base_module_def TARGET)
 	target_link_directories(${TARGET} PRIVATE "${ZE_BINS_DIR}")
 
 	# Add _API macro
-	if(MONOLITHIC)
+	if(ZE_MONOLITHIC)
 		target_compile_definitions(${TARGET} PRIVATE "${TARGET_UPPER}_API=")
 		target_compile_definitions(${TARGET} INTERFACE "${TARGET_UPPER}_API=")
 		target_compile_definitions(${TARGET} PRIVATE "ZE_MONOLITHIC=1")

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "EngineCore.h"
 #include <imgui.h>
 #include "Module/Module.h"
 

@@ -1,6 +1,11 @@
 find_package(SDL2 CONFIG REQUIRED)
 
-ze_create_module(ImGui Private/ImGui/ImGuiModule.cpp Private/ImGui/ImGuiRender.cpp)
+ze_create_module(ImGui Private/ImGui/ImGuiModule.cpp Private/ImGui/ImGuiRender.cpp
+    ${ZE_LIBS_DIR}/imgui/imgui.cpp
+    ${ZE_LIBS_DIR}/imgui/imgui_demo.cpp
+    ${ZE_LIBS_DIR}/imgui/imgui_draw.cpp
+    ${ZE_LIBS_DIR}/imgui/imgui_widgets.cpp
+    ${ZE_LIBS_DIR}/imgui/examples/imgui_impl_sdl.cpp)
 ze_add_public_modules(ImGui Core RenderCore ShaderCore ShaderCompiler RenderSystem)
 
 target_include_directories(ImGui
@@ -10,12 +15,5 @@ target_include_directories(ImGui
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Private)
 
-target_sources(ImGui 
-    PRIVATE 
-        ${ZE_LIBS_DIR}/imgui/imgui.cpp
-        ${ZE_LIBS_DIR}/imgui/imgui_demo.cpp
-        ${ZE_LIBS_DIR}/imgui/imgui_draw.cpp
-        ${ZE_LIBS_DIR}/imgui/imgui_widgets.cpp
-        ${ZE_LIBS_DIR}/imgui/examples/imgui_impl_sdl.cpp)
-
 target_link_libraries(ImGui PRIVATE SDL2::SDL2)
+target_compile_definitions(ImGui PUBLIC -DIMGUI_DISABLE_INCLUDE_IMCONFIG_H -DIMGUI_USER_CONFIG="ImGuiConfigZE.h")
