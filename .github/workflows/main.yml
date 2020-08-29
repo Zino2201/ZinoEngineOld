@@ -127,8 +127,9 @@ jobs:
     # Prepare artifact
     - name: Prepare artifact
       run: | 
+        cd ${{ github.workspace }}/Tools
+        call CopyDLLs.bat
         cd ${{ github.workspace }}
-        call Tools/CopyDLLs.bat
         mkdir RelWithDebInfo
         copy "Binaries\RelWithDebInfo-Editor\*.dll" "RelWithDebInfo\*.dll"
         copy "Binaries\RelWithDebInfo-Editor\ZinoEngine.exe" "RelWithDebInfo\ZinoEngine.exe"
