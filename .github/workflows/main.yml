@@ -196,7 +196,7 @@ jobs:
       
     # Zip
     - run: |
-        powershell Compress-Archive -Path RelWithDebInfoEd\* -DestinationPath ZinoEngine-Editor-RelWithDebInfo.zip
+        powershell Compress-Archive -Path RelWithDebInfo\* -DestinationPath ZinoEngine-Editor-RelWithDebInfo.zip
     
     # Release
     - uses: "marvinpinto/action-automatic-releases@latest"
