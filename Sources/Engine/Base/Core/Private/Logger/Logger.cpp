@@ -71,7 +71,7 @@ void Log(ESeverityFlagBits InSeverity, const std::string& InMessage)
 	if(InSeverity == ESeverityFlagBits::Fatal)
 	{
 		MsgBox(Message);
-#ifdef ZE_DEBUG
+#if ZE_DEBUG
 		ZE_DEBUGBREAK();
 #endif
 		App::Exit(-1);

@@ -8,15 +8,13 @@ namespace ZE::Serialization
 /**
  * Input binary archive
  */
-class ENGINECORE_API CIBinaryArchive : public CInputArchive
+class CORE_API CIBinaryArchive : public TInputArchive<CIBinaryArchive>
 {
 public:
-	CIBinaryArchive(std::istream& InStream) : Stream(InStream) {}
+	CIBinaryArchive(std::istream& InStream) : TInputArchive<CIBinaryArchive>(*this),
+		Stream(InStream) {}
 
-	void Load(void* InData, const uint64_t& InSize)
-	{
-		Stream.read(reinterpret_cast<char*>(InData), InSize);
-	}
+	void LoadBytes(void* InData, const uint64_t& InSize);
 private:
 	std::istream& Stream;
 };
@@ -24,17 +22,58 @@ private:
 /**
  * Output binary archive
  */
-class ENGINECORE_API COBinaryArchive : public COutputArchive
+class CORE_API COBinaryArchive : public TOutputArchive<COBinaryArchive>
 {
 public:
-	COBinaryArchive(std::ostream& InStream) : Stream(InStream) {}
+	COBinaryArchive(std::ostream& InStream) : TOutputArchive<COBinaryArchive>(*this), 
+		Stream(InStream) {}
 
-	void Save(const void* InData, const uint64_t& InSize)
-	{
-		Stream.write(reinterpret_cast<const char*>(InData), InSize);
-	}
+	void SaveBytes(const void* InData, const uint64_t& InSize);
 private:
 	std::ostream& Stream;
 };
+
+/** Serialize functions for binary archives */
+
+/** Arithmetic types */
+template<typename T>
+	requires std::is_arithmetic_v<T>
+ZE_FORCEINLINE void Serialize(CIBinaryArchive& InArchive, T& InData)
+{
+	InArchive.LoadBytes(&InData, sizeof(T));
+}
+
+template<typename T>
+	requires std::is_arithmetic_v<T>
+ZE_FORCEINLINE void Serialize(COBinaryArchive& InArchive, const T& InData)
+{
+	InArchive.SaveBytes(&InData, sizeof(T));
+}
+
+/** Binary archives */
+template<typename T>
+ZE_FORCEINLINE void Serialize(CIBinaryArchive& InArchive, TBinaryData<T>& InData)
+{
+	InArchive.LoadBytes(InData.Data, InData.Size);
+}
+
+template<typename T>
+ZE_FORCEINLINE void Serialize(COBinaryArchive& InArchive, const TBinaryData<T>& InData)
+{
+	InArchive.SaveBytes(InData.Data, InData.Size);
+}
+
+/** Containers size */
+template<typename T>
+ZE_FORCEINLINE void Serialize(CIBinaryArchive& InArchive, TSize<T>& InData)
+{
+	InArchive <=> InData.Size;
+}
+
+template<typename T>
+ZE_FORCEINLINE void Serialize(COBinaryArchive& InArchive, const TSize<T>& InData)
+{
+	InArchive <=> InData.Size;
+}
 
 }

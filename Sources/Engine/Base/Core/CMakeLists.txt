@@ -7,6 +7,7 @@ ze_create_module(Core Private/EngineCore.cpp Private/App.cpp
     Private/Logger/Logger.cpp Private/Logger/Sink.cpp
     Private/Memory/SmartPointers.cpp
     Private/Module/ModuleManager.cpp
+    Private/Serialization/BinaryArchive.cpp
     Private/Threading/JobSystem/Job.cpp Private/Threading/JobSystem/JobSystem.cpp Private/Threading/JobSystem/WorkerThread.cpp
     Private/Threading/Thread.cpp)
 

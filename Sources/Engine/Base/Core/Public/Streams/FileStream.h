@@ -23,33 +23,45 @@ public:
 	
 		verify(File);
 	}
+
+	operator bool() const { return !!File; }
 protected:
 	int sync() override
 	{
+		verify(File);
+
 		File->Flush();
 		return 0;
 	}
 	
 	std::streamsize xsputn(const char_type* InChar, std::streamsize InSize) override
 	{
+		verify(File);
+
 		File->Write(reinterpret_cast<const uint8_t*>(InChar), InSize);
 		return InSize;
 	}
 
 	std::streamsize xsgetn(char_type* InChar, std::streamsize InSize) override 
 	{
+		verify(File);
+
 		File->Read(reinterpret_cast<uint8_t*>(InChar), InSize);
 		return InSize;
 	}
 
 	int_type overflow(int_type Char) override
 	{
+		verify(File);
+		
 		File->Write(reinterpret_cast<const uint8_t*>(&Char), sizeof(int_type));
 		return Char;
 	}
 
 	int_type underflow() override
 	{
+		verify(File);
+		
 		int_type Char = 0;
 		File->Read(reinterpret_cast<uint8_t*>(&Char), sizeof(int_type));
 		return Char;

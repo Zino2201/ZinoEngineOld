@@ -60,7 +60,7 @@ inline void Logf(ESeverityFlagBits InSeverity, std::string_view InFormat, Args&&
 template<typename... Args>
 inline void Verbose(const std::string_view& InFormat, Args&&... InArgs)
 {
-#ifdef _DEBUG
+#if ZE_FEATURE(DEVELOPMENT)
 	Logf(ESeverityFlagBits::Verbose, InFormat, std::forward<Args>(InArgs)...);
 #endif
 }
