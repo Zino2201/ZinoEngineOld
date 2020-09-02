@@ -22,9 +22,9 @@ namespace ZE
 #define ZE_PLATFORM(X) ZE_PLATFORM_PRIVATE_DEFINITION_##X()
 
 /** Compilers */
-#define ZE_COMPILER_PRIVATE_DEFINITION_MSVC() defined(_MSVC_VER)
+#define ZE_COMPILER_PRIVATE_DEFINITION_MSVC() defined(_MSVC_VER) || defined(__INTELLISENSE__)
 #define ZE_COMPILER_PRIVATE_DEFINITION_GCC() defined(__GNUC__) && !defined(__llvm__) && !defined(__INTEL_COMPILER)
-#define ZE_COMPILER_PRIVATE_DEFINITION_CLANG() defined(__clang__)
+#define ZE_COMPILER_PRIVATE_DEFINITION_CLANG() defined(__clang__) && !defined(__INTELLISENSE__)
 #define ZE_COMPILER_PRIVATE_DEFINITION_CLANG_CL() ZE_COMPILER_PRIVATE_DEFINITION_CLANG() && ZE_PLATFORM(WINDOWS)
 
 /** Return 1 if compiling with the specified compiler */

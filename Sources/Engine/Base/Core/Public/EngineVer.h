@@ -21,22 +21,19 @@ struct SZEVersion
 		return Minor >= InOther.Minor &&
 			Patch >= InOther.Patch;
 	}
+
+	template<typename Archive>
+	ZE_FORCEINLINE void Serialize(Archive& InArchive)
+	{
+		InArchive <=> Major;
+		InArchive <=> Minor;
+		InArchive <=> Patch;
+	}
 };
 
 constexpr SZEVersion GetZEVersion() 
 {
 	return SZEVersion(0, 1, 0);
-}
-
-/** Serialization operators */
-template<typename Archive>
-FORCEINLINE void Serialize(Archive& InArchive, const SZEVersion& InValue)
-{
-	InArchive <=> InValue.Major;
-	InArchive <=> InValue.Minor;
-	InArchive <=> InValue.Patch;
-
-	return InArchive;
 }
 
 }
