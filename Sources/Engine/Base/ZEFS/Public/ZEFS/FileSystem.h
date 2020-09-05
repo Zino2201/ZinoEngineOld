@@ -1,0 +1,63 @@
+#pragma once
+
+#include "EngineCore.h"
+#include "Delegates/Delegate.h"
+
+namespace ZE::FileSystem
+{
+
+/**
+ * File open flags
+ */
+enum class EFileReadFlagBits
+{
+	None = 0,
+
+	/** Open in binary mode */
+	Binary = 1 << 0,
+
+	/** Place the cursor at the end */
+	End = 1 << 1,
+};
+ENABLE_FLAG_ENUMS(EFileReadFlagBits, EFileReadFlags);
+
+/**
+ * File write flags
+ */
+enum class EFileWriteFlagBits
+{
+	None = 0,
+
+	ReplaceExisting = 1 << 0,
+	Binary = 1 << 1,
+};
+ENABLE_FLAG_ENUMS(EFileWriteFlagBits, EFileWriteFlags);
+
+struct SDirectoryEntry
+{
+	std::string_view Path;
+
+	SDirectoryEntry(const std::string_view& InPath) : Path(InPath) {}
+};
+using TDirectoryIterator = TDelegate<void, const SDirectoryEntry&>;
+
+/**
+ * Interface for a FileSystem
+ */
+class ZEFS_API IFileSystem
+{
+public:
+	IFileSystem(const std::string& InAlias,
+		const uint8_t& InPriority) {}
+	virtual ~IFileSystem() = default;
+
+	virtual TOwnerPtr<std::streambuf> Read(const std::string_view& InPath, const EFileReadFlags& InFlags) = 0;
+	virtual TOwnerPtr<std::streambuf> Write(const std::string_view& InPath, const EFileWriteFlags& InFlags) = 0;
+	virtual bool IterateDirectories(const std::string_view& InPath,
+		const TDirectoryIterator& InIt) = 0;
+	virtual bool Exists(const std::string_view& InPath) = 0;
+	virtual bool IsDirectory(const std::string_view& InPath) = 0;
+	virtual bool IsReadOnly() const = 0;
+};
+
+}

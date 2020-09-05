@@ -4,9 +4,9 @@
 #include <spirv_glsl.hpp>
 #include "ShaderConductor/ShaderConductor.hpp"
 #include <array>
-#include "FileSystem/FileUtils.h"
-#include "FileSystem/ZFS.h"
-#include "FileSystem/FileSystem.h"
+#include "ZEFS/Utils.h"
+#include "ZEFS/Paths.h"
+#include "ZEFS/ZEFS.h"
 
 using namespace ZE;
 
@@ -35,8 +35,7 @@ public:
 		/**
 		 * Read shader data
 		 */
-		std::string ShaderData;
-		ZE::FileUtils::ReadTextFile(InShaderFilename, ShaderData);
+		std::string ShaderData = ZE::FileSystem::ReadFileToString(InShaderFilename);
 		if(ShaderData.empty())
 		{
 			Output.ErrMsg = "Can't open shader file";
@@ -63,7 +62,7 @@ public:
 		SourceDesc.loadIncludeCallback = 
 			[](const char* InIncludeName) -> ShaderConductor::Blob*
 			{	
-				std::string Filename = ZE::PathUtils::GetFilename(InIncludeName);
+				std::string Filename = ZE::FileSystem::Paths::GetFilename(InIncludeName);
 				std::string Path = InIncludeName;
 
 				if(!ZE::FileSystem::Exists(InIncludeName))
@@ -87,16 +86,10 @@ public:
 						return nullptr;
 				}
 
-				std::unique_ptr<ZE::FileSystem::IFile> File = 
-					std::unique_ptr<ZE::FileSystem::IFile>(ZE::FileSystem::Read(Path));
-
-				std::vector<uint8_t> Array;
-				Array.resize(File->GetSize() / sizeof(uint8_t));
-
-				File->Read(Array.data(), File->GetSize());
+				std::vector<uint8_t> Array = ZE::FileSystem::ReadFileToVector(Path);
 
 				ShaderConductor::Blob* Blob = ShaderConductor::CreateBlob(Array.data(),
-					static_cast<uint32_t>(File->GetSize()));
+					static_cast<uint32_t>(Array.size()));
 
 				return Blob;
 			};

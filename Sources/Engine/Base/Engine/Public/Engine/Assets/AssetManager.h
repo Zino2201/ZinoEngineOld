@@ -21,9 +21,12 @@ ENGINE_API void GetAssets(const std::string_view& InPath);
 /** Get the specific asset, this will load it  */
 ENGINE_API std::shared_ptr<CAsset> GetAsset(const std::string_view& InPath);
 
+/** Save the specified asset to disk */
+ENGINE_API bool SaveAsset(const std::shared_ptr<CAsset>& InAsset);
+
 /** Templated version of GetAsset */
 template<typename T>
-FORCEINLINE std::shared_ptr<T> GetAsset(const std::string_view& InPath)
+ZE_FORCEINLINE std::shared_ptr<T> GetAsset(const std::string_view& InPath)
 {
 	return std::static_pointer_cast<T>(GetAsset(InPath));
 }

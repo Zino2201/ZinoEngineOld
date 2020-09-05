@@ -7,7 +7,7 @@ ze_create_module(Engine Private/Engine/Assets/AssetManager.cpp Private/Engine/As
     Private/Engine/ECS.cpp Private/Engine/Engine.cpp Private/Engine/EngineGame.cpp Private/Engine/InputSystem.cpp
         Private/Engine/TickSystem.cpp Private/Engine/Viewport.cpp Private/Engine/World.cpp)
 
-ze_add_public_modules(Engine Core RenderCore ShaderCore RenderSystem ShaderCompiler Reflection ImGui Renderer)
+ze_add_public_modules(Engine Core ZEFS RenderCore ShaderCore RenderSystem ShaderCompiler Reflection ImGui Renderer)
 
 target_include_directories(Engine
     PUBLIC 

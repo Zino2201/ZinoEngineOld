@@ -1,6 +1,6 @@
 # ZinoEngine
 
-![Windows](https://github.com/Zino2201/ZinoEngine/workflows/Windows/badge.svg)
+![CI](https://github.com/Zino2201/ZinoEngine/workflows/CI/badge.svg)
 
 A custom C++ 3d vulkan only (for now) game engine that I make for fun.
 

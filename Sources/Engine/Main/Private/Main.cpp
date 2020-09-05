@@ -8,9 +8,9 @@
 #include "Engine/Engine.h"
 #include "Shader/ShaderCompiler.h"
 #include "Render/Shader/BasicShader.h"
-#include "FileSystem/ZFS.h"
-#include "FileSystem/StdFileSystem.h"
-#include "FileSystem/FileUtils.h"
+#include "ZEFS/ZEFS.h"
+#include "ZEFS/StdFileSystem.h"
+#include "ZEFS/Paths.h"
 #include "Threading/JobSystem/JobSystem.h"
 #include <chrono>
 #include "Threading/JobSystem/WorkerThread.h"
@@ -26,13 +26,14 @@
 #include "Shader/ShaderCore.h"
 #include "Threading/Thread.h"
 #include "Logger/Sinks/WinDbgSink.h"
-#include "Logger/Sinks/FileSink.h"
+#include "ZEFS/Sinks/FileSink.h"
 #if ZE_PLATFORM(WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <cstdlib>
 #endif
 #include <sstream>
+#include <filesystem>
 
 namespace FS = ZE::FileSystem;
 
@@ -113,9 +114,8 @@ void PreInit()
 		ZE::Threading::SetThreadName("Main Thread");
 
 		/** Mount std file system to current working dir */
-		FS::IFileSystem* Root = FS::CFileSystemManager::Get()
-			.AddFileSystem<ZE::FileSystem::CStdFileSystem>("Root", "/", 0,
-				ZE::FileUtils::GetCurrentWorkingDirectory());
+		FS::IFileSystem& Root = FS::AddFileSystem<FS::CStdFileSystem>("Root", "/", 0,
+			ZE::FileSystem::Paths::GetCurrentWorkingDir());
 		FS::SetWriteFS(Root);
 
 		/** Setup default sinks */
@@ -132,7 +132,7 @@ void PreInit()
 			
 			std::stringstream ss;
 			ss << std::put_time(LocalTime, "Logs/ZinoEngine_%H_%M_%S.log");
-			ZE::Logger::AddSink(std::make_unique<ZE::Logger::Sinks::CFileSink>("File", ss.str()));
+			ZE::Logger::AddSink(std::make_unique<ZE::FileSystem::CFileSink>("File", ss.str()));
 		}
 		ZE::Logger::Info("=== ZinoEngine {} Build ===", ZE_CONFIGURATION_NAME);
 		

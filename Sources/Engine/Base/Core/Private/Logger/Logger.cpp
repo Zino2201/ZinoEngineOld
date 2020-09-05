@@ -5,7 +5,6 @@
 #include <sstream>
 #include "Module/Module.h"
 #include <chrono>
-#include "FileSystem/ZFS.h"
 #include <filesystem>
 #include "Threading/Thread.h"
 #include "Logger/Sink.h"

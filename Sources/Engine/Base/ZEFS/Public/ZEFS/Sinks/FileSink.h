@@ -1,26 +1,26 @@
 #pragma once
 
+#include "Logger/Logger.h"
 #include "Logger/Sink.h"
-#include "Streams/FileStream.h"
+#include "ZEFS/FileStream.h"
 #include <ostream>
 
-namespace ZE::Logger::Sinks
+namespace ZE::FileSystem
 {
 
 /**
  * A sink that supports writing to a file
  */
-class CORE_API CFileSink : public CSink
+class ZEFS_API CFileSink : public ZE::Logger::CSink
 {
 public:
 	CFileSink(const std::string& InName,
 		const std::string& InFileName);
 
-	void Log(const SMessage& InMessage) override;
+	void Log(const ZE::Logger::SMessage& InMessage) override;
 private:
 	std::string Filename;
-	Streams::COFileStream FileStream;
-	std::ostream Stream;
+	COFileStream FileStream;
 };
 
 }

@@ -1,70 +1,25 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "Wrappers.h"
 
 namespace ZE::Serialization
 {
 
-/** Wrapper for a size, used to omit size for special archives (e.g JSON) */
 template<typename T>
-struct TSize
-{
-	T Size;
-	
-	TSize(T&& InSize) : Size(std::forward<T>(InSize)) {}
-};
-
-template<typename T>
-ZE_FORCEINLINE TSize<T> MakeSize(T&& InSize)
-{
-	return TSize<T>(std::forward<T>(InSize));
-}
-
-/** Wrapper for contiguous binary data */
-template<typename T>
-struct TBinaryData
-{
-	void* Data;
-	uint64_t Size;
-
-	TBinaryData(T* InData, const uint64_t& InSize) : Data(InData), Size(InSize) {}
-
-	operator bool() const { return !!Data;  }
-};
-
-template<typename T>
-ZE_FORCEINLINE TBinaryData<T> MakeBinaryData(T* InData, const uint64_t& InSize)
-{
-	return TBinaryData<T>(InData, InSize);
-}
-
-/**
- * Data with a name
- */
-template<typename T>
-struct TNamedData
-{
-	std::string_view Name;
-	T& Data;
-	
-	TNamedData(const std::string_view& InName, T& InData) : InName(Name), Data(InData) {}
-};
+struct THasVersion : std::false_type {};
 
 /** Versionning */
 template<typename T>
 struct TTypeVersion
 {
-	constexpr static uint32_t Version = 0;
+	static constexpr bool HasVersion = false;
+
+	static_assert(HasVersion, "Please specify a version for T using ZE_SERL_TYPE_VERSION macro");
 };
 
 #define ZE_SERL_TYPE_VERSION(T, Ver) \
-	template<> struct ZE::Serialization::TTypeVersion<T> { constexpr static uint32_t Version = Ver; };
-
-/** Type traits for archives */
-namespace Traits 
-{
-	struct TextArchive {};
-}
+	template<> struct ZE::Serialization::TTypeVersion<T> { constexpr static uint32_t Version = Ver; constexpr static bool HasVersion = true; }; \
 
 template<typename T, typename Archive>
 static constexpr bool THasSerializeFunction =
@@ -136,20 +91,8 @@ private:
 	ArchiveType& This;
 };
 
-template<typename T>
-static constexpr bool TIsInputArchive = std::is_base_of_v<TInputArchive<T>, T>;
-
-template<typename T>
-static constexpr bool TIsOutputArchive = std::is_base_of_v<TOutputArchive<T>, T>;
-
-template<typename T>
-static constexpr bool TIsArchive = TIsInputArchive<T> || TIsOutputArchive<T>;
-
-template<typename T>
-static constexpr bool TIsTextArchive = std::is_base_of_v<Traits::TextArchive, T>;
-
 /**
- * Basic serialize function
+ * Serialize function that call Serialize method on class/union if it exists
  */
 template<typename Archive, typename T>
 	requires (std::is_class_v<T> || std::is_union_v<T>)
@@ -168,3 +111,5 @@ ZE_FORCEINLINE void Serialize(Archive& InArchive, T& InData, const uint32_t& InV
 }
 
 }
+
+#include "Traits.h"
