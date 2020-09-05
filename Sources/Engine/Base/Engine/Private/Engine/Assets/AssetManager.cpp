@@ -1,8 +1,11 @@
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/Asset.h"
-#include "FileSystem/ZFS.h"
+#include "ZEFS/ZEFS.h"
+#include "ZEFS/FileStream.h"
 #include <robin_hood.h>
 #include "Reflection/Class.h"
+#include "Serialization/BinaryArchive.h"
+#include <ostream>
 
 namespace ZE::AssetManager
 {
@@ -86,7 +89,34 @@ std::shared_ptr<CAsset> GetAsset(const std::string_view& InPath)
 		return Asset.Instance.lock();
 
 	/** Instantiate a new class for this asset */
-	return std::shared_ptr<CAsset>(Asset.Class->Instantiate<CAsset>());
+	std::shared_ptr<CAsset> AssetInstance = std::shared_ptr<CAsset>(Asset.Class->Instantiate<CAsset>());
+	AssetInstance->SetPath(InPath);
+	return AssetInstance;
+}
+
+bool SaveAsset(const std::shared_ptr<CAsset>& InAsset)
+{
+	verify(InAsset);
+
+	if (!InAsset)
+		return false;
+
+	using namespace ZE::Serialization;
+	using namespace ZE::FileSystem;
+
+	COFileStream FS(InAsset->GetPath(), EFileWriteFlagBits::ReplaceExisting |
+		EFileWriteFlagBits::Binary);
+	if (!FS)
+		return false;
+;
+	COBinaryArchive Ar(FS);
+
+	/**
+	 * Write header
+	 */
+	Ar <=> MakeAssetHeader(InAsset->GetClass()->GetName());
+
+	return true;
 }
 
 }

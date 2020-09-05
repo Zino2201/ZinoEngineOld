@@ -4,6 +4,7 @@
 #include "Reflection/Reflection.h"
 #include <array>
 #include "EngineVer.h"
+#include "Serialization/Types/String.h"
 #include "Asset.gen.h"
 
 namespace ZE
@@ -23,17 +24,19 @@ struct SAssetHeader
     SAssetHeader(const std::string& InClassName) : Id("ZASSET"),
         EngineVer(GetZEVersion()),
         ClassName(InClassName) {}
+
+	template<typename Archive>
+	ZE_FORCEINLINE void Serialize(Archive& InArchive)
+	{
+		InArchive <=> Id;
+		InArchive <=> EngineVer;
+		InArchive <=> ClassName;
+	}
 };
 
-/** Serialization operators */
-template<typename Archive>
-FORCEINLINE void Serialize(Archive& InArchive, const SAssetHeader& InHeader)
+ZE_FORCEINLINE SAssetHeader MakeAssetHeader(const std::string& InClassName)
 {
-	InArchive <=> InHeader.Id;
-	InArchive <=> InHeader.EngineVer;
-	InArchive <=> InHeader.ClassName;
-
-	return InArchive;
+    return SAssetHeader(InClassName);
 }
 
 /**
@@ -48,22 +51,18 @@ class ENGINE_API CAsset
 
 public:
     virtual ~CAsset() = default;
-
-    /**
-     * Serialize the asset
-     * Manages automatic serialization of this asset properties
-     */
+    
     template<typename Archive>
-        requires Serialization::TIsArchive<Archive>
     void Serialize(Archive& InArchive)
     {
+        
     }
+
+    ZE_FORCEINLINE void SetPath(const std::string_view& InPath) { Path = InPath; }
+
+    ZE_FORCEINLINE std::string GetPath() const { return Path;  }
+protected:
+    std::string Path;
 };
-
-template<typename T>
-static constexpr bool TAssetUseCustomSerializer = false;
-
-template<>
-static constexpr bool TAssetUseCustomSerializer<int> = true;
 
 }
