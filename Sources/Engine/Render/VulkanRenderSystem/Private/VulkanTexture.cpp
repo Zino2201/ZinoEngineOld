@@ -187,7 +187,7 @@ void CVulkanTexture::SetName(const char* InName)
 		vmaSetAllocationUserData(Device.GetAllocator(),
 			Allocation, reinterpret_cast<void*>(const_cast<char*>(InName)));
 
-#ifndef NDEBUG
+#if ZE_ENABLE_VULKAN_DEBUG_FEATURES
 	PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectName = (PFN_vkSetDebugUtilsObjectNameEXT)
 		GVulkanRenderSystem->GetInstance().getProcAddr("vkSetDebugUtilsObjectNameEXT");
 

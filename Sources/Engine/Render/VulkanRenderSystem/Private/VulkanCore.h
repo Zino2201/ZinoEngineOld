@@ -49,11 +49,14 @@ const std::vector<const char*> GVulkanValidationLayers =
 	"VK_LAYER_KHRONOS_validation"
 };
 
-#if ZE_FEATURE(DEVELOPMENT)
-constexpr bool GVulkanEnableValidationLayers = false;
-#else
+#define ZE_ENABLE_VULKAN_DEBUG_FEATURES ZE_FEATURE(DEVELOPMENT)
+
+#if ZE_ENABLE_VULKAN_DEBUG_FEATURES
 constexpr bool GVulkanEnableValidationLayers = true;
+#else
+constexpr bool GVulkanEnableValidationLayers = false;
 #endif
+
 
 /** Required device extensions */
 const std::vector<const char*> GVulkanRequiredDeviceExtensions =
