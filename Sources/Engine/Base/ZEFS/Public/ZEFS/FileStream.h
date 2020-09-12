@@ -14,7 +14,7 @@ namespace ZE::FileSystem
 class ZEFS_API CIFileStream : public std::istream
 {
 public:
-	CIFileStream(const std::string_view& InPath,
+	CIFileStream(const std::filesystem::path& InPath,
 		const ZE::FileSystem::EFileReadFlags& InReadFlags = ZE::FileSystem::EFileReadFlagBits::None);
 	~CIFileStream() { delete rdbuf(); }
 };
@@ -25,7 +25,7 @@ public:
 class ZEFS_API COFileStream : public std::ostream
 {
 public:
-	COFileStream(const std::string_view& InPath,
+	COFileStream(const std::filesystem::path& InPath,
 		const ZE::FileSystem::EFileWriteFlags& InWriteFlags = ZE::FileSystem::EFileWriteFlagBits::None);
 	~COFileStream() { delete rdbuf(); }
 };

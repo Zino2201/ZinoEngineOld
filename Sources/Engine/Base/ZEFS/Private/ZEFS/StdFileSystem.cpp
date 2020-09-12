@@ -10,7 +10,7 @@ CStdFileSystem::CStdFileSystem(const std::string& InAlias,
 	const uint8_t& InPriority, const std::string& InRoot) : IFileSystem(InAlias,
 		InPriority), Root(InRoot) {}
 
-TOwnerPtr<std::streambuf> CStdFileSystem::Read(const std::string_view& InPath, const EFileReadFlags& InFlags)
+TOwnerPtr<std::streambuf> CStdFileSystem::Read(const std::filesystem::path& InPath, const EFileReadFlags& InFlags)
 {
 	std::filesystem::path Path = GetCorrectPath(InPath);
 
@@ -27,7 +27,7 @@ TOwnerPtr<std::streambuf> CStdFileSystem::Read(const std::string_view& InPath, c
 	if (!File->is_open())
 	{
 		ZE::Logger::Error("Failed to open file {}",
-			InPath.data());
+			InPath.string());
 		delete File;
 		File = nullptr;
 	}
@@ -35,7 +35,7 @@ TOwnerPtr<std::streambuf> CStdFileSystem::Read(const std::string_view& InPath, c
 	return File;
 }
 
-TOwnerPtr<std::streambuf> CStdFileSystem::Write(const std::string_view& InPath, const EFileWriteFlags& InFlags)
+TOwnerPtr<std::streambuf> CStdFileSystem::Write(const std::filesystem::path& InPath, const EFileWriteFlags& InFlags)
 {
 	std::filesystem::path Path = GetCorrectPath(InPath);
 
@@ -49,7 +49,7 @@ TOwnerPtr<std::streambuf> CStdFileSystem::Write(const std::string_view& InPath, 
 	if (!File->is_open())
 	{
 		ZE::Logger::Error("Failed to open file {}",
-			InPath.data());
+			InPath.string());
 		delete File;
 		File = nullptr;
 	}
@@ -57,7 +57,7 @@ TOwnerPtr<std::streambuf> CStdFileSystem::Write(const std::string_view& InPath, 
 	return File;
 }
 
-bool CStdFileSystem::IterateDirectories(const std::string_view& InPath,
+bool CStdFileSystem::IterateDirectories(const std::filesystem::path& InPath,
 	const TDirectoryIterator& InIt)
 {
 	std::filesystem::path Path = GetCorrectPath(InPath);
@@ -66,26 +66,26 @@ bool CStdFileSystem::IterateDirectories(const std::string_view& InPath,
 		return false;
 
 	for (auto& Entry : std::filesystem::directory_iterator(Path))
-		InIt.Execute(SDirectoryEntry(Entry.path().string()));
+		InIt.Execute(SDirectoryEntry(Entry.path()));
 
 	return true;
 }
 
-bool CStdFileSystem::Exists(const std::string_view& InPath)
+bool CStdFileSystem::Exists(const std::filesystem::path& InPath)
 {
 	return std::filesystem::exists(GetCorrectPath(InPath));
 }
 
-bool CStdFileSystem::IsDirectory(const std::string_view& InPath)
+bool CStdFileSystem::IsDirectory(const std::filesystem::path& InPath)
 {
 	return std::filesystem::is_directory(GetCorrectPath(InPath));
 }
 
-std::filesystem::path CStdFileSystem::GetCorrectPath(const std::string_view& InPath) const
+std::filesystem::path CStdFileSystem::GetCorrectPath(const std::filesystem::path& InPath) const
 {
 	std::filesystem::path Path = InPath;
 	if (Path.is_relative())
-		Path = Root / std::string(InPath);
+		Path = Root / InPath;
 
 	return Path;
 }

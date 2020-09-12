@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include "Delegates/Delegate.h"
+#include <filesystem>
 
 namespace ZE::FileSystem
 {
@@ -35,9 +36,9 @@ ENABLE_FLAG_ENUMS(EFileWriteFlagBits, EFileWriteFlags);
 
 struct SDirectoryEntry
 {
-	std::string_view Path;
+	std::filesystem::path Path;
 
-	SDirectoryEntry(const std::string_view& InPath) : Path(InPath) {}
+	SDirectoryEntry(const std::filesystem::path& InPath) : Path(InPath) {}
 };
 using TDirectoryIterator = TDelegate<void, const SDirectoryEntry&>;
 
@@ -51,12 +52,12 @@ public:
 		const uint8_t& InPriority) {}
 	virtual ~IFileSystem() = default;
 
-	virtual TOwnerPtr<std::streambuf> Read(const std::string_view& InPath, const EFileReadFlags& InFlags) = 0;
-	virtual TOwnerPtr<std::streambuf> Write(const std::string_view& InPath, const EFileWriteFlags& InFlags) = 0;
-	virtual bool IterateDirectories(const std::string_view& InPath,
+	virtual TOwnerPtr<std::streambuf> Read(const std::filesystem::path& InPath, const EFileReadFlags& InFlags) = 0;
+	virtual TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath, const EFileWriteFlags& InFlags) = 0;
+	virtual bool IterateDirectories(const std::filesystem::path& InPath,
 		const TDirectoryIterator& InIt) = 0;
-	virtual bool Exists(const std::string_view& InPath) = 0;
-	virtual bool IsDirectory(const std::string_view& InPath) = 0;
+	virtual bool Exists(const std::filesystem::path& InPath) = 0;
+	virtual bool IsDirectory(const std::filesystem::path& InPath) = 0;
 	virtual bool IsReadOnly() const = 0;
 };
 

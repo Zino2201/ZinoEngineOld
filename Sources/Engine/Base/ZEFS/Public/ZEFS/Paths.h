@@ -7,7 +7,10 @@
  */
 namespace ZE::FileSystem::Paths
 {
+
+/**
+ * Get current working directory
+ */
 ZEFS_API inline std::string GetCurrentWorkingDir();
-ZEFS_API inline std::string GetFilename(const std::string& InPath);
 
 }

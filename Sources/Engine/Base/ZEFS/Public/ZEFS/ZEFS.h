@@ -17,10 +17,10 @@ namespace ZE::FileSystem
 /**
  * Check if the specified file or directory exists
  */
-ZEFS_API bool Exists(const std::string_view& InPath);
+ZEFS_API bool Exists(const std::filesystem::path& InPath);
 
 /** Check if the specified path is a directory */
-ZEFS_API bool IsDirectory(const std::string_view& InPath);
+ZEFS_API bool IsDirectory(const std::filesystem::path& InPath);
 
 /**
  * ***************************************
@@ -32,14 +32,14 @@ ZEFS_API bool IsDirectory(const std::string_view& InPath);
  * Create a file archive of the specified path for reading
  * @return Returns a stream buffer for manipulating the file
  */
-ZEFS_API TOwnerPtr<std::streambuf> Read(const std::string_view& InPath,
+ZEFS_API TOwnerPtr<std::streambuf> Read(const std::filesystem::path& InPath,
 	const EFileReadFlags& InReadFlags = EFileReadFlagBits::None);
 
 /**
  * Create a file archive of the specified path for writing
  * @return Returns a stream buffer for manipulating the file
  */
-ZEFS_API TOwnerPtr<std::streambuf> Write(const std::string_view& InPath,
+ZEFS_API TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath,
 	const EFileWriteFlags& InWriteFlags = EFileWriteFlagBits::None); 
 
 
@@ -52,7 +52,7 @@ ZEFS_API TOwnerPtr<std::streambuf> Write(const std::string_view& InPath,
 /**
  * Iterate over all directories
  */
-ZEFS_API bool IterateDirectories(const std::string_view& InPath,
+ZEFS_API bool IterateDirectories(const std::filesystem::path& InPath,
 	const TDirectoryIterator& InIt);
 /**
  * ***************************************

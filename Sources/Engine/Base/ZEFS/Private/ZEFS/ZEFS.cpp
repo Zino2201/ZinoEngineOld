@@ -31,7 +31,7 @@ IFileSystem* WriteFS = nullptr;
 /**
  * Get filesystems that has a matching alias inside the path
  */
-std::vector<IFileSystem*> GetFileSystemsMatchingAlias(const std::string_view& InPath)
+std::vector<IFileSystem*> GetFileSystemsMatchingAlias(const std::filesystem::path& InPath)
 {
 	std::vector<IFileSystem*> FileSystems;
 	FileSystems.reserve(2);
@@ -39,7 +39,7 @@ std::vector<IFileSystem*> GetFileSystemsMatchingAlias(const std::string_view& In
 	for (const auto& [Entry, FS] : Filesystems)
 	{
 		if (Entry.Alias == "/" ||
-			InPath.rfind(Entry.Alias, 0) == 0)
+			InPath.string().rfind(Entry.Alias, 0) == 0)
 		{
 			FileSystems.emplace_back(FS.get());
 		}
@@ -53,7 +53,7 @@ std::vector<IFileSystem*> GetFileSystemsMatchingAlias(const std::string_view& In
  * gathered using GetFileSystemsMatchingAlias
  */
 template<typename Lambda>
-bool Execute(const std::string_view& InPath, Lambda&& InLambda)
+bool Execute(const std::filesystem::path& InPath, Lambda&& InLambda)
 {
 	std::vector<IFileSystem*> FileSystems = GetFileSystemsMatchingAlias(InPath);
 
@@ -67,7 +67,7 @@ bool Execute(const std::string_view& InPath, Lambda&& InLambda)
 }
 
 template<typename Ret, bool bWriteOp = false, typename Lambda>
-Ret ExecutePtr(const std::string_view& InPath, Lambda&& InLambda)
+Ret ExecutePtr(const std::filesystem::path& InPath, Lambda&& InLambda)
 {
 	std::vector<IFileSystem*> FileSystems = GetFileSystemsMatchingAlias(InPath);
 
@@ -89,7 +89,7 @@ Ret ExecutePtr(const std::string_view& InPath, Lambda&& InLambda)
 	return nullptr;
 }
 
-TOwnerPtr<std::streambuf> Read(const std::string_view& InPath,
+TOwnerPtr<std::streambuf> Read(const std::filesystem::path& InPath,
 	const EFileReadFlags& InReadFlags)
 {
 	return ExecutePtr<TOwnerPtr<std::streambuf>>(InPath,
@@ -99,7 +99,7 @@ TOwnerPtr<std::streambuf> Read(const std::string_view& InPath,
 		});
 }
 
-TOwnerPtr<std::streambuf> Write(const std::string_view& InPath,
+TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath,
 	const EFileWriteFlags& InWriteFlags)
 {
 	return ExecutePtr<TOwnerPtr<std::streambuf>, true>(InPath,
@@ -110,7 +110,7 @@ TOwnerPtr<std::streambuf> Write(const std::string_view& InPath,
 				if (!(InWriteFlags & EFileWriteFlagBits::ReplaceExisting))
 				{
 					ZE::Logger::Error("Can't write to file {}: file already exists",
-						InPath.data());
+						InPath.string());
 					return nullptr;
 				}
 			}
@@ -119,7 +119,7 @@ TOwnerPtr<std::streambuf> Write(const std::string_view& InPath,
 		});
 }
 
-bool Exists(const std::string_view& InPath)
+bool Exists(const std::filesystem::path& InPath)
 {
 	return Execute(InPath,
 		[InPath](IFileSystem* InFS) -> bool
@@ -128,7 +128,7 @@ bool Exists(const std::string_view& InPath)
 		});
 }
 
-bool IsDirectory(const std::string_view& InPath)
+bool IsDirectory(const std::filesystem::path& InPath)
 {
 	return Execute(InPath,
 		[InPath](IFileSystem* InFS) -> bool
@@ -137,7 +137,7 @@ bool IsDirectory(const std::string_view& InPath)
 		});
 }
 
-bool IterateDirectories(const std::string_view& InPath,
+bool IterateDirectories(const std::filesystem::path& InPath,
 	const TDirectoryIterator& InIt)
 {
 	return Execute(InPath,

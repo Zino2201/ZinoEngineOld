@@ -62,7 +62,7 @@ public:
 		SourceDesc.loadIncludeCallback = 
 			[](const char* InIncludeName) -> ShaderConductor::Blob*
 			{	
-				std::string Filename = ZE::FileSystem::Paths::GetFilename(InIncludeName);
+				std::string Filename = std::filesystem::path(InIncludeName).filename().string();
 				std::string Path = InIncludeName;
 
 				if(!ZE::FileSystem::Exists(InIncludeName))

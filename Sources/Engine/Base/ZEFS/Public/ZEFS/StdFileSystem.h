@@ -16,18 +16,18 @@ public:
 	CStdFileSystem(const std::string& InAlias,
 		const uint8_t& InPriority, const std::string& InRoot);
 
-	TOwnerPtr<std::streambuf> Read(const std::string_view& InPath, const EFileReadFlags& InFlags) override;
-	TOwnerPtr<std::streambuf> Write(const std::string_view& InPath, const EFileWriteFlags& InFlags) override;
+	TOwnerPtr<std::streambuf> Read(const std::filesystem::path& InPath, const EFileReadFlags& InFlags) override;
+	TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath, const EFileWriteFlags& InFlags) override;
 
-	bool IterateDirectories(const std::string_view& InPath,
+	bool IterateDirectories(const std::filesystem::path& InPath,
 		const TDirectoryIterator& InIt) override;
 
-	bool Exists(const std::string_view& InPath) override;
-	bool IsDirectory(const std::string_view& InPath) override;
+	bool Exists(const std::filesystem::path& InPath) override;
+	bool IsDirectory(const std::filesystem::path& InPath) override;
 
 	bool IsReadOnly() const override { return false; }
 private:
-	std::filesystem::path GetCorrectPath(const std::string_view& InPath) const;
+	std::filesystem::path GetCorrectPath(const std::filesystem::path& InPath) const;
 private:
 	std::filesystem::path Root;
 };
