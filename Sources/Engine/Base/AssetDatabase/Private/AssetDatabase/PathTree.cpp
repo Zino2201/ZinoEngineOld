@@ -4,7 +4,7 @@
 namespace ZE
 {
 
-std::vector<std::string> Tokenize(const std::string& InString, 
+std::vector<std::string> Split(const std::string& InString, 
 	const char& InDelimiter)
 {
 	std::vector<std::string> Tokens;
@@ -36,7 +36,7 @@ void CPathTree::Add(const std::filesystem::path& InPath)
 		Paths.insert({ InPath, SPathDirectory() });
 
 	/** Now scan each part to build a tree */
-	std::vector<std::string> Tokens = Tokenize(InPath.string(), 
+	std::vector<std::string> Tokens = Split(InPath.string(),
 		std::filesystem::path::preferred_separator);
 
 	/** Insert at root */

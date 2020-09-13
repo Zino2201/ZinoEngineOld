@@ -11,6 +11,6 @@ namespace ZE::FileSystem::Paths
 /**
  * Get current working directory
  */
-ZEFS_API inline std::string GetCurrentWorkingDir();
+ZEFS_API std::string GetCurrentWorkingDir();
 
 }
