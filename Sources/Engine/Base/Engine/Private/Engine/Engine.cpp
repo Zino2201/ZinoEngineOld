@@ -8,6 +8,8 @@
 #include "Render/RenderCore.h"
 #include <SDL.h>
 #include "Engine/InputSystem.h"
+#include "Module/Module.h"
+#include "AssetDatabase/AssetDatabase.h"
 
 namespace ZE
 {
@@ -26,12 +28,29 @@ bool bRun = true;
 
 DEFINE_MODULE(ZE::Module::CDefaultModule, Engine)
 
+/**
+ * Try to load a required module
+ * Crash if it fails
+ */
+ZE::Module::CModule* LoadRequiredModule(const std::string_view& InName)
+{
+	ZE::Module::CModule* Ptr = ZE::Module::LoadModule(InName);
+	if (!Ptr)
+		ZE::Logger::Fatal("Failed to load required module {} ! Exiting", InName);
+
+	return Ptr;
+}
+
 CZinoEngineApp::CZinoEngineApp(const bool& bInWaitForEvents) 
 	: CApp(0, nullptr), bWaitForEvents(bInWaitForEvents), Now(SDL_GetPerformanceCounter()), Last(0)
 {
+	/** Load asset related modules */
+	LoadRequiredModule("Asset");
+	LoadRequiredModule("AssetDatabase");
+
 	/** LOAD RENDERER MODULE */
 	ZE::Logger::Info("Initializing renderer");
-	ZE::Module::LoadModule("Renderer");
+	LoadRequiredModule("Renderer");
 
 	/** Initialize ECS */
 	ECS::CECSManager::Get().Initialize();

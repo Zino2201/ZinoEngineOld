@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Serialization/Archive.h"
+#include <fmt/format.h>
 
 namespace ZE
 {
@@ -11,6 +12,7 @@ struct SZEVersion
 	uint8_t Minor;
 	uint8_t Patch;
 
+	constexpr SZEVersion() : Major(0), Minor(0), Patch(0) {}
 	constexpr SZEVersion(const uint8_t& InMajor,
 		const uint8_t& InMinor,
 		const uint8_t& InPatch) : Major(InMajor),
@@ -28,6 +30,11 @@ struct SZEVersion
 		InArchive <=> Major;
 		InArchive <=> Minor;
 		InArchive <=> Patch;
+	}
+
+	ZE_FORCEINLINE std::string ToString() const
+	{
+		return "ZE VERSION";
 	}
 };
 

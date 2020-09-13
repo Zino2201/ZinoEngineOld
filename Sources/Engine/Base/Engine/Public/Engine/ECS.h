@@ -282,8 +282,8 @@ private:
     /** Available entity id */
     EntityID AvailableEntityID;
 
-    TMulticastDelegate<CEntityManager&, const ECS::EntityID&, ECS::SEntityComponent*> OnComponentAdded;
-    TMulticastDelegate<CEntityManager&, const ECS::EntityID&, ECS::SEntityComponent*> OnComponentRemoved;
+    TMulticastDelegateNoRet<CEntityManager&, const ECS::EntityID&, ECS::SEntityComponent*> OnComponentAdded;
+    TMulticastDelegateNoRet<CEntityManager&, const ECS::EntityID&, ECS::SEntityComponent*> OnComponentRemoved;
 };
 
 }

@@ -9,6 +9,18 @@ namespace ZE
 /**
  * std::async version using ZE jobsystem
  */
+
+template<typename Lambda>
+void Async(Lambda InLambda)
+{
+	const auto& Job = ZE::JobSystem::CreateJob(ZE::JobSystem::EJobType::Normal, 
+		[InLambda](const ZE::JobSystem::SJob& InJob)
+		{
+			InLambda(InJob);
+		});
+	ZE::JobSystem::ScheduleJob(Job);
+}
+
 template<typename Ret, typename Lambda>
 std::future<Ret> Async(Lambda InLambda)
 {

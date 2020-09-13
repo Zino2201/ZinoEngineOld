@@ -46,8 +46,8 @@ public:
 	template<typename T>
 	ZE_FORCEINLINE ArchiveType& operator<=>(T&& InData)
 	{
-		if constexpr (THasSerializeFunctionWithVersion<T, Archive> ||
-			THasSerializeMethodWithVersion<T, Archive>)
+		if constexpr (THasSerializeFunctionWithVersion<T, ArchiveType> ||
+			THasSerializeMethodWithVersion<T, ArchiveType>)
 		{
 			uint32_t Version = 0;
 			This <=> Version;

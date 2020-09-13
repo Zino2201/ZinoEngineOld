@@ -71,7 +71,7 @@ private:
     void DeleteProxy(ECS::CEntityManager& InEntityManager, 
         SRenderableComponent* InComponent);
 public:
-    TMulticastDelegate<> OnRenderableComponentUpdated;
+    TMulticastDelegateNoRet<> OnRenderableComponentUpdated;
 private:
     std::vector<SRenderableComponent*> ComponentsToUpdate;
 };

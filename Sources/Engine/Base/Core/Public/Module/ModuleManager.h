@@ -9,7 +9,7 @@ namespace ZE::Module
 
 class CModule;
 
-using OnModuleLoadedDelegate = TMulticastDelegate<const std::string_view&>;
+using OnModuleLoadedDelegate = TMulticastDelegateNoRet<const std::string_view&>;
 
 CORE_API CModule* LoadModule(const std::string_view& InName);
 

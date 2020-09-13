@@ -1,66 +1,31 @@
-#include "Engine/Assets/AssetManager.h"
-#include "Engine/Assets/Asset.h"
-#include "ZEFS/ZEFS.h"
-#include "ZEFS/FileStream.h"
+
 #include <robin_hood.h>
 #include "Reflection/Class.h"
 #include "Serialization/BinaryArchive.h"
 #include <ostream>
+#include "Module/Module.h"
 
+DEFINE_MODULE(ZE::Module::CDefaultModule, Asset);
+
+#if 0
 namespace ZE::AssetManager
 {
 
 /**
- * A cached asset data
+ * A loaded asset
  */
 struct SCachedAsset
 {
 	/** Path of the asset */
 	std::string Path;
 
-	/** Class of the asset */
-	Refl::CClass* Class;
-
-	/** Instance of the asset if instanced */
+	/** Instance of the asset */
 	std::weak_ptr<CAsset> Instance;
 
-	SCachedAsset(const std::string_view& InPath) : Path(InPath), Class(nullptr) {}
+	SCachedAsset(const std::string_view& InPath) : Path(InPath) {}
 };
 
 robin_hood::unordered_map<std::string_view, SCachedAsset> CachedAssets;
-
-uint32_t SearchAndCache_FoundAssets = 0;
-void SearchAndCacheAssets_Iterator(const ZE::FileSystem::SDirectoryEntry& InEntry)
-{
-	/** Check if not a directory */
-	if(ZE::FileSystem::IsDirectory(InEntry.Path))
-		return;
-
-	auto It = CachedAssets.find(InEntry.Path);
-	if (It != CachedAssets.end())
-		return;
-
-	/** Cache asset if not present */
-	CachedAssets.insert({ InEntry.Path, SCachedAsset(InEntry.Path) });
-	ZE::Logger::Verbose("Cached {} ", InEntry.Path);
-
-	SearchAndCache_FoundAssets++;
-}
-
-uint32_t SearchAndCacheAssets(const std::string_view& InPath)
-{
-	SearchAndCache_FoundAssets = 0;
-
-	ZE::Logger::Verbose("Searching for assets in {}", InPath);
-
-	if(!ZE::FileSystem::IterateDirectories(InPath, 
-		&SearchAndCacheAssets_Iterator))
-		ZE::Logger::Error("Failed to iterate over {}", InPath);
-
-	ZE::Logger::Verbose("Found {} assets", SearchAndCache_FoundAssets);
-
-	return SearchAndCache_FoundAssets;
-}
 
 void GetAssets(const std::string_view& InPath)
 {
@@ -94,6 +59,58 @@ std::shared_ptr<CAsset> GetAsset(const std::string_view& InPath)
 	return AssetInstance;
 }
 
+/**
+ * Verify the specified asset header
+ */
+bool VerifyAssetHeader(const SAssetHeader& InHeader)
+{
+	if (strcmp(InHeader.Id, "ZASSET") != 0)
+	{
+		ZE::Logger::Error("Incorrect header ID. Must be ZASSET but is {}", InHeader.Id);
+		return false;
+	}
+
+	if (!InHeader.EngineVer.IsCompatibleWith(GetZEVersion()))
+	{
+		ZE::Logger::Error("Asset ({}) is not compatible with this version ({})", InHeader.EngineVer.ToString(), GetZEVersion().ToString());
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Load the specified asset
+ * @param bHeaderOnly If true, only reads the header and cache the asset
+ */
+std::shared_ptr<CAsset> LoadAsset(const std::string& InPath,
+	const bool& bHeaderOnly)
+{
+	using namespace ZE::Serialization;
+	using namespace ZE::FileSystem;
+
+	CIFileStream FS(InPath, EFileReadFlagBits::Binary);
+	if (!FS)
+	{
+		ZE::Logger::Error("Failed to load asset {}: can't open file stream", InPath);
+		return nullptr;
+	}
+
+	CIBinaryArchive Ar(FS);
+
+	SAssetHeader Header;
+	Ar <=> Header;
+	if (!VerifyAssetHeader(Header))
+	{
+		ZE::Logger::Error("Failed to load asset {}: asset header invalid", InPath);
+		return nullptr;
+	}
+
+	/** Skip if header only */
+	if (bHeaderOnly)
+		return nullptr;
+}
+
 bool SaveAsset(const std::shared_ptr<CAsset>& InAsset)
 {
 	verify(InAsset);
@@ -119,4 +136,13 @@ bool SaveAsset(const std::shared_ptr<CAsset>& InAsset)
 	return true;
 }
 
+void UncacheAsset(const TAssetPtr<CAsset>& InAsset)
+{
+	verify(InAsset);
+
+	CachedAssets.erase(InAsset->GetPath());
 }
+
+}
+
+#endif

@@ -9,10 +9,10 @@ namespace ZE
 /**
  * Simple multicast delegate
  */
-template<typename... Args>
+template<typename Ret, typename... Args>
 class TMulticastDelegate
 {
-	using TSignature = void(Args...);
+	using TSignature = Ret(Args...);
 
 public:
 	/**
@@ -34,5 +34,8 @@ public:
 private:
 	std::vector<std::function<TSignature>> Functions;
 };
+
+template<typename... Args>
+using TMulticastDelegateNoRet = TMulticastDelegate<void, Args...>;
 
 } /* namespace ZE */

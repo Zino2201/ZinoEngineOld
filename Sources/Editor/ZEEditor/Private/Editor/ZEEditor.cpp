@@ -14,7 +14,10 @@
 #include "ImGui/ImGuiRender.h"
 #include <SDL.h>
 #include "Editor/Widgets/MapTabWidget.h"
-#include "Engine/Assets/AssetManager.h"
+//#include "Engine/Assets/AssetManager.h"
+//#include "Engine/Assets/Asset.h"
+#include "AssetDatabase/AssetDatabase.h"
+#include <istream>
 
 DEFINE_MODULE(ZE::Module::CDefaultModule, ZEEditor);
 
@@ -32,7 +35,8 @@ SRSRenderPass MainRenderPass;
 
 CZEEditor::CZEEditor() : CZinoEngineApp(true) 
 {
-	ZE::AssetManager::SearchAndCacheAssets("Assets/");
+	/** Scan Assets directory */
+	ZE::AssetDatabase::Scan("Assets", ZE::AssetDatabase::EAssetScanMode::Async);
 
 	SDL_Rect WindowSize;
 	SDL_GetDisplayUsableBounds(0, &WindowSize);

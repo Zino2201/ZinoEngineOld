@@ -2,6 +2,7 @@ ze_create_module(AssetExplorer Private/Editor/AssetExplorer.cpp)
 
 ze_add_private_modules(AssetExplorer
 	Core Reflection ImGui)
+ze_add_private_modules(AssetExplorer AssetDatabase)
 
 target_include_directories(AssetExplorer
     PUBLIC 

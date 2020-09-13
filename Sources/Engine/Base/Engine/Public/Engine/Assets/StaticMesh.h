@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Asset.h"
+#include "Assets/Asset.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "Render/RenderSystem/Resources/Pipeline.h"
 
