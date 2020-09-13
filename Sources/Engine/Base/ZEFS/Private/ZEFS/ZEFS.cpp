@@ -138,12 +138,12 @@ bool IsDirectory(const std::filesystem::path& InPath)
 }
 
 bool IterateDirectories(const std::filesystem::path& InPath,
-	const TDirectoryIterator& InIt)
+	const TDirectoryIterator& InIt, const EIterateDirectoriesFlags& InFlags)
 {
 	return Execute(InPath,
-		[InPath, InIt](IFileSystem* InFS) -> bool
+		[InPath, InIt, InFlags](IFileSystem* InFS) -> bool
 		{
-			return InFS->IterateDirectories(InPath, InIt);
+			return InFS->IterateDirectories(InPath, InIt, InFlags);
 		});
 }
 

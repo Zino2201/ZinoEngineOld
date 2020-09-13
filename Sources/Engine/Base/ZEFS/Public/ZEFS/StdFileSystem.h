@@ -20,7 +20,7 @@ public:
 	TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath, const EFileWriteFlags& InFlags) override;
 
 	bool IterateDirectories(const std::filesystem::path& InPath,
-		const TDirectoryIterator& InIt) override;
+		const TDirectoryIterator& InIt, const EIterateDirectoriesFlags& InFlags) override;
 
 	bool Exists(const std::filesystem::path& InPath) override;
 	bool IsDirectory(const std::filesystem::path& InPath) override;

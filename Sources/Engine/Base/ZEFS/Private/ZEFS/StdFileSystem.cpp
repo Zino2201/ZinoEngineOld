@@ -58,15 +58,25 @@ TOwnerPtr<std::streambuf> CStdFileSystem::Write(const std::filesystem::path& InP
 }
 
 bool CStdFileSystem::IterateDirectories(const std::filesystem::path& InPath,
-	const TDirectoryIterator& InIt)
+	const TDirectoryIterator& InIt, const EIterateDirectoriesFlags& InFlags)
 {
 	std::filesystem::path Path = GetCorrectPath(InPath);
 	if (!InIt)
 		return false;
 
-	for (auto& Entry : std::filesystem::directory_iterator(Path))
+	if (InFlags & EIterateDirectoriesFlagBits::Recursive)
 	{
-		InIt.Execute(SDirectoryEntry(std::filesystem::relative(Entry.path(), Path)));
+		for (auto& Entry : std::filesystem::recursive_directory_iterator(Path))
+		{
+			InIt.Execute(SDirectoryEntry(std::filesystem::relative(Entry.path(), Path)));
+		}
+	}
+	else
+	{
+		for (auto& Entry : std::filesystem::directory_iterator(Path))
+		{
+			InIt.Execute(SDirectoryEntry(std::filesystem::relative(Entry.path(), Path)));
+		}
 	}
 
 	return true;

@@ -34,6 +34,16 @@ enum class EFileWriteFlagBits
 };
 ENABLE_FLAG_ENUMS(EFileWriteFlagBits, EFileWriteFlags);
 
+/** Iteration related types */
+
+enum class EIterateDirectoriesFlagBits
+{
+	None = 0,
+
+	Recursive = 1 << 0,
+};
+ENABLE_FLAG_ENUMS(EIterateDirectoriesFlagBits, EIterateDirectoriesFlags);
+
 struct SDirectoryEntry
 {
 	std::filesystem::path Path;
@@ -55,7 +65,7 @@ public:
 	virtual TOwnerPtr<std::streambuf> Read(const std::filesystem::path& InPath, const EFileReadFlags& InFlags) = 0;
 	virtual TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath, const EFileWriteFlags& InFlags) = 0;
 	virtual bool IterateDirectories(const std::filesystem::path& InPath,
-		const TDirectoryIterator& InIt) = 0;
+		const TDirectoryIterator& InIt, const EIterateDirectoriesFlags& InFlags) = 0;
 	virtual bool Exists(const std::filesystem::path& InPath) = 0;
 	virtual bool IsDirectory(const std::filesystem::path& InPath) = 0;
 	virtual bool IsReadOnly() const = 0;

@@ -53,7 +53,7 @@ ZEFS_API TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath,
  * Iterate over all directories
  */
 ZEFS_API bool IterateDirectories(const std::filesystem::path& InPath,
-	const TDirectoryIterator& InIt);
+	const TDirectoryIterator& InIt, const EIterateDirectoriesFlags& InFlags = EIterateDirectoriesFlagBits::None);
 /**
  * ***************************************
  *					Misc
