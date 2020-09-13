@@ -61,12 +61,13 @@ bool CStdFileSystem::IterateDirectories(const std::filesystem::path& InPath,
 	const TDirectoryIterator& InIt)
 {
 	std::filesystem::path Path = GetCorrectPath(InPath);
-
 	if (!InIt)
 		return false;
 
 	for (auto& Entry : std::filesystem::directory_iterator(Path))
-		InIt.Execute(SDirectoryEntry(Entry.path()));
+	{
+		InIt.Execute(SDirectoryEntry(std::filesystem::relative(Entry.path(), Root)));
+	}
 
 	return true;
 }
