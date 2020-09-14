@@ -59,6 +59,7 @@ void RegisterAsset(const std::filesystem::path& InPath)
 		return;
 	}
 
+	Data.EngineVer = Header.EngineVer;
 	Data.Class = ZE::Refl::CClass::Get(Header.ClassName.c_str());
 
 	PathTree.Add(InPath);

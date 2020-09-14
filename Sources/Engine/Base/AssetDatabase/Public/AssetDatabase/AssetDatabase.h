@@ -4,6 +4,7 @@
 #include "Delegates/MulticastDelegate.h"
 #include <filesystem>
 #include <unordered_set>
+#include "EngineVer.h"
 
 namespace ZE::Refl { class CClass; }
 
@@ -30,6 +31,9 @@ struct SAssetPrimitiveData
 
 	/** Size of the asset (in bytes) */
 	uint64_t Size;
+
+	/** ZE version this asset was saved */
+	SZEVersion EngineVer;
 
 	std::filesystem::path Path;
 

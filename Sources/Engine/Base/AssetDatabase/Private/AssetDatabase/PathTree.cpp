@@ -1,27 +1,9 @@
 #include "PathTree.h"
 #include <sstream>
+#include "StringUtil.h"
 
 namespace ZE
 {
-
-std::vector<std::string> Split(const std::string& InString, 
-	const char& InDelimiter)
-{
-	std::vector<std::string> Tokens;
-	Tokens.reserve(5);
-
-	std::stringstream Stream(InString);
-	std::string Token;
-	while (std::getline(Stream, Token, InDelimiter)) 
-	{
-		/** Remove tabs */
-		Token.erase(std::remove(Token.begin(), Token.end(), '\t'), Token.end());
-		if(!Token.empty())
-			Tokens.push_back(std::move(Token));
-	}
-
-	return Tokens;
-}
 
 void CPathTree::Add(const std::filesystem::path& InPath)
 {
@@ -36,7 +18,7 @@ void CPathTree::Add(const std::filesystem::path& InPath)
 		Paths.insert({ InPath, SPathDirectory() });
 
 	/** Now scan each part to build a tree */
-	std::vector<std::string> Tokens = Split(InPath.string(),
+	std::vector<std::string> Tokens = ZE::StringUtil::Split(InPath.string(),
 		std::filesystem::path::preferred_separator);
 
 	/** Insert at root */

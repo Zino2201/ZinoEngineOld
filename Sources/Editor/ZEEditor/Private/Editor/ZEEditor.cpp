@@ -58,6 +58,10 @@ CZEEditor::CZEEditor() : CZinoEngineApp(true)
 		ImGuiStyle& Style = ImGui::GetStyle();
 		Style.WindowRounding = 0.f;
 		Style.TabRounding = 0.f;
+
+		/** Remove unfocused effects */
+		//Style.Colors[ImGuiCol_TitleBg] = Style.Colors[ImGuiCol_TitleBgActive];
+		//Style.Colors[ImGuiCol_TabUnfocused] = Style.Colors[ImGuiCol_Tab];
 	}
 
 	IO.DisplaySize = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
@@ -65,6 +69,7 @@ CZEEditor::CZEEditor() : CZinoEngineApp(true)
 	IO.WantCaptureKeyboard = true;
 	IO.WantCaptureMouse = true;
 	IO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	
 	Font = IO.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 16.f);
 
 	Renderer::CRendererModule::Get().CreateImGuiRenderer();
@@ -161,6 +166,7 @@ void CZEEditor::Tick(const float& InDeltaTime)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
 	if(ImGui::Begin("MainEditorWindow", nullptr, ImGuiWindowFlags_NoDocking
 		| ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove
 		| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus))
