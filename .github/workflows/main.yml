@@ -183,7 +183,7 @@ jobs:
   # Release
   build-nightly-win:
     if: ${{ github.event_name == 'schedule' }}
-    name: Build Nightly Windows
+    name: Publish Nightly Windows
     runs-on: windows-2019
     needs: [windows-debug-ed, windows-debug-mono-ed, windows-relwithdebinfo-ed, windows-release-mono-noed]
     
