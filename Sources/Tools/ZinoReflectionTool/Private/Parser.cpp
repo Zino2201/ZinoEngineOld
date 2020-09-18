@@ -423,7 +423,7 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 			/**
 			 * Try to parse a potential property
 			 */
-			if(InWords[0].find(GPropertyMacro) != std::string::npos)
+			if(InWords[0].rfind(GPropertyMacro) != std::string::npos)
 			{
 				ParseProperty(InLines, InWords, InLine);
 			}
