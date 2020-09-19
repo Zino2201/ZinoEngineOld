@@ -6,6 +6,8 @@
 namespace ZE
 {
 
+using DelegateHandle = size_t;
+
 /**
  * Simple multicast delegate
  */
@@ -18,9 +20,10 @@ public:
 	/**
 	 * Bind a function to delegate
 	 */
-	void Bind(const std::function<TSignature>& InFunction)
+	DelegateHandle Bind(const std::function<TSignature>& InFunction)
 	{
 		Functions.push_back(InFunction);
+		return Functions.size() - 1;
 	}
 
 	/**
@@ -30,6 +33,16 @@ public:
 	{
 		for (const auto& Function : Functions)
 			Function(std::forward<Args>(InArgs)...);
+	}
+
+	/**
+	 * Remove the function from the delegate
+	 */
+	void Remove(const DelegateHandle& InFunction)
+	{
+		verify(InFunction < Functions.size());
+
+		Functions.erase(Functions.begin() + InFunction);
 	}
 private:
 	std::vector<std::function<TSignature>> Functions;
