@@ -37,8 +37,8 @@
 #include "Logger/Logger.h"
 #include "Assertions.h"
 
-#define CONCAT_(x,y) x##y
-#define CONCAT(x,y) CONCAT_(x,y)
+#define ZE_CONCAT_(x, y) x ## y
+#define ZE_CONCAT(x, y) ZE_CONCAT_(x, y)
 
 /** Flags */
 #include <type_traits>
