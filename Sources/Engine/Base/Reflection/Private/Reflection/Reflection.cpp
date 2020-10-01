@@ -3,11 +3,20 @@
 #include "Reflection/Struct.h"
 #include "Reflection/Class.h"
 #include "Reflection/Builders.h"
+#include "Reflection/Serialization.h"
 
 DEFINE_MODULE(ZE::Module::CDefaultModule, Reflection);
 
 namespace ZE::Refl
 {
+
+std::unordered_map<std::string, std::unordered_map<std::string, std::function<void(void*, void*)>>> ArchiveMap;
+
+
+std::unordered_map<std::string, std::function<void(void*, void*)>>& GetArchiveMap(const char* InArchive)
+{
+	return ArchiveMap[InArchive];
+}
 
 std::vector<CStruct*> GetDerivedStructsFrom(CStruct* InParent)
 {
@@ -23,13 +32,16 @@ std::vector<CStruct*> GetDerivedStructsFrom(CStruct* InParent)
 	return Structs;
 }
 
-std::vector<CClass*> GetDerivedClassesFrom(CClass* InParent)
+std::vector<CClass*> GetDerivedClassesFrom(CClass* InParent, const bool& bInIncludeParentClass)
 {
 	std::vector<CClass*> Classes;
 	Classes.reserve(10);
 
 	for (const auto& Class : CClass::GetClasses())
 	{
+		if (Class == InParent && !bInIncludeParentClass)
+			continue;
+
 		if (Class->IsDerivedFrom(InParent))
 			Classes.push_back(Class);
 	}

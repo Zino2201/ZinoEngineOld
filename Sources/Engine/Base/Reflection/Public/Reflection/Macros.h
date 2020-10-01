@@ -62,11 +62,12 @@ namespace Internal
  */
 #define ZSTRUCT(...)
 #define ZCLASS(...)
+#define ZENUM(...)
 #define ZPROPERTY(...)
 #define ZFUNCTION(...)
 
 /** Macro used for ZRT to generate a body */
-#define REFL_BODY() CONCAT(CONCAT(CONCAT(_Refl_Body_, CURRENT_FILE_UNIQUE_ID), _), __LINE__)
+#define REFL_BODY() ZE_CONCAT(ZE_CONCAT(ZE_CONCAT(_Refl_Body_, CURRENT_FILE_UNIQUE_ID), _), __LINE__)
 
 /**
  * Specialize TTypeName
@@ -85,9 +86,9 @@ namespace Internal
     friend ZE::Refl::CType; \
     friend void ZE::Refl::Refl_InitReflectedClassesAndStructs(); \
     template<typename... Args> \
-    static void* Refl_InternalInstantiate(Args&&... InArgs) { return new Struct(std::forward<Args>(InArgs)...); } \
+    static void* ZE__Refl_InternalInstantiate(Args&&... InArgs) { return new Struct(std::forward<Args>(InArgs)...); } \
     template<typename... Args> \
-    static void Refl_InternalPlacementNew(void* InPtr, Args&&... InArgs) { new (InPtr) Struct(std::forward<Args>(InArgs)...); } \
+    static void ZE__Refl_InternalPlacementNew(void* InPtr, Args&&... InArgs) { new (InPtr) Struct(std::forward<Args>(InArgs)...); } \
     static ZE::Refl::CStruct* GetStaticStruct(); \
     virtual ZE::Refl::CStruct* GetStruct() const { return ZE::Refl::Internal::GetStructByName(StructName); }
 
@@ -105,10 +106,10 @@ namespace Internal
     friend void ZE::Refl::Refl_InitReflectedClassesAndStructs(); \
     template<typename... Args> \
         requires (!std::is_abstract_v<Class>) \
-    static void* Refl_InternalInstantiate(Args&&... InArgs) { return new Class(std::forward<Args>(InArgs)...); } \
+    static void* ZE__Refl_InternalInstantiate(Args&&... InArgs) { return new Class(std::forward<Args>(InArgs)...); } \
     template<typename... Args> \
         requires (!std::is_abstract_v<Class>) \
-    static void Refl_InternalPlacementNew(void* InPtr, Args&&... InArgs) { new (InPtr) Class(std::forward<Args>(InArgs)...); } \
+    static void ZE__Refl_InternalPlacementNew(void* InPtr, Args&&... InArgs) { new (InPtr) Class(std::forward<Args>(InArgs)...); } \
     static ZE::Refl::CClass* GetStaticClass(); \
     virtual ZE::Refl::CClass* GetClass() const { return ZE::Refl::Internal::GetClassByName(ClassName); } \
     private:

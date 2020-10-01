@@ -10,14 +10,14 @@ namespace ZE::Refl::Builders
  */
 #define REFL_INIT_BUILDERS_FUNC(UniqueName) REFL_INIT_BUILDERS_FUNC_INTERNAL(UniqueName)
 #define REFL_INIT_BUILDERS_FUNC_INTERNAL(c) \
-    struct CONCAT(_Refl_AutoInit, c) \
+    struct ZE_CONCAT(_Refl_AutoInit, c) \
     { \
-        CONCAT(_Refl_AutoInit, c) () \
+        ZE_CONCAT(_Refl_AutoInit, c) () \
 	    { \
             ZE::Refl::Refl_InitReflectedClassesAndStructs(); \
         } \
     }; \
-    static CONCAT(_Refl_AutoInit, c) CONCAT(Refl_AutoInitStruct, c); \
+    static ZE_CONCAT(_Refl_AutoInit, c) ZE_CONCAT(Refl_AutoInitStruct, c); \
     static void Refl_InitReflectedClassesAndStructs()
 
 /**
@@ -56,10 +56,10 @@ public:
 	{
         if constexpr(!std::is_abstract_v<T>)
         {
-			std::function<void* (Args...)> Functor = &T::template Refl_InternalInstantiate<Args...>;
+			std::function<void* (Args...)> Functor = &T::template ZE__Refl_InternalInstantiate<Args...>;
 			Struct->AddInstantiateFunc<Args...>(Functor);
 
-			std::function<void(void*, Args...)> Functor2 = &T::template Refl_InternalPlacementNew<Args...>;
+			std::function<void(void*, Args...)> Functor2 = &T::template ZE__Refl_InternalPlacementNew<Args...>;
 			Struct->AddPlacementNewFunc<Args...>(Functor2);
         }
 

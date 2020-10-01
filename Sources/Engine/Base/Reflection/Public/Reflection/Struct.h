@@ -49,9 +49,8 @@ class REFLECTION_API CStruct : public CType
 	class IInstantiateFunc {};
 
 	template<typename... Args>
-	class CInstantiateFunc : public IInstantiateFunc
+	struct CInstantiateFunc : public IInstantiateFunc
 	{
-    public:
         CInstantiateFunc(const std::function<void*(Args...)>& InFunc) :
             Func(InFunc) {}
 
@@ -59,9 +58,8 @@ class REFLECTION_API CStruct : public CType
 	};
 
 	template<typename... Args>
-	class CPlacementNewFunc : public IInstantiateFunc
+	struct CPlacementNewFunc : public IInstantiateFunc
 	{
-	public:
 		CPlacementNewFunc(const std::function<void(void*, Args...)>& InFunc) :
 			Func(InFunc) {}
 

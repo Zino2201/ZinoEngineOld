@@ -22,7 +22,7 @@ namespace ZE::Refl
  * Get all structs derived from struct
  */
 REFLECTION_API std::vector<CStruct*> GetDerivedStructsFrom(CStruct* InParent);
-REFLECTION_API std::vector<CClass*> GetDerivedClassesFrom(CClass* InParent);
+REFLECTION_API std::vector<CClass*> GetDerivedClassesFrom(CClass* InParent, const bool& bInIncludeParentClass = false);
 
 }
 
