@@ -169,6 +169,7 @@ void SerializeRefl(ArchiveType& InArchive, T& InObj)
 /**
  *
  */
- serialize propert
+void SerializeProp()
+{
 
- prop
+}
