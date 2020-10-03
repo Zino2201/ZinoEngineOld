@@ -3,7 +3,7 @@
 #include <robin_hood.h>
 #include "Module/ModuleManager.h"
 #include "Threading/JobSystem/Async.h"
-#include "Assets/AssetHeader.h"
+#include "AssetDatabase/AssetHeader.h"
 #include <istream>
 #include <ios>
 #include "Serialization/BinaryArchive.h"
@@ -60,7 +60,7 @@ void RegisterAsset(const std::filesystem::path& InPath)
 	}
 
 	Data.EngineVer = Header.EngineVer;
-	Data.Class = ZE::Refl::CClass::Get(Header.ClassName.c_str());
+	Data.Class = ZE::Refl::GetClassByName(Header.ClassName.c_str());
 
 	PathTree.Add(InPath);
 	DataMap.insert({ InPath, Data });
@@ -130,6 +130,15 @@ std::vector<SAssetPrimitiveData> GetAssets(const std::filesystem::path& InDirect
 	}
 
 	return Assets;
+}
+
+std::optional<SAssetPrimitiveData> GetAssetPrimitiveData(const std::filesystem::path& InPath)
+{
+	auto Data = DataMap.find(InPath);
+	if (Data != DataMap.end())
+		return Data->second;
+
+	return std::nullopt;
 }
 
 std::vector<std::filesystem::path> GetSubDirectories(const std::filesystem::path& InRoot)

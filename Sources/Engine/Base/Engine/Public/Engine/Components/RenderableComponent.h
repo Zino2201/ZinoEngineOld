@@ -22,7 +22,7 @@ ZSTRUCT()
 struct SRenderableComponent : public ECS::SEntityComponent,
     public Renderer::IRenderableComponent
 {
-    REFL_BODY()
+    ZE_REFL_BODY()
 
     Renderer::CRenderableComponentProxy* Proxy;
     STransformComponent* TransformComponent;
@@ -48,14 +48,14 @@ struct SRenderableComponent : public ECS::SEntityComponent,
 ZCLASS()
 class CRenderableComponentSystem : public ECS::IEntityComponentSystem
 {
-    REFL_BODY()
+    ZE_REFL_BODY()
 
 public:
     void Initialize(ECS::CEntityManager& InEntityManager) override;
     void Tick(ECS::CEntityManager& InEntityManager, const float& InDeltaTime) override;
-    ZE::Refl::CStruct* GetComponentStruct() const override
+    const ZE::Refl::CStruct* GetComponentStruct() const override
     { 
-        return ZE::Refl::CStruct::Get<SRenderableComponent>(); 
+        return ZE::Refl::GetStruct<SRenderableComponent>(); 
     }
     bool ShouldTick() const override { return true; }
     uint32_t GetPriority() const override { return 0; }

@@ -1,41 +1,11 @@
 #pragma once
 
 #include "Type.h"
+#include "Property.h"
 #include "Struct.gen.h"
 
 namespace ZE::Refl
 {
-
-/**
- * A property
- */
-ZCLASS()
-class REFLECTION_API CProperty
-{
-    REFL_BODY()
-
-public:
-	CProperty(const char* InName,
-		const uint64_t& InSize,
-		const size_t& InOffset) :
-		Name(InName), Size(InSize), Offset(InOffset) {}
-
-	void* GetData(void* InPtr) const
-	{
-		uint8_t* Dst = reinterpret_cast<uint8_t*>(InPtr);
-		return Dst + Offset;
-	}
-
-	template<typename T>
-	T* GetData(void* InPtr) const
-	{
-		return reinterpret_cast<T*>(GetData(InPtr));
-	}
-private:
-    const char* Name;
-    size_t Size;
-	size_t Offset;
-};
 
 /**
  * A C++ struct
@@ -44,7 +14,7 @@ private:
 ZCLASS()
 class REFLECTION_API CStruct : public CType
 {
-	REFL_BODY()
+	ZE_REFL_BODY()
 
 	class IInstantiateFunc {};
 
@@ -88,7 +58,7 @@ public:
      * Instantiate the struct
      */
     template<typename T, typename... Args>
-    T* Instantiate(Args&&... InArgs)
+    T* Instantiate(Args&&... InArgs) const
     {
         must(bIsInstanciable);
 
@@ -102,7 +72,7 @@ public:
      * Placement new
      */
     template<typename... Args>
-	void PlacementNew(void* InP, Args&&... InArgs)
+	void PlacementNew(void* InP, Args&&... InArgs) const
 	{
 		must(bIsInstanciable);
 
@@ -111,38 +81,31 @@ public:
 		Func->Func(InP, std::forward<Args>(InArgs)...);
 	}
 
-    static void AddStruct(CStruct* InStruct);
-
     void AddProperty(const CProperty& InProperty)
     {
         Properties.push_back(InProperty);
     }
 
-    void AddParent(CStruct* InParent);
-    bool IsDerivedFrom(CStruct* InParent) const;
+    void AddParent(const std::string& InParent);
+    bool IsDerivedFrom(const CStruct* InParent) const;
 
-	template<typename T>
-	static CStruct* Get()
-	{
-		CStruct* Struct = Get(TTypeName<T>::Name);
-		must(Struct); // This struct is not registered
-
-		return Struct;
-	}
-
-    static CStruct* Get(const char* InName);
-
-	const std::vector<CStruct*>& GetParents() { return Parents; }
-	static const std::vector<CStruct*>& GetStructs() { return Structs; }
+	const auto& GetParents() { return Parents; }
 protected:
     std::unique_ptr<IInstantiateFunc> InstantiateFunc;
     std::unique_ptr<IInstantiateFunc> PlacementNewFunc;
     std::vector<CProperty> Properties;
-    std::vector<CStruct*> Parents;
-    inline static std::vector<CStruct*> Structs;
+    std::vector<TLazyTypePtr<CStruct>> Parents;
     bool bIsInstanciable;
-public:
-    std::vector<const char*> Refl_ParentsWaitingAdd;
 };
+
+REFLECTION_API void RegisterStruct(const CStruct* InStruct);
+REFLECTION_API const CStruct* GetStructByName(const std::string& InName);
+REFLECTION_API const std::vector<const CStruct*> GetStructs();
+
+template<typename T>
+ZE_FORCEINLINE const CStruct* GetStruct()
+{
+    return GetStructByName(TTypeName<T>::Name);
+}
 
 }

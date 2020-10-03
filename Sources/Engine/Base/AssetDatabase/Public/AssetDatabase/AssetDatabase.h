@@ -4,6 +4,7 @@
 #include "Delegates/MulticastDelegate.h"
 #include <filesystem>
 #include <unordered_set>
+#include <optional>
 #include "EngineVer.h"
 
 namespace ZE::Refl { class CClass; }
@@ -27,7 +28,7 @@ struct SAssetPrimitiveData
 	std::string Name;
 	
 	/** Asset class */
-	Refl::CClass* Class;
+	const Refl::CClass* Class;
 
 	/** Size of the asset (in bytes) */
 	uint64_t Size;
@@ -71,6 +72,11 @@ ASSETDATABASE_API std::vector<std::filesystem::path> GetSubDirectories(const std
  * Get assets contained in this directory
  */
 ASSETDATABASE_API std::vector<SAssetPrimitiveData> GetAssets(const std::filesystem::path& InDirectory);
+
+/**
+ * Get the specified asset primitive data
+ */
+ASSETDATABASE_API std::optional<SAssetPrimitiveData> GetAssetPrimitiveData(const std::filesystem::path& InPath);
 
 ASSETDATABASE_API inline TOnAssetRegistered& GetOnAssetRegistered();
 ASSETDATABASE_API inline TOnAssetScanCompleted& GetOnAssetScanCompleted();

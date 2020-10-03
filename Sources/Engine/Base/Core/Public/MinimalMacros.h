@@ -54,6 +54,9 @@ namespace ZE
 #elif ZE_COMPILER(GCC) || ZE_COMPILER(CLANG)
 #define ZE_FORCEINLINE __attribute__((always_inline)) inline
 #define ZE_RESTRICT __restrict
+#else
+#define ZE_FORCEINLINE
+#define ZE_RESTRICT
 #endif /** ZE_COMPILER(MSVC) */
 
 }

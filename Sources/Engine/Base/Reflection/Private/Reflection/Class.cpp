@@ -3,29 +3,28 @@
 namespace ZE::Refl
 {
 
-namespace Internal
-{
+__attribute__((__init_priority__(2998))) std::vector<const CClass*> Classes;
 
-CClass* GetClassByName(const char* InName)
+void RegisterClass(const CClass* InClass)
 {
-	return CClass::Get(InName);
-}
+	Classes.emplace_back(InClass);
 }
 
-CClass* CClass::Get(const char* InName)
+const CClass* GetClassByName(const std::string& InName)
 {
-	for (auto& Class : Classes)
+	for (const auto& Class : Classes)
 	{
-		if (std::strcmp(Class->GetName(), InName) == 0)
+		if (std::strcmp(Class->GetName(), InName.data()) == 0)
 			return Class;
 	}
 
 	return nullptr;
 }
 
-void CClass::AddClass(CClass* InClass)
+const std::vector<const CClass*> GetClasses()
 {
-	Classes.push_back(InClass);
+	return Classes;
 }
+
 
 }

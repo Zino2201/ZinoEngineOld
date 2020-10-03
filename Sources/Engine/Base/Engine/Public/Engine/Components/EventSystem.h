@@ -12,7 +12,7 @@ namespace ZE::Components
 ZCLASS()
 class CEventSystem : public ECS::IEntityComponentSystem
 {
-	REFL_BODY()
+	ZE_REFL_BODY()
 
 public:
 	void Initialize(ECS::CEntityManager& InEntityManager) override;

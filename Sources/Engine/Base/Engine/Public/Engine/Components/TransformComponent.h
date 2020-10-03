@@ -14,7 +14,7 @@ namespace ZE::Components
 ZSTRUCT()
 struct STransformComponent : public ECS::SEntityComponent
 {
-    REFL_BODY()
+    ZE_REFL_BODY()
 
     Math::STransform Transform;
 };

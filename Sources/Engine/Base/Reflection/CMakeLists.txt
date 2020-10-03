@@ -1,6 +1,6 @@
 ze_create_module(Reflection Private/Reflection/Class.cpp
 	Private/Reflection/Reflection.cpp Private/Reflection/Struct.cpp
-	Private/Reflection/Type.cpp)
+	Private/Reflection/Type.cpp Private/Reflection/Enum.cpp)
 
 ze_add_public_modules(Reflection Core)
 

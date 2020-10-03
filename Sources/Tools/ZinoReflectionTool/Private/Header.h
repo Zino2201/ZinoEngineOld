@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Class.h"
+#include "Enum.h"
 
 /**
  * Represents a C++ header
@@ -18,9 +19,11 @@ public:
 		const size_t& InDeclLine);
 	CClass& AddClass(const std::string& InName, const std::string& InNamespace,
 		const size_t& InDeclLine);
+	CEnum& AddEnum(const std::string& InName, const std::string& InNamespace);
 
 	const std::vector<CStruct>& GetStructs() const { return Structs; }
 	const std::vector<CClass>& GetClasses() const { return Classes; }
+	const std::vector<CEnum>& GetEnums() const { return Enums; }
 	const std::string& GetFilename() const { return Filename; }
 	const std::string& GetModule() const { return Module; }
 	const std::filesystem::path& GetPath() const { return Path; }
@@ -31,4 +34,5 @@ private:
 	std::filesystem::path Path;
 	std::vector<CStruct> Structs;
 	std::vector<CClass> Classes;
+	std::vector<CEnum> Enums;
 };

@@ -20,7 +20,7 @@ void CECSManager::OnModuleLoaded(const std::string_view& InName)
 
 	/** Search all IEntityComponentSystems */
 	auto SystemClasses = Refl::GetDerivedClassesFrom(
-		Refl::CClass::Get<IEntityComponentSystem>());
+		Refl::GetClass<IEntityComponentSystem>());
 
 	for(const auto& SystemClass : SystemClasses)
 	{
@@ -52,7 +52,7 @@ void CEntity::AddComponent(SEntityComponent* InComponent)
 	Components.push_back(InComponent);
 }
 
-SEntityComponent* CEntity::RemoveComponent(ZE::Refl::CStruct* InComponent)
+SEntityComponent* CEntity::RemoveComponent(const ZE::Refl::CStruct* InComponent)
 {
 	size_t Idx = 0;
 	for(const auto& Component : Components)
@@ -137,7 +137,7 @@ EntityID CEntityManager::CreateEntity()
 
 SEntityComponent* CEntityManager::AddComponent(
 	const ECS::EntityID& InEntity,
-	ZE::Refl::CStruct* InStruct)
+	const ZE::Refl::CStruct* InStruct)
 {
 	must(InStruct);
 
@@ -177,7 +177,7 @@ SEntityComponent* CEntityManager::AddComponent(
 
 void CEntityManager::RemoveComponent(
 	const ECS::EntityID& InEntity,
-	ZE::Refl::CStruct* InComponent)
+	const ZE::Refl::CStruct* InComponent)
 {
 	must(InComponent);
 
@@ -216,7 +216,7 @@ void CEntityManager::RemoveComponent(
 	}
 }
 
-SEntityComponent* CEntityManager::CreateComponent(ZE::Refl::CStruct* InStruct)
+SEntityComponent* CEntityManager::CreateComponent(const ZE::Refl::CStruct* InStruct)
 {
 	if(!ComponentPoolMap.count(InStruct))
 		ComponentPoolMap.insert(std::make_pair(InStruct, 
@@ -264,7 +264,7 @@ void CEntityManager::AttachEntity(const EntityID& InEntity, const EntityID& InPa
 }
 
 SEntityComponent* CEntityManager::GetComponent(const EntityID& InID,
-	Refl::CStruct* InComponent)
+	const Refl::CStruct* InComponent)
 {
 	auto It = Entities.find(InID);
 

@@ -186,6 +186,10 @@ CParser::CParser(CHeader* InHeader, const std::string_view& InPathHeader,
 		{
 			BeginStructOrClass(EType::Class, Lines, Words, i);
 		}
+		else if(Words[0].find("enum") != std::string::npos)
+		{
+			BeginEnum(Lines, Words, i);
+		}
 	}
 }
 
@@ -201,7 +205,7 @@ void CParser::BeginStructOrClass(const EType& InNewType,
 	/**
 	 * Detect if this struct/class has a ZSTRUCT or ZCLASS macro
 	 */
-	if(!IsValidClassOrStruct(InNewType, InLines, InLine))
+	if(!IsValidReflectedType(InNewType, InLines, InLine))
 	{
 		if(CurrentType != EType::None)
 			NestedEncounters++;
@@ -312,6 +316,36 @@ void CParser::BeginStructOrClass(const EType& InNewType,
 	CTypeDatabase::Get().RegisterType(CurrentObjectName);
 }
 
+void CParser::BeginEnum(const std::vector<std::string>& InLines,
+	const std::vector<std::string>& InWords, const size_t& InLine)
+{
+	/** Check if C++ enum */
+	if(InLines[InLine].find("enum class") == std::string::npos)
+		return;
+
+	size_t NameIdx = InLine;
+	size_t NameWordIdx = 0;
+	CurrentObjectName = GetObjectName(InLines, InWords, InLine, NameIdx,
+		NameWordIdx, true);
+
+	/**
+	 * Detect if this struct/class has a ZSTRUCT or ZCLASS macro
+	 */
+	if(!IsValidReflectedType(EType::Enum, InLines, InLine))
+	{
+		if(CurrentType != EType::None)
+			NestedEncounters++;
+		return;
+	}
+
+	CurrentType = EType::Enum;
+
+	if(!bIgnorePropertiesAndFunctions)
+		CurrentEnum = &Header->AddEnum(CurrentNamespace, CurrentObjectName);
+	
+	CTypeDatabase::Get().RegisterType(CurrentObjectName);
+}
+
 void CParser::ParseLine(const std::vector<std::string>& InLines,
 	const std::vector<std::string>& InWords, const size_t& InLine)
 {
@@ -379,6 +413,7 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 						CtorType.erase(std::remove(CtorType.begin(), CtorType.end(), ':'), CtorType.end());
 						if(!FCtor.empty())
 							FCtor += ",";
+						CtorType.erase(std::remove(CtorType.begin(), CtorType.end(), '='), CtorType.end());
 						FCtor += CtorType;
 					}
 
@@ -423,14 +458,20 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 			/**
 			 * Try to parse a potential property
 			 */
-			if(InWords[0].rfind(GPropertyMacro) != std::string::npos)
+			if(InWords[0].rfind(GPropertyMacro, 0) != std::string::npos)
 			{
 				ParseProperty(InLines, InWords, InLine);
 			}
 		}
-		else
+		else if(CurrentType == EType::Enum)
 		{
-			/** ENUM */
+			if(InWords[0].find("{") == std::string::npos)
+			{
+				auto Words = Tokenize(InWords[0], ',');
+				
+				if(!Words.empty() && Words[0].find("*") == std::string::npos)
+					CurrentEnum->AddValue(Words[0]);
+			}
 		}
 	}
 }
@@ -441,7 +482,7 @@ void CParser::EndCurrentType()
 		(CurrentType == EType::Struct || CurrentType == EType::Class) &&
 		CurrentStruct->GetBodyLine() == -1)
 	{
-		Fatal("%s(%d) : error: Missing REFL_BODY() macro for struct/class %s",
+		Fatal("%s(%d) : error: Missing ZE_REFL_BODY() macro for struct/class %s",
 			Filename.c_str(),
 			CurrentStruct->GetDeclLine(),
 			CurrentObjectName.c_str());
@@ -456,8 +497,26 @@ void CParser::EndCurrentType()
 void CParser::ParseProperty(const std::vector<std::string>& InLines,
 	const std::vector<std::string>& InWords, const size_t& InLine)
 {
-	// TODO: Parse macro metadata
+	EPropertyFlags Flags = EPropertyFlags::None;
+	EPropertyAttributes Attributes = EPropertyAttributes::None;
 	
+	/**
+	 * Parse macro metadata
+	 */
+	std::vector<std::string> MetaWords = Tokenize(InLines[InLine], '(');
+	MetaWords = Tokenize(MetaWords[1], ',');
+	for(auto& Word : MetaWords)
+	{
+		/** Sanitize word */
+		Word.erase(std::remove_if(Word.begin(), Word.end(), isspace), Word.end());
+		Word.erase(std::remove(Word.begin(), Word.end(), '('), Word.end());
+		Word.erase(std::remove(Word.begin(), Word.end(), ')'), Word.end());
+
+		auto Flag = GPropFlagMap.find(Word);
+		if(Flag != GPropFlagMap.end())
+			Flags |= Flag->second;
+	}
+
 	/**
 	 * Next line must contain a property
 	 */
@@ -475,7 +534,6 @@ void CParser::ParseProperty(const std::vector<std::string>& InLines,
 	 * Words may contains specifiers
 	 */
 	size_t PossibleNameIndex = 0;
-	EPropertyFlags Flags = EPropertyFlags::None;
 	size_t CurrentWord = 0;
 
 	while(true)
@@ -486,22 +544,22 @@ void CParser::ParseProperty(const std::vector<std::string>& InLines,
 		}
 		else if(Words[CurrentWord].find(GConstExpr) != std::string::npos)
 		{
-			Flags |= EPropertyFlags::Constexpr;
+			Attributes |= EPropertyAttributes::Constexpr;
 			CurrentWord++;
 		}
 		else if (Words[CurrentWord].find(GConst) != std::string::npos)
 		{
-			Flags |= EPropertyFlags::Const;
+			Attributes |= EPropertyAttributes::Const;
 			CurrentWord++;
 		}
 		else if (Words[CurrentWord].find(GMutable) != std::string::npos)
 		{
-			Flags |= EPropertyFlags::Mutable;
+			Attributes |= EPropertyAttributes::Mutable;
 			CurrentWord++;
 		}
 		else if (Words[CurrentWord].find(GVolatile) != std::string::npos)
 		{
-			Flags |= EPropertyFlags::Volatile;
+			Attributes |= EPropertyAttributes::Volatile;
 			CurrentWord++;
 		}
 		else
@@ -554,7 +612,8 @@ void CParser::ParseProperty(const std::vector<std::string>& InLines,
 	CurrentStruct->AddProperty(std::move(Name), 
 		std::move(Type),
 		CurrentAccess,
-		std::move(Flags));
+		std::move(Flags),
+		Attributes);
 
 	CTypeDatabase::Get().RegisterType(Name);
 }
@@ -575,7 +634,7 @@ void CParser::CloseNamespace()
 	}
 }
 
-bool CParser::IsValidClassOrStruct(const EType& InNewType, const std::vector<std::string>& InLines,
+bool CParser::IsValidReflectedType(const EType& InNewType, const std::vector<std::string>& InLines,
 	const size_t& InLine) const
 {
 	if(InLine == 0)
@@ -606,18 +665,27 @@ bool CParser::IsValidClassOrStruct(const EType& InNewType, const std::vector<std
 				InLine + 1, 
 				CurrentObjectName.c_str());
 	}
+	else if (Words[0].find(GEnumMacro) != std::string::npos)
+	{
+		if (InNewType == EType::Enum)
+			return true;
+		else
+			Fatal("%s(%d) : error: Bad macro for %s! Must be ZENUM", 
+				Filename.c_str(),
+				InLine + 1, 
+				CurrentObjectName.c_str());
+	}
 	
 	return false;
 }
 
 std::string CParser::GetObjectName(const std::vector<std::string>& InLines,
 	const std::vector<std::string>& InWords, const size_t& InLine, size_t& InNameLine,
-	size_t& InWordIdx) const
+	size_t& InWordIdx, const bool& bIsEnum) const
 {
 	/**
 	 * Try to find the name in the current line
 	 */
-
 	InNameLine = InLine;
 
 	/**
@@ -638,8 +706,16 @@ std::string CParser::GetObjectName(const std::vector<std::string>& InLines,
 		}
 		else
 		{
-			InWordIdx = 2;
-			return InWords[2];
+			if(bIsEnum)
+			{
+				InWordIdx = 3;
+				return InWords[3];
+			}
+			else
+			{
+				InWordIdx = 2;
+				return InWords[2];
+			}
 		}
 	}
 	else
@@ -656,8 +732,16 @@ std::string CParser::GetObjectName(const std::vector<std::string>& InLines,
 		}
 		else
 		{
-			InWordIdx = 1;
-			return InWords[1];
+			if(bIsEnum)
+			{
+				InWordIdx = 2;
+				return InWords[2];
+			}
+			else
+			{
+				InWordIdx = 1;
+				return InWords[1];
+			}
 		}
 	}
 

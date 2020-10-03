@@ -21,22 +21,22 @@ namespace ZE::Refl
 /**
  * Get all structs derived from struct
  */
-REFLECTION_API std::vector<CStruct*> GetDerivedStructsFrom(CStruct* InParent);
-REFLECTION_API std::vector<CClass*> GetDerivedClassesFrom(CClass* InParent, const bool& bInIncludeParentClass = false);
+REFLECTION_API std::vector<const CStruct*> GetDerivedStructsFrom(const CStruct* InParent);
+REFLECTION_API std::vector<const CClass*> GetDerivedClassesFrom(const CClass* InParent, const bool& bInIncludeParentClass = false);
 
 }
 
 /** Basic types specializations */
-REFL_SPECIALIZE_TYPE_NAME(bool, "bool");
-REFL_SPECIALIZE_TYPE_NAME(float, "float");
-REFL_SPECIALIZE_TYPE_NAME(double, "double");
+ZE_REFL_SPECIALIZE_TYPE_NAME(bool, "bool");
+ZE_REFL_SPECIALIZE_TYPE_NAME(float, "float");
+ZE_REFL_SPECIALIZE_TYPE_NAME(double, "double");
 
-REFL_SPECIALIZE_TYPE_NAME(uint8_t, "uint8_t");
-REFL_SPECIALIZE_TYPE_NAME(uint16_t, "uint16_t");
-REFL_SPECIALIZE_TYPE_NAME(uint32_t, "uint32_t");
-REFL_SPECIALIZE_TYPE_NAME(uint64_t, "uint64_t");
+ZE_REFL_SPECIALIZE_TYPE_NAME(uint8_t, "uint8_t");
+ZE_REFL_SPECIALIZE_TYPE_NAME(uint16_t, "uint16_t");
+ZE_REFL_SPECIALIZE_TYPE_NAME(uint32_t, "uint32_t");
+ZE_REFL_SPECIALIZE_TYPE_NAME(uint64_t, "uint64_t");
 
-REFL_SPECIALIZE_TYPE_NAME(int8_t, "int8_t");
-REFL_SPECIALIZE_TYPE_NAME(int16_t, "int16_t");
-REFL_SPECIALIZE_TYPE_NAME(int32_t, "int32_t");
-REFL_SPECIALIZE_TYPE_NAME(int64_t, "int64_t");
+ZE_REFL_SPECIALIZE_TYPE_NAME(int8_t, "int8_t");
+ZE_REFL_SPECIALIZE_TYPE_NAME(int16_t, "int16_t");
+ZE_REFL_SPECIALIZE_TYPE_NAME(int32_t, "int32_t");
+ZE_REFL_SPECIALIZE_TYPE_NAME(int64_t, "int64_t");

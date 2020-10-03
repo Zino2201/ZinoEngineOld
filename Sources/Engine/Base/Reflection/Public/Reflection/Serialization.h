@@ -15,7 +15,7 @@ namespace ZE::Refl
 {
 
 template<typename T>
-static constexpr char* TArchiveName = "";
+static constexpr const char* TArchiveName = "";
 
 /**
  * Get or create an map for the specified archive name
@@ -84,7 +84,7 @@ struct TAdlHelper {};
 	{  \
 		template<typename T> typename ZE::Refl::TRegisterArchive<T, Archive>::type ZE__Refl_RegisterArchive(T*, Archive*, TAdlHelper);  \
 		template<> \
-		static constexpr char* TArchiveName<Archive> = #Archive; \
+		static constexpr const char* TArchiveName<Archive> = #Archive; \
 	}
 
 template<typename T> 
@@ -92,7 +92,7 @@ struct TRegisterTypeToArchive
 {
 	TRegisterTypeToArchive()
 	{ 
-		static_assert(ZE::Refl::TIsReflStruct<T>::Value || ZE::Refl::TIsReflClass<T>::Value,
+		static_assert(ZE::Refl::TIsReflStruct<T> || ZE::Refl::TIsReflClass<T>,
 			"ZE_REFL_SERL_REGISTER_TYPE only works with reflected types");
 		ZE::Refl::ZE__Refl_RegisterArchive(static_cast<T*>(nullptr), 0, TAdlHelper{});
 	}
@@ -149,10 +149,10 @@ void SerializeRefl(ArchiveType& InArchive, T& InObj)
 	auto& Map = ZE::Refl::GetArchiveMap(ZE::Refl::TArchiveName<ArchiveType>);
 
 	std::string Name;
-	if constexpr (ZE::Refl::TIsReflStruct<T>::Value)
+	if constexpr (ZE::Refl::TIsReflStruct<T>)
 		Name = InObj.GetStruct()->GetName();
 
-	if constexpr (ZE::Refl::TIsReflClass<T>::Value)
+	if constexpr (ZE::Refl::TIsReflClass<T>)
 		Name = InObj.GetClass()->GetName();
 
 	auto Serializer = Map.find(Name);
@@ -167,9 +167,9 @@ void SerializeRefl(ArchiveType& InArchive, T& InObj)
 }
 
 /**
- *
+ * Serialize all property of the specified reflected type
  */
-void SerializeProp()
+inline void SerializeProp()
 {
 
 }

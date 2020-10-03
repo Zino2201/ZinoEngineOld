@@ -17,7 +17,7 @@ struct SStaticMeshComponent;
 ZSTRUCT()
 struct SStaticMeshComponent : public SRenderableComponent
 {
-	REFL_BODY()
+	ZE_REFL_BODY()
 
 	std::shared_ptr<CStaticMesh> StaticMesh;
 

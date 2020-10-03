@@ -9,22 +9,24 @@ namespace ZE
  * Safe cast (only works with ZSTRUCT or ZCLASS types)
  */
 template<typename To, typename From>
+    requires (Refl::TIsReflStruct<To> || Refl::TIsReflClass<To>) &&
+        (Refl::TIsReflStruct<From> || Refl::TIsReflClass<From>)
 inline To* Cast(From* In)
 {
     if(!In)
         return nullptr;
 
-    Refl::CStruct* FromStruct = nullptr;
+    const Refl::CStruct* FromStruct = nullptr;
 
-    if constexpr(Refl::TIsReflStruct<From>::Value)
+    if constexpr(Refl::TIsReflStruct<From>)
         FromStruct = In->GetStruct();
     else
-        FromStruct = static_cast<Refl::CStruct*>(In->GetClass());
+        FromStruct = static_cast<const Refl::CStruct*>(In->GetClass());
 
     if(!FromStruct)
         return nullptr;
 
-	Refl::CStruct* ToStruct = Refl::CStruct::Get<To>();
+	const Refl::CStruct* ToStruct = Refl::GetStruct<To>();
     if(!ToStruct)
         return nullptr;
 

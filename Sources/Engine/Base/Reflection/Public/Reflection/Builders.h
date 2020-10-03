@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Class.h"
+#include "Enum.h"
 
 namespace ZE::Refl::Builders
 {
@@ -8,8 +9,8 @@ namespace ZE::Refl::Builders
 /**
  * Helpers utilites to build types
  */
-#define REFL_INIT_BUILDERS_FUNC(UniqueName) REFL_INIT_BUILDERS_FUNC_INTERNAL(UniqueName)
-#define REFL_INIT_BUILDERS_FUNC_INTERNAL(c) \
+#define ZE_REFL_INIT_BUILDERS_FUNC(UniqueName) ZE_REFL_INIT_BUILDERS_FUNC_INTERNAL(UniqueName)
+#define ZE_REFL_INIT_BUILDERS_FUNC_INTERNAL(c) \
     struct ZE_CONCAT(_Refl_AutoInit, c) \
     { \
         ZE_CONCAT(_Refl_AutoInit, c) () \
@@ -29,12 +30,43 @@ class TTypeBuilder
 public:
 	TTypeBuilder(const char* InName)
     {
-        Type = CType::RegisterType<U>(InName, sizeof(T));
+        Type = const_cast<CType*>(RegisterType(new U(InName, sizeof(T))));
     }
 
     virtual ~TTypeBuilder() = default;
 protected:
     CType* Type;
+};
+
+/**
+ * Enum builder
+ */
+template<typename T>
+struct TEnumBuilder : public TTypeBuilder<T, CEnum>
+{
+public:
+    using TUnderlyingType = typename std::underlying_type<T>::type;
+
+    TEnumBuilder(const char* InName) : TTypeBuilder<T, CEnum>(InName)
+    {
+        Enum = static_cast<CEnum*>(TEnumBuilder::Type);
+
+        RegisterEnum(Enum);
+        Enum->SetUnderlyingType(TLazyTypePtr<CType>(TTypeName<TUnderlyingType>::Name));
+    }
+
+    template<typename E>
+    TEnumBuilder& Value(const std::string& InName,
+        const E& InEnum)
+    {
+        Enum->AddValue(InName, static_cast<TUnderlyingType>(InEnum));
+
+        return *this;
+    }
+
+    CEnum* GetEnum() const { return Enum; }
+private:
+    CEnum* Enum;
 };
 
 /**
@@ -48,7 +80,9 @@ public:
     {
         Struct = static_cast<CStruct*>(TStructBuilder::Type);
 
-        CStruct::AddStruct(Struct);
+        /** Only register as a struct if it is a struct* */
+        if constexpr(std::is_same_v<U, CStruct>)
+            RegisterStruct(Struct);
     }
 
 	template<typename... Args>
@@ -68,25 +102,17 @@ public:
 
     TStructBuilder<T, U>& Parent(const char* InParent)
     {
-		auto PotentialParent = CStruct::Get(InParent);
-
-		if (PotentialParent)
-        {
-			Struct->AddParent(PotentialParent);
-        }
-		else
-		{
-			Struct->Refl_ParentsWaitingAdd.push_back(InParent);
-		}
+		Struct->AddParent(InParent);
 
         return *this;
     }
 
     template<typename P>
-    TStructBuilder<T, U>& Property(const char* InName, P&& InPtr)
+    TStructBuilder<T, U>& Property(const char* InName, P&& InPtr,
+        const EPropertyFlags& InFlags)
     {
         size_t Offset = (char*)&((T*)nullptr->*InPtr) - (char*)nullptr;
-        Struct->AddProperty(CProperty(InName, sizeof(P), Offset));
+        Struct->AddProperty(CProperty(InName, sizeof(P), Offset, InFlags));
         return *this;
     }
 
@@ -103,7 +129,7 @@ public:
 	{  
         Class = static_cast<CClass*>(TClassBuilder::Struct);
 
-		CClass::AddClass(Class);
+		RegisterClass(Class);
 	}
 
     /**

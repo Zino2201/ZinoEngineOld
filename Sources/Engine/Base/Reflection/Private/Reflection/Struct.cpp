@@ -3,61 +3,39 @@
 namespace ZE::Refl
 {
 
-namespace Internal
-{
+__attribute__((__init_priority__(2999))) std::vector<const CStruct*> Structs;
 
-CStruct* GetStructByName(const char* InName)
+void RegisterStruct(const CStruct* InStruct)
 {
-	return CStruct::Get(InName);
+	Structs.emplace_back(InStruct);
 }
 
-}
-
-CStruct* CStruct::Get(const char* InName)
+const CStruct* GetStructByName(const std::string& InName)
 {
-	for (auto& Struct : Structs)
+	for (const auto& Struct : Structs)
 	{
-		if(std::strcmp(Struct->GetName(), InName) == 0)
+		if (std::strcmp(Struct->GetName(), InName.data()) == 0)
 			return Struct;
 	}
 
 	return nullptr;
 }
 
-void CStruct::AddStruct(CStruct* InStruct)
-{
-	Structs.push_back(InStruct);
 
-	// TODO: Make a better system
-	for(auto& Struct : Structs)
-	{
-		for (auto It = Struct->Refl_ParentsWaitingAdd.begin(); 
-			It != Struct->Refl_ParentsWaitingAdd.end();)
-		{
-			auto Parent = CStruct::Get(*It);
-			if (Parent)
-			{
-				Struct->AddParent(Parent);
-				It = Struct->Refl_ParentsWaitingAdd.erase(It);
-			}
-			else
-				++It;
-		}
-	}
+void CStruct::AddParent(const std::string& InParent)
+{
+	Parents.emplace_back(InParent);
 }
 
-void CStruct::AddParent(CStruct* InParent)
-{
-	Parents.push_back(InParent);
-}
-
-bool CStruct::IsDerivedFrom(CStruct* InParent) const
+bool CStruct::IsDerivedFrom(const CStruct* InParent) const
 {
 	if (this == InParent)
 		return true;
 
-	for (const auto& Parent : Parents)
+	for (const auto& ParentPtr : Parents)
 	{
+		const CStruct* Parent = ParentPtr.Get();
+
 		if (Parent == InParent)
 			return true;
 		else
@@ -69,6 +47,11 @@ bool CStruct::IsDerivedFrom(CStruct* InParent) const
 	}
 
 	return false;
+}
+
+const std::vector<const CStruct*> GetStructs()
+{
+	return Structs;
 }
 
 }

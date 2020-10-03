@@ -6,14 +6,25 @@
 /**
  * Flags about this property
  */
-enum class EPropertyFlags
+enum class EPropertyAttributes
 {
 	None = 0,
 
 	Constexpr = 1 << 0,
 	Const = 1 << 1,
 	Mutable = 1 << 2,
-	Volatile = 1 << 3
+	Volatile = 1 << 3,
+};
+DECLARE_FLAG_ENUM(EPropertyAttributes);
+
+/**
+ * Flags about this property
+ */
+enum class EPropertyFlags
+{
+	None = 0,
+
+	Serializable = 1 << 0,
 };
 DECLARE_FLAG_ENUM(EPropertyFlags);
 
@@ -33,10 +44,16 @@ struct SProperty
 	std::string Type;
 	EAccess Access;
 	EPropertyFlags Flags;
+	EPropertyAttributes Attributes;
 
 	SProperty(const std::string& InName, const std::string& InType,
-		const EAccess& InAccess, const EPropertyFlags& InFlags) : Name(InName),
-		Type(InType), Access(InAccess), Flags(InFlags) {}
+		const EAccess& InAccess, const EPropertyFlags& InFlags, const EPropertyAttributes& InAttribs) : Name(InName),
+		Type(InType), Access(InAccess), Flags(InFlags), Attributes(InAttribs) {}
+};
+
+static const robin_hood::unordered_map<std::string, EPropertyFlags> GPropFlagMap = 
+{
+	{ "Serializable", EPropertyFlags::Serializable}
 };
 
 /**
@@ -93,7 +110,7 @@ public:
 
 	void AddProperty(const std::string& InName, const std::string& InType,
 		const EAccess& InAccess, 
-		const EPropertyFlags& InFlags);
+		const EPropertyFlags& InFlags, const EPropertyAttributes& InAttribs);
 
 	void AddParent(const std::string& InParent);
 	void SetBodyLine(const size_t& InBodyLine) { BodyLine = InBodyLine; }

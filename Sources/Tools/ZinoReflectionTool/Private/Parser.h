@@ -13,6 +13,7 @@ class CParser
 		None,
 		Struct,
 		Class,
+		Enum,
 	};
 public:
 	CParser(CHeader* InHeader, const std::string_view& InPathHeader,
@@ -20,12 +21,14 @@ public:
 private:
 	std::string GetObjectName(const std::vector<std::string>& InLines,
 		const std::vector<std::string>& InWords, const size_t& InLine, size_t& InNameLine,
-		size_t& InWordIdx) const;
+		size_t& InWordIdx, const bool& bIsEnum = false) const;
 	void BeginStructOrClass(const EType& InNewType, const std::vector<std::string>& InLines, 
+		const std::vector<std::string>& InWords, const size_t& InLine);
+	void BeginEnum(const std::vector<std::string>& InLines,
 		const std::vector<std::string>& InWords, const size_t& InLine);
 	void ParseLine(const std::vector<std::string>& InLines,
 		const std::vector<std::string>& InWords, const size_t& InLine);
-	bool IsValidClassOrStruct(const EType& InNewType, const std::vector<std::string>& InLines,
+	bool IsValidReflectedType(const EType& InNewType, const std::vector<std::string>& InLines,
 		const size_t& InLine) const;
 	void EndCurrentType();
 
@@ -43,6 +46,8 @@ private:
 
 	/** Pointer to the current class */
 	CClass* CurrentClass;
+
+	CEnum* CurrentEnum;
 
 	/** Path to the header */
 	std::string_view Path;

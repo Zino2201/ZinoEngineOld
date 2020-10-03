@@ -61,7 +61,7 @@ private:
 private:
     std::vector<std::unique_ptr<ECS::IEntityComponentSystem>> Systems;
     std::unordered_map<ETickFlagBits, std::vector<ECS::IEntityComponentSystem*>> GroupMap;
-    std::unordered_set<Refl::CClass*> AddedSystems;
+    std::unordered_set<const Refl::CClass*> AddedSystems;
 };
 
 using EntityID = uint64_t;
@@ -84,7 +84,7 @@ public:
         const EntityID& InID) : Manager(InManager), ID(InID) {}
 
     ENGINE_API void AddComponent(SEntityComponent* InComponent);
-    ENGINE_API SEntityComponent* RemoveComponent(ZE::Refl::CStruct* InComponent);
+    ENGINE_API SEntityComponent* RemoveComponent(const ZE::Refl::CStruct* InComponent);
 
     const std::vector<SEntityComponent*>& GetComponents() const { return Components; }
 private:
@@ -99,7 +99,7 @@ private:
 ZSTRUCT()
 struct SEntityComponent
 {
-    REFL_BODY()
+    ZE_REFL_BODY()
 
     virtual ~SEntityComponent() = default;
 
@@ -112,7 +112,7 @@ struct SEntityComponent
 ZSTRUCT()
 struct SHierarchyComponent : public ECS::SEntityComponent
 {
-    REFL_BODY()
+    ZE_REFL_BODY()
 
     uint32_t ChildrenCount;
 
@@ -146,7 +146,7 @@ struct SHierarchyComponent : public ECS::SEntityComponent
 ZCLASS()
 class IEntityComponentSystem
 {
-    REFL_BODY()
+    ZE_REFL_BODY()
 
 public:
     virtual ~IEntityComponentSystem() = default;
@@ -162,7 +162,7 @@ public:
     virtual void Tick(CEntityManager& InEntityManager, const float& InDeltaTime) = 0;
 
     // TODO: Remove ?
-    virtual ZE::Refl::CStruct* GetComponentStruct() const = 0;
+    virtual const ZE::Refl::CStruct* GetComponentStruct() const = 0;
 
     /**
      * Determine if the entity component system will can tick
@@ -205,7 +205,7 @@ public:
      */
     ENGINE_API SEntityComponent* AddComponent(
         const ECS::EntityID& InEntity,
-        ZE::Refl::CStruct* InStruct);
+        const ZE::Refl::CStruct* InStruct);
 
 	ENGINE_API void Tick(const float& InDeltaTime) override;
 	ENGINE_API void FixedTick(const float& InDeltaTime) override;
@@ -214,7 +214,7 @@ public:
     template<typename T>
 	T* AddComponent(const ECS::EntityID& InEntity)
     {
-        return Cast<T>(AddComponent(InEntity, Refl::CStruct::Get<T>()));
+        return Cast<T>(AddComponent(InEntity, Refl::GetStruct<T>()));
     }
 
     /**
@@ -222,18 +222,18 @@ public:
      */
 	ENGINE_API void RemoveComponent(
 		const ECS::EntityID& InEntity,
-		ZE::Refl::CStruct* InComponent);
+		const ZE::Refl::CStruct* InComponent);
 
     /**
      * Get the specified component of an entity
      */
     ENGINE_API SEntityComponent* GetComponent(const EntityID& InID,
-        Refl::CStruct* InComponent);
+        const Refl::CStruct* InComponent);
 
     template<typename T>
     T* GetComponent(const EntityID& InID)
     {
-        return Cast<T>(GetComponent(InID, Refl::CStruct::Get<T>()));
+        return Cast<T>(GetComponent(InID, Refl::GetStruct<T>()));
     }
 
     CEntity* TryGetEntityByID(const EntityID& InID) 
@@ -254,7 +254,7 @@ public:
     CEntity& GetEntityByID(const EntityID& InID) { return Entities.find(InID)->second; }
     auto& GetOnComponentAdded() { return OnComponentAdded; }
     auto& GetOnComponentRemoved() { return OnComponentRemoved; }
-    std::vector<ECS::SEntityComponent*>* GetComponents(ZE::Refl::CStruct* InStruct)
+    std::vector<ECS::SEntityComponent*>* GetComponents(const ZE::Refl::CStruct* InStruct)
     {
         auto It = ComponentVecMap.find(InStruct);
 
@@ -266,18 +266,18 @@ public:
 
 private:
 	ENGINE_API EntityID GetFreeID();
-    ENGINE_API SEntityComponent* CreateComponent(ZE::Refl::CStruct* InStruct);
+    ENGINE_API SEntityComponent* CreateComponent(const ZE::Refl::CStruct* InStruct);
 private:
     CWorld& World;
 
     std::unordered_map<EntityID, CEntity> Entities;
 
     /** Pools of components */
-    std::unordered_map<ZE::Refl::CStruct*, 
+    std::unordered_map<const ZE::Refl::CStruct*, 
         TDynamicPool<TComponentPool>> ComponentPoolMap;
 
     /** Map to a set of components */
-    std::unordered_map<ZE::Refl::CStruct*, std::vector<ECS::SEntityComponent*>> ComponentVecMap;
+    std::unordered_map<const ZE::Refl::CStruct*, std::vector<ECS::SEntityComponent*>> ComponentVecMap;
 
     /** Available entity id */
     EntityID AvailableEntityID;
