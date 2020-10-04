@@ -10,7 +10,7 @@ std::condition_variable SleepConditionVariable;
 
 std::condition_variable& CWorkerThread::GetSleepConditionVariable() { return SleepConditionVariable; }
 
-CWorkerThread::CWorkerThread() : Active(false), Type(EWorkerThreadType::Full) {}
+CWorkerThread::CWorkerThread() : Type(EWorkerThreadType::Full), Active(false) {}
 
 CWorkerThread::CWorkerThread(EWorkerThreadType InType,
 	const std::thread::id& InThreadId) : Active(true), Type(InType), ThreadId(InThreadId) 

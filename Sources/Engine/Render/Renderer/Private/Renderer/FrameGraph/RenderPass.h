@@ -132,7 +132,8 @@ class CRenderPass
 
 public:
     CRenderPass(const uint32_t InID, const std::string_view& InName,
-        CFrameGraph& InGraph) : ID(InID), Name(InName), Graph(InGraph) {}
+        CFrameGraph& InGraph) : Graph(InGraph), ID(InID), Name(InName) {}
+    virtual ~CRenderPass() = default;
 
     virtual void Execute(IRenderSystemContext* InContext) {}
 

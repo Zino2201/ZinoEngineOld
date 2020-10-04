@@ -31,11 +31,6 @@ struct SZEVersion
 		InArchive <=> Minor;
 		InArchive <=> Patch;
 	}
-
-	ZE_FORCEINLINE std::string ToString() const
-	{
-		return "ZE VERSION";
-	}
 };
 
 constexpr SZEVersion GetZEVersion() 

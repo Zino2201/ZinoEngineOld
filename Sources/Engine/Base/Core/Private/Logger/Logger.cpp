@@ -30,8 +30,7 @@ void MsgBox(const SMessage& InMessage)
 
 	switch(InMessage.Severity)
 	{
-	case ESeverityFlagBits::Verbose:
-	case ESeverityFlagBits::Info:
+	default:
 		Type |= MB_ICONINFORMATION;
 		break;
 	case ESeverityFlagBits::Warn:

@@ -24,7 +24,7 @@ struct SMeshDrawcallShaderBinding
 		CRSSampler* Sampler;
 	};
 
-	SMeshDrawcallShaderBinding() : Binding(0), Set(0), 
+	SMeshDrawcallShaderBinding() : Set(0), Binding(0),
 		ParameterType(EShaderParameterType::UniformBuffer),
 		Buffer(nullptr) {}
 

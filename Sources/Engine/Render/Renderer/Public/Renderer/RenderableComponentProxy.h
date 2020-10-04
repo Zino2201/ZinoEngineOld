@@ -28,6 +28,7 @@ class RENDERER_API CRenderableComponentProxy
 public:
 	CRenderableComponentProxy(const IRenderableComponent* InComponent,
 		const ERenderableComponentProxyType& InType);
+	virtual ~CRenderableComponentProxy() = default;
 
 	virtual IRenderableComponentType* GetComponentType() const = 0;
 	virtual std::vector<SMesh> GetDynamicMeshes(const SWorldView& InView) const = 0;

@@ -267,10 +267,10 @@ struct SRSDepthStencilState
 		const SRSDepthStencilOp& InFrontFace = SRSDepthStencilOp(),
 		const SRSDepthStencilOp& InBackFace = SRSDepthStencilOp()) :
 		bEnableDepthTest(bInDepthTestEnable), 
-		bStencilTestEnable(bInStencilTestEnable), 
         bEnableDepthWrite(bInDepthWriteEnable),
 		DepthCompareOp(InComparaisonOp),
 		bDepthBoundsTestEnable(bInDepthBoundsTestEnable),
+		bStencilTestEnable(bInStencilTestEnable), 
 		FrontFace(InFrontFace), BackFace(InBackFace) {}
 
     bool operator==(const SRSDepthStencilState& InOther) const

@@ -58,8 +58,8 @@ struct CORE_API alignas(GJobAlignement) SJob
 	SJob() : Type(EJobType::Normal), Parent(nullptr), UnfinishedJobs(0), Function(nullptr) {}
 	SJob(const JobFunction& InJobFunction, EJobType InType = EJobType::Normal,
 		const SJob* InParent = nullptr) : 
-		Type(InType),
-		Function(InJobFunction), Parent(InParent), UnfinishedJobs(1), DependancesCount(0),
+		Type(InType), Parent(InParent),
+		UnfinishedJobs(1), Function(InJobFunction), DependancesCount(0),
 		DependentCount(0) {}
 		 
 	/**

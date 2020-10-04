@@ -21,7 +21,7 @@ namespace ZE::Refl
 {
 
 /** Forward decls */
-static void Refl_InitReflectedClassesAndStructs();
+static void Refl_InitReflectedClassesAndStructs() ZE_USED;
 
 class CType;
 class CStruct;
@@ -59,7 +59,11 @@ template<typename T>
     requires std::is_enum_v<T>
 ZE_FORCEINLINE const CEnum* GetStaticEnum() { return nullptr; }
 
+template<typename T>
+static constexpr bool TIsSerializableWithReflection = false;
+
 }
+
 
 /**
  * Macros parsed by the reflection tool
@@ -81,6 +85,16 @@ ZE_FORCEINLINE const CEnum* GetStaticEnum() { return nullptr; }
     { \
         inline static const char* Name = TypeName; \
     }
+
+/**
+ * Declare a reflected serializable type
+ */
+#define ZE_REFL_SERL_DECLARE_TYPE(Type) \
+	namespace ZE::Refl \
+	{ \
+		template<> \
+		static constexpr bool TIsSerializableWithReflection<Type> = true; \
+	}
 
 /**
  * ZRT ONLY MACROS
@@ -115,7 +129,7 @@ ZE_FORCEINLINE const CEnum* GetStaticEnum() { return nullptr; }
         requires (!std::is_abstract_v<Class>) \
     static void ZE__Refl_InternalPlacementNew(void* InPtr, Args&&... InArgs) { new (InPtr) Class(std::forward<Args>(InArgs)...); } \
     static const ZE::Refl::CClass* GetStaticClass(); \
-    virtual const ZE::Refl::CClass* GetClass() const; \ 
+    virtual const ZE::Refl::CClass* GetClass() const; \
     private:
 
 #define ZE_REFL_DECLARE_ENUM(Enum, EnumWithoutNamespace) \

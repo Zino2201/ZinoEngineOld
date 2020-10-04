@@ -162,7 +162,6 @@ CVulkanDescriptorSetManager::SDescriptorPoolEntry* CVulkanDescriptorSetManager::
 /*
  * Vulkan pipeline layout
  */
-constexpr uint32_t GMaxAllocationsPerPool = 42;
 
 CVulkanPipelineLayout::CVulkanPipelineLayout(CVulkanDevice& Device,
 	const SVulkanPipelineLayoutDesc& InDesc) :

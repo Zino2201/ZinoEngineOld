@@ -56,17 +56,18 @@ struct SConVar
 		const float& InDefaultValue,
 		const std::string& InHelp,
 		const EConVarFlags& InFlags = EConVarFlagBits::None) : Name(InName), Data(std::in_place_index<0>,
-			InDefaultValue), Help(InHelp), Flags(InFlags),
+			InDefaultValue),
 			Minimum(std::in_place_index<0>, std::numeric_limits<float>::min()),
-			Maximum(std::in_place_index<0>, std::numeric_limits<float>::max()) {}
+			Maximum(std::in_place_index<0>, std::numeric_limits<float>::max()), Help(InHelp), 
+		Flags(InFlags) {}
 
 	SConVar(const std::string& InName, 
 		const int32_t& InDefaultValue,
 		const std::string& InHelp,
 		const EConVarFlags& InFlags = EConVarFlagBits::None) : Name(InName), Data(std::in_place_index<1>,
-			InDefaultValue), Help(InHelp), Flags(InFlags),
+			InDefaultValue),
 			Minimum(std::in_place_index<1>, std::numeric_limits<int32_t>::min()),
-			Maximum(std::in_place_index<1>, std::numeric_limits<int32_t>::max()) {}
+			Maximum(std::in_place_index<1>, std::numeric_limits<int32_t>::max()), Help(InHelp), Flags(InFlags) {}
 
 	SConVar(const std::string& InName, 
 		const std::string& InDefaultValue,

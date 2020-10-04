@@ -4,7 +4,7 @@
 namespace ZE
 {
 
-CApp::CApp(const int& InArgc, const char** InArgv) : bRun(true), ErrCode(0)
+CApp::CApp(const int& InArgc, const char** InArgv) : ErrCode(0), bRun(true)
 { 
 	must(!CurrentApp); CurrentApp = this; 
 }

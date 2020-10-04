@@ -9,7 +9,7 @@ DEFINE_MODULE(ZE::Module::CDefaultModule, RenderCore);
 
 CWindow::CWindow(const char* InName, const uint32_t& InWidth, const uint32_t& InHeight, 
 	const EWindowFlags& InFlags)
-	: Name(InName), Width(InWidth), Height(InHeight), Handle(nullptr)
+	: Handle(nullptr), Name(InName), Width(InWidth), Height(InHeight)
 {
 	Uint32 WindowsFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
 

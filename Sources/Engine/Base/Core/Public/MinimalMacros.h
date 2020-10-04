@@ -51,12 +51,15 @@ namespace ZE
 #if ZE_COMPILER(MSVC)
 #define ZE_FORCEINLINE __forceinline
 #define ZE_RESTRICT __restrict
+#define ZE_USED
 #elif ZE_COMPILER(GCC) || ZE_COMPILER(CLANG)
 #define ZE_FORCEINLINE __attribute__((always_inline)) inline
 #define ZE_RESTRICT __restrict
+#define ZE_USED __attribute__((used))
 #else
 #define ZE_FORCEINLINE
 #define ZE_RESTRICT
+#define ZE_USED
 #endif /** ZE_COMPILER(MSVC) */
 
 }

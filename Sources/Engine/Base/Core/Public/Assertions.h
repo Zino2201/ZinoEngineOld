@@ -7,6 +7,8 @@
 #define ZE_DEBUGBREAK() __debugbreak();
 #elif ZE_COMPILER(GCC) || ZE_COMPILER(CLANG)
 #define ZE_DEBUGBREAK() __asm volatile ("int $0x3");
+#else
+#define ZE_DEBUGBREAK()
 #endif /** ZE_COMPILER(MSVC) */
 
 /** Assertions */

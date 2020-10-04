@@ -1,6 +1,9 @@
 #include "EngineCore.h"
 #include "ZEFS/ZEFS.h"
 #include <map>
+#include "Module/Module.h"
+
+DEFINE_MODULE(ZE::Module::CDefaultModule, ZEFS);
 
 namespace ZE::FileSystem
 {

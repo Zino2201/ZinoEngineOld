@@ -186,7 +186,7 @@ namespace VulkanUtil
 /** Functions definitions */
 namespace VulkanUtil
 {
-	vk::Format VulkanUtil::FormatToVkFormat(const EFormat& InFormat)
+	vk::Format FormatToVkFormat(const EFormat& InFormat)
 	{
 		switch (InFormat)
 		{
@@ -216,7 +216,7 @@ namespace VulkanUtil
 		}
 	}
 
-	EFormat VulkanUtil::VkFormatToFormat(const vk::Format& InFormat)
+	EFormat VkFormatToFormat(const vk::Format& InFormat)
 	{
 		switch (InFormat)
 		{
@@ -247,7 +247,7 @@ namespace VulkanUtil
 		}
 	}
 
-	vk::SampleCountFlagBits VulkanUtil::SampleCountToVkSampleCount(
+	vk::SampleCountFlagBits SampleCountToVkSampleCount(
 		const ESampleCount& InSampleCount)
 	{
 		switch (InSampleCount)
@@ -270,7 +270,7 @@ namespace VulkanUtil
 		}
 	}
 
-	vk::ShaderStageFlagBits VulkanUtil::ShaderStageToVkShaderStage(const EShaderStage& InShader)
+	vk::ShaderStageFlagBits ShaderStageToVkShaderStage(const EShaderStage& InShader)
 	{
 		switch (InShader)
 		{
@@ -285,7 +285,7 @@ namespace VulkanUtil
 	namespace RenderPass
 	{
 
-		vk::AttachmentLoadOp VulkanUtil::RenderPass::AttachmentLoadOpToVkAttachmentLoadOp(
+		vk::AttachmentLoadOp AttachmentLoadOpToVkAttachmentLoadOp(
 			const ERSRenderPassAttachmentLoadOp& InOp)
 		{
 			switch (InOp)
@@ -300,7 +300,7 @@ namespace VulkanUtil
 			}
 		}
 
-		vk::AttachmentStoreOp VulkanUtil::RenderPass::AttachmentStoreOpToVkAttachmentStoreOp(
+		vk::AttachmentStoreOp AttachmentStoreOpToVkAttachmentStoreOp(
 			const ERSRenderPassAttachmentStoreOp& InOp)
 		{
 			switch (InOp)
@@ -313,7 +313,7 @@ namespace VulkanUtil
 			}
 		}
 
-		vk::ImageLayout VulkanUtil::RenderPass::AttachmentLayoutToVkImageLayout(
+		vk::ImageLayout AttachmentLayoutToVkImageLayout(
 			const ERSRenderPassAttachmentLayout& InLayout)
 		{
 			switch (InLayout)

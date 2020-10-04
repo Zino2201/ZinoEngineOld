@@ -31,6 +31,7 @@ public:
     void* GetHandle() const { return Handle; }
     const uint32_t& GetWidth() const { return Width; }
     const uint32_t& GetHeight() const { return Height; }
+    const char* GetName() const { return Name; }
 private:
     void* Handle;
     const char* Name;
