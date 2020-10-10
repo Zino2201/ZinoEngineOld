@@ -3,6 +3,8 @@
 #include "EngineCore.h"
 #include "Reflection/Reflection.h"
 #include <array>
+#include <filesystem>
+#include "Reflection/Serialization.h"
 #include "Asset.gen.h"
 
 namespace ZE
@@ -18,24 +20,23 @@ namespace Serialization { class IArchive; }
 ZCLASS()
 class ASSET_API CAsset
 {
-    REFL_BODY()
+    ZE_REFL_BODY()
 
 public:
-    static constexpr std::string_view AssetFileExtension = "zasset";
-
     virtual ~CAsset() = default;
 
-    template<typename Archive>
-    void Serialize(Archive& InArchive)
+    template<typename ArchiveType>
+    void Serialize(ArchiveType& InArchive)
     {
-        
+        Refl::SerializeProperties(InArchive, *this);
     }
 
-    ZE_FORCEINLINE void SetPath(const std::string_view& InPath) { Path = InPath; }
+    void SetPath(const std::filesystem::path& InPath) { Path = InPath; }
 
-    ZE_FORCEINLINE std::string GetPath() const { return Path;  }
+    ZE_FORCEINLINE std::filesystem::path GetPath() const { return Path; }
 protected:
-    std::string Path;
+    std::filesystem::path Path;
 };
+
 
 }
