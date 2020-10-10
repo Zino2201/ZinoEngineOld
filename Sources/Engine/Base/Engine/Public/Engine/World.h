@@ -6,7 +6,6 @@
 namespace ZE
 {
 
-namespace ECS { class CEntityManager; }
 namespace Renderer { class CWorldProxy; }
 
 /**
@@ -19,10 +18,8 @@ public:
     CWorld();
     ~CWorld();
 
-    ECS::CEntityManager* GetEntityManager() const { return EntityManager.get(); }
     Renderer::CWorldProxy* GetProxy() const { return Proxy.get(); }
 private:
-    std::unique_ptr<ECS::CEntityManager> EntityManager;
     std::unique_ptr<Renderer::CWorldProxy> Proxy;
 };
 

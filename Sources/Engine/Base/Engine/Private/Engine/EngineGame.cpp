@@ -9,9 +9,6 @@
 #include "Engine/Assets/StaticMesh.h"
 #include <SDL.h>
 #include "Engine/World.h"
-#include "Engine/ECS.h"
-#include "Engine/Components/TransformComponent.h"
-#include "Engine/Components/StaticMeshComponent.h"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #include "Pool.h"
@@ -94,8 +91,6 @@ CZEGameApp::CZEGameApp() :
 {
 	srand(2201);
 
-	using namespace ZE::Components;
-
 	ConVSync.BindOnChanged(this, &CZEGameApp::OnVsyncChanged);
 
 	/** Create main game window */
@@ -128,24 +123,6 @@ CZEGameApp::CZEGameApp() :
 
 	testSM = std::make_shared<CStaticMesh>();
 	testSM->UpdateData(Vertices, Indices);
-
-	for(int i = 0; i < 15; ++i)
-	{
-		double X = RAND_1_0 * 100 - 50;
-		double Y = RAND_1_0 * 100 - 50;
-		double Z = RAND_1_0 * -300;
-
-		ECS::EntityID Entity = World->GetEntityManager()->CreateEntity();
-		Components::STransformComponent* T = 
-			World->GetEntityManager()->AddComponent<Components::STransformComponent>(Entity);
-		T->Transform.Position.X = X;
-		T->Transform.Position.Y = Y;
-		T->Transform.Position.Z = Z;
-
-		Components::SStaticMeshComponent* SM = 
-			World->GetEntityManager()->AddComponent<Components::SStaticMeshComponent>(Entity);
-		SM->SetStaticMesh(testSM);
-	}
 
 	Renderer::CRendererModule::Get().CreateImGuiRenderer();
 
@@ -230,7 +207,6 @@ void CZEGameApp::ProcessEvent(SDL_Event& InEvent)
 
 	
 	/** Update camera */
-	const Uint8* KeyState = SDL_GetKeyboardState(nullptr);
 	Uint32 MouseState = SDL_GetMouseState(nullptr, nullptr);
 
 	const bool bImGuiInteract = ImGui::IsAnyItemHovered()
@@ -262,8 +238,6 @@ void CZEGameApp::ProcessEvent(SDL_Event& InEvent)
 
 void CZEGameApp::Tick(const float& InDeltaTime)
 {
-	ImGuiIO& IO = ImGui::GetIO();
-
 	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(Window->GetHandle()));
 	
 	const float CameraSpeed = 5.f * InDeltaTime;
