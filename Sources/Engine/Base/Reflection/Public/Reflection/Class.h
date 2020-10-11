@@ -136,6 +136,7 @@ public:
 	
 	ZE_FORCEINLINE bool is_abstract() const { return static_cast<bool>(class_flags & ClassFlagBits::Abstract); }
 
+	const Property* get_property(const std::string& in_name) const;
 	ZE_FORCEINLINE const std::vector<Property>& get_propreties() const { return properties; }
 	ZE_FORCEINLINE const std::vector<Constructor>& get_constructors() const { return constructors; }
 	ZE_FORCEINLINE const Class* get_parent() const { return parent.get_as_class(); }

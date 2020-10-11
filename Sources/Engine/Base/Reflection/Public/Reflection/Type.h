@@ -34,6 +34,9 @@ public:
 		const size_t& in_size,
 		const TypeFlags& in_flags) : name(in_name), size(in_size), flags(in_flags) {}
 
+	Type(const Type&) = delete;
+	void operator=(const Type&) = delete;
+
 	/**
 	 * Get a type by name, returns nullptr if not found
 	 */

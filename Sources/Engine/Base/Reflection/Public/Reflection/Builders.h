@@ -5,6 +5,7 @@
 #include "Enum.h"
 #include "Registration.h"
 #include <type_traits>
+#include "Reflection/Detail/PropertyImpl.h"
 
 namespace ze::reflection::builders
 {
@@ -77,6 +78,10 @@ struct ClassBuilder : public TypeBuilder<T, Class>
 			const_cast<std::vector<ze::reflection::Property>&>(class_->get_propreties());
 		properties.emplace_back(in_name, type_name<PropType>, 
 			(char*)&((T*)nullptr->*in_ptr) - (char*)nullptr, in_flags);
+
+		auto& property_impl = const_cast<std::unique_ptr<detail::PropertyImplBase>&>(properties.back().get_impl());
+		property_impl = std::make_unique<detail::PropertyImplMember<PropType>>(properties.back().get_offset());
+
 		return *this;
 	}
 

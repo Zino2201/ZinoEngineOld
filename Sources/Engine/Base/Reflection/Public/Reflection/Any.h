@@ -32,13 +32,13 @@ public:
 	 * WARNING: Not type-safe
 	 */
 	template<typename T>
-	ZE_FORCEINLINE const T& get_value()
+	ZE_FORCEINLINE const T& get_value() const
 	{
 		std::any val = visit_func(detail::VisitType::GetValue, data);
 		return **std::any_cast<const T*>(&val);
 	}
 
-	ZE_FORCEINLINE const Type* get_type()
+	ZE_FORCEINLINE const Type* get_type() const
 	{
 		std::any val = visit_func(detail::VisitType::GetType, data);
 		return *std::any_cast<const Type*>(&val);
@@ -51,7 +51,7 @@ public:
 		return *std::any_cast<bool>(&val);
 	}
 private:
-	detail::AnyDataType data;
+	mutable detail::AnyDataType data;
 	detail::VisitFunc visit_func;
 };
 

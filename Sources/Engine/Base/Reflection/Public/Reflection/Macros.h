@@ -37,11 +37,6 @@
 /** Macro used for ZRT to generate a body */
 #define ZE_REFL_BODY() ZE_CONCAT(ZE_CONCAT(ZE_CONCAT(ZE_Refl_Body_, ZE_CURRENT_FILE_UNIQUE_ID), _), __LINE__)
 
-namespace ze::reflection
-{
-
-static void initialize_reflection_data() ZE_USED;
-
 ZE_REFL_DECLARE_TYPE(bool)
 ZE_REFL_DECLARE_TYPE(float)
 ZE_REFL_DECLARE_TYPE(double)
@@ -58,5 +53,10 @@ ZE_REFL_DECLARE_TYPE(int64_t)
 
 template<typename T> static constexpr bool ze::reflection::IsReflType<std::vector<T>> = true;
 template<typename T> static constexpr const char* ze::reflection::type_name<std::vector<T>> = "std::vector";
+
+namespace ze::reflection
+{
+
+static void initialize_reflection_data() ZE_USED;
 
 }

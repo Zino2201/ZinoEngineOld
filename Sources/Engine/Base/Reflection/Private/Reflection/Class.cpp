@@ -52,4 +52,15 @@ bool Class::is_base_of(const Class* in_other) const
 }
 
 
+const Property* Class::get_property(const std::string& in_name) const
+{
+	for(const auto& property : properties)
+	{
+		if(property.get_name() == in_name)
+			return &property;
+	}
+
+	return nullptr;
+}
+
 }

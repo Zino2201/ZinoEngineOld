@@ -73,6 +73,8 @@ struct AnyPolicyEmpty
 		case VisitType::IsValid:
 			return false;
 		}
+
+		return nullptr;
 	}
 };
 

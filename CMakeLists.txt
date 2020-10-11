@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
+cmake_policy(SET CMP0091 NEW)
+
 project(ZinoEngine)
 
 # TODO: Make a UnrealBuildTool-like target system
@@ -110,7 +112,7 @@ function(_ze_base_module_def TARGET)
 	# Enable SSE4.2
 	target_compile_options(${TARGET} PRIVATE 
 		${ZE_COMPILE_OPT_NO_RTTI} ${ZE_COMPILE_OPT_NO_EXCEPTIONS}
-		${ZE_COMPILE_OPT_SSE_4_2})
+		${ZE_COMPILE_OPT_SSE_4_2} ${ZE_COMPILE_OPT_SANITIZERS})
 
 	# Generate reflection data
 	set(TARGET_REFL_DIR "${ZE_REFL_DIR}/${TARGET}")
