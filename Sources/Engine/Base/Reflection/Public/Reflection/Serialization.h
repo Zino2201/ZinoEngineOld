@@ -1,53 +1,47 @@
 #pragma once
 
-#include "Macros.h"
-#include "Serialization/Archive.h"
-#include "Serialization/Traits.h"
 #include "Singleton.h"
 #include <robin_hood.h>
 
-/**
- * Serialization using reflection
- * Largely inspired by cereal and boost polymorphic archives
- */
-
-namespace ZE::Refl
+namespace ze::reflection::serialization
 {
 
 template<typename T>
-static constexpr const char* TArchiveName = "";
+static constexpr const char* ArchiveName = "";
+
+template<typename T>
+static constexpr bool IsSerializableWithReflection = false;
 
 /**
- * Get or create an map for the specified archive name
+ * Get the binding map for the specified archive
  */
-REFLECTION_API std::unordered_map<std::string, std::function<void(void*, void*)>>& GetArchiveMap(const char* InArchive);
+REFLECTION_API robin_hood::unordered_map<std::string, std::function<void(void*, void*)>>& get_archive_map(const char* InArchive);
 
 /**
- * Create an binding for a Archive, T when instantiated
+ * Structure that register an archive binding
  */
 template<typename T, typename Archive>
-struct TArchiveBindingCreator 
+struct ArchiveBindingCreator
 {
-	TArchiveBindingCreator()
+	ArchiveBindingCreator()
 	{
-		auto& Map = GetArchiveMap(TArchiveName<Archive>);
+		auto& Map = get_archive_map(archive_name<Archive>);
 
-		Map.insert({ TTypeName<T>::Name, [] (void* InArchive, void* InObj)
+		Map.insert({ type_name<T>, [](void* archive, void* object)
 		{
 			ZE::Serialization::Serialize(
-				reinterpret_cast<Archive&>(*InArchive),
-				reinterpret_cast<T&>(*InObj));
+				reinterpret_cast<Archive&>(*archive),
+				reinterpret_cast<T&>(*object));
 		}});
 	}
 };
 
-/** Registration */
 template<typename T, typename Archive>
-struct TArchiveCreateBindings
+struct ArchiveCreateBindings
 {
-	static const TArchiveBindingCreator<T, Archive>& CreateBindings()
+	static const ArchiveBindingCreator<T, Archive>& create_bindings()
 	{
-		return TSingleton<TArchiveBindingCreator<T, Archive>>::Get();
+		return Singleton<ArchiveBindingCreator<T, Archive>>::Get();
 	}
 };
 
@@ -57,119 +51,79 @@ struct TArchiveCreateBindings
  * that returns this type
  */
 template<typename T, typename Archive>
-struct TRegisterArchive
+struct RegisterArchive
 {
 	template<void(*)()>
-	struct TInstantiateFunction {};
+	struct InstantiateFunction {};
 
 	/**
 	 * Instantiated per type
 	 */
-	REFLECTION_API static void Instantiate()
+	REFLECTION_API static void instantiate()
 	{
-		TArchiveCreateBindings<T, Archive>::CreateBindings();
+		ArchiveCreateBindings<T, Archive>::create_bindings();
 	}
 
 	/** Instantiate the function */
-	using InstantiateFunctionType = TInstantiateFunction<&TRegisterArchive::Instantiate>;
+	using InstantiateFunctionType = InstantiateFunction<&RegisterArchive::instantiate>;
 };
-
-struct TAdlHelper {};
 
 /**
  * Register an archive for serialization using reflection 
  */
 #define ZE_REFL_REGISTER_ARCHIVE(Archive) \
-	namespace ZE::Refl \
+	namespace ze::reflection::serialization \
 	{  \
-		template<typename T> typename ZE::Refl::TRegisterArchive<T, Archive>::type ZE__Refl_RegisterArchive(T*, Archive*, TAdlHelper);  \
-		template<> \
-		static constexpr const char* TArchiveName<Archive> = #Archive; \
-	}
-
-template<typename T> 
-struct TRegisterTypeToArchive 
-{
-	TRegisterTypeToArchive()
-	{ 
-		static_assert(ZE::Refl::TIsReflStruct<T> || ZE::Refl::TIsReflClass<T>,
-			"ZE_REFL_SERL_REGISTER_TYPE only works with reflected types");
-		ZE::Refl::ZE__Refl_RegisterArchive(static_cast<T*>(nullptr), 0, TAdlHelper{});
-	}
-};
-
-template<typename T>
-static constexpr bool TIsSerializableWithReflection = false;
-
-/**
- * Declare a reflected serializable type
- */
-#define ZE_REFL_SERL_DECLARE_TYPE(Type) \ 
-	namespace ZE::Refl \
-	{ \
-		template<> \
-		static constexpr bool TIsSerializableWithReflection<Type> = true; \
+		template<typename T> typename ze::reflection::serialization::RegisterArchive<T, Archive>::type register_archive(T*, Archive*);  \
+		template<> static constexpr const char* ArchiveName<Archive> = #Archive; \
 	}
 
 /**
  * Register an type
  * The macro must be called in global namespace
  */
-#define ZE_REFL_SERL_REGISTER_TYPE(Type, UniqueName) \ 
-	namespace ZE::Refl \
+#define ZE_REFL_SERL_REGISTER_TYPE(Type, UniqueName) \
+	namespace ze::reflection::serialization \
 	{ \
-		static const TRegisterTypeToArchive<Type>& ZE_CONCAT(ZE__Refl_Serl_Inst_Ref_, UniqueName) = \ 
-			TSingleton<TRegisterTypeToArchive<Type>>::Get(); \
+		static const RegisterTypeToArchive<Type>& ZE_CONCAT(refl_serl_inst_ref_, UniqueName) = \
+			Singleton<RegisterTypeToArchive<Type>>::get(); \
+		template<> static constexpr bool IsSerializableWithReflection<Type> = true; \
 	}
 
+template<typename T> 
+struct RegisterTypeToArchive 
+{
+	RegisterTypeToArchive()
+	{ 
+		static_assert(IsReflClass<T>,
+			"ZE_REFL_SERL_REGISTER_TYPE only works with reflected types");
+		ze::reflection::serialization::register_archive(static_cast<T*>(nullptr), 0);
+	}
+};
+
 /**
- * Default ZE__Refl_RegisterArchive function
+ * Default register archive function
  */
 template<typename T>
-void ZE__Refl_RegisterArchive(T*, int, TAdlHelper) {}
-}
-
-template<typename ArchiveType, typename T>
-ZE_FORCEINLINE void Serialize(ArchiveType& InArchive, const std::unique_ptr<T>& InPtr)
-	requires ZE::Refl::TIsSerializableWithReflection<T>
-{
-	if(!InPtr)
-		InPtr = std::make_unique<T>();
-
-	SerializeRefl(InArchive, *InPtr.get());
-}
+void register_archive(T*, int) {}
 
 /**
- * Serialize an reflection type
+ * Serialize an reflected type
  */
 template<typename ArchiveType, typename T>
-void SerializeRefl(ArchiveType& InArchive, T& InObj)
-	requires ZE::Refl::TIsSerializableWithReflection<T>
+void serialize(ArchiveType& archive, T& object)
+	requires IsSerializableWithReflection<T>
 {
-	auto& Map = ZE::Refl::GetArchiveMap(ZE::Refl::TArchiveName<ArchiveType>);
+	auto& map = get_archive_map(ze::reflection::ArchiveName<ArchiveType>);
+	auto serializer = Map.find(object.get_class()->get_name());
 
-	std::string Name;
-	if constexpr (ZE::Refl::TIsReflStruct<T>)
-		Name = InObj.GetStruct()->GetName();
+	verify(serializer != map.end());
 
-	if constexpr (ZE::Refl::TIsReflClass<T>)
-		Name = InObj.GetClass()->GetName();
-
-	auto Serializer = Map.find(Name);
-
-	verify(Serializer != Map.end());
-
-	if(Serializer != Map.end())
+	if(serializer != map.end())
 	{
-		Serializer->second(reinterpret_cast<void*>(&InArchive),
-			reinterpret_cast<void*>(&InObj));
+		serializer->second(reinterpret_cast<void*>(&archive),
+			reinterpret_cast<void*>(&object));
 	}
 }
-
-/**
- * Serialize all property of the specified reflected type
- */
-inline void SerializeProp()
-{
 
 }

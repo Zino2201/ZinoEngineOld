@@ -81,8 +81,9 @@ std::vector<std::string> Tokenize(const std::string& InString,
 
 CParser::CParser(CHeader* InHeader, const std::string_view& InPathHeader,
 	const bool& bInIgnorePropertiesAndFunctions)
-	: Header(InHeader), CurrentType(EType::None), CurrentAccess(EAccess::Public), Path(InPathHeader),
-	Filename(std::filesystem::path(InPathHeader).filename().string()), NestedEncounters(0),
+	: Header(InHeader), Path(InPathHeader), Filename(std::filesystem::path(InPathHeader).filename().string()), 
+	CurrentType(EType::None), CurrentAccess(EAccess::Public), 
+	NestedEncounters(0),
 	CurrentStruct(nullptr), CurrentClass(nullptr), ScopeCounter(0), 
 	bIgnorePropertiesAndFunctions(bInIgnorePropertiesAndFunctions)
 {
@@ -410,12 +411,14 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 						std::string CtorType;
 						for(const auto& Word : CtorTypeTokenized)
 							CtorType += Word + " ";
-						CtorType.erase(std::remove(CtorType.begin(), CtorType.end(), ':'), CtorType.end());
+						if(CtorType.find_last_of(':') != std::string::npos)
+							CtorType.erase(CtorType.begin() + CtorType.find_last_of(':'));
 						if(!FCtor.empty())
 							FCtor += ",";
 						CtorType.erase(std::remove(CtorType.begin(), CtorType.end(), '='), CtorType.end());
 						FCtor += CtorType;
 					}
+					else break;
 
 					if(CurrentWord == Args.size() - 1)
 					{
@@ -533,7 +536,6 @@ void CParser::ParseProperty(const std::vector<std::string>& InLines,
 	/**
 	 * Words may contains specifiers
 	 */
-	size_t PossibleNameIndex = 0;
 	size_t CurrentWord = 0;
 
 	while(true)

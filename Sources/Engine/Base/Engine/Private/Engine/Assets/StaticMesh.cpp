@@ -23,9 +23,6 @@ CStaticMeshRenderData::CStaticMeshRenderData(CStaticMesh* InStaticMesh) : Static
 	VertexBuffer->SetName("StaticMesh VertexBuffer");
 	RSUtils::Copy(Vertices.data(), VertexBuffer.get());
 
-	uint64_t IndexBufferTypeSize = IndexFormat == EIndexFormat::Uint16 ? sizeof(uint16_t) :
-		sizeof(uint32_t);
-
 	IndexBuffer = GRenderSystem->CreateBuffer({
 		ERSBufferUsageFlagBits::IndexBuffer,
 		ERSMemoryUsage::DeviceLocal,

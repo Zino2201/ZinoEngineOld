@@ -48,29 +48,13 @@ void ProcessHeaderStructOrClass(std::ofstream& File, const CStruct& InStruct,
 		}
 	}
 
-	File << GDeclareReflTypeMacro << Type
-		<< ", \"" << InStruct.GetName() << "\");";
+	File << "ZE_REFL_DECLARE_CLASS(" << Type << ");";
 	File << "\n";
-	if(bIsClass)
-		File << "template<> static constexpr bool ZE::Refl::TIsReflClass<" << Type << "> = true;\n";
-	else
-		File << "template<> static constexpr bool ZE::Refl::TIsReflStruct<" << Type << "> = true;\n";
 
 	/** Generate body macro */
 	File << "#define " << GReflBodyDefMacro << CurrentFileUniqueId << "_" <<
 		InStruct.GetBodyLine() << " ";
-	std::string_view M = GDeclareStructMacro;
-	if(bIsClass)
-	{
-		const auto& Class = static_cast<const CClass&>(InStruct);
-		if(Class.IsAbstract())
-			M = "ZE_REFL_DECLARE_ABSTRACT_CLASS(";
-		else
-			M = GDeclareClassMacro;
-	}
-
-	File << M << Type << ", \"" << InStruct.GetName() << "\")";
-	File << "\n";
+	File << GDeclareStructMacro << Type << ")\n";
 	File << "\n";
 }
 
@@ -95,10 +79,7 @@ void ProcessHeaderEnum(std::ofstream& File, const CEnum& InEnum)
 		}
 	}
 
-	File << GDeclareReflTypeMacro << Type
-		<< ", \"" << InEnum.GetName() << "\");\n";
-	File << "template<> static constexpr bool ZE::Refl::TIsReflEnum<" << Type << "> = true;\n";
-	File << "ZE_REFL_DECLARE_ENUM(" << Type << ", " << InEnum.GetName() << ")\n";
+	File << "ZE_REFL_DECLARE_ENUM(" << Type << ")\n";
 	File << "\n";
 }
 
@@ -150,21 +131,21 @@ void ProcessProperty(std::ofstream& File, const std::string& InType,
 {
 	std::string BuilderName = "Builder_" + InStruct.GetName();
 
-	File << "\n\t\t" << BuilderName << ".Property(\"" << InProperty.Name << "\", &" << InType << "::" << InProperty.Name
-		<< ", ";
+	File << "\n\t\t" << BuilderName << ".property<" << InProperty.Type 
+		<< ">(\"" << InProperty.Name << "\", &" << InType << "::" << InProperty.Name
+			<< ", ";
 
 	if(InProperty.Flags == EPropertyFlags::None)
 	{
-		File << "EPropertyFlagBits::None";
+		File << "PropertyFlagBits::None";
 	}
 
 	bool bHasAddedFlag = false;
 	if(HAS_FLAG(InProperty.Flags, EPropertyFlags::Serializable))
 	{
 		bHasAddedFlag = true;
-		File << "EPropertyFlagBits::Serializable";
+		File << "PropertyFlagBits::Serializable";
 	}
-
 	File << ");";
 }
 
@@ -175,7 +156,7 @@ void ProcessParents(std::ofstream& InFile, const CStruct& InStruct)
 	for(const auto& Parent : InStruct.GetParents())
 	{
 		if(CTypeDatabase::Get().HasType(Parent))
-			InFile << "\n\t" << BuilderName << ".Parent(\"" << Parent << "\");";
+			InFile << "\n\t" << BuilderName << ".parent(\"" << Parent << "\");";
 	}
 }
 
@@ -185,12 +166,12 @@ void ProcessCtors(std::ofstream& InFile, const CStruct& InStruct)
 	
 	for(const auto& Ctor : InStruct.GetCtors())
 	{
-		InFile << "\t" << BuilderName << ".Ctor<" << Ctor << ">();";
+		InFile << "\t" << BuilderName << ".constructor<" << Ctor << ">();";
 	}
 
 	if(InStruct.GetCtors().empty())
 	{
-		InFile << "\t" << BuilderName << ".Ctor<>();";
+		InFile << "\t" << BuilderName << ".constructor<>();";
 	}
 }
 
@@ -223,12 +204,6 @@ void ProcessCppClass(std::ofstream& File, const CClass& InClass)
 		ProcessProperty(File, Type, InClass, Property);
 	ProcessParents(File, InClass);
 	File << ";\n";
-	if (InClass.GetName().rfind("I", 0) == 0)
-	{
-		File << "\n\t" << BuilderName << ".MarkAsInterface();";
-	}
-	File << "\tStaticClass_" << InClass.GetName() << " = " 
-		<< "Builder_" << InClass.GetName() << ".GetClass();\n";
 }
 
 void ProcessCppEnum(std::ofstream& File, const CEnum& InEnum)
@@ -236,13 +211,11 @@ void ProcessCppEnum(std::ofstream& File, const CEnum& InEnum)
 	std::string Type = GetObjectType(InEnum.GetNamespace(), InEnum.GetName());
 
 	std::string BuilderName = "Builder_" + InEnum.GetName();
-	File << "\t" << "Builders::TEnumBuilder" << "<" << Type << "> " << BuilderName
+	File << "\t" << "builders::EnumBuilder" << "<" << Type << "> " << BuilderName
 		<< "(\"" << InEnum.GetName() << "\");";
 	for(const auto& Value : InEnum.GetValues())
-		File << "\n\t\t" << BuilderName << ".Value(\"" << Value << "\", " << Type << "::" << Value << ");";
+		File << "\n\t\t" << BuilderName << ".value(\"" << Value << "\", " << Type << "::" << Value << ");";
 	File << "\n";
-	File << "\tStaticEnum_" << InEnum.GetName() << " = " 
-		<< "Builder_" << InEnum.GetName() << ".GetEnum();\n";
 }
 
 void WriteGenCpp(const std::string_view& InOutDir, const CHeader& InHeader)
@@ -270,8 +243,8 @@ void WriteGenCpp(const std::string_view& InOutDir, const CHeader& InHeader)
 	File << "#include " << std::filesystem::absolute(InHeader.GetPath()) << "\n";
 	File << "#include \"Reflection/Builders.h\"\n";
 	File << "#include \"Reflection/Class.h\"\n";
-	File << "#include \"Reflection/Struct.h\"\n";
 	File << "#include \"Reflection/Enum.h\"\n";
+	File << "#include \"Reflection/Serialization.h\"\n";
 	File << "\n";
 
 	/** Static ptrs */
@@ -279,17 +252,16 @@ void WriteGenCpp(const std::string_view& InOutDir, const CHeader& InHeader)
 	{
 		for (const auto& Struct : InHeader.GetStructs())
 		{
-			File << "static const ZE::Refl::CStruct* StaticStruct_" << Struct.GetName() << " = nullptr;\n";
+			std::string Type = GetObjectType(Struct.GetNamespace(), Struct.GetName());
+
+			File << "ZE_REFL_SERL_REGISTER_TYPE(" << Type << ", " << Struct.GetName() << ");\n";
 		}
 
 		for (const auto& Class : InHeader.GetClasses())
 		{
-			File << "static const ZE::Refl::CClass* StaticClass_" << Class.GetName() << " = nullptr;\n";
-		}
+			std::string Type = GetObjectType(Class.GetNamespace(), Class.GetName());
 
-		for (const auto& Enum : InHeader.GetEnums())
-		{
-			File << "static const ZE::Refl::CEnum* StaticEnum_" << Enum.GetName() << " = nullptr;\n";
+			File << "ZE_REFL_SERL_REGISTER_TYPE(" << Type << ", " << Class.GetName() << ");\n";
 		}
 	}
 
@@ -297,8 +269,9 @@ void WriteGenCpp(const std::string_view& InOutDir, const CHeader& InHeader)
 
 	/** Refl builder func */
 	{
-		File << "namespace ZE::Refl\n{\n";
+		File << "namespace ze::reflection\n{\n";
 		File << GReflBuilderMacro << "(" << CurrentFileUniqueId << "_" << Filename.string() << ")\n{\n";
+		File << "using namespace ZE;\n";
 	//	File << "static bool bHasBeenCalled = false;\nif(bHasBeenCalled)\nreturn;\nelse\nbHasBeenCalled = true;\n";
 		for(const auto& Struct : InHeader.GetStructs())
 			ProcessCppStruct(File, Struct);
@@ -308,42 +281,6 @@ void WriteGenCpp(const std::string_view& InOutDir, const CHeader& InHeader)
 			ProcessCppEnum(File, Enum);
 		File << "}\n";
 		File << "}\n";
-	}
-
-	/** GetStaticXXXXX */
-	{
-		for(const auto& Struct : InHeader.GetStructs())
-		{
-			std::string Type = GetObjectType(Struct.GetNamespace(), Struct.GetName());
-
-			File << "const ZE::Refl::CStruct* " << Type << "::GetStaticStruct()\n{\n";
-			File << "\treturn StaticStruct_" << Struct.GetName() << ";\n";
-			File << "}\n\n";
-
-			File << "const ZE::Refl::CStruct* " << Type << "::GetStruct() const\n{\n";
-			File << "\treturn StaticStruct_" << Struct.GetName() << ";\n";
-			File << "}\n\n";
-		}
-
-		for (const auto& Class : InHeader.GetClasses())
-		{
-			std::string Type = GetObjectType(Class.GetNamespace(), Class.GetName());
-
-			File << "const ZE::Refl::CClass* " << Type << "::GetStaticClass()\n{\n";
-			File << "\treturn StaticClass_" << Class.GetName() << ";\n";
-			File << "}\n\n";
-
-			File << "const ZE::Refl::CClass* " << Type << "::GetClass() const\n{\n";
-			File << "\treturn StaticClass_" << Class.GetName() << ";\n";
-			File << "}\n\n";
-		}
-
-		for(const auto& Enum : InHeader.GetEnums())
-		{
-			File << "const ZE::Refl::CEnum* " << "ZE__Refl_GetStaticEnumImpl_" << Enum.GetName() << "()\n{\n";
-			File << "\treturn StaticEnum_" << Enum.GetName() << ";\n";
-			File << "}\n\n";
-		}
 	}
 
 	File.close();

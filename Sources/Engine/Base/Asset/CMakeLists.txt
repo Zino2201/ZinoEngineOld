@@ -1,7 +1,7 @@
 ze_create_module(Asset Private/Assets/AssetManager.cpp)
 
-ze_add_public_modules(Asset Core Reflection)
-ze_add_private_modules(Asset)
+ze_add_public_modules(Asset Core Reflection ZEFS)
+ze_add_private_modules(Asset AssetDatabase)
 
 target_include_directories(Asset
     PUBLIC 

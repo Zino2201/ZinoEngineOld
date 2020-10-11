@@ -1,149 +1,129 @@
 #pragma once
 
+#include "Type.h"
 #include "Class.h"
 #include "Enum.h"
+#include "Registration.h"
+#include <type_traits>
 
-namespace ZE::Refl::Builders
+namespace ze::reflection::builders
 {
 
-/**
- * Helpers utilites to build types
- */
-#define ZE_REFL_INIT_BUILDERS_FUNC(UniqueName) ZE_REFL_INIT_BUILDERS_FUNC_INTERNAL(UniqueName)
-#define ZE_REFL_INIT_BUILDERS_FUNC_INTERNAL(c) \
+#define ZE_REFL_BUILDER_FUNC(UniqueName) ZE_REFL_BUILDER_FUNC_INTERNAL(UniqueName)
+#define ZE_REFL_BUILDER_FUNC_INTERNAL(c) \
     struct ZE_CONCAT(_Refl_AutoInit, c) \
     { \
         ZE_CONCAT(_Refl_AutoInit, c) () \
 	    { \
-            ZE::Refl::Refl_InitReflectedClassesAndStructs(); \
+            ze::reflection::initialize_reflection_data(); \
         } \
     }; \
     static ZE_CONCAT(_Refl_AutoInit, c) ZE_CONCAT(Refl_AutoInitStruct, c); \
-    static void Refl_InitReflectedClassesAndStructs()
+    static void initialize_reflection_data()
 
 /**
- * Simple type builder
+ * Builder for registering and building a type
  */
-template<typename T, typename U = CType>
-class TTypeBuilder
+template<typename T, typename U = Type>
+struct TypeBuilder
 {
-public:
-	TTypeBuilder(const char* InName)
-    {
-        Type = const_cast<CType*>(RegisterType(new U(InName, sizeof(T))));
-    }
+	TypeBuilder(const char* in_name) 
+	{
+		TypeFlags flags;
 
-    virtual ~TTypeBuilder() = default;
-protected:
-    CType* Type;
+		/** Flags */
+		if constexpr(std::is_arithmetic_v<T>)
+			flags |= TypeFlagBits::Arithmetic; 
+
+		if constexpr(IsReflClass<T>)
+			flags |= TypeFlagBits::Class; 
+
+		if constexpr(IsReflEnum<T>)
+			flags |= TypeFlagBits::Enum; 
+
+		type = RegistrationManager::get().register_type(new U(in_name, sizeof(T), flags));
+	}
+
+	const Type* type;
 };
 
 /**
- * Enum builder
+ * Builder for registering and building a struct/class
  */
 template<typename T>
-struct TEnumBuilder : public TTypeBuilder<T, CEnum>
+struct ClassBuilder : public TypeBuilder<T, Class>
 {
-public:
-    using TUnderlyingType = typename std::underlying_type<T>::type;
-
-    TEnumBuilder(const char* InName) : TTypeBuilder<T, CEnum>(InName)
-    {
-        Enum = static_cast<CEnum*>(TEnumBuilder::Type);
-
-        RegisterEnum(Enum);
-        Enum->SetUnderlyingType(TLazyTypePtr<CType>(TTypeName<TUnderlyingType>::Name));
-    }
-
-    template<typename E>
-    TEnumBuilder& Value(const std::string& InName,
-        const E& InEnum)
-    {
-        Enum->AddValue(InName, static_cast<TUnderlyingType>(InEnum));
-
-        return *this;
-    }
-
-    CEnum* GetEnum() const { return Enum; }
-private:
-    CEnum* Enum;
-};
-
-/**
- * A struct builder
- */
-template<typename T, typename U = CStruct>
-class TStructBuilder : public TTypeBuilder<T, U>
-{
-public:
-    TStructBuilder(const char* InName) : TTypeBuilder<T, U>(InName)
-    {
-        Struct = static_cast<CStruct*>(TStructBuilder::Type);
-
-        /** Only register as a struct if it is a struct* */
-        if constexpr(std::is_same_v<U, CStruct>)
-            RegisterStruct(Struct);
-    }
-
-	template<typename... Args>
-	TStructBuilder<T, U>& Ctor()
+	ClassBuilder(const char* in_name) : TypeBuilder<T, Class>(in_name) 
 	{
-        if constexpr(!std::is_abstract_v<T>)
-        {
-			std::function<void* (Args...)> Functor = &T::template ZE__Refl_InternalInstantiate<Args...>;
-			Struct->AddInstantiateFunc<Args...>(Functor);
+		class_ = static_cast<const Class*>(type);
 
-			std::function<void(void*, Args...)> Functor2 = &T::template ZE__Refl_InternalPlacementNew<Args...>;
-			Struct->AddPlacementNewFunc<Args...>(Functor2);
-        }
+		auto& class_flags = const_cast<ClassFlags&>(class_->get_class_flags());
+		if constexpr(std::is_abstract_v<T>)
+			class_flags |= ClassFlagBits::Abstract;
+	}
 
+	ClassBuilder& parent(const std::string& in_name)
+	{
+		LazyTypePtr& parent = const_cast<LazyTypePtr&>(class_->get_parent_lazy_ptr());
+		parent = LazyTypePtr(in_name);
 		return *this;
 	}
 
-    TStructBuilder<T, U>& Parent(const char* InParent)
-    {
-		Struct->AddParent(InParent);
-
-        return *this;
-    }
-
-    template<typename P>
-    TStructBuilder<T, U>& Property(const char* InName, P&& InPtr,
-        const EPropertyFlags& InFlags)
-    {
-        size_t Offset = (char*)&((T*)nullptr->*InPtr) - (char*)nullptr;
-        Struct->AddProperty(CProperty(InName, sizeof(P), Offset, InFlags));
-        return *this;
-    }
-
-    CStruct* GetStruct() const { return Struct; }
-protected:
-    CStruct* Struct;
-};
-
-template<typename T, typename U = CClass>
-class TClassBuilder final : public TStructBuilder<T, U>
-{
-public:
-	TClassBuilder(const char* InName) : TStructBuilder<T, U>(InName), Class(nullptr)
-	{  
-        Class = static_cast<CClass*>(TClassBuilder::Struct);
-
-		RegisterClass(Class);
+	template<typename PropType, typename PropPtr>
+	ClassBuilder& property(const std::string& in_name, PropPtr&& in_ptr, 
+		const PropertyFlags& in_flags = PropertyFlagBits::None)
+	{
+		std::vector<ze::reflection::Property>& properties = 
+			const_cast<std::vector<ze::reflection::Property>&>(class_->get_propreties());
+		properties.emplace_back(in_name, type_name<PropType>, 
+			(char*)&((T*)nullptr->*in_ptr) - (char*)nullptr, in_flags);
+		return *this;
 	}
 
-    /**
-     * Mark the class as a interface
-     */
-    TClassBuilder<T, U>& MarkAsInterface()
+	template<typename... Args>
+	ClassBuilder& constructor()
+	{
+		if constexpr(!std::is_abstract_v<T>)
+		{
+			std::vector<ze::reflection::Constructor>& constructors = 
+				const_cast<std::vector<ze::reflection::Constructor>&>(class_->get_constructors());
+			constructors.push_back(ze::reflection::Constructor::make_constructor<T, Args...>());
+		}
+		
+		return *this;
+	}
+
+	const Class* class_;
+};
+
+template<typename T>
+struct EnumBuilder : public TypeBuilder<T, Enum>
+{
+public:
+    using UnderlyingType = typename std::underlying_type<T>::type;
+
+    EnumBuilder(const char* in_name) : 
+		TypeBuilder<T, Enum>(in_name)
     {
-        Class->SetIsInterface(true);
+        enum_ = static_cast<const Enum*>(type);
+
+        auto& underlying_type = const_cast<LazyTypePtr&>(enum_->get_underlying_type_lazy_ptr());
+		underlying_type = LazyTypePtr(type_name<UnderlyingType>);
+    }
+
+    template<typename E>
+	EnumBuilder& value(const std::string& in_name,
+        const E& in_enum)
+    {
+		auto& values = 
+			const_cast<std::vector<std::pair<std::string, Any>>&>(enum_->get_values());
+
+		values.push_back({ in_name, static_cast<UnderlyingType>(in_enum) });
+
         return *this;
     }
 
-    CClass* GetClass() const { return Class; }
-private:
-    CClass* Class;
+	const Enum* enum_;
 };
 
 }

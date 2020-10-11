@@ -14,6 +14,8 @@ class CMapTabWidget
 {
 public:
 	void Draw();
+
+	CAssetExplorer& GetAssetExplorer() { return AssetExplorer; }
 private:
 	CMapEditor MapEditor;
 	CConsoleWidget Console;

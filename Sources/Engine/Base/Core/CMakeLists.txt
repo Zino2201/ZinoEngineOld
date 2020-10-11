@@ -1,6 +1,7 @@
 find_package(glm REQUIRED PATHS ${ZE_LIBS_DIR}/glm/cmake/glm)
 
-ze_create_module(Core Private/EngineCore.cpp Private/App.cpp Private/StringUtil.cpp
+ze_create_module(Core 
+    Private/EngineCore.cpp Private/App.cpp Private/StringUtil.cpp
     Private/Console/Console.cpp
     Private/Logger/Sinks/WinDbgSink.cpp
     Private/Logger/Logger.cpp Private/Logger/Sink.cpp

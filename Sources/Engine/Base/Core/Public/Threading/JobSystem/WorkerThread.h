@@ -37,7 +37,7 @@ public:
 
 	template<typename T>
 	CWorkerThread(EWorkerThreadType InType, const T& InThreadFunc) :
-		Active(true), Type(InType), Thread(InThreadFunc), 
+		Type(InType), Active(true), Thread(InThreadFunc), 
 		ThreadId(Thread.get_id()) { }
 
 	/** Flush the thread queue */

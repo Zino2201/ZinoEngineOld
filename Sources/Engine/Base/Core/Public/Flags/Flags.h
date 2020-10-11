@@ -86,16 +86,16 @@ private:
 #define ENABLE_FLAG_ENUMS(EnumType, FlagsType) \
 	constexpr auto operator&(EnumType InLeft, EnumType InRight) \
 	{ \
-		return TFlags<EnumType>(InLeft) & InRight; \
+		return ZE::TFlags<EnumType>(InLeft) & InRight; \
 	} \
 	constexpr auto operator|(EnumType InLeft, EnumType InRight) \
 	{ \
-		return TFlags<EnumType>(InLeft) | InRight; \
+		return ZE::TFlags<EnumType>(InLeft) | InRight; \
 	} \
 	constexpr auto operator^(EnumType InLeft, EnumType InRight) \
 	{ \
-		return TFlags<EnumType>(InLeft) ^ InRight; \
+		return ZE::TFlags<EnumType>(InLeft) ^ InRight; \
 	} \
-	using FlagsType = TFlags<EnumType>;
+	using FlagsType = ZE::TFlags<EnumType>;
 
 }

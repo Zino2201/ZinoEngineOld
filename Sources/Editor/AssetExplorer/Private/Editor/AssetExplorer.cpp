@@ -6,6 +6,8 @@
 #include "AssetDatabase/AssetDatabase.h"
 #include "Reflection/Class.h"
 #include "StringUtil.h"
+#include "Editor/AssetUtils/AssetUtils.h"
+#include "ZEFS/Paths.h"
 
 DEFINE_MODULE(ZE::Module::CDefaultModule, AssetExplorer);
 
@@ -24,7 +26,7 @@ void CAssetExplorer::Draw()
 		return;
 	}
 	ImGui::PopStyleVar();
-	 
+
 	/** Project Hierarchy */
 	if(ImGui::BeginChild("Project Hierarchy", ImVec2(MaxHierarchyWidth, 
 		ImGui::GetContentRegionAvail().y)))
@@ -74,6 +76,17 @@ void CAssetExplorer::DrawRecurseHierachy(const std::filesystem::path& InPath)
 
 void CAssetExplorer::DrawAssetHierarchy()
 {
+	ImGui::Dummy(ImVec2(3, 5));
+
+	ImGui::Dummy(ImVec2(2, 0));
+	ImGui::SameLine();
+	if (ImGui::Button("Import", ImVec2(75, 25)))
+	{
+		ZE::Editor::AssetUtils::ImportAssetsDialog(
+			ZE::FileSystem::Paths::GetCurrentWorkingDir() / CurrentDirectory, CurrentDirectory);
+	}
+	
+	ImGui::Separator();
 	if (ImGui::TreeNodeEx("Game", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow |
 		ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_SpanAvailWidth))
 	{
@@ -146,7 +159,7 @@ void CAssetExplorer::DrawAssetList()
 		ImGui::PushTextWrapPos(75.f);
 		ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 
 			ImGui::CalcTextSize(Subdir.string().c_str()).x) * 0.5f);
-		ImGui::Text(Subdir.string().c_str());
+		ImGui::TextUnformatted(Subdir.string().c_str());
 		ImGui::PopTextWrapPos();
 
 		ImGui::EndChild();
@@ -163,7 +176,7 @@ void CAssetExplorer::DrawAssetList()
 		{
 			ImGui::BeginTooltip();
 			ImGui::Text("Type: %s\nFull path: %s\nSize: %f Mb",
-				Asset.Class->GetName(),
+				"===class===",
 				Asset.Path.string().c_str(),
 				static_cast<float>(Asset.Size / 1024.f / 1024.f));
 			ImGui::Separator();

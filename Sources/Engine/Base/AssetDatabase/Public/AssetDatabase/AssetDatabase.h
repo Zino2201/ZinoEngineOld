@@ -7,7 +7,7 @@
 #include <optional>
 #include "EngineVer.h"
 
-namespace ZE::Refl { class CClass; }
+namespace ze::reflection { class Class; }
 
 /*
  * Asset database
@@ -28,7 +28,7 @@ struct SAssetPrimitiveData
 	std::string Name;
 	
 	/** Asset class */
-	const Refl::CClass* Class;
+	const ze::reflection::Class* Class;
 
 	/** Size of the asset (in bytes) */
 	uint64_t Size;

@@ -1,27 +1,17 @@
 #include "Reflection/Type.h"
+#include "Reflection/Registration.h"
 
-namespace ZE::Refl
+namespace ze::reflection
 {
 
-__attribute__((__init_priority__(3000))) std::vector<std::unique_ptr<CType>> Types;
-
-const CType* RegisterType(TOwnerPtr<CType> InType)
+const Type* Type::get_by_name(const std::string& in_name)
 {
-	bool bDoesTypeExist = GetTypeByName(InType->GetName());
-	if(bDoesTypeExist)
-		ZE::Logger::Fatal("Error! Type {} is already registered",
-			InType->GetName());
+	const auto& reg_mgrs = get_registration_managers();
 
-	Types.emplace_back(InType);
-	return Types.back().get();
-}
-
-const CType* GetTypeByName(const std::string& InName)
-{
-	for (const auto& Type : Types)
+	for(const auto& reg_mgr : reg_mgrs)
 	{
-		if (std::strcmp(Type->GetName(), InName.data()) == 0)
-			return Type.get();
+		if(const Type* type = reg_mgr->get_type(in_name))
+			return type;
 	}
 
 	return nullptr;

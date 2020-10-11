@@ -1,148 +1,63 @@
-
+#include "Assets/AssetManager.h"
+#include "Serialization/BinaryArchive.h"
+#include "Assets/Asset.h"
 #include <robin_hood.h>
 #include "Reflection/Class.h"
-#include "Serialization/BinaryArchive.h"
 #include <ostream>
 #include "Module/Module.h"
+#include "ZEFS/FileStream.h"
+#include "AssetDatabase/AssetDatabase.h"
+#include <utility>
+#include "Reflection/ArchivesFwd.h"
 
 DEFINE_MODULE(ZE::Module::CDefaultModule, Asset);
 
-#if 0
+namespace std
+{
+	template<> struct hash<std::filesystem::path>
+	{
+		std::size_t operator()(const std::filesystem::path& InPath) const noexcept
+		{
+			return std::filesystem::hash_value(InPath);
+		}
+	};
+}
+
 namespace ZE::AssetManager
 {
 
-/**
- * A loaded asset
- */
-struct SCachedAsset
+robin_hood::unordered_map<std::filesystem::path, std::weak_ptr<CAsset>> CachedAssets;
+
+std::shared_ptr<CAsset> GetAsset(const std::filesystem::path& InPath)
 {
-	/** Path of the asset */
-	std::string Path;
+	/** Try returning an existing instance */
+	auto CachedAsset = CachedAssets.find(InPath);
+	if (CachedAsset != CachedAssets.end() && 
+		!CachedAsset->second.expired())
+		return CachedAsset->second.lock();
 
-	/** Instance of the asset */
-	std::weak_ptr<CAsset> Instance;
-
-	SCachedAsset(const std::string_view& InPath) : Path(InPath) {}
-};
-
-robin_hood::unordered_map<std::string_view, SCachedAsset> CachedAssets;
-
-void GetAssets(const std::string_view& InPath)
-{
-}
-
-std::shared_ptr<CAsset> GetAsset(const std::string_view& InPath)
-{
-	auto It = CachedAssets.find(InPath);
-	if(It == CachedAssets.end())
+	/** Instantiate the asset */
+	std::optional<ZE::AssetDatabase::SAssetPrimitiveData> Data 
+		= ZE::AssetDatabase::GetAssetPrimitiveData(InPath);
+	if (!Data)
 	{
-		ZE::Logger::Error("Can't get asset {}: Asset not cached, cache it first before trying to get it", InPath);
+		ZE::Logger::Error("Can't load asset {}: Not registered in asset database, may be an invalid asset", 
+			InPath.string());
 		return nullptr;
 	}
 
-	SCachedAsset& Asset = It->second;
-	
 	/** Check if asset class is valid */
-	if(!Asset.Class)
+	if(!Data->Class)
 	{
-		ZE::Logger::Error("Can't load asset {}: Asset class invalid", InPath);
+		ZE::Logger::Error("Can't load asset {}: Asset class invalid", InPath.string());
 		return nullptr;
 	}
-
-	/** Return current instance if it exist */
-	if(!Asset.Instance.expired())
-		return Asset.Instance.lock();
 
 	/** Instantiate a new class for this asset */
-	std::shared_ptr<CAsset> AssetInstance = std::shared_ptr<CAsset>(Asset.Class->Instantiate<CAsset>());
-	AssetInstance->SetPath(InPath);
-	return AssetInstance;
-}
-
-/**
- * Verify the specified asset header
- */
-bool VerifyAssetHeader(const SAssetHeader& InHeader)
-{
-	if (strcmp(InHeader.Id, "ZASSET") != 0)
-	{
-		ZE::Logger::Error("Incorrect header ID. Must be ZASSET but is {}", InHeader.Id);
-		return false;
-	}
-
-	if (!InHeader.EngineVer.IsCompatibleWith(GetZEVersion()))
-	{
-		ZE::Logger::Error("Asset ({}) is not compatible with this version ({})", InHeader.EngineVer.ToString(), GetZEVersion().ToString());
-		return false;
-	}
-
-	return true;
-}
-
-/**
- * Load the specified asset
- * @param bHeaderOnly If true, only reads the header and cache the asset
- */
-std::shared_ptr<CAsset> LoadAsset(const std::string& InPath,
-	const bool& bHeaderOnly)
-{
-	using namespace ZE::Serialization;
-	using namespace ZE::FileSystem;
-
-	CIFileStream FS(InPath, EFileReadFlagBits::Binary);
-	if (!FS)
-	{
-		ZE::Logger::Error("Failed to load asset {}: can't open file stream", InPath);
-		return nullptr;
-	}
-
-	CIBinaryArchive Ar(FS);
-
-	SAssetHeader Header;
-	Ar <=> Header;
-	if (!VerifyAssetHeader(Header))
-	{
-		ZE::Logger::Error("Failed to load asset {}: asset header invalid", InPath);
-		return nullptr;
-	}
-
-	/** Skip if header only */
-	if (bHeaderOnly)
-		return nullptr;
-}
-
-bool SaveAsset(const std::shared_ptr<CAsset>& InAsset)
-{
-	verify(InAsset);
-
-	if (!InAsset)
-		return false;
-
-	using namespace ZE::Serialization;
-	using namespace ZE::FileSystem;
-
-	COFileStream FS(InAsset->GetPath(), EFileWriteFlagBits::ReplaceExisting |
-		EFileWriteFlagBits::Binary);
-	if (!FS)
-		return false;
-;
-	COBinaryArchive Ar(FS);
-
-	/**
-	 * Write header
-	 */
-	Ar <=> MakeAssetHeader(InAsset->GetClass()->GetName());
-
-	return true;
-}
-
-void UncacheAsset(const TAssetPtr<CAsset>& InAsset)
-{
-	verify(InAsset);
-
-	CachedAssets.erase(InAsset->GetPath());
+	//std::shared_ptr<CAsset> AssetInstance = std::shared_ptr<CAsset>(Data->Class->Instantiate<CAsset>());
+	//AssetInstance->SetPath(InPath);
+	//CachedAssets[InPath] = AssetInstance;
+	return nullptr;
 }
 
 }
-
-#endif

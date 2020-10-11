@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/Engine.h"
+#include <filesystem>
 
 struct ImFont;
 
@@ -22,6 +23,9 @@ public:
 	void ProcessEvent(SDL_Event& InEvent) override;
 	void Tick(const float& InDeltaTime) override;
 	int OnWindowResized(SDL_Event* InEvent);
+	
+	void OnAssetImported(const std::filesystem::path& InPath,
+		const std::filesystem::path& InTarget);
 protected:
 	void Draw() override;
 private:
@@ -30,7 +34,6 @@ private:
 	std::unique_ptr<CWindow> MainWindow;
 	std::unique_ptr<CViewport> MainViewport;
 	ImFont* Font;
-	bool bShouldRun;
 };
 
 ZEEDITOR_API TOwnerPtr<CZinoEngineApp> CreateEditor();

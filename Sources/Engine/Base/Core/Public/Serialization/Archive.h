@@ -37,6 +37,12 @@ template<typename T, typename Archive>
 static constexpr bool THasSerializeMethodWithVersion =
 	requires(Archive& InArchive, T& InData, const uint32_t& InVersion) { InData.Serialize(InArchive, InVersion); };
 
+template<typename T, typename Archive>
+static constexpr bool TIsSerializable = THasSerializeFunction<T, Archive> ||
+	THasSerializeMethod<T, Archive> ||
+	THasSerializeFunctionWithVersion<T, Archive> ||
+	THasSerializeMethodWithVersion<T, Archive>;
+
 template<typename ArchiveType>
 class CORE_API TInputArchive
 {

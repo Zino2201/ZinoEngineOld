@@ -1,3 +1,5 @@
+add_subdirectory(AssetCache)
 add_subdirectory(AssetExplorer)
 add_subdirectory(MapEditor)
+add_subdirectory(AssetUtils)
 add_subdirectory(ZEEditor)

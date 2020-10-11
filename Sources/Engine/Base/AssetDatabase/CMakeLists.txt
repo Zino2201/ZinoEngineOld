@@ -1,8 +1,8 @@
 ze_create_module(AssetDatabase Public/AssetDatabase/AssetDatabase.h Private/AssetDatabase/AssetDatabase.cpp
     Private/AssetDatabase/PathTree.cpp)
 
-ze_add_public_modules(AssetDatabase Core)
-ze_add_private_modules(AssetDatabase Asset ZEFS)
+ze_add_public_modules(AssetDatabase Core Reflection)
+ze_add_private_modules(AssetDatabase ZEFS)
 
 target_include_directories(AssetDatabase
     PUBLIC 

@@ -1,39 +1,27 @@
 #pragma once
 
-#include "Struct.h"
+#include "Class.h"
+#include "Traits.h"
 
-namespace ZE
+namespace ze::reflection
 {
-    
+
 /**
- * Safe cast (only works with ZSTRUCT or ZCLASS types)
+ * Safe cast that performs runtime check to ensure that the pointer can actually
+ *	be casted to the target type
+ * Returns nullptr if the pointer cannot be casted
  */
 template<typename To, typename From>
-    requires (Refl::TIsReflStruct<To> || Refl::TIsReflClass<To>) &&
-        (Refl::TIsReflStruct<From> || Refl::TIsReflClass<From>)
-inline To* Cast(From* In)
+	requires IsReflClass<To> && IsReflClass<From>
+To* cast(From* from)
 {
-    if(!In)
-        return nullptr;
+	const Class* from_class = from->get_class();
+	const Class* to_class = Class::get<To>();
 
-    const Refl::CStruct* FromStruct = nullptr;
+	if(from_class->is_derived_from(to_class))
+		return static_cast<To*>(from);
 
-    if constexpr(Refl::TIsReflStruct<From>)
-        FromStruct = In->GetStruct();
-    else
-        FromStruct = static_cast<const Refl::CStruct*>(In->GetClass());
-
-    if(!FromStruct)
-        return nullptr;
-
-	const Refl::CStruct* ToStruct = Refl::GetStruct<To>();
-    if(!ToStruct)
-        return nullptr;
-
-    if(FromStruct->IsDerivedFrom(ToStruct))
-		return static_cast<To*>(In);
-
-    return nullptr;
+	return nullptr;
 }
 
 }

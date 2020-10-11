@@ -1,18 +1,15 @@
 #include "Reflection/Enum.h"
 
-namespace ZE::Refl
+namespace ze::reflection
 {
 
-std::vector<CEnum*> Enums;
-
-void RegisterEnum(CEnum* InEnum)
+const Enum* get_by_name(const std::string in_name)
 {
-	Enums.emplace_back(InEnum);
-}
+	const Type* type = Type::get_by_name(in_name);
+	if(type && type->is_enum())
+		return static_cast<const Enum*>(type);
 
-void CEnum::AddValue(const std::string& InName, const std::any& InValue)
-{
-	Values.emplace_back(InName, InValue);
+	return nullptr;
 }
 
 }

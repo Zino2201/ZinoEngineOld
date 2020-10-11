@@ -1,34 +1,33 @@
 #pragma once
 
 #include "MinimalMacros.h"
-#include "NonCopyable.h"
 
-namespace ZE
+namespace ze::reflection::serialization
 {
 
 /**
  * A singleton
  */
 template<typename T>
-class TSingleton : public CNonCopyable
+class Singleton
 {
 public:
-	ZE_DLLEXPORT static T& Get()
+	ZE_DLLEXPORT static T& get()
 	{
-		return GetOrCreate();
+		return get_or_create();
 	}
 private:
-	static T& GetOrCreate()
+	static T& get_or_create()
 	{
-		static T Instance;
-		(void)InstanceRef;
-		return Instance;
+		static T instance;
+		(void)instance_ref;
+		return instance;
 	}
 private:
-	static T& InstanceRef;
+	static T& instance_ref;
 };
 
 template<typename T> 
-T& TSingleton<T>::InstanceRef = TSingleton<T>::Get();
+T& Singleton<T>::instance_ref = Singleton<T>::get();
 
 }

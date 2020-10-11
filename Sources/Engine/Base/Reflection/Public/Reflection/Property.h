@@ -1,55 +1,38 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "Flags/Flags.h"
 #include "Type.h"
-#include "Property.gen.h"
+#include "Any.h"
+#include <string>
+#include <cstdint>
 
-namespace ZE::Refl
+namespace ze::reflection
 {
 
-/**
- * Property flags
- */
-enum class EPropertyFlagBits
+enum class PropertyFlagBits
 {
 	None = 0,
 
-	/** Allow the property to be serialized */
 	Serializable = 1 << 0,
 };
-ENABLE_FLAG_ENUMS(EPropertyFlagBits, EPropertyFlags);
+ENABLE_FLAG_ENUMS(PropertyFlagBits, PropertyFlags)
 
-/**
- * A property
- */
-ZCLASS()
-class REFLECTION_API CProperty
+class Property
 {
-    ZE_REFL_BODY()
-
 public:
-	CProperty(const char* InName,
-		const uint64_t& InSize,
-		const size_t& InOffset,
-		const EPropertyFlags& InFlags) :
-		Name(InName), Size(InSize), Offset(InOffset), Flags(InFlags) {}
+	Property(const std::string& in_name,
+		const std::string& in_type_name,
+		const size_t& in_offset,
+		const PropertyFlags& in_flags) : name(in_name), type(in_type_name),
+		offset(in_offset), flags(in_flags) {}
 
-	void* GetData(void* InPtr) const
-	{
-		uint8_t* Dst = reinterpret_cast<uint8_t*>(InPtr);
-		return Dst + Offset;
-	}
-
-	template<typename T>
-	T* GetData(void* InPtr) const
-	{
-		return reinterpret_cast<T*>(GetData(InPtr));
-	}
+	Any get_value(const void* instance) const;
 private:
-    const char* Name;
-    size_t Size;
-	size_t Offset;
-	EPropertyFlags Flags; 
+	std::string name;
+	LazyTypePtr type;
+	size_t offset;
+	PropertyFlags flags;
 };
 
 }

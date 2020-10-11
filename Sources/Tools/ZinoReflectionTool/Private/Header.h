@@ -13,7 +13,7 @@ class CHeader
 public:
 	CHeader(const std::string_view& InModule, const std::filesystem::path& InPath,
 		const std::string& InFilename) : 
-		Module(InModule), Path(InPath), Filename(InFilename) {}
+		Module(InModule), Filename(InFilename), Path(InPath) {}
 
 	CStruct& AddStruct(const std::string& InName, const std::string& InNamespace,
 		const size_t& InDeclLine);

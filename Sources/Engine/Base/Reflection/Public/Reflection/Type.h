@@ -1,80 +1,96 @@
 #pragma once
 
 #include "EngineCore.h"
-#include "Reflection/Macros.h"
-#include <optional>
-#include <string>
-#include "NonCopyable.h"
-#include "Type.gen.h"
+#include <cstdint>
+#include "Traits.h"
 
-namespace ZE::Refl
+namespace ze::reflection
 {
+
+class Class;
 
 /**
- * Represents a simple C++ type
+ * Additional flags about a type
  */
-ZCLASS()
-class REFLECTION_API CType : public CNonCopyable
+enum class TypeFlagBits
 {
-    ZE_REFL_BODY()
+	None = 0,
 
+	Class = 1 << 0,
+	Enum = 1 << 1,
+	SequentialContainer = 1 << 2,
+	AssociativeContainer = 1 << 3,
+	Arithmetic = 1 << 4,
+};
+ENABLE_FLAG_ENUMS(TypeFlagBits, TypeFlags);
+
+/**
+ * Base class for basic types (e.g primitives)
+ */
+class Type
+{
 public:
-    CType(const char* InName,
-		const uint64_t& InSize)
-        : Name(InName), Size(InSize) {}
+	Type(const char* in_name,
+		const size_t& in_size,
+		const TypeFlags& in_flags) : name(in_name), size(in_size), flags(in_flags) {}
 
-    virtual ~CType() = default;
+	/**
+	 * Get a type by name, returns nullptr if not found
+	 */
+	REFLECTION_API static const Type* get_by_name(const std::string& in_name);
+	
+	/**
+	 * Get a type by name, returns nullptr if not found
+	 */
+	template<typename T>
+		requires IsReflType<T>
+	ZE_FORCEINLINE static const Type* get()
+	{
+		return get_by_name(type_name<T>);
+	}
 
-    const char* GetName() const { return Name; }
-    uint64_t GetSize() const { return Size; }
-protected:
-    /** Pretty name */
-    const char* Name;
-
-    /** Type size */
-    uint64_t Size;
+	ZE_FORCEINLINE const std::string& get_name() const { return name; }
+	ZE_FORCEINLINE const size_t& get_size() const { return size; }
+	ZE_FORCEINLINE bool is_arithmetic() const { return static_cast<bool>(flags & TypeFlagBits::Arithmetic); }
+	ZE_FORCEINLINE bool is_class() const { return static_cast<bool>(flags & TypeFlagBits::Class); }
+	ZE_FORCEINLINE bool is_enum() const { return static_cast<bool>(flags & TypeFlagBits::Enum); }
+	ZE_FORCEINLINE bool is_sequential_container() const { return static_cast<bool>(flags & TypeFlagBits::SequentialContainer); }
+	ZE_FORCEINLINE bool is_associative_container() const { return static_cast<bool>(flags & TypeFlagBits::AssociativeContainer); }
+private:
+	std::string name;
+	size_t size;
+	TypeFlags flags;
 };
 
 /**
- * Register a new CType (will take ownership !)
+ * A "lazy" type pointer used in reflection structures
+ * to point to a type that may not be registered as the registration
+ * order is undefined
  */
-REFLECTION_API const CType* RegisterType(TOwnerPtr<CType> InType);
-
-REFLECTION_API const CType* GetTypeByName(const std::string& InName);
-
-template<typename T>
-ZE_FORCEINLINE const CType* GetType()
-{
-    return GetTypeByName(TTypeName<T>::Name);
-}
-
-/**
- * Lazy pointer to a CType*
- * This can be used in reflection registration code since registration order is undefined
- */
-template<typename T>
-class TLazyTypePtr
+class LazyTypePtr
 {
 public:
-    TLazyTypePtr() : Name(""), Type(nullptr) {}
+	LazyTypePtr() : type(nullptr) {} 
+	LazyTypePtr(const std::string& in_name) : name(in_name), type(nullptr) { get(); }
 
-    explicit TLazyTypePtr(const std::string& InName) 
-        : Name(InName), Type(nullptr) { TryGetType(); }
+	const Type* get() const
+	{
+		if(!type)
+			type = Type::get_by_name(name);
 
-    ZE_FORCEINLINE const T* Get() const
-    {
-        return TryGetType();
-    }
+		return type;
+	}
+
+	const Class* get_as_class() const
+	{
+		if(get() && type->is_class())
+			return reinterpret_cast<const Class*>(type);
+
+		return nullptr;
+	}
 private:
-    const T* TryGetType() const
-    {
-        if(!Type)
-            Type = static_cast<const T*>(GetTypeByName(Name));
-        return Type;
-    }
-private:
-    std::string Name;
-    mutable const T* Type;
+	std::string name;
+	mutable const Type* type;
 };
 
 }

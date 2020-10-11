@@ -1,7 +1,6 @@
 #pragma once
 
 #include "EngineCore.h"
-#include "Reflection/Reflection.h"
 #include <array>
 #include <filesystem>
 #include "Reflection/Serialization.h"

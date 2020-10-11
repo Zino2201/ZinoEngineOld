@@ -14,10 +14,13 @@
 #include "ImGui/ImGuiRender.h"
 #include <SDL.h>
 #include "Editor/Widgets/MapTabWidget.h"
-//#include "Engine/Assets/AssetManager.h"
-//#include "Engine/Assets/Asset.h"
+#include "Assets/Asset.h"
 #include "AssetDatabase/AssetDatabase.h"
 #include <istream>
+#include "Editor/Assets/AssetFactory.h"
+#include "Assets/AssetManager.h"
+#include "Editor/AssetUtils/AssetUtils.h"
+#include "ZEFS/FileStream.h"
 
 DEFINE_MODULE(ZE::Module::CDefaultModule, ZEEditor);
 
@@ -35,6 +38,13 @@ SRSRenderPass MainRenderPass;
 
 CZEEditor::CZEEditor() : CZinoEngineApp(true) 
 {
+	ZE::Editor::InitializeAssetFactoryMgr();
+	ZE::Editor::AssetUtils::GetOnAssetImported().Bind(
+		std::bind(&CZEEditor::OnAssetImported, 
+			this,
+			std::placeholders::_1,
+			std::placeholders::_2));
+
 	/** Scan Assets directory */
 	ZE::AssetDatabase::Scan("Assets", ZE::AssetDatabase::EAssetScanMode::Async);
 
@@ -56,12 +66,8 @@ CZEEditor::CZEEditor() : CZinoEngineApp(true)
 	/** Default ZE editor style */
 	{
 		ImGuiStyle& Style = ImGui::GetStyle();
-		Style.WindowRounding = 0.f;
-		Style.TabRounding = 0.f;
-
-		/** Remove unfocused effects */
-		//Style.Colors[ImGuiCol_TitleBg] = Style.Colors[ImGuiCol_TitleBgActive];
-		//Style.Colors[ImGuiCol_TabUnfocused] = Style.Colors[ImGuiCol_Tab];
+		Style.WindowRounding = 2.f;
+		Style.TabRounding = 2.f;
 	}
 
 	IO.DisplaySize = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
@@ -112,6 +118,7 @@ CZEEditor::CZEEditor() : CZinoEngineApp(true)
 
 CZEEditor::~CZEEditor() 
 { 
+	ZE::Editor::ClearAssetFactoryMgr();
 	ImGui_ImplSDL2_Shutdown(); 
 }
 
@@ -176,8 +183,10 @@ void CZEEditor::Tick(const float& InDeltaTime)
 		if (ImGui::BeginTabBar("MainTabBar", ImGuiTabBarFlags_TabListPopupButton
 			| ImGuiTabBarFlags_Reorderable))
 		{
-			ImGui::SameLine(ImGui::GetColumnWidth() - 200);
-			ImGui::Text("ZinoEngine");
+			ImGui::SameLine(ImGui::GetColumnWidth() - 500);
+			ImGui::Text("ZinoEngine v%d.%d.%d (FPS: %f)",
+				GetZEVersion().Major, GetZEVersion().Minor,
+				GetZEVersion().Patch, (1.f / InDeltaTime));
 			DrawMainTab();
 			ImGui::EndTabBar();
 		}
@@ -206,6 +215,36 @@ void CZEEditor::Draw()
 		GRSContext->EndRenderPass();
 		MainViewport->End();
 	}
+}
+
+void CZEEditor::OnAssetImported(const std::filesystem::path& InPath,
+	const std::filesystem::path& InTarget)
+{
+	/** Try to find an asset factory compatible with this format */
+	std::string Extension = InPath.extension().string().substr(1, InPath.extension().string().size() - 1);
+	CAssetFactory* Factory = GetFactoryForFormat(Extension);
+	if (!Factory)
+	{
+		ZE::Logger::Error("Asset {} can't be imported: unknown format", InPath.string());
+		return;
+	}
+
+	/** Open a stream to the file */
+	FileSystem::CIFileStream Stream(InPath, FileSystem::EFileReadFlagBits::Binary);
+	if (!Stream)
+	{
+		ZE::Logger::Error("Failed to open an input stream for file {}", InPath.string());
+		return;
+	}
+
+	/** Serialize the asset and then unload it */
+	CAsset* Asset = Factory->CreateFromStream(Stream);
+	ZE::Editor::AssetUtils::SaveAsset(*Asset, InTarget,
+		"NewAssetTest");
+	delete Asset;
+
+	/** Notify the database */
+	ZE::AssetDatabase::Scan(InTarget);
 }
 
 TOwnerPtr<CZinoEngineApp> CreateEditor()

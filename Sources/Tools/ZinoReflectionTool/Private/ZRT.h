@@ -80,7 +80,7 @@ static constexpr std::string_view GClassMacro = "ZCLASS";
 static constexpr std::string_view GPropertyMacro = "ZPROPERTY";
 static constexpr std::string_view GFunctionMacro = "ZFUNCTION";
 static constexpr std::string_view GApiMacro = "_API";
-static constexpr std::string_view GReflBuilderMacro = "ZE_REFL_INIT_BUILDERS_FUNC";
+static constexpr std::string_view GReflBuilderMacro = "ZE_REFL_BUILDER_FUNC";
 static constexpr std::string_view GReflBodyMacro = "ZE_REFL_BODY";
 
 /**
@@ -107,11 +107,11 @@ static constexpr std::string_view GGeneratedFileCpp = "/**\n * GENERATED FILE BY
 static constexpr std::string_view GGeneratedHeaderIncludes = "#include \"Reflection/Macros.h\"\n\n";
 
 /** .gen.h **/
-static constexpr std::string_view GDeclareReflTypeMacro = "ZE_REFL_SPECIALIZE_TYPE_NAME(";
+static constexpr std::string_view GDeclareReflTypeMacro = "ZE_REFL_DECLARE_TYPE(";
 static constexpr std::string_view GReflBodyDefMacro = "ZE_Refl_Body_";
-static constexpr std::string_view GDeclareStructMacro = "ZE_REFL_DECLARE_STRUCT(";
-static constexpr std::string_view GDeclareClassMacro = "ZE_REFL_DECLARE_CLASS(";
+static constexpr std::string_view GDeclareStructMacro = "ZE_REFL_DECLARE_CLASS_BODY(";
+static constexpr std::string_view GDeclareClassMacro = "ZE_REFL_DECLARE_CLASS_BODY(";
 
 /** gen.cpp */
-static constexpr std::string_view GStructBuilder = "Builders::TStructBuilder";
-static constexpr std::string_view GClassBuilder = "Builders::TClassBuilder";
+static constexpr std::string_view GStructBuilder = "builders::ClassBuilder";
+static constexpr std::string_view GClassBuilder = "builders::ClassBuilder";

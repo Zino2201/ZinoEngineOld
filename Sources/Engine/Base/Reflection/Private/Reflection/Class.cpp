@@ -1,29 +1,54 @@
 #include "Reflection/Class.h"
+#include "Reflection/Registration.h"
 
-namespace ZE::Refl
+namespace ze::reflection
 {
 
-__attribute__((__init_priority__(2998))) std::vector<const CClass*> Classes;
-
-void RegisterClass(const CClass* InClass)
+const Class* Class::get_by_name(const std::string& in_name)
 {
-	Classes.emplace_back(InClass);
-}
-
-const CClass* GetClassByName(const std::string& InName)
-{
-	for (const auto& Class : Classes)
-	{
-		if (std::strcmp(Class->GetName(), InName.data()) == 0)
-			return Class;
-	}
+	const Type* type = Type::get_by_name(in_name);
+	if(type && type->is_class())
+		return static_cast<const Class*>(type);
 
 	return nullptr;
 }
 
-const std::vector<const CClass*> GetClasses()
+std::vector<const Class*> Class::get_derived_classes_from(const Class* in_class)
 {
-	return Classes;
+	std::vector<const Class*> classes;
+	classes.reserve(10);
+
+	for(const auto& reg_mgr : get_registration_managers())	
+	{
+		for (const auto& class_ : reg_mgr->get_classes())
+		{
+			if (class_ == in_class)
+				continue;
+
+			if (class_->is_derived_from(in_class))
+				classes.push_back(class_);
+		}
+	}
+
+	return classes;
+}
+
+bool Class::is_derived_from(const Class* in_other) const
+{
+	if(this == in_other)
+		return true;
+
+	if(parent.get_as_class() == in_other)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool Class::is_base_of(const Class* in_other) const
+{
+	return this == in_other || in_other->get_parent() == this;
 }
 
 

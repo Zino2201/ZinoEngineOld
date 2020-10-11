@@ -1,72 +1,27 @@
-#include "Reflection/Reflection.h"
-#include "Module/Module.h"
-#include "Reflection/Struct.h"
-#include "Reflection/Class.h"
+#include "Reflection/Registration.h"
 #include "Reflection/Builders.h"
-#include "Reflection/Serialization.h"
+#include "Module/Module.h"
 
 DEFINE_MODULE(ZE::Module::CDefaultModule, Reflection);
 
-namespace ZE::Refl
+namespace ze::reflection
 {
 
-std::unordered_map<std::string, std::unordered_map<std::string, std::function<void(void*, void*)>>> ArchiveMap;
-
-
-std::unordered_map<std::string, std::function<void(void*, void*)>>& GetArchiveMap(const char* InArchive)
+ZE_REFL_BUILDER_FUNC(Reflection_Primitives)
 {
-	return ArchiveMap[InArchive];
-}
+	builders::TypeBuilder<bool>("bool");
+	builders::TypeBuilder<float>("float");
+	builders::TypeBuilder<double>("double");
 
-std::vector<const CStruct*> GetDerivedStructsFrom(const CStruct* InParent)
-{
-	std::vector<const CStruct*> Structs;
-	Structs.reserve(10);
+	builders::TypeBuilder<uint8_t>("uint8_t");
+	builders::TypeBuilder<uint16_t>("uint16_t");
+	builders::TypeBuilder<uint32_t>("uint32_t");
+	builders::TypeBuilder<uint64_t>("uint64_t");
 
-	for(const auto& Struct : GetStructs())
-	{
-		if(Struct->IsDerivedFrom(InParent))
-			Structs.push_back(Struct);
-	}
-
-	return Structs;
-}
-
-std::vector<const CClass*> GetDerivedClassesFrom(const CClass* InParent, const bool& bInIncludeParentClass)
-{
-	std::vector<const CClass*> Classes;
-	Classes.reserve(10);
-
-	for (const auto& Class : GetClasses())
-	{
-		if (Class == InParent && !bInIncludeParentClass)
-			continue;
-
-		if (Class->IsDerivedFrom(InParent))
-			Classes.push_back(Class);
-	}
-
-	return Classes;
-}
-
-ZE_REFL_INIT_BUILDERS_FUNC(Reflection)
-{
-	/** Register basic types */
-	Builders::TTypeBuilder<bool>("bool");
-	Builders::TTypeBuilder<float>("float");
-	Builders::TTypeBuilder<double>("double");
-
-	/** Unsigned types */
-	Builders::TTypeBuilder<uint8_t>("uint8_t");
-	Builders::TTypeBuilder<uint16_t>("uint16_t");
-	Builders::TTypeBuilder<uint32_t>("uint32_t");
-	Builders::TTypeBuilder<uint64_t>("uint64_t");
-
-	/** Signed types */
-	Builders::TTypeBuilder<int8_t>("int8_t");
-	Builders::TTypeBuilder<int16_t>("int16_t");
-	Builders::TTypeBuilder<int32_t>("int32_t");
-	Builders::TTypeBuilder<int64_t>("int64_t");
+	builders::TypeBuilder<int8_t>("int8_t");
+	builders::TypeBuilder<int16_t>("int16_t");
+	builders::TypeBuilder<int32_t>("int32_t");
+	builders::TypeBuilder<int64_t>("int64_t");
 }
 
 }

@@ -2,7 +2,6 @@
 #include "Module/Module.h"
 #include "Module/ModuleManager.h"
 #include "Engine/TickSystem.h"
-#include "Engine/ECS.h"
 #include "Profiling/Profiling.h"
 #include "Console/Console.h"
 #include "Render/RenderCore.h"
@@ -51,9 +50,6 @@ CZinoEngineApp::CZinoEngineApp(const bool& bInWaitForEvents)
 	/** LOAD RENDERER MODULE */
 	ZE::Logger::Info("Initializing renderer");
 	LoadRequiredModule("Renderer");
-
-	/** Initialize ECS */
-	ECS::CECSManager::Get().Initialize();
 }
 
 CZinoEngineApp::~CZinoEngineApp()
@@ -67,7 +63,7 @@ void CZinoEngineApp::ProcessEvents()
 	
 	if (bWaitForEvents)
 	{
-		if (SDL_WaitEvent(&Event))
+		if (SDL_WaitEventTimeout(&Event, 1000))
 		{
 			ProcessEvent(Event);
 		}

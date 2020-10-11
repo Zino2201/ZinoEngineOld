@@ -12,6 +12,8 @@ public:
 	CAssetExplorer();
 
 	void Draw();
+
+	std::filesystem::path& GetCurrentDirectory() { return CurrentDirectory; }
 private:
 	void DrawAssetHierarchy();
 	void DrawAssetList();

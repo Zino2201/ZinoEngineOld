@@ -1,33 +1,31 @@
 #pragma once
 
 #include "Type.h"
-#include <any>
+#include "Any.h"
 
-namespace ZE::Refl
+namespace ze::reflection
 {
 
-/**
- * A C++ enum
- */
-class REFLECTION_API CEnum : public CType
+class Enum : public Type
 {
 public:
-	CEnum(const char* InName,
-		const uint64_t& InSize) : CType(InName, InSize), UnderlyingType() {}
+	Enum(const char* in_name,
+		const size_t& in_size,
+		const TypeFlags& in_flags) : Type(in_name, in_size, in_flags) {}
 
-	void AddValue(const std::string& InName, const std::any& InValue);
-	void SetUnderlyingType(const TLazyTypePtr<CType>& InUnderlyingType) { UnderlyingType = InUnderlyingType; }
+	REFLECTION_API static const Enum* get_by_name(const std::string in_name);
+	
+	template<typename T>
+	ZE_FORCEINLINE static const Enum* get()
+	{
+		return get_by_name(type_name<T>);
+	}
 
-	const CType* GetUnderlyingType() { return UnderlyingType.Get(); }
+	const LazyTypePtr& get_underlying_type_lazy_ptr() const { return underlying_type; }
+	const auto& get_values() const { return values; }
 private:
-	std::vector<std::pair<std::string, std::any>> Values;
-	TLazyTypePtr<CType> UnderlyingType;
+	std::vector<std::pair<std::string, Any>> values;
+	LazyTypePtr underlying_type;
 };
-
-/**
- * Register an enumeration
- */
-REFLECTION_API void RegisterEnum(CEnum* InEnum);
-
 
 }

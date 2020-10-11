@@ -84,6 +84,8 @@ struct SVulkanPipelineLayoutDesc
 			for(const auto& Binding : Set.Bindings)
 				Bindings.push_back(Binding);
 		}
+
+		return Bindings;
 	}
 };
 
