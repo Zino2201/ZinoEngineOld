@@ -8,9 +8,9 @@
 #include "ZEFS/Paths.h"
 #include "ZEFS/ZEFS.h"
 
-using namespace ZE;
+using namespace ze::gfx::shaders;
 
-static constexpr std::array<const char*, 1> GIncludeDirs =
+static constexpr std::array<const char*, 1> include_dirs =
 {
 	"Shaders"
 };
@@ -18,199 +18,196 @@ static constexpr std::array<const char*, 1> GIncludeDirs =
 /**
  * Vulkan shader compiler
  */
-class CVulkanShaderCompiler : public IShaderCompiler
+class VulkanShaderCompiler : public ShaderCompiler
 {
 public:
-	CVulkanShaderCompiler(const EShaderCompilerTarget& InTarget) : IShaderCompiler(InTarget) {}
+	VulkanShaderCompiler(const ShaderCompilerTarget& in_target) : ShaderCompiler(in_target) {}
 
-	SShaderCompilerOutput CompileShader(
-		const EShaderStage& InStage,
-		const std::string_view& InShaderFilename,
-		const std::string_view& InEntryPoint,
-		const EShaderCompilerTarget& InTargetFormat,
-		const bool& bInShouldOptimize) override
+	ShaderCompilerOutput compile_shader(
+		const ShaderStage& stage,
+		const std::string_view& shader_filename,
+		const std::string_view& entry_point,
+		const ShaderCompilerTarget& target,
+		const bool& optimize) override
 	{
-		SShaderCompilerOutput Output;
+		ShaderCompilerOutput output;
 
 		/**
 		 * Read shader data
 		 */
-		std::string ShaderData = ZE::FileSystem::ReadFileToString(InShaderFilename);
-		if(ShaderData.empty())
+		std::string shader_data = ze::filesystem::read_file_to_string(shader_filename);
+		if(shader_data.empty())
 		{
-			Output.ErrMsg = "Can't open shader file";
-			return Output;
+			output.err_msg = "Can't open shader file";
+			return output;
 		}
 
-		ShaderConductor::ShaderStage Stage = ShaderConductor::ShaderStage::VertexShader;
-		switch(InStage)
+		ShaderConductor::ShaderStage scstage = ShaderConductor::ShaderStage::VertexShader;
+		switch(stage)
 		{
-		case EShaderStage::Fragment:
-			Stage = ShaderConductor::ShaderStage::PixelShader;
+		case ShaderStage::Fragment:
+			scstage = ShaderConductor::ShaderStage::PixelShader;
 			break;
 		default:
 			break;
 		};
 
-		ShaderConductor::Compiler::SourceDesc SourceDesc;
-		SourceDesc.source = ShaderData.c_str();
-		SourceDesc.fileName = InShaderFilename.data();
-		SourceDesc.entryPoint = InEntryPoint.data();
-		SourceDesc.stage = Stage;
-		SourceDesc.numDefines = 0;
-		SourceDesc.defines = nullptr;
-		SourceDesc.loadIncludeCallback = 
-			[](const char* InIncludeName) -> ShaderConductor::Blob*
+		ShaderConductor::Compiler::SourceDesc source_desc;
+		source_desc.source = shader_data.c_str();
+		source_desc.fileName = shader_filename.data();
+		source_desc.entryPoint = entry_point.data();
+		source_desc.stage = scstage;
+		source_desc.numDefines = 0;
+		source_desc.defines = nullptr;
+		source_desc.loadIncludeCallback = 
+			[](const char* include_name) -> ShaderConductor::Blob*
 			{	
-				std::string Filename = std::filesystem::path(InIncludeName).filename().string();
-				std::string Path = InIncludeName;
+				std::string filename = std::filesystem::path(include_name).filename().string();
+				std::string path = include_name;
 
-				if(!ZE::FileSystem::Exists(InIncludeName))
+				if(!ze::filesystem::exists(include_name))
 				{
-					bool bHasFoundFile = false;
+					bool has_found_file = false;
 
-					for (const auto& IncludeDir : GIncludeDirs)
+					for (const auto& include_dir : include_dirs)
 					{
-						Path = IncludeDir;
-						Path += "/";
-						Path += Filename;
+						path = include_dir;
+						path += "/";
+						path += filename;
 						
-						if(ZE::FileSystem::Exists(Path))
+						if(ze::filesystem::exists(path))
 						{
-							bHasFoundFile = true;
+							has_found_file = true;
 							break;
 						}
 					}
 
-					if(!bHasFoundFile)
+					if(!has_found_file)
 						return nullptr;
 				}
 
-				std::vector<uint8_t> Array = ZE::FileSystem::ReadFileToVector(Path);
+				std::vector<uint8_t> array = ze::filesystem::read_file_to_vector(path);
 
-				ShaderConductor::Blob* Blob = ShaderConductor::CreateBlob(Array.data(),
-					static_cast<uint32_t>(Array.size()));
+				ShaderConductor::Blob* blob = ShaderConductor::CreateBlob(array.data(),
+					static_cast<uint32_t>(array.size()));
 
-				return Blob;
+				return blob;
 			};
 
-		ShaderConductor::Compiler::Options Options;
-		Options.disableOptimizations = bInShouldOptimize;
+		ShaderConductor::Compiler::Options options;
+		options.disableOptimizations = optimize;
 #ifdef ZE_DEBUG
-		Options.enableDebugInfo = true;
-		Options.optimizationLevel = 1;
+		options.enableDebugInfo = true;
+		options.optimizationLevel = 1;
 #else
 		Options.optimizationLevel = 3;
 #endif
 
-		std::array<ShaderConductor::Compiler::TargetDesc, 1> Targets = 
+		std::array<ShaderConductor::Compiler::TargetDesc, 1> targets = 
 		{
 			{ ShaderConductor::ShadingLanguage::SpirV, "1_0", false }
 		};
 
-		ShaderConductor::Compiler::ResultDesc Result;
-		ShaderConductor::Compiler::Compile(SourceDesc, Options, 
-			Targets.data(), static_cast<uint32_t>(Targets.size()), 
-			&Result);
+		ShaderConductor::Compiler::ResultDesc result;
+		ShaderConductor::Compiler::Compile(source_desc, options, 
+			targets.data(), static_cast<uint32_t>(targets.size()), 
+			&result);
 
-		if(Result.hasError)
+		if(result.hasError)
 		{
-			std::string_view ErrMsg(
-				reinterpret_cast<const char*>(Result.errorWarningMsg->Data()), 
-				Result.errorWarningMsg->Size());
-			Output.ErrMsg = ErrMsg;
-			ZE::Logger::Error("Failed to compile shader {}: {}",
-				InShaderFilename.data(), Output.ErrMsg.c_str());
-			return Output;
+			std::string_view err_msg(
+				reinterpret_cast<const char*>(result.errorWarningMsg->Data()), 
+				result.errorWarningMsg->Size());
+			output.err_msg = err_msg;
+			ze::logger::error("Failed to compile shader {}: {}",
+				shader_filename.data(), output.err_msg.c_str());
+			return output;
 		}
 
-		uint32_t* Spv = reinterpret_cast<uint32_t*>(const_cast<void*>(Result.target->Data()));
+		uint32_t* spv = reinterpret_cast<uint32_t*>(const_cast<void*>(result.target->Data()));
+		output.bytecode = std::vector<uint32_t>(
+			spv,
+			spv + (result.target->Size() / sizeof(uint32_t)));
+		output.success = true;
+		output.reflection_data = get_reflection_data(output.bytecode);
 
-		Output.Bytecode = std::vector<uint32_t>(
-			Spv,
-			Spv + (Result.target->Size() / sizeof(uint32_t)));
-		Output.bSucceed = true;
-		Output.ReflectionData = GetReflectionData(Output.Bytecode);
-
-		return Output;
+		return output;
 	}
 
-	SShaderCompilerReflectionDataOutput GetReflectionData(const std::vector<uint32_t>& InSpv)
+	ShaderCompilerReflectionDataOutput get_reflection_data(const std::vector<uint32_t>& spv)
 	{
-		SShaderCompilerReflectionDataOutput Output;
+		ShaderCompilerReflectionDataOutput output;
 
-		spirv_cross::Compiler Compiler(InSpv);
+		spirv_cross::Compiler compiler(spv);
 
-		spirv_cross::ShaderResources Resources = Compiler.get_shader_resources();
-		for (auto& UniformBuffer : Resources.uniform_buffers)
+		spirv_cross::ShaderResources resources = compiler.get_shader_resources();
+		for (auto& uniform_buffer : resources.uniform_buffers)
 		{
-			const auto& Type = Compiler.get_type(UniformBuffer.base_type_id);
+			const auto& type = compiler.get_type(uniform_buffer.base_type_id);
 
-			uint32_t Set = Compiler.get_decoration(UniformBuffer.id, spv::DecorationDescriptorSet);
-			uint32_t Binding = Compiler.get_decoration(UniformBuffer.id, spv::DecorationBinding);
-			std::string Name = Compiler.get_name(UniformBuffer.id);
-			if (Name.empty())
-				Name = Compiler.get_name(UniformBuffer.base_type_id);
+			uint32_t set = compiler.get_decoration(uniform_buffer.id, spv::DecorationDescriptorSet);
+			uint32_t binding = compiler.get_decoration(uniform_buffer.id, spv::DecorationBinding);
+			std::string name = compiler.get_name(uniform_buffer.id);
+			if (name.empty())
+				name = compiler.get_name(uniform_buffer.base_type_id);
 
-			uint64_t Size = Compiler.get_declared_struct_size(Type);
+			uint64_t size = compiler.get_declared_struct_size(type);
 
-			std::vector<SShaderParameterMember> Members; /*=
-				ParseStruct(Compiler.get(), Type);*/
+			std::vector<ShaderParameterMember> members ;
 
-			Output.ParameterMap.AddParameter(Name.c_str(), 
+			output.parameter_map.add_parameter(name.c_str(), 
 				{
-					Name,
-					EShaderParameterType::UniformBuffer,
-					Set,
-					Binding,
-					Size,
+					name,
+					ShaderParameterType::UniformBuffer,
+					set,
+					binding,
+					size,
 					1,
-					Members
+					members
 				});
 		}
 
-		for (auto& Texture : Resources.separate_images)
+		for (auto& texture : resources.separate_images)
 		{
-			uint32_t Set = Compiler.get_decoration(Texture.id, spv::DecorationDescriptorSet);
-			uint32_t Binding = Compiler.get_decoration(Texture.id, spv::DecorationBinding);
-			std::string Name = Compiler.get_name(Texture.id);
+			uint32_t set = compiler.get_decoration(texture.id, spv::DecorationDescriptorSet);
+			uint32_t binding = compiler.get_decoration(texture.id, spv::DecorationBinding);
+			std::string name = compiler.get_name(texture.id);
 
-			Output.ParameterMap.AddParameter(Name.c_str(), 
-				SShaderParameter(
-					Name,
-					EShaderParameterType::Texture,
-					Set,
-					Binding,
+			output.parameter_map.add_parameter(name.c_str(), 
+				ShaderParameter(
+					name,
+					ShaderParameterType::Texture,
+					set,
+					binding,
 					1));
 		}
 
-		for (auto& Sampler : Resources.separate_samplers)
+		for (auto& sampler : resources.separate_samplers)
 		{
-			uint32_t Set = Compiler.get_decoration(Sampler.id, spv::DecorationDescriptorSet);
-			uint32_t Binding = Compiler.get_decoration(Sampler.id, spv::DecorationBinding);
-			std::string Name = Compiler.get_name(Sampler.id);
+			uint32_t set = compiler.get_decoration(sampler.id, spv::DecorationDescriptorSet);
+			uint32_t binding = compiler.get_decoration(sampler.id, spv::DecorationBinding);
+			std::string name = compiler.get_name(sampler.id);
 
-			Output.ParameterMap.AddParameter(Name.c_str(),
-				SShaderParameter(
-					Name,
-					EShaderParameterType::Sampler,
-					Set,
-					Binding,
+			output.parameter_map.add_parameter(name.c_str(),
+				ShaderParameter(
+					name,
+					ShaderParameterType::Sampler,
+					set,
+					binding,
 					1));
 		}
 
-		return Output;
+		return output;
 	}
 };
 
-class CVulkanShaderCompilerModule : public ZE::Module::CModule
+class CVulkanShaderCompilerModule : public ze::module::Module
 {
 public:
 	CVulkanShaderCompilerModule()
 	{
-		CGlobalShaderCompiler::Get()
-			.Register<CVulkanShaderCompiler>(EShaderCompilerTarget::VulkanSpirV);
+		register_shader_compiler(ShaderCompilerTarget::VulkanSpirV, new VulkanShaderCompiler(ShaderCompilerTarget::VulkanSpirV));
 	}
 };
 
-DEFINE_MODULE(CVulkanShaderCompilerModule, VulkanShaderCompiler);
+ZE_DEFINE_MODULE(CVulkanShaderCompilerModule, VulkanShaderCompiler);

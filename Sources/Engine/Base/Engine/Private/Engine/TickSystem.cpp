@@ -2,7 +2,7 @@
 #include <algorithm>
 #include "Engine/Engine.h"
 
-namespace ZE
+namespace ze
 {
 
 void CTickSystem::Tick(ETickFlagBits InFlag, const float& InDeltaTime)
@@ -24,7 +24,7 @@ void CTickSystem::Tick(ETickFlagBits InFlag, const float& InDeltaTime)
 			if(Tickable->GetTickFlags() & ETickFlagBits::Variable)
 			{
 				auto& Tickables = TickablesMap[ETickFlagBits::Variable];
-				must(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
+				ZE_ASSERT(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
 				Tickables.Add(Tickable);
 				Tickable->TickableIdx = Tickables.GetSize() - 1;
 			}
@@ -32,7 +32,7 @@ void CTickSystem::Tick(ETickFlagBits InFlag, const float& InDeltaTime)
 			if(Tickable->GetTickFlags() & ETickFlagBits::Fixed)
 			{
 				auto& Tickables = TickablesMap[ETickFlagBits::Fixed];
-				must(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
+				ZE_ASSERT(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
 				Tickables.Add(Tickable);
 				Tickable->TickableIdx = Tickables.GetSize() - 1;
 			}
@@ -40,7 +40,7 @@ void CTickSystem::Tick(ETickFlagBits InFlag, const float& InDeltaTime)
 			if(Tickable->GetTickFlags() & ETickFlagBits::EndOfSimulation)
 			{
 				auto& Tickables = TickablesMap[ETickFlagBits::EndOfSimulation];
-				must(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
+				ZE_ASSERT(std::find(Tickables.begin(), Tickables.end(), Tickable) == Tickables.end());
 				Tickables.Add(Tickable);
 				Tickable->TickableIdx = Tickables.GetSize() - 1;
 			}	

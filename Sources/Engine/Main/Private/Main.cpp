@@ -34,8 +34,9 @@
 #endif
 #include <sstream>
 #include <filesystem>
+#include "Serialization/Types/Map.h"
 
-namespace FS = ZE::FileSystem;
+namespace FS = ze::filesystem;
 
 
 /** Forward decls */
@@ -45,19 +46,19 @@ void Exit();
 /** Global variables */
 
 /** Render system ptr */
-static std::unique_ptr<ZE::IRenderSystem> RenderSystem;
+static std::unique_ptr<ze::IRenderSystem> RenderSystem;
 
 /** Current app */
 
 /** Engine ptr */
-static std::unique_ptr<ZE::CZinoEngineApp> Engine;
+static std::unique_ptr<ze::CZinoEngineApp> Engine;
 
-static ZE::TConVar<int32_t> CVarMaxFPS("r_maxfps", 144,
+static ze::ConVarRef<int32_t> CVarMaxFPS("r_maxfps", 144,
 	"Max FPS.",
 	1,
-	ZE::GMaxFPS);
+	ze::GMaxFPS);
 
-static ZE::TConVar<int32_t> CVarPhysFPS("phys_fps", 5,
+static ze::ConVarRef<int32_t> CVarPhysFPS("phys_fps", 5,
 	"Physics FPS count.",
 	1,
 	60);
@@ -99,8 +100,8 @@ int main(int argc, char** argv)
  */
 void LoadRequiredModule(const std::string_view& InName)
 {
-	if (!ZE::Module::LoadModule(InName))
-		ZE::Logger::Fatal("Failed to load required module {} ! Exiting", InName);
+	if (!ze::module::load_module(InName))
+		ze::logger::fatal("Failed to load required module {} ! Exiting", InName);
 }
 
 void PreInit()
@@ -111,16 +112,18 @@ void PreInit()
 	{
 		/** Ensure the EngineCore module is loaded */
 		LoadRequiredModule("Core");
-		ZE::Threading::SetThreadName("Main Thread");
+		ze::threading::set_thread_name("Main Thread");
+
+		LoadRequiredModule("ZEFS");
 
 		/** Mount std file system to current working dir */
-		FS::IFileSystem& Root = FS::AddFileSystem<FS::CStdFileSystem>("Root", "/", 0,
-			ZE::FileSystem::Paths::GetCurrentWorkingDir());
-		FS::SetWriteFS(Root);
+		FS::FileSystem& Root = FS::add_filesystem<FS::StdFileSystem>("Root", "/", 0,
+			FS::get_current_working_dir());
+		FS::set_write_fs(Root);
 
 		/** Setup default sinks */
 #if ZE_PLATFORM(WINDOWS) && defined ZE_DEBUG
-		ZE::Logger::AddSink(std::make_unique<ZE::Logger::Sinks::CWinDbgSink>("WinDbg"));
+		ze::logger::add_sink(std::make_unique<ze::logger::WinDbgSink>("WinDbg"));
 #endif
 
 		/** Log file sink */
@@ -132,12 +135,12 @@ void PreInit()
 			
 			std::stringstream ss;
 			ss << std::put_time(LocalTime, "Logs/ZinoEngine_%H_%M_%S.log");
-			ZE::Logger::AddSink(std::make_unique<ZE::FileSystem::CFileSink>("File", ss.str()));
+			ze::logger::add_sink(std::make_unique<FS::FileSink>("File", ss.str()));
 		}
-		ZE::Logger::Info("=== ZinoEngine {} Build ===", ZE_CONFIGURATION_NAME);
+		ze::logger::info("=== ZinoEngine {} Build ===", ZE_CONFIGURATION_NAME);
 		
 #ifdef ZE_DEBUG
-		ZE::Logger::Warn("Using a debug build ! Except very bad performances");
+		ze::logger::warn("Using a debug build ! Except very bad performances");
 #endif
 
 		/** Check if required directories/files are presents */
@@ -149,15 +152,15 @@ void PreInit()
 
 		for(const auto& Obj : RequiredObjects)
 		{
-			if(!FS::Exists(Obj))
-				ZE::Logger::Fatal("Can't find directory/file \"{}\" ! Check your installation", Obj);
+			if(!FS::exists(Obj))
+				ze::logger::fatal("Can't find directory/file \"{}\" ! Check your installation", Obj);
 		}
 
 		LoadRequiredModule("Reflection");
 
 		/** JOB SYSTEM */
-		ZE::Logger::Info("Initializing job system");
-		ZE::JobSystem::Initialize();
+		ze::logger::info("Initializing job system");
+		ze::jobsystem::initialize();
 
 		SDL_InitSubSystem(SDL_INIT_VIDEO);
 
@@ -174,7 +177,7 @@ void PreInit()
 
 	/** INITIALIZE RENDER SYSTEM **/
 	{
-		ZE::Logger::Info("Initializing render system");
+		ze::logger::info("Initializing render system");
 		LoadRequiredModule("VulkanRenderSystem");
 		LoadRequiredModule("VulkanShaderCompiler");
 		RenderSystem.reset(CreateVulkanRenderSystem());
@@ -183,52 +186,109 @@ void PreInit()
 
 	/** INITIALIZE BASIC SHADERS */
 	{
-		ZE::Logger::Info("Initializing shader compiler");
-		ZE::CGlobalShaderCompiler::Get();
-
-		ZE::Logger::Info("Initializing & compiling basic shaders");
-		ZE::CBasicShaderManager::Get().CompileShaders();
+		ze::logger::info("Initializing & compiling basic shaders");
+		ze::gfx::shaders::CBasicShaderManager::Get().CompileShaders();
 	}
 }
+
+#include "Reflection/Registration.h"
+#include "Reflection/Class.h"
+#include "Reflection/Builders.h"
+#include "Reflection/Traits.h"
+#include "Reflection/Cast.h"
+#include "Reflection/Any.h"
+#include "Reflection/Macros.h"
+
+class Parent
+{
+public:
+	int32_t A = 2000;
+	std::string cava = "oui oui";
+
+	Parent() : A (5000)
+	{
+		
+	}
+
+	ZE_REFL_DECLARE_CLASS_BODY(Parent)
+};
+
+class Child : public Parent
+{
+public:
+	int8_t B = 22;
+
+	ZE_REFL_DECLARE_CLASS_BODY(Child)
+};
+
+ZE_REFL_DECLARE_CLASS(Parent)
+ZE_REFL_DECLARE_CLASS(Child)
 
 int Init()
 {
 	PreInit();
 
-	ZE::Logger::Info("Initializing and starting app");
+	ze::reflection::builders::ClassBuilder<Parent>("Parent")
+		.property<int32_t>("A", &Parent::A);
+	ze::reflection::builders::ClassBuilder<Child>("Child")
+		.constructor()
+		.parent("Parent")
+		.property<int8_t>("B", &Child::B);
+
+	int sz = sizeof(Parent);
+
+	Parent pp;
+	pp.A = 121;
+	const ze::reflection::Property* prop = ze::reflection::Class::get<Parent>()->get_property("A");
+	prop->set_value(&pp, 1201);
+	const auto& val = prop->get_value(&pp);
+	const auto& real_val = val.get_value<int32_t>();
+
+	Parent* a = new Child;
+	Parent* b = new Parent;
+
+	// instantiate
+	Child* test_inst = ze::reflection::Class::get<Child>()->instantiate<Child>();
+
+	Child* legal = ze::reflection::cast<Child>(a);
+	Child* illegal = ze::reflection::cast<Child>(b);
+	
+	ZE_DEBUGBREAK();
+
+	ze::logger::info("Initializing and starting app");
 
 	/** INITIALIZE ENGINE CLASS */
 #if ZE_WITH_EDITOR
 	LoadRequiredModule("ZEEditor");
-	Engine.reset(ZE::Editor::CreateEditor());
+	Engine.reset(ze::editor::CreateEditor());
 #else
-	Engine.reset(ZE::CreateGameApp());
+	Engine.reset(ze::CreateGameApp());
 #endif
 
 	/** START GAME LOOP */
-	return Engine->Run();
+	return Engine->run();
 }
 
 void Exit()
 {
-	ZE::Logger::Info("Exiting engine");
+	ze::logger::info("Exiting engine");
 
 	/** Unload renderer to free all renderer data */
-	ZE::Module::UnloadModule("Renderer");
+	ze::module::unload_module("Renderer");
 
 	/** Delete engine */
 	Engine.reset();
 
 	RenderSystem->WaitGPU();
 
-	ZE::CBasicShaderManager::Get().DestroyAll();
+	ze::gfx::shaders::CBasicShaderManager::Get().DestroyAll();
 
 	/** Delete render system */
 	RenderSystem->Destroy();
 	RenderSystem.reset();
 
 	/** Clear all modules */
-	ZE::Module::UnloadModules();
+	ze::module::unload_modules();
 
 	SDL_Quit();
 }

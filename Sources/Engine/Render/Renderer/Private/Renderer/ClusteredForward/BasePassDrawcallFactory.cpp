@@ -3,7 +3,7 @@
 #include "Renderer/WorldView.h"
 #include "Renderer/RenderableComponentProxy.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class CBasePassDrawcallFactory : public CRenderPassDrawcallFactory
@@ -29,11 +29,11 @@ public:
 		std::vector<SRSPipelineShaderStage> Stages =
 		{
 			SRSPipelineShaderStage(
-				EShaderStage::Vertex,
+				ShaderStage::Vertex,
 				CBasicShaderManager::Get().GetShader("BasePassVS")->GetShader(),
 				"Main"),
 			SRSPipelineShaderStage(
-				EShaderStage::Fragment,
+				ShaderStage::Fragment,
 				CBasicShaderManager::Get().GetShader("BasePassFS")->GetShader(),
 				"Main")
 		};
@@ -60,8 +60,8 @@ public:
 	{
 		ComputeDrawcalls(InMesh, Test, 
 			{
-				{ SMeshDrawcallShaderBinding(0, 0, EShaderParameterType::UniformBuffer, InWorldView.TEST_ViewUBO.GetBuffer()) },
-				{ SMeshDrawcallShaderBinding(0, 1, EShaderParameterType::UniformBuffer, InProxy.TEST_PerInstanceUBO.GetBuffer()) },
+				{ SMeshDrawcallShaderBinding(0, 0, gfx::shaders::ShaderParameterType::UniformBuffer, InWorldView.TEST_ViewUBO.GetBuffer()) },
+				{ SMeshDrawcallShaderBinding(0, 1, gfx::shaders::ShaderParameterType::UniformBuffer, InProxy.TEST_PerInstanceUBO.GetBuffer()) },
 			});
 	}
 private:

@@ -6,7 +6,7 @@
 #include "Render/RenderSystem/RenderSystem.h"
 #include <robin_hood.h>
 
-namespace ZE
+namespace ze::gfx::shaders
 {
 
 class CShader;
@@ -18,24 +18,24 @@ class RENDERCORE_API CShaderType
 {
 public:
     using InstantiateFunctionType = CShader*(*)(const CShaderType* InShaderType,
-        const SShaderCompilerOutput& InOutput);
+        const ShaderCompilerOutput& InOutput);
 
     CShaderType(const char* InName, const char* InFilename,	const char* InEntryPoint,
-        EShaderStage InStage,
+        ShaderStage InStage,
         InstantiateFunctionType InFunc);
 
-    virtual CShader* InstantiateShader(const SShaderCompilerOutput& InOutput) const;
+    virtual CShader* InstantiateShader(const ShaderCompilerOutput& InOutput) const;
 
     const char* GetName() const { return Name; }
     const char* GetFilename() const { return Filename; }
     const char* GetEntryPoint() const { return EntryPoint; }
-    EShaderStage GetStage() const { return Stage; }
+    ShaderStage GetStage() const { return Stage; }
     InstantiateFunctionType GetInstantiateFunc() const { return InstantiateFunc; }
 private:
     const char* Name;
     const char* Filename;
     const char* EntryPoint;
-    EShaderStage Stage;
+    ShaderStage Stage;
     InstantiateFunctionType InstantiateFunc;
 };
 
@@ -46,9 +46,9 @@ class RENDERCORE_API CShader
     : public boost::intrusive_ref_counter<CShader, boost::thread_unsafe_counter>
 {
 public:
-    CShader(const CShaderType* InShaderType, const SShaderCompilerOutput& InOutput);
+    CShader(const CShaderType* InShaderType, const ShaderCompilerOutput& InOutput);
     virtual ~CShader();
-
+    
     CRSShader* GetShader() const { return Shader.get(); }
 private:
 	CRSShaderPtr Shader;
@@ -78,7 +78,7 @@ private:
     using ShaderType = BaseClass##Type; \
     static ShaderType ShaderStaticType; \
     inline static const char* ShaderNameType = #Class; \
-    static CShader* InstantiateShader(const CShaderType* InType, const SShaderCompilerOutput& InOutput) \
+    static gfx::shaders::CShader* InstantiateShader(const gfx::shaders::CShaderType* InType, const gfx::shaders::ShaderCompilerOutput& InOutput) \
     { \
         return new Class(InType, InOutput); \
     }

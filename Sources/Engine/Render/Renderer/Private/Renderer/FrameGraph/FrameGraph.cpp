@@ -7,7 +7,7 @@
 #include "Render/RenderSystem/Resources/Framebuffer.h"
 #include "Renderer/RendererModule.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 CFrameGraph::CFrameGraph() 
@@ -30,7 +30,7 @@ bool CFrameGraph::ValidateRenderPass(const CRenderPass& InRenderPass)
 		}
 		else
 		{
-			ZE::Logger::Error("Invalid usage flags for texture {} inside render pass {}",
+			ze::logger::error("Invalid usage flags for texture {} inside render pass {}",
 				Texture.ID,
 				InRenderPass.Name.c_str());
 		}
@@ -230,7 +230,7 @@ bool CFrameGraph::Compile()
 	{
 		if(!ValidateRenderPass(*RenderPass.get()))
 		{
-			ZE::Logger::Error("Validation of render pass {} failed ! Frame will be skipped !",
+			ze::logger::error("Validation of render pass {} failed ! Frame will be skipped !",
 				RenderPass->Name.c_str());
 			return false;
 		}

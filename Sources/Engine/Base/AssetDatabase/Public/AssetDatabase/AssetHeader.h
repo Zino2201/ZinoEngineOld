@@ -3,40 +3,40 @@
 #include "EngineVer.h"
 #include "Serialization/Types/String.h"
 
-namespace ZE
+namespace ze
 {
 
 /**
  * Header of a asset
  */
-struct SAssetHeader
+struct AssetHeader
 {
-    char Id[7];
-    SZEVersion EngineVer;
-    std::string ClassName;
+    char id[7];
+    ZEVersion engine_ver;
+    std::string class_name;
 
-    SAssetHeader() : Id("") {}
-    SAssetHeader(const std::string& InClassName) : Id("ZASSET"),
-        EngineVer(GetZEVersion()),
-        ClassName(InClassName) {}
+    AssetHeader() : id("") {}
+    AssetHeader(const std::string& in_class_name) : id("ZASSET"),
+        engine_ver(get_version()),
+        class_name(in_class_name) {}
 
 	template<typename Archive>
-	ZE_FORCEINLINE void Serialize(Archive& InArchive)
+	ZE_FORCEINLINE void serialize(Archive& archive)
 	{
-		InArchive <=> Id;
-		InArchive <=> EngineVer;
-		InArchive <=> ClassName;
+		archive <=> id;
+		archive <=> engine_ver;
+		archive <=> class_name;
 	}
 
-    bool IsValid() const
+    bool is_valid() const
     {
-        return strcmp(Id, "ZASSET") == 0;
+        return strcmp(id, "ZASSET") == 0;
     }
 };
 
-ZE_FORCEINLINE SAssetHeader MakeAssetHeader(const std::string& InClassName)
+ZE_FORCEINLINE AssetHeader make_asset_header(const std::string& in_class_name)
 {
-    return SAssetHeader(InClassName);
+    return AssetHeader(in_class_name);
 }
 
 }

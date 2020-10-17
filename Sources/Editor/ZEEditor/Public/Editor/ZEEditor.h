@@ -5,13 +5,13 @@
 
 struct ImFont;
 
-namespace ZE 
+namespace ze 
 { 
 class CWindow; 
 class CViewport; 
 }
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 class CZEEditor final : public CZinoEngineApp
@@ -36,6 +36,6 @@ private:
 	ImFont* Font;
 };
 
-ZEEDITOR_API TOwnerPtr<CZinoEngineApp> CreateEditor();
+ZEEDITOR_API OwnerPtr<CZinoEngineApp> CreateEditor();
 
 }

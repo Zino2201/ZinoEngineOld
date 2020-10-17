@@ -3,7 +3,7 @@
 #include "EngineCore.h"
 #include <unordered_map>
 
-namespace ZE
+namespace ze
 {
 
 static constexpr uint32_t GMaxBindings = 16;

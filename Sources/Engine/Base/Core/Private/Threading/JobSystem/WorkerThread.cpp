@@ -2,75 +2,71 @@
 #include "Threading/JobSystem/JobSystem.h"
 #include <random>
 
-namespace ZE::JobSystem
+namespace ze::jobsystem
 {
 
 /** Global condition_variable for sleeping workers */
-std::condition_variable SleepConditionVariable;
+std::condition_variable sleep_condition_var;
 
-std::condition_variable& CWorkerThread::GetSleepConditionVariable() { return SleepConditionVariable; }
+std::condition_variable& WorkerThread::get_sleep_condition_var() { return sleep_condition_var; }
 
-CWorkerThread::CWorkerThread() : Type(EWorkerThreadType::Full), Active(false) {}
+WorkerThread::WorkerThread() : type(WorkerThreadType::Full), active(false) {}
+WorkerThread::WorkerThread(WorkerThreadType type,
+	const std::thread::id& in_thread_id) : active(true), type(type), thread_id(in_thread_id) {}
 
-CWorkerThread::CWorkerThread(EWorkerThreadType InType,
-	const std::thread::id& InThreadId) : Active(true), Type(InType), ThreadId(InThreadId) 
+const Job* WorkerThread::try_get_or_steal_job(const size_t& in_worker_idx)
 {
-
-}
-
-const SJob* CWorkerThread::TryGetOrStealJob(const size_t& InWorkerIdx)
-{
-	const SJob* Job = JobQueue.Pop();
-	if(!Job && Type != EWorkerThreadType::Partial)
+	const Job* job = job_queue.pop();
+	if(!job && type != WorkerThreadType::Partial)
 	{
 		/** 
 		 * Try to steal it from another worker
 		 */
-		std::random_device Device;
-		std::mt19937 Gen(Device());
-		std::uniform_int_distribution<size_t> Distribution(0, GetWorkerCount());
+		std::random_device device;
+		std::mt19937 gen(device());
+		std::uniform_int_distribution<size_t> distribution(0, get_worker_count());
 
-		size_t WorkerIdx = InWorkerIdx == -1 ? Distribution(Gen) : InWorkerIdx;
-		auto& WorkerToSteal = GetWorkerByIdx(WorkerIdx);
+		size_t worker_idx = in_worker_idx == -1 ? distribution(gen) : in_worker_idx;
+		auto& worker_to_steal = get_worker_by_idx(worker_idx);
 		
 		/**
 		 * Test if it isn't this worker
 		 */
-		if(*this != WorkerToSteal)
+		if(*this != worker_to_steal)
 		{
-			const SJob* Job = WorkerToSteal.JobQueue.Steal();
-			if(Job)
-				return Job;
+			const Job* job = worker_to_steal.job_queue.steal();
+			if(job)
+				return job;
 		}
 
 		std::this_thread::yield();
 		return nullptr;
 	}
 
-	return Job;
+	return job;
 }
 
-void CWorkerThread::Flush()
+void WorkerThread::flush()
 {
 	/** Try steal from the main worker, if no job found try again */
-	const SJob* Job = TryGetOrStealJob(GetMainWorkerIdx());
-	if (Job)
+	const Job* job = try_get_or_steal_job(get_main_worker_idx());
+	if (job)
 	{
-		Internal::ExecuteJob(*Job);
+		detail::execute(*job);
 	}
 	else
 	{
-		const SJob* Job = TryGetOrStealJob();
-		if(Job)
+		const Job* job = try_get_or_steal_job();
+		if(job)
 		{
-			Internal::ExecuteJob(*Job);
+			detail::execute(*job);
 		}
 		else
 		{
-			if (Type != EWorkerThreadType::Partial)
+			if (type != WorkerThreadType::Partial)
 			{
-				std::unique_lock<std::mutex> Lock(SleepMutex);
-				SleepConditionVariable.wait(Lock);
+				std::unique_lock<std::mutex> lock(sleep_mutex);
+				sleep_condition_var.wait(lock);
 			}
 		}
 	}

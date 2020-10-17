@@ -1,18 +1,18 @@
 #include "ImGui/ImGui.h"
 
-DEFINE_MODULE(ZE::UI::CImGuiModule, ImGui);
+ZE_DEFINE_MODULE(ze::ui::ImGuiModule, ImGui);
 
-namespace ZE::UI
+namespace ze::ui
 {
 
-CImGuiModule::CImGuiModule() 
+ImGuiModule::ImGuiModule() 
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 }
 
-CImGuiModule::~CImGuiModule()
+ImGuiModule::~ImGuiModule()
 {
 	ImGui::DestroyContext();
 }

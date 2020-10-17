@@ -5,22 +5,22 @@
 #include "ZEFS/FileStream.h"
 #include <ostream>
 
-namespace ZE::FileSystem
+namespace ze::filesystem
 {
 
 /**
  * A sink that supports writing to a file
  */
-class ZEFS_API CFileSink : public ZE::Logger::CSink
+class ZEFS_API FileSink : public logger::Sink
 {
 public:
-	CFileSink(const std::string& InName,
-		const std::string& InFileName);
+	FileSink(const std::string& in_name,
+		const std::string& in_filename);
 
-	void Log(const ZE::Logger::SMessage& InMessage) override;
+	void log(const logger::Message& InMessage) override;
 private:
-	std::string Filename;
-	COFileStream FileStream;
+	std::string filename;
+	FileOStream stream;
 };
 
 }

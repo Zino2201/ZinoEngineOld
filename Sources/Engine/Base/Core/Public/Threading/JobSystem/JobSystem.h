@@ -4,54 +4,54 @@
 #include "Job.h"
 #include <thread>
 
-namespace ZE::JobSystem
+namespace ze::jobsystem
 {
 
-class CWorkerThread;
+class WorkerThread;
 
 /**
  * Max job count that can be allocated per frame
  */
-static constexpr size_t GMaxJobCountPerFrame = 4096;
+static constexpr size_t max_job_count_per_frame = 4096;
 
 /**
  * JobSystem API
  */
 
 /** Initialize the job system */
-CORE_API void Initialize();
+CORE_API void initialize();
 
 /** Create a new job */
-[[nodiscard]] CORE_API const SJob& CreateJob(EJobType InType, 
-	const SJob::JobFunction& InJobFunc);
+[[nodiscard]] CORE_API const Job& create_job(JobType type, 
+	const Job::JobFunction& job_func);
 
 /** Create a new child job */
-[[nodiscard]] CORE_API const SJob& CreateJob(EJobType InType, 
-	const SJob::JobFunction& InJobFunc, const SJob& InParent);
+[[nodiscard]] CORE_API const Job& create_job(JobType type, 
+	const Job::JobFunction& job_func, const Job& parent);
 
 /** Create a new job with user data */
 template<typename T, typename... Args>
-[[nodiscard]] const SJob& CreateJobUserdata(EJobType InType, 
-	const SJob::JobFunction& InJobFunc, Args&&... InArgs)
+[[nodiscard]] const Job& create_job_with_userdata(JobType type, 
+	const Job::JobFunction& job_func, Args&&... args)
 {
-	static_assert(sizeof(T) <= SJob::UserdataSize, "Userdata is too big !");
+	static_assert(sizeof(T) <= Job::userdata_size, "Userdata <= SJob::userdata_size (too large)");
 
-	const SJob& Job = CreateJob(InType, InJobFunc);
-	new (Job.GetUserdata<void*>()) T(std::forward<Args>(InArgs)...);
-	return Job;
+	const Job& job = create_job(type, job_func);
+	new (job.get_userdata<void*>()) T(std::forward<Args>(args)...);
+	return job;
 }
 
 /** Create a new child job with user data */
 template<typename T, typename... Args>
-[[nodiscard]] const SJob& CreateChildJobUserdata(EJobType InType, 
-	const SJob::JobFunction& InJobFunc, 
-	const SJob& InParent, Args&&... InArgs)
+[[nodiscard]] const Job& create_child_job_with_userdata(JobType type, 
+	const Job::JobFunction& job_func, 
+	const Job& parent, Args&&... args)
 {
-	static_assert(sizeof(T) <= SJob::UserdataSize, "Userdata is too big !");
+	static_assert(sizeof(T) <= Job::userdata_size, "Userdata <= SJob::userdata_size (too large)");
 
-	const SJob& Job = CreateJob(InType, InJobFunc, InParent);
-	new (Job.GetUserdata<void*>()) T(std::forward<Args>(InArgs)...);
-	return Job;
+	const Job& job = create_job(type, job_func, parent);
+	new (job.get_userdata<void*>()) T(std::forward<Args>(args)...);
+	return job;
 }
 
 /**
@@ -59,39 +59,47 @@ template<typename T, typename... Args>
  * Lambda parameters must contains const SJob& InJob
  */
 template<typename Lambda>
-[[nodiscard]] const SJob& CreateJob(EJobType InType, Lambda InLambda)
+[[nodiscard]] const Job& create_job(JobType type, Lambda in_lambda)
 {
-	const SJob& Job = CreateJobUserdata<Lambda>(InType,
-		[](const SJob& InJob)
+	const Job& job = create_job_with_userdata<Lambda>(type,
+		[](const Job& job)
 		{
-			Lambda& InLambda = *InJob.GetUserdata<Lambda>();
-			InLambda(InJob);
-			InLambda.~Lambda();
+			Lambda& lambda = *job.get_userdata<Lambda>();
+			lambda(job);
+			lambda.~Lambda();
 		},
-		std::forward<Lambda>(InLambda));
-	return Job;
+		std::forward<Lambda>(in_lambda));
+	return job;
 }
 
 template<typename Lambda>
-[[nodiscard]] const SJob& CreateChildJob(EJobType InType, SJob& InParent, Lambda InLambda)
+[[nodiscard]] const Job& create_child_job(JobType type, Job& parent, Lambda in_lambda)
 {
-	const SJob& Job = CreateChildJobUserdata<Lambda>(InType,
-		[](const SJob& InJob)
-	{
-		Lambda& InLambda = *InJob.GetUserdata<Lambda>();
-		InLambda(InJob);
-		InLambda.~Lambda();
-	}, 
-	InParent,
-	std::forward<Lambda>(InLambda));
-	return Job;
+	const Job& job = create_child_job_with_userdata<Lambda>(type,
+		[](const Job& job)
+		{
+			Lambda& lambda = *job.get_userdata<Lambda>();
+			lambda(job);
+			lambda.~Lambda();
+		}, 
+		parent,
+		std::forward<Lambda>(in_lambda));
+	return job;
 }
 
-CORE_API CWorkerThread& GetWorkerByThreadId(const std::thread::id& InThreadId);
-CORE_API CWorkerThread& GetWorkerByIdx(const size_t& InIdx);
-CORE_API CWorkerThread& GetWorker();
-CORE_API size_t GetWorkerIdx();
-CORE_API size_t GetWorkerCount();
-ZE_FORCEINLINE size_t GetMainWorkerIdx() { return 0; }
+CORE_API WorkerThread& get_worker_by_thread_id(const std::thread::id& InThreadId);
+CORE_API WorkerThread& get_worker_by_idx(const size_t& InIdx);
+
+/*
+ * Get the worker thread of the current thread
+ */
+CORE_API WorkerThread& get_worker();
+
+/**
+ * Get the worker thread index of the current thread
+ */
+CORE_API size_t get_worker_idx();
+CORE_API size_t get_worker_count();
+ZE_FORCEINLINE size_t get_main_worker_idx() { return 0; }
 
 }

@@ -41,7 +41,7 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice& InDevice,
 
 	if(!Device.GetPhysicalDevice().getSurfaceSupportKHR(
 		Device.GetPresentQueue()->GetFamilyIndex(), Surface).value)
-		ZE::Logger::Fatal("Selected present queue doesn't support presentation !");
+		ze::logger::fatal("Selected present queue doesn't support presentation !");
 
 	/**
 	 * Create swapchain handle
@@ -66,7 +66,7 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice& InDevice,
 		InOldSwapchain);
 	Swapchain = Device.GetDevice().createSwapchainKHRUnique(CreateInfos).value;
 	if (!Swapchain)
-		ZE::Logger::Fatal("Failed to create swap chain");
+		ze::logger::fatal("Failed to create swap chain");
 
 	/** Get swapchain images */
 	Images = Device.GetDevice().getSwapchainImagesKHR(*Swapchain).value;
@@ -90,7 +90,7 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice& InDevice,
 			Images[i]);
 
 		if(!ImageViews[i])
-			ZE::Logger::Fatal("Failed to create swap chain image view for image {}", i);
+			ze::logger::fatal("Failed to create swap chain image view for image {}", i);
 
 		ImageViews[i]->SetName("Swapchain Backbuffer");
 	}
@@ -101,11 +101,11 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice& InDevice,
 
 		ImageAcquired = Device.GetDevice().createSemaphoreUnique(CreateInfo).value;
 		if (!ImageAcquired)
-			ZE::Logger::Fatal("Failed to create image acquired semaphore");
+			ze::logger::fatal("Failed to create image acquired semaphore");
 
 		RenderFinished = Device.GetDevice().createSemaphoreUnique(CreateInfo).value;
 		if (!RenderFinished)
-			ZE::Logger::Fatal("Failed to create render finished semaphore");
+			ze::logger::fatal("Failed to create render finished semaphore");
 	}
 }
 

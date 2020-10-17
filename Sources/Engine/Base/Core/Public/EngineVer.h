@@ -3,39 +3,39 @@
 #include "Serialization/Archive.h"
 #include <fmt/format.h>
 
-namespace ZE
+namespace ze
 {
 
-struct SZEVersion
+struct ZEVersion
 {
-	uint8_t Major;
-	uint8_t Minor;
-	uint8_t Patch;
+	uint8_t major;
+	uint8_t minor;
+	uint8_t patch;
 
-	constexpr SZEVersion() : Major(0), Minor(0), Patch(0) {}
-	constexpr SZEVersion(const uint8_t& InMajor,
-		const uint8_t& InMinor,
-		const uint8_t& InPatch) : Major(InMajor),
-		Minor(InMinor), Patch(InPatch) {}
+	constexpr ZEVersion() : major(0), minor(0), patch(0) {}
+	constexpr ZEVersion(const uint8_t& in_major,
+		const uint8_t& in_minor,
+		const uint8_t& in_patch) : major(in_major),
+		minor(in_minor), patch(in_patch) {}
 
-	bool IsCompatibleWith(const SZEVersion& InOther) const
+	bool is_compatible_with(const ZEVersion& other) const
 	{
-		return Minor >= InOther.Minor &&
-			Patch >= InOther.Patch;
+		return minor >= other.minor &&
+			patch >= other.patch;
 	}
 
 	template<typename Archive>
-	ZE_FORCEINLINE void Serialize(Archive& InArchive)
+	ZE_FORCEINLINE void serialize(Archive& archive)
 	{
-		InArchive <=> Major;
-		InArchive <=> Minor;
-		InArchive <=> Patch;
+		archive <=> major;
+		archive <=> minor;
+		archive <=> patch;
 	}
 };
 
-constexpr SZEVersion GetZEVersion() 
+constexpr ZEVersion get_version() 
 {
-	return SZEVersion(0, 1, 0);
+	return ZEVersion(0, 1, 0);
 }
 
 }

@@ -2,13 +2,13 @@
 
 #include "Flags/Flags.h"
 
-namespace ZE::Logger
+namespace ze::logger
 {
 
 /**
  * Severity flag bits
  */
-enum class ESeverityFlagBits
+enum class SeverityFlagBits
 {
 	None = 0,
 
@@ -20,7 +20,7 @@ enum class ESeverityFlagBits
 
 	All = Verbose | Info | Warn | Error | Fatal,
 };
-ENABLE_FLAG_ENUMS(ESeverityFlagBits, ESeverityFlags);
+ENABLE_FLAG_ENUMS(SeverityFlagBits, SeverityFlags);
 
 
 }

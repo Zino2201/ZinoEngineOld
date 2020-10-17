@@ -2,7 +2,7 @@
 
 #include "Pipeline.h"
 
-namespace ZE
+namespace ze
 {
 
 /**

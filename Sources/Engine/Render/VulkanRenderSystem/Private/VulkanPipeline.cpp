@@ -20,7 +20,7 @@ CVulkanGraphicsPipeline* CVulkanPipelineManager::GetOrCreateGraphicsPipeline(
 	if(Result != GraphicsPipelines.end())
 		return Result->second.get();
 
-	TOwnerPtr<CVulkanGraphicsPipeline> Pipeline = new CVulkanGraphicsPipeline(
+	OwnerPtr<CVulkanGraphicsPipeline> Pipeline = new CVulkanGraphicsPipeline(
 		Device, InPipeline, InRenderPass);
 	
 	GraphicsPipelines.insert({ Entry, std::unique_ptr<CVulkanGraphicsPipeline>(Pipeline) });
@@ -43,25 +43,25 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice& InDevice,
 
 	for(const auto& Stage : InGraphicsPipeline.ShaderStages)
 	{
-		for (const auto& Parameter : Stage.Shader->GetCreateInfo().ParameterMap.GetParameters())
+		for (const auto& Parameter : Stage.Shader->GetCreateInfo().ParameterMap.get_parameters())
 		{
-			uint64_t HashParameter = SShaderParameterHash()(Parameter);
+			uint64_t HashParameter = ShaderParameterHash()(Parameter);
 
 			if (AddedParametersHash.count(HashParameter) == 0)
 			{
-				Bindings[Parameter.Set].emplace_back(
-					Parameter.Binding,
-					VulkanUtil::ShaderParameterTypeToVkDescriptorType(Parameter.Type),
-					Parameter.Count,
+				Bindings[Parameter.set].emplace_back(
+					Parameter.binding,
+					VulkanUtil::ShaderParameterTypeToVkDescriptorType(Parameter.type),
+					Parameter.count,
 					VulkanUtil::ShaderStageToVkShaderStage(Stage.Stage));
 
 				AddedParametersHash.insert(HashParameter);
 			}
 			else
 			{
-				for (auto& Binding : Bindings[Parameter.Set])
+				for (auto& Binding : Bindings[Parameter.set])
 				{
-					if(Binding.binding == Parameter.Binding)
+					if(Binding.binding == Parameter.binding)
 					{
 						Binding.stageFlags |= VulkanUtil::ShaderStageToVkShaderStage(Stage.Stage);
 						break;
@@ -254,24 +254,24 @@ CVulkanGraphicsPipeline::CVulkanGraphicsPipeline(CVulkanDevice& InDevice,
 	Pipeline = Device.GetDevice().createGraphicsPipelineUnique(vk::PipelineCache(),
 		CreateInfo).value;
 	if (!Pipeline)
-		ZE::Logger::Fatal("Failed to create pipeline");
+		ze::logger::fatal("Failed to create pipeline");
 }
 
 vk::DescriptorType VulkanUtil::ShaderParameterTypeToVkDescriptorType(
-	const EShaderParameterType& InType)
+	const ShaderParameterType& InType)
 {
 	switch(InType)
 	{
 	default:
-	case EShaderParameterType::UniformBuffer:
+	case ShaderParameterType::UniformBuffer:
 		return vk::DescriptorType::eUniformBuffer;
-	case EShaderParameterType::CombinedImageSampler:
+	case ShaderParameterType::CombinedImageSampler:
 		return vk::DescriptorType::eCombinedImageSampler;
-	case EShaderParameterType::Sampler:
+	case ShaderParameterType::Sampler:
 		return vk::DescriptorType::eSampler;
-	case EShaderParameterType::Texture:
+	case ShaderParameterType::Texture:
 		return vk::DescriptorType::eSampledImage;
-	case EShaderParameterType::StorageBuffer:
+	case ShaderParameterType::StorageBuffer:
 		return vk::DescriptorType::eStorageBuffer;
 	}
 }

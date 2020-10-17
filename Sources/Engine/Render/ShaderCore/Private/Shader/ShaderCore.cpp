@@ -1,8 +1,8 @@
 #include "Shader/ShaderCore.h"
 
-namespace ZE
+namespace ze
 {
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, ShaderCore);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, ShaderCore);
 
 }

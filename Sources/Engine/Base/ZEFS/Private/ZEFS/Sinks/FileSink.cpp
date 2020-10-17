@@ -1,19 +1,19 @@
 #include "EngineCore.h"
 #include "ZEFS/Sinks/FileSink.h"
 
-namespace ZE::FileSystem
+namespace ze::filesystem
 {
 
-CFileSink::CFileSink(const std::string& InName,
-	const std::string& InFileName) : 
-	CSink(InName), FileStream(InFileName) {}
+FileSink::FileSink(const std::string& in_name,
+	const std::string& in_filename) : 
+	Sink(in_name), stream(in_filename) {}
 
-void CFileSink::Log(const ZE::Logger::SMessage& InMessage)
+void FileSink::log(const logger::Message& message)
 {
-	std::string Msg = Format(InMessage);
+	std::string msg = format(message);
 
-	FileStream << Msg;
-	FileStream.flush();
+	stream << msg;
+	stream.flush();
 }
 
 }

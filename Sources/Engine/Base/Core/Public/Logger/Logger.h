@@ -15,97 +15,97 @@
 /**
  * Thread-safe logging system
  */
-namespace ZE::Logger
+namespace ze::logger
 {
 
-class CSink;
+class Sink;
 
 /**
  * A logger message
  */
-struct SMessage
+struct Message
 {
-	std::chrono::system_clock::time_point Time;
-	std::thread::id ThreadId;
-	ESeverityFlagBits Severity;
-	std::string Message;
+	std::chrono::system_clock::time_point time;
+	std::thread::id thread_id;
+	SeverityFlagBits severity;
+	std::string message;
 
-	SMessage(const std::chrono::system_clock::time_point& InTime,
-		const std::thread::id& InId,
-		const ESeverityFlagBits& InSeverity,
-		const std::string& InMessage) : Time(InTime),
-		ThreadId(InId), Severity(InSeverity), Message(InMessage) {}
+	Message(const std::chrono::system_clock::time_point& in_time,
+		const std::thread::id& in_id,
+		const SeverityFlagBits& in_severity,
+		const std::string& in_message) : time(in_time),
+		thread_id(in_id), severity(in_severity), message(in_message) {}
 };
 
 /**
  * Print the message to the log
  */
-CORE_API void Log(ESeverityFlagBits InSeverity, const std::string& InMessage);
+CORE_API void log(SeverityFlagBits severity, const std::string& message);
 
 /**
  * Add a new sink
  */
-CORE_API void AddSink(std::unique_ptr<CSink>&& InSink);
+CORE_API void add_sink(std::unique_ptr<Sink>&& sink);
 
 /**
  * Utils functions for logging
  */
 
 template<typename... Args>
-inline void Logf(ESeverityFlagBits InSeverity, std::string_view InFormat, Args&&... InArgs)
+ZE_FORCEINLINE void logf(SeverityFlagBits severity, std::string_view format, Args&&... args)
 {
-	Log(InSeverity, fmt::format(InFormat, std::forward<Args>(InArgs)...));
+	log(severity, fmt::format(format, std::forward<Args>(args)...));
 }
 
 template<typename... Args>
-inline void Verbose(const std::string_view& InFormat, Args&&... InArgs)
+ZE_FORCEINLINE void verbose(const std::string_view& format, Args&&... args)
 {
 #if ZE_FEATURE(DEVELOPMENT)
-	Logf(ESeverityFlagBits::Verbose, InFormat, std::forward<Args>(InArgs)...);
+	logf(SeverityFlagBits::Verbose, format, std::forward<Args>(args)...);
 #endif
 }
 
 template<typename... Args>
-inline void Info(const std::string_view& InFormat, Args&&... InArgs)
+ZE_FORCEINLINE void info(const std::string_view& format, Args&&... args)
 {
-	Logf(ESeverityFlagBits::Info, InFormat, std::forward<Args>(InArgs)...);
+	logf(SeverityFlagBits::Info, format, std::forward<Args>(args)...);
 }
 
 template<typename... Args>
-inline void Warn(const std::string_view& InFormat, Args&&... InArgs)
+ZE_FORCEINLINE void warn(const std::string_view& format, Args&&... args)
 {
-	Logf(ESeverityFlagBits::Warn, InFormat, std::forward<Args>(InArgs)...);
+	logf(SeverityFlagBits::Warn, format, std::forward<Args>(args)...);
 }
 
 template<typename... Args>
-inline void Error(const std::string_view& InFormat, Args&&... InArgs)
+ZE_FORCEINLINE void error(const std::string_view& format, Args&&... args)
 {
-	Logf(ESeverityFlagBits::Error, InFormat, std::forward<Args>(InArgs)...);
+	logf(SeverityFlagBits::Error, format, std::forward<Args>(args)...);
 }
 
 template<typename... Args>
-inline void Fatal(const std::string_view& InFormat, Args&&... InArgs)
+ZE_FORCEINLINE void fatal(const std::string_view& format, Args&&... args)
 {
-	Logf(ESeverityFlagBits::Fatal, InFormat, std::forward<Args>(InArgs)...);
+	logf(SeverityFlagBits::Fatal, format, std::forward<Args>(args)...);
 }
 
 /**
  * Get severity flag bit as string
  */
-inline std::string_view GetSeverityAsString(const ESeverityFlagBits& InFlagBits)
+inline std::string_view get_severity_as_string(const SeverityFlagBits& flag_bit)
 {
-	switch(InFlagBits)
+	switch(flag_bit)
 	{
-	case ESeverityFlagBits::Verbose:
+	case SeverityFlagBits::Verbose:
 		return "VERBOSE";
 	default:
-	case ESeverityFlagBits::Info:
+	case SeverityFlagBits::Info:
 		return "INFO";
-	case ESeverityFlagBits::Warn:
+	case SeverityFlagBits::Warn:
 		return "WARN";
-	case ESeverityFlagBits::Error:
+	case SeverityFlagBits::Error:
 		return "ERROR";
-	case ESeverityFlagBits::Fatal:
+	case SeverityFlagBits::Fatal:
 		return "FATAL";
 	}
 }

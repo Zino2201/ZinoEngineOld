@@ -3,47 +3,34 @@
 #include "ZEFS/FileStream.h"
 #include <filesystem>
 
-namespace ZE::FileSystem
+namespace ze::filesystem
 {
 
-std::string ReadFileToString(const std::string_view& InPath)
+std::string read_file_to_string(const std::string_view& path)
 {
-	/** Start at the end to get the file size */
-	CIFileStream FS(InPath, EFileReadFlagBits::End);
-	if (!FS)
-		return "";
-
-	int64_t Size = FS.tellg();
-
-	/** Go back to beginning */
-	FS.seekg(0, std::ios::beg);
-
-	std::vector<uint8_t> Array;
-	Array.resize(Size / sizeof(uint8_t));
-
-	FS.read(reinterpret_cast<char*>(Array.data()), Size);
+	std::vector<uint8_t> Array = read_file_to_vector(path);
 
 	return std::string(Array.begin(), Array.end());
 }
 
-std::vector<uint8_t> ReadFileToVector(const std::string_view& InPath)
+std::vector<uint8_t> read_file_to_vector(const std::string_view& path)
 {
 	/** Start at the end to get the file size */
-	CIFileStream FS(InPath, EFileReadFlagBits::End);
-	if (!FS)
+	FileIStream fs(path, FileReadFlagBits::End);
+	if (!fs)
 		return {};
 
-	int64_t Size = FS.tellg();
+	int64_t size = fs.tellg();
 
 	/** Go back to beginning */
-	FS.seekg(0, std::ios::beg);
+	fs.seekg(0, std::ios::beg);
 
-	std::vector<uint8_t> Array;
-	Array.resize(Size / sizeof(uint8_t));
+	std::vector<uint8_t> array;
+	array.resize(size / sizeof(uint8_t));
 
-	FS.read(reinterpret_cast<char*>(Array.data()), Size);
+	fs.read(reinterpret_cast<char*>(array.data()), size);
 
-	return Array;
+	return array;
 }
 
 }

@@ -12,7 +12,7 @@
 #include "Reflection/ArchivesFwd.h"
 #include "Assets/Asset.h"
 
-namespace ZE::Editor::AssetUtils
+namespace ze::editor::assetutils
 {
 	
 TOnAssetImported OnAssetImported;	
@@ -43,24 +43,24 @@ void ImportAssetsDialog(const std::filesystem::path& InPath,
 	{
 		std::filesystem::path File = FileBuf;
 		SetCurrentDirectory(CWD);
-		OnAssetImported.Execute(File, InTarget);
+		OnAssetImported.execute(File, InTarget);
 	}
 
 	SetCurrentDirectory(CWD);
 #endif
 }
 
-void SaveAsset(ZE::CAsset& InAsset, const std::filesystem::path& InPath,
+void SaveAsset(ze::CAsset& InAsset, const std::filesystem::path& InPath,
 	const std::string& InName)
 {
 	std::string FinalName = InName + ".zasset";
-	FileSystem::COFileStream Stream(InPath / FinalName,
-		FileSystem::EFileWriteFlagBits::Binary |
-		FileSystem::EFileWriteFlagBits::ReplaceExisting);
+	ze::filesystem::FileOStream Stream(InPath / FinalName,
+		ze::filesystem::FileWriteFlagBits::Binary |
+		ze::filesystem::FileWriteFlagBits::ReplaceExisting);
 	if (!Stream)
 		return;
 
-	Serialization::COBinaryArchive Archive(Stream);
+	//Serialization::COBinaryArchive Archive(Stream);
 	//Archive <=> MakeAssetHeader(InAsset.GetClass()->GetName());
 	//ze::reflection::serialization::serialize(Archive, InAsset);
 }

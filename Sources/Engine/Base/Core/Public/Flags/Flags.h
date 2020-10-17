@@ -2,100 +2,100 @@
 
 #include <type_traits>
 
-namespace ZE
+namespace ze
 {
 
 template<typename T>
 	requires std::is_enum_v<T>
-struct TFlags
+struct Flags
 {
 public:
 	using MaskType = typename std::underlying_type<T>::type;
 
-    constexpr TFlags() : Mask(0) {}
-    constexpr TFlags(const T& InBit) : Mask(static_cast<MaskType>(InBit)) {}
-    constexpr explicit TFlags(const MaskType& InMask) : Mask(InMask) {}
+    constexpr Flags() : mask (0) {}
+    constexpr Flags(const T& bit) : mask(static_cast<MaskType>(bit)) {}
+    constexpr explicit Flags(const MaskType& in_mask) : mask(in_mask) {}
 
 	/** Bitwise operators */
-    friend constexpr TFlags<T> operator&(const TFlags<T>& InLeft, const TFlags<T>& InRight) 
+    friend constexpr Flags<T> operator&(const Flags<T>& left, const Flags<T>& right) 
     {
-        return TFlags<T>(InLeft.Mask & InRight.Mask);
+        return Flags<T>(left.mask & right.mask);
     }
 
-	friend constexpr TFlags<T> operator|(const TFlags<T>& InLeft, const TFlags<T>& InRight)
+	friend constexpr Flags<T> operator|(const Flags<T>& left, const Flags<T>& right)
 	{
-		return TFlags<T>(InLeft.Mask| InRight.Mask);
+		return Flags<T>(left.mask | right.mask);
 	}
 
-	friend constexpr TFlags<T> operator^(const TFlags<T>& InLeft, const TFlags<T>& InRight)
+	friend constexpr Flags<T> operator^(const Flags<T>& left, const Flags<T>& right)
 	{
-		return TFlags<T>(InLeft.Mask ^ InRight.Mask);
+		return Flags<T>(left.mask ^ right.mask);
 	}
 
-	constexpr TFlags<T> operator~() const
+	constexpr Flags<T> operator~() const
 	{
-		return TFlags<T>(~Mask);
+		return Flags<T>(~mask);
 	}
 	
 	/** Compare operators */
-	friend constexpr bool operator==(const TFlags<T>& InLeft, const TFlags<T>& InRight)
+	friend constexpr bool operator==(const Flags<T>& left, const Flags<T>& right)
 	{
-		return InLeft.Mask == InRight.Mask;
+		return left.mask == right.mask;
 	}
 
-	friend constexpr bool operator!=(const TFlags<T>& InLeft, const TFlags<T>& InRight)
+	friend constexpr bool operator!=(const Flags<T>& left, const Flags<T>& right)
 	{
-		return InLeft.Mask != InRight.Mask;
+		return left.mask != right.mask;
 	}
 
 	/** Assignements operators */
-	constexpr TFlags<T> operator=(const TFlags<T>& InOther)
+	constexpr Flags<T> operator=(const Flags<T>& other)
 	{
-		Mask = InOther.Mask;
+		mask = other.mask;
 		return *this;
 	}
 
-	constexpr TFlags<T> operator|=(const TFlags<T> & InOther)
+	constexpr Flags<T> operator|=(const Flags<T> & other)
 	{
-		Mask |= InOther.Mask;
+		mask |= other.mask;
 		return *this;
 	}
 
-	constexpr TFlags<T> operator&=(const TFlags<T> & InOther)
+	constexpr Flags<T> operator&=(const Flags<T> & other)
 	{
-		Mask &= InOther.Mask;
+		mask &= other.mask;
 		return *this;
 	}
 
-	constexpr TFlags<T> operator^=(const TFlags<T> & InOther)
+	constexpr Flags<T> operator^=(const Flags<T> & other)
 	{
-		Mask ^= InOther.Mask;
+		mask ^= other.mask;
 		return *this;
 	}
 
 	explicit constexpr operator MaskType() const
 	{
-		return Mask;
+		return mask;
 	}
 
-	constexpr explicit operator bool() const { return Mask != 0; }
+	constexpr explicit operator bool() const { return mask != 0; }
 private:
-	MaskType Mask;
+	MaskType mask;
 };
 
 #define ENABLE_FLAG_ENUMS(EnumType, FlagsType) \
-	constexpr auto operator&(EnumType InLeft, EnumType InRight) \
+	constexpr auto operator&(EnumType left, EnumType right) \
 	{ \
-		return ZE::TFlags<EnumType>(InLeft) & InRight; \
+		return ze::Flags<EnumType>(left) & right; \
 	} \
-	constexpr auto operator|(EnumType InLeft, EnumType InRight) \
+	constexpr auto operator|(EnumType left, EnumType right) \
 	{ \
-		return ZE::TFlags<EnumType>(InLeft) | InRight; \
+		return ze::Flags<EnumType>(left) | right; \
 	} \
-	constexpr auto operator^(EnumType InLeft, EnumType InRight) \
+	constexpr auto operator^(EnumType left, EnumType right) \
 	{ \
-		return ZE::TFlags<EnumType>(InLeft) ^ InRight; \
+		return ze::Flags<EnumType>(left) ^ right; \
 	} \
-	using FlagsType = ZE::TFlags<EnumType>;
+	using FlagsType = ze::Flags<EnumType>;
 
 }

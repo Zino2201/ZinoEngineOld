@@ -1,4 +1,4 @@
 #include "EngineCore.h"
 #include "Module/Module.h"
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, Core)
+ZE_DEFINE_MODULE(ze::module::DefaultModule, Core)

@@ -6,7 +6,7 @@
 #include "Render/RenderSystem/Resources/Sampler.h"
 #include "Render/UniformBuffer.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class CBarrelDistortionVS : public CBasicShader
@@ -14,7 +14,7 @@ class CBarrelDistortionVS : public CBasicShader
 	DECLARE_SHADER(CBarrelDistortionVS, CBasicShader)
 
 public:
-	CBarrelDistortionVS(const CShaderType* InType, const SShaderCompilerOutput& InOutput) 
+	CBarrelDistortionVS(const CShaderType* InType, const gfx::shaders::ShaderCompilerOutput& InOutput) 
 		: CBasicShader(InType, InOutput) {}
 };
 
@@ -23,15 +23,15 @@ class CBarrelDistortionFS : public CBasicShader
 	DECLARE_SHADER(CBarrelDistortionFS, CBasicShader)
 
 public:
-	CBarrelDistortionFS(const CShaderType* InType, const SShaderCompilerOutput& InOutput) 
+	CBarrelDistortionFS(const CShaderType* InType, const gfx::shaders::ShaderCompilerOutput& InOutput) 
 		: CBasicShader(InType, InOutput) {}
 };
 
 IMPLEMENT_SHADER(CBarrelDistortionVS, "BarrelDistortionVS", 
-	"PostProcess/BarrelDistortionVS.hlsl", "Main", EShaderStage::Vertex);
+	"PostProcess/BarrelDistortionVS.hlsl", "Main", ShaderStage::Vertex);
 
 IMPLEMENT_SHADER(CBarrelDistortionFS, "BarrelDistortionFS",
-	"PostProcess/BarrelDistortionFS.hlsl", "Main", EShaderStage::Fragment);
+	"PostProcess/BarrelDistortionFS.hlsl", "Main", ShaderStage::Fragment);
 
 const SBarrelDistortionData& AddBarrelDistortionPass(CFrameGraph& InFrameGraph,
 	const RenderPassResourceID& InColor,
@@ -56,10 +56,10 @@ const SBarrelDistortionData& AddBarrelDistortionPass(CFrameGraph& InFrameGraph,
 			InContext->SetShaderTexture(0, 0, InFrameGraph.GetTexture(InData.Color));
 			InContext->SetShaderSampler(0, 1, TEST_SAMPLER);
 		},
-		SRSPipelineShaderStage(EShaderStage::Vertex,
+		SRSPipelineShaderStage(ShaderStage::Vertex,
 			CBasicShaderManager::Get().GetShader("BarrelDistortionVS")->GetShader(),
 			"Main"),
-		SRSPipelineShaderStage(EShaderStage::Fragment,
+		SRSPipelineShaderStage(ShaderStage::Fragment,
 			CBasicShaderManager::Get().GetShader("BarrelDistortionFS")->GetShader(),
 			"Main"));
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 class CMapEditor;

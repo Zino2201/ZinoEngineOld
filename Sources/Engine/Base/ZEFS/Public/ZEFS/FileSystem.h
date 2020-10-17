@@ -4,13 +4,13 @@
 #include "Delegates/Delegate.h"
 #include <filesystem>
 
-namespace ZE::FileSystem
+namespace ze::filesystem
 {
 
 /**
  * File open flags
  */
-enum class EFileReadFlagBits
+enum class FileReadFlagBits
 {
 	None = 0,
 
@@ -20,55 +20,55 @@ enum class EFileReadFlagBits
 	/** Place the cursor at the end */
 	End = 1 << 1,
 };
-ENABLE_FLAG_ENUMS(EFileReadFlagBits, EFileReadFlags);
+ENABLE_FLAG_ENUMS(FileReadFlagBits, FileReadFlags);
 
 /**
  * File write flags
  */
-enum class EFileWriteFlagBits
+enum class FileWriteFlagBits
 {
 	None = 0,
 
 	ReplaceExisting = 1 << 0,
 	Binary = 1 << 1,
 };
-ENABLE_FLAG_ENUMS(EFileWriteFlagBits, EFileWriteFlags);
+ENABLE_FLAG_ENUMS(FileWriteFlagBits, FileWriteFlags);
 
 /** Iteration related types */
 
-enum class EIterateDirectoriesFlagBits
+enum class IterateDirectoriesFlagBits
 {
 	None = 0,
 
 	Recursive = 1 << 0,
 };
-ENABLE_FLAG_ENUMS(EIterateDirectoriesFlagBits, EIterateDirectoriesFlags);
+ENABLE_FLAG_ENUMS(IterateDirectoriesFlagBits, IterateDirectoriesFlags);
 
-struct SDirectoryEntry
+struct DirectoryEntry
 {
-	std::filesystem::path Path;
+	std::filesystem::path path;
 
-	SDirectoryEntry(const std::filesystem::path& InPath) : Path(InPath) {}
+	DirectoryEntry(const std::filesystem::path& in_path) : path(in_path) {}
 };
-using TDirectoryIterator = TDelegate<void, const SDirectoryEntry&>;
+using DirectoryIterator = Delegate<void, const DirectoryEntry&>;
 
 /**
  * Interface for a FileSystem
  */
-class ZEFS_API IFileSystem
+class ZEFS_API FileSystem
 {
 public:
-	IFileSystem(const std::string& InAlias,
-		const uint8_t& InPriority) {}
-	virtual ~IFileSystem() = default;
+	FileSystem(const std::string& in_alias,
+		const uint8_t& in_priority) {}
+	virtual ~FileSystem() = default;
 
-	virtual TOwnerPtr<std::streambuf> Read(const std::filesystem::path& InPath, const EFileReadFlags& InFlags) = 0;
-	virtual TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath, const EFileWriteFlags& InFlags) = 0;
-	virtual bool IterateDirectories(const std::filesystem::path& InPath,
-		const TDirectoryIterator& InIt, const EIterateDirectoriesFlags& InFlags) = 0;
-	virtual bool Exists(const std::filesystem::path& InPath) = 0;
-	virtual bool IsDirectory(const std::filesystem::path& InPath) = 0;
-	virtual bool IsReadOnly() const = 0;
+	virtual OwnerPtr<std::streambuf> read(const std::filesystem::path& path, const FileReadFlags& flags) = 0;
+	virtual OwnerPtr<std::streambuf> write(const std::filesystem::path& path, const FileWriteFlags& flags) = 0;
+	virtual bool iterate_directories(const std::filesystem::path& path,
+		const DirectoryIterator& iterator, const IterateDirectoriesFlags& flags) = 0;
+	virtual bool exists(const std::filesystem::path& path) = 0;
+	virtual bool is_directory(const std::filesystem::path& path) = 0;
+	virtual bool is_read_only() const = 0;
 };
 
 }

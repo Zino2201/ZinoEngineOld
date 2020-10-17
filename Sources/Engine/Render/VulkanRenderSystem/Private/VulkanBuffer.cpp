@@ -25,7 +25,7 @@ CVulkanInternalStagingBuffer::CVulkanInternalStagingBuffer(
 		reinterpret_cast<VkBuffer*>(&Buffer),
 		&Allocation,
 		&AllocationInfo) != VK_SUCCESS)
-		ZE::Logger::Fatal("Failed to create Vulkan internal staging buffer");
+		ze::logger::fatal("Failed to create Vulkan internal staging buffer");
 }
 
 CVulkanInternalStagingBuffer::~CVulkanInternalStagingBuffer()
@@ -80,7 +80,7 @@ CVulkanBuffer::CVulkanBuffer(
 		&AllocationInfo));
 
 	if (Result != vk::Result::eSuccess)
-		ZE::Logger::Fatal("Failed to create Vulkan buffer: {}",
+		ze::logger::fatal("Failed to create Vulkan buffer: {}",
 			vk::to_string(Result).c_str());
 }
 
@@ -116,7 +116,8 @@ void CVulkanBuffer::SetName(const char* InName)
 
 void* CVulkanBuffer::Map(ERSBufferMapMode InMapMode)
 {
-	must(!CurrentStagingBuffer.StagingBuffer);
+	ZE_CHECK(!CurrentStagingBuffer.StagingBuffer);
+
 	/**
 	 * If we are reading only, wait all operations
 	 * Else, create a staging buffer to copy at the beginning of the new frame
@@ -206,7 +207,7 @@ void* CVulkanBuffer::Map(ERSBufferMapMode InMapMode)
 
 void CVulkanBuffer::Unmap()
 {
-	must(CurrentStagingBuffer.StagingBuffer);
+	ZE_CHECK(CurrentStagingBuffer.StagingBuffer);
 
 	const vk::CommandBuffer& CmdBuffer =
 		Device.GetContext()->GetCmdBufferMgr().GetMemoryCmdBuffer()->GetCommandBuffer();
@@ -234,7 +235,7 @@ void CVulkanBuffer::Unmap()
 	CurrentStagingBuffer.StagingBuffer = nullptr;
 }
 
-TOwnerPtr<CRSBuffer> CVulkanRenderSystem::CreateBuffer(
+OwnerPtr<CRSBuffer> CVulkanRenderSystem::CreateBuffer(
 	const SRSBufferCreateInfo& InCreateInfo) const
 {
 	return new CVulkanBuffer(

@@ -14,7 +14,7 @@ namespace ze::reflection { class Class; }
  * Contains a path tree with a list of all assets
  * Allow retrieving informations about assets without loading them
  */
-namespace ZE::AssetDatabase
+namespace ze::assetdatabase
 {
 
 /**
@@ -22,38 +22,37 @@ namespace ZE::AssetDatabase
  * This data is available in every configuration (with Editor/no Editor)
  *	as this data is gathered from the zasset header and/or file metadata
  */
-struct SAssetPrimitiveData
+struct AssetPrimitiveData
 {
 	/** Asset name */
-	std::string Name;
+	std::string name;
 	
 	/** Asset class */
-	const ze::reflection::Class* Class;
+	const ze::reflection::Class* asset_class;
 
 	/** Size of the asset (in bytes) */
-	uint64_t Size;
+	uint64_t size;
 
 	/** ZE version this asset was saved */
-	SZEVersion EngineVer;
+	ZEVersion engine_ver;
 
-	std::filesystem::path Path;
+	std::filesystem::path path;
 
-	SAssetPrimitiveData() : Class(nullptr), Size(0) {}
+	AssetPrimitiveData() : asset_class(nullptr), size(0) {}
 };
 
 /**
  * Asset scan mode
  */
-enum class EAssetScanMode
+enum class AssetScanMode
 {
-	/** Scan in another thread */
 	Async,
 	Sync
 };
 
 /** Delegates */
-using TOnAssetRegistered = TMulticastDelegateNoRet<const SAssetPrimitiveData&>;
-using TOnAssetScanCompleted = TMulticastDelegateNoRet<>;
+using OnAssetRegistered = MulticastDelegateNoRet<const AssetPrimitiveData&>;
+using OnAssetScanCompleted = MulticastDelegateNoRet<>;
 
 /** Functions */
 
@@ -61,24 +60,24 @@ using TOnAssetScanCompleted = TMulticastDelegateNoRet<>;
  * Scan a directory or file for asset(s)
  * By default, this scan is asynchronous 
  */
-ASSETDATABASE_API void Scan(const std::filesystem::path& InPath, const EAssetScanMode& InScanMode = EAssetScanMode::Async);
+ASSETDATABASE_API void scan(const std::filesystem::path& path, const AssetScanMode& scanmode = AssetScanMode::Async);
 
 /**
  * Get sub directories of the specified directory in the asset database path tree
  */
-ASSETDATABASE_API std::vector<std::filesystem::path> GetSubDirectories(const std::filesystem::path& InRoot);
+ASSETDATABASE_API std::vector<std::filesystem::path> get_subdirectories(const std::filesystem::path& rppt);
 
 /**
  * Get assets contained in this directory
  */
-ASSETDATABASE_API std::vector<SAssetPrimitiveData> GetAssets(const std::filesystem::path& InDirectory);
+ASSETDATABASE_API std::vector<AssetPrimitiveData> get_assets(const std::filesystem::path& dir);
 
 /**
  * Get the specified asset primitive data
  */
-ASSETDATABASE_API std::optional<SAssetPrimitiveData> GetAssetPrimitiveData(const std::filesystem::path& InPath);
+ASSETDATABASE_API std::optional<AssetPrimitiveData> get_asset_primitive_data(const std::filesystem::path& path);
 
-ASSETDATABASE_API inline TOnAssetRegistered& GetOnAssetRegistered();
-ASSETDATABASE_API inline TOnAssetScanCompleted& GetOnAssetScanCompleted();
+ASSETDATABASE_API inline OnAssetRegistered& get_on_asset_registered();
+ASSETDATABASE_API inline OnAssetScanCompleted& get_on_asset_scan_completed();
 
 }

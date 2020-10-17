@@ -2,67 +2,79 @@
 
 #include "MathCore.h"
 
-namespace ZE::Math
+namespace ze::maths
 {
 
 /**
  * Base template class for a 2D vector
  */
 template<typename T>
-struct TVector2
+	requires (std::is_integral_v<T> || std::is_floating_point_v<T>)
+struct Vector2
 {
-	T X;
-	T Y;
+	T x;
+	T y;
 
-	TVector2() : X(0), Y(0) {}
-	TVector2(const T& InX) : X(InX), Y(InX) {}
-	TVector2(const T& InX, const T& InY) : X(InX), Y(InY) {}
+	Vector2() : x(0), y(0) {}
+	Vector2(const T& in_val) : x(in_val), y(in_val) {}
+	Vector2(const T& in_x, const T& in_y) : x(in_x), y(in_y) {}
 
-	bool operator==(const TVector2& InOther) const
+	bool operator==(const Vector2& other) const
 	{
-		return X == InOther.X && Y == InOther.Y;
+		return x == other.x 
+			&& y == other.y;
 	}
 
-	bool operator!=(const TVector2& InOther) const
+	bool operator!=(const Vector2& other) const
 	{
-		return X != InOther.X ||
-			Y != InOther.Y;
+		return x != other.x ||
+			y != other.y;
 	}
 };
 
-using SVector2f = TVector2<float>;
+using Vector2f = Vector2<float>;
 
 /**
  * Basic template class for a 3D vector
  */
 template<typename T>
-struct TVector3
+	requires (std::is_integral_v<T> || std::is_floating_point_v<T>)
+struct Vector3
 {
-	T X;
-	T Y;
-	T Z;
+	T x;
+	T y;
+	T z;
 
-	TVector3() : X(0), Y(0), Z(0) {}
-	TVector3(const T& InX, const T& InY, const T& InZ) : X(InX), Y(InY), Z(InZ) {}
+	Vector3() : x(0), y(0), z(0) {}
+	Vector3(const T& in_val) : x(in_val), y(in_val), z(in_val) {}
+	Vector3(const T& in_x, const T& in_y, const T& in_z) : x(in_x), y(in_y), z(in_z) {}
+	Vector3(const Vector2<T>& in_vec2, const T& in_z) : x(in_vec2.x), y(in_vec2.y), z(in_z) {}
 
-	bool operator==(const TVector3<T>& InOther) const
+	bool operator==(const Vector3& other) const
 	{
-		return X == InOther.X &&
-			Y == InOther.Y &&
-			Z == InOther.Z;
+		return x == other.x 
+			&& y == other.y 
+			&& z == other.z;
+	}
+
+	bool operator!=(const Vector3& other) const
+	{
+		return x != other.x ||
+			y != other.y ||
+			z != other.z;
 	}
 };
 
 /**
  * A 3d vector (double-precision)
  */
-struct SVector3 : public TVector3<double>
+struct Vector3d : public Vector3<double>
 {
-	SVector3& operator=(const glm::vec3& InVec)
+	Vector3d& operator=(const glm::vec3& vec)
 	{
-		X = InVec.x;
-		Y = InVec.x;
-		Z = InVec.z;
+		x = vec.x;
+		y = vec.x;
+		z = vec.z;
 
 		return *this;
 	}
@@ -71,24 +83,34 @@ struct SVector3 : public TVector3<double>
 /**
  * A 3d vector (single-precision)
  */
-struct SVector3Float : public TVector3<float>
-{
-	SVector3Float() : TVector3<float>() {}
-	SVector3Float(float InX, float InY, float InZ) : TVector3<float>(InX, InY, InZ) {}
-};
-
-struct SVector3FloatHash
-{
-	std::size_t operator()(const SVector3Float& InVec) const noexcept
-	{
-		std::size_t Seed = 0;
-
-		HashCombine(Seed, InVec.X);
-		HashCombine(Seed, InVec.Y);
-		HashCombine(Seed, InVec.Z);
-
-		return Seed;
-	}
-};
+using Vector3f = Vector3<float>;
 
 } /* namespace ZE::Math */
+
+namespace std
+{
+	template<typename T> 
+	struct hash<ze::maths::Vector2<T>>
+	{
+		std::size_t operator()(const ze::maths::Vector2<T> in_vec) const noexcept
+		{
+			size_t hash = 0;
+			ze::hash_combine(hash, in_vec.x);
+			ze::hash_combine(hash, in_vec.y);
+			return hash;
+		}
+	};
+
+	template<typename T> 
+	struct hash<ze::maths::Vector3<T>>
+	{
+		std::size_t operator()(const ze::maths::Vector3<T> in_vec) const noexcept
+		{
+			size_t hash = 0;
+			ze::hash_combine(hash, in_vec.x);
+			ze::hash_combine(hash, in_vec.y);
+			ze::hash_combine(hash, in_vec.z);
+			return hash;
+		}
+	};
+}

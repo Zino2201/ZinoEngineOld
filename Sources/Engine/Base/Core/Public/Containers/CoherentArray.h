@@ -4,7 +4,7 @@
 #include "boost/dynamic_bitset/dynamic_bitset.hpp"
 #include <iterator>  
 
-namespace ZE
+namespace ze
 {
   
 template<typename ElementType>
@@ -48,7 +48,7 @@ struct TCoherentArrayIterator
 	TCoherentArrayIterator& operator-(difference_type InDiff)
 	{
 		CurrentIdx -= InDiff;
-		verify(CurrentIdx > 0 && CurrentIdx <= Elements.size() - 1);
+		ZE_CHECK(CurrentIdx > 0 && CurrentIdx <= Elements.size() - 1);
 	}
 
 	friend difference_type operator-(const TCoherentArrayIterator& InLeft, const TCoherentArrayIterator& InRight)
@@ -124,7 +124,7 @@ public:
   
     void Remove(const size_t& InIndex)
     {
-        must(InIndex < Elements.size());
+        ZE_ASSERT(InIndex < Elements.size());
   
         AllocatedBitset.set(InIndex, false);
     }
@@ -179,16 +179,16 @@ public:
   
     ElementType& operator[](const size_t& InIndex)
     {
-        verify(InIndex < Elements.size());
-        verify(AllocatedBitset[InIndex]);
+        ZE_CHECK(InIndex < Elements.size());
+        ZE_CHECK(AllocatedBitset[InIndex]);
   
         return Elements[InIndex];
     }
   
     const ElementType& operator[](const size_t& InIndex) const
     {
-        verify(InIndex < Elements.size());
-        verify(AllocatedBitset[InIndex]);
+        ZE_CHECK(InIndex < Elements.size());
+        ZE_CHECK(AllocatedBitset[InIndex]);
   
         return Elements[InIndex];
     }

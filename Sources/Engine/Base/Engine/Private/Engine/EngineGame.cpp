@@ -23,10 +23,10 @@
 #include "Engine/UI/Console.h"
 #include "Engine/InputSystem.h"
 
-namespace ZE
+namespace ze
 {
 
-static TConVar<int32_t> ConVSync("r_vsync", 0, 
+static ConVarRef<int32_t> ConVSync("r_vsync", 0, 
 	"Enable V-SYNC.\n0 = disabled\n1 = enabled\n2 = triple buffering (not implemented)");
 
 void LoadModelUsingTinyObjLoader(const std::string_view& InPath,
@@ -48,13 +48,13 @@ void LoadModelUsingTinyObjLoader(const std::string_view& InPath,
 		for (const auto& Index : Shape.mesh.indices)
 		{
 			SStaticMeshVertex Vertex;
-			Vertex.Position.X = Attrib.vertices[3 * Index.vertex_index + 0];
-			Vertex.Position.Y = Attrib.vertices[3 * Index.vertex_index + 1];
-			Vertex.Position.Z = Attrib.vertices[3 * Index.vertex_index + 2];
+			Vertex.Position.x = Attrib.vertices[3 * Index.vertex_index + 0];
+			Vertex.Position.y = Attrib.vertices[3 * Index.vertex_index + 1];
+			Vertex.Position.z = Attrib.vertices[3 * Index.vertex_index + 2];
 
-			Vertex.Normal.X = Attrib.normals[3 * Index.normal_index + 0];
-			Vertex.Normal.Y = Attrib.normals[3 * Index.normal_index + 1];
-			Vertex.Normal.Z = Attrib.normals[3 * Index.normal_index + 2];
+			Vertex.Normal.x = Attrib.normals[3 * Index.normal_index + 0];
+			Vertex.Normal.y = Attrib.normals[3 * Index.normal_index + 1];
+			Vertex.Normal.z = Attrib.normals[3 * Index.normal_index + 2];
 
 			if (UniqueVertices.count(Vertex) == 0)
 			{
@@ -77,7 +77,7 @@ struct test
 
 int StaticOnWindowResized(void* InUserData, SDL_Event* InEvent)
 {
-	must(InUserData);
+	ZE_ASSERT(InUserData);
 
 	return reinterpret_cast<CZEGameApp*>(InUserData)->OnWindowResized(InEvent);
 }
@@ -110,7 +110,7 @@ CZEGameApp::CZEGameApp() :
 	Font = IO.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 16.f);
 	
 	Viewport = std::make_unique<CViewport>(Window->GetHandle(), Window->GetWidth(), 
-		Window->GetHeight(), ConVSync.Get());
+		Window->GetHeight(), ConVSync.get());
 
 	World = std::make_unique<CWorld>();
 
@@ -124,9 +124,9 @@ CZEGameApp::CZEGameApp() :
 	testSM = std::make_shared<CStaticMesh>();
 	testSM->UpdateData(Vertices, Indices);
 
-	Renderer::CRendererModule::Get().CreateImGuiRenderer();
+	renderer::CRendererModule::Get().CreateImGuiRenderer();
 
-	ImGuiRenderer = std::make_unique<ZE::UI::CImGuiRender>();
+	ImGuiRenderer = std::make_unique<ze::ui::CImGuiRender>();
 }
 
 CZEGameApp::~CZEGameApp() { ImGui_ImplSDL2_Shutdown(); }
@@ -224,7 +224,7 @@ void CZEGameApp::ProcessEvent(SDL_Event& InEvent)
 		IO.WantCaptureMouse = false;
 	}
 
-	if (ZE::Input::IsKeyPressed(SDL_SCANCODE_ESCAPE))
+	if (ze::input::is_key_pressed(SDL_SCANCODE_ESCAPE))
 	{
 		if (bIsMouseGrabbed)
 		{
@@ -244,19 +244,19 @@ void CZEGameApp::Tick(const float& InDeltaTime)
 
 	/*if(!bImGuiInteract)
 	{*/
-		if (ZE::Input::IsKeyHeld(SDL_SCANCODE_W))
+		if (ze::input::is_key_held(SDL_SCANCODE_W))
 		{
 			CameraPos += CameraSpeed * CameraFront;
 		}
-		if (ZE::Input::IsKeyHeld(SDL_SCANCODE_S))
+		if (ze::input::is_key_held(SDL_SCANCODE_S))
 		{
 			CameraPos -= CameraSpeed * CameraFront;
 		}
-		if (ZE::Input::IsKeyHeld(SDL_SCANCODE_A))
+		if (ze::input::is_key_held(SDL_SCANCODE_A))
 		{
 			CameraPos -= glm::normalize(glm::cross(CameraFront, CameraUp)) * CameraSpeed;
 		}
-		if (ZE::Input::IsKeyHeld(SDL_SCANCODE_D))
+		if (ze::input::is_key_held(SDL_SCANCODE_D))
 		{
 			CameraPos += glm::normalize(glm::cross(CameraFront, CameraUp)) * CameraSpeed;
 		}
@@ -296,7 +296,7 @@ void CZEGameApp::Tick(const float& InDeltaTime)
 	ImGui::Separator();
 	ImGui::Text("Rendering"); 
 
-	ImGui::Text("VSync: %i", ConVSync.Get());
+	ImGui::Text("VSync: %i", ConVSync.get());
 
 	ImGui::Separator();
 	ImGui::End();
@@ -311,7 +311,7 @@ void CZEGameApp::Draw()
 	// TODO: Execute jobs while rendering is processing
 
 	/** Ensure all rendering is finished */
-	Renderer::CRendererModule::Get().WaitRendering();
+	renderer::CRendererModule::Get().WaitRendering();
 
 	static bool bHasBegun = false;
 	
@@ -325,7 +325,7 @@ void CZEGameApp::Draw()
 
 	if (bHasBegun = Viewport->Begin())
 	{
-		ZE::Renderer::SWorldView WorldView(*World->GetProxy());
+		ze::renderer::SWorldView WorldView(*World->GetProxy());
 		WorldView.Scissor = { { 0.f, 0.f }, { Window->GetWidth(), Window->GetHeight() } };
 		WorldView.Viewport = { WorldView.Scissor, 0.f, 1.0f };
 		glm::mat4 View = glm::lookAt(CameraPos, CameraPos
@@ -335,13 +335,13 @@ void CZEGameApp::Draw()
 			(float)Window->GetWidth() / Window->GetHeight(),
 			100000.F, 0.01f);
 		WorldView.ViewProj = Proj * View;
-		WorldView.ViewPos = CameraPos;
-		WorldView.ViewForward = CameraFront;
+		WorldView.ViewPos = maths::Vector3f(CameraPos.x, CameraPos.y, CameraPos.z);
+		WorldView.ViewForward = maths::Vector3f(CameraFront.x, CameraFront.y, CameraFront.z);
 		WorldView.TargetRT = Viewport->GetSurface()->GetBackbufferTexture();
-		Renderer::CRendererModule::Get().EnqueueView(WorldView);
+		renderer::CRendererModule::Get().EnqueueView(WorldView);
 	}
 
-	Renderer::CRendererModule::Get().FlushViews();
+	renderer::CRendererModule::Get().FlushViews();
 }
 
 CZinoEngineApp* CreateGameApp()

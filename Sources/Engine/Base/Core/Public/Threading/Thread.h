@@ -2,19 +2,19 @@
 
 #include "EngineCore.h"
 
-namespace ZE::Threading
+namespace ze::threading
 {
 
 /**
  * Set the current thread name
  */
-CORE_API void SetThreadName(const std::string_view& InStr);
+CORE_API void set_thread_name(const std::string_view& name);
 
 /*
 * Get the current thread name
 */
-CORE_API std::string GetThreadName();
+CORE_API std::string get_thread_name();
 
-CORE_API std::string GetThreadName(const std::thread::id& InID);
+CORE_API std::string get_thread_name(const std::thread::id& id);
 
 }

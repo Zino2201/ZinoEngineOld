@@ -19,18 +19,18 @@ CVulkanCommandBufferManager::CVulkanCommandBufferManager(CVulkanDevice& InDevice
 				vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
 		Device.GetGraphicsQueue()->GetFamilyIndex())).value;
 	if(!CommandPool)
-		ZE::Logger::Error("Failed to create command pool");
+		ze::logger::error("Failed to create command pool");
 
 	/**
 	 * Allocate 2 command buffers
 	 */
 	MemoryCmdBuffer = std::make_unique<CVulkanCommandBuffer>(Device, *CommandPool, false);
 	if(!MemoryCmdBuffer)
-		ZE::Logger::Fatal("Failed to allocate memory command buffer");
+		ze::logger::fatal("Failed to allocate memory command buffer");
 
 	GraphicsCmdBuffer = std::make_unique<CVulkanCommandBuffer>(Device, *CommandPool, false);
 	if (!GraphicsCmdBuffer)
-		ZE::Logger::Fatal("Failed to allocate graphics command buffer");
+		ze::logger::fatal("Failed to allocate graphics command buffer");
 }
 
 CVulkanCommandBufferManager::~CVulkanCommandBufferManager() = default;
@@ -169,7 +169,7 @@ void CVulkanRenderSystemContext::EndRenderPass()
 
 bool CVulkanRenderSystemContext::BeginSurface(CRSSurface* InSurface)
 {
-	must(InSurface);
+	ZE_CHECK(InSurface);
 
 	CVulkanSurface* Surface = static_cast<CVulkanSurface*>(InSurface);
 	CurrentSurface = Surface;
@@ -181,10 +181,10 @@ bool CVulkanRenderSystemContext::BeginSurface(CRSSurface* InSurface)
 
 void CVulkanRenderSystemContext::PresentSurface(CRSSurface* InSurface)
 {
-	must(InSurface);
+	ZE_CHECK(InSurface);
 
 	CVulkanSurface* Surface = static_cast<CVulkanSurface*>(InSurface);
-	must(Surface == CurrentSurface);
+	ZE_CHECK(Surface == CurrentSurface);
 
 	/**
 	 * Submit render queue if we have commands
@@ -246,7 +246,7 @@ void CVulkanRenderSystemContext::SetViewports(const std::vector<SViewport>& InVi
 		0, Viewports);
 }
 
-void CVulkanRenderSystemContext::SetScissors(const std::vector<SRect2D>& InScissors)
+void CVulkanRenderSystemContext::SetScissors(const std::vector<maths::Rect2D>& InScissors)
 {
 	std::vector<vk::Rect2D> Scissors;
 	Scissors.reserve(InScissors.size());
@@ -296,7 +296,7 @@ void CVulkanRenderSystemContext::BindIndexBuffer(CRSBuffer* InIndexBuffer,
 void CVulkanRenderSystemContext::SetShaderUniformBuffer(const uint32_t& InSet, 
 	const uint32_t& InBinding, CRSBuffer* InBuffer)
 {
-	verify(InBuffer);
+	ZE_CHECK(InBuffer);
 	if (!InBuffer)
 		return;
 
@@ -317,7 +317,7 @@ void CVulkanRenderSystemContext::SetShaderUniformBuffer(const uint32_t& InSet,
 void CVulkanRenderSystemContext::SetShaderTexture(const uint32_t& InSet, const uint32_t& InBinding,
 	CRSTexture* InTexture)
 {
-	verify(InTexture);
+	ZE_CHECK(InTexture);
 	if(!InTexture)
 		return;
 
@@ -344,7 +344,7 @@ void CVulkanRenderSystemContext::SetShaderTexture(const uint32_t& InSet, const u
 void CVulkanRenderSystemContext::SetShaderSampler(const uint32_t& InSet, const uint32_t& InBinding,
 	CRSSampler* InSampler)
 {
-	verify(InSampler);
+	ZE_CHECK(InSampler);
 	if (!InSampler)
 		return;
 
@@ -363,7 +363,7 @@ void CVulkanRenderSystemContext::SetShaderSampler(const uint32_t& InSet, const u
 void CVulkanRenderSystemContext::AddWrite(const uint32_t& InSet, const uint32_t& InBinding,
 	const SDescriptorSetWrite& InWrite, const uint64_t& InHandle)
 {
-	verify(InBinding < GMaxBindingsPerSet);
+	ZE_CHECK(InBinding < GMaxBindingsPerSet);
 
 	WriteMap[InSet][InBinding] = std::move(InWrite);
 	HandleMap[InSet][InBinding] = InHandle;
@@ -371,7 +371,7 @@ void CVulkanRenderSystemContext::AddWrite(const uint32_t& InSet, const uint32_t&
 
 void CVulkanRenderSystemContext::BindDescriptorSets()
 {
-	verify(CurrentLayout);
+	ZE_CHECK(CurrentLayout);
 
 	for(const auto& [SetIdx, Writes] : WriteMap)
 	{

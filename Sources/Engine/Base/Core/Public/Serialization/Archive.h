@@ -3,7 +3,7 @@
 #include "EngineCore.h"
 #include "Wrappers.h"
 
-namespace ZE::Serialization
+namespace ze::serialization
 {
 
 template<typename T>
@@ -11,90 +11,90 @@ struct THasVersion : std::false_type {};
 
 /** Versionning */
 template<typename T>
-struct TTypeVersion
+struct TypeVersion
 {
-	static constexpr bool HasVersion = false;
+	static constexpr bool has_version = false;
 
-	static_assert(HasVersion, "Please specify a version for T using ZE_SERL_TYPE_VERSION macro");
+	static_assert(has_version, "Please specify a version for T using ZE_SERL_TYPE_VERSION macro");
 };
 
 #define ZE_SERL_TYPE_VERSION(T, Ver) \
-	template<> struct ZE::Serialization::TTypeVersion<T> { constexpr static uint32_t Version = Ver; constexpr static bool HasVersion = true; }; \
+	template<> struct ze::serialization::TypeVersion<T> { constexpr static uint32_t version = Ver; constexpr static bool has_version = true; }; \
 
 template<typename T, typename Archive>
-static constexpr bool THasSerializeFunction =
-	requires(Archive& InArchive, T& InData) { Serialize(InArchive, InData); };
+static constexpr bool HasSerializeFunction =
+	requires(Archive& archive, T& data) { serialize(archive, data); };
 
 template<typename T, typename Archive>
-static constexpr bool THasSerializeMethod =
-	requires(Archive& InArchive, T& InData) { InData.Serialize(InArchive); };
+static constexpr bool HasSerializeMethod =
+	requires(Archive& archive, T& data) { data.serialize(archive); };
 
 template<typename T, typename Archive>
-static constexpr bool THasSerializeFunctionWithVersion = 
-	requires(Archive& InArchive, T& InData, const uint32_t& InVersion) { Serialize(InArchive, InData, InVersion); };
+static constexpr bool HasSerializeFunctionWithVersion = 
+	requires(Archive& archive, T& data, const uint32_t& version) { serialize(archive, data, version); };
 
 template<typename T, typename Archive>
-static constexpr bool THasSerializeMethodWithVersion =
-	requires(Archive& InArchive, T& InData, const uint32_t& InVersion) { InData.Serialize(InArchive, InVersion); };
+static constexpr bool HasSerializeMethodWithVersion =
+	requires(Archive& archive, T& data, const uint32_t& version) { data.serialize(archive, version); };
 
 template<typename T, typename Archive>
-static constexpr bool TIsSerializable = THasSerializeFunction<T, Archive> ||
-	THasSerializeMethod<T, Archive> ||
-	THasSerializeFunctionWithVersion<T, Archive> ||
-	THasSerializeMethodWithVersion<T, Archive>;
+static constexpr bool IsSerializable = HasSerializeFunction<T, Archive> ||
+	HasSerializeMethod<T, Archive> ||
+	HasSerializeFunctionWithVersion<T, Archive> ||
+	HasSerializeMethodWithVersion<T, Archive>;
 
 template<typename ArchiveType>
-class CORE_API TInputArchive
+class CORE_API InputArchive
 {
 public:
-	TInputArchive(ArchiveType& InArchive) : This(InArchive) {}
+	InputArchive(ArchiveType& archive) : this_(archive) {}
 
 	template<typename T>
-	ZE_FORCEINLINE ArchiveType& operator<=>(T&& InData)
+	ZE_FORCEINLINE ArchiveType& operator<=>(T&& data)
 	{
-		if constexpr (THasSerializeFunctionWithVersion<T, ArchiveType> ||
-			THasSerializeMethodWithVersion<T, ArchiveType>)
+		if constexpr (HasSerializeFunctionWithVersion<T, ArchiveType> ||
+			HasSerializeMethodWithVersion<T, ArchiveType>)
 		{
-			uint32_t Version = 0;
-			This <=> Version;
-			Serialize(This, InData, Version);
+			uint32_t version = 0;
+			this_ <=> version;
+			serialize(this_, data, version);
 		}
 		else
 		{
-			Serialize(This, InData);
+			serialize(this_, data);
 		}
 
-		return This;
+		return this_;
 	}
 private:
-	ArchiveType& This;
+	ArchiveType& this_;
 };
 
 template<typename ArchiveType>
-class CORE_API TOutputArchive
+class CORE_API OutputArchive
 {
 public:
-	TOutputArchive(ArchiveType& InArchive) : This(InArchive) {}
+	OutputArchive(ArchiveType& archive) : this_(archive) {}
 
 	template<typename T>
-	ZE_FORCEINLINE ArchiveType& operator<=>(const T& InData)
+	ZE_FORCEINLINE ArchiveType& operator<=>(const T& data)
 	{
-		if constexpr(THasSerializeFunctionWithVersion<T, ArchiveType> ||
-			THasSerializeMethodWithVersion<T, ArchiveType>)
+		if constexpr(HasSerializeFunctionWithVersion<T, ArchiveType> ||
+			HasSerializeMethodWithVersion<T, ArchiveType>)
 		{
-			uint32_t Version = TTypeVersion<T>::Version;
-			This <=> Version;
-			Serialize(This, const_cast<T&>(InData), Version);
+			uint32_t version = TTypeVersion<T>::version;
+			this_ <=> version;
+			serialize(this_, const_cast<T&>(data), versiin);
 		}
 		else
 		{
-			Serialize(This, const_cast<T&>(InData));
+			serialize(this_, const_cast<T&>(InData));
 		}
 
-		return This;
+		return this_;
 	}
 private:
-	ArchiveType& This;
+	ArchiveType& this_;
 };
 
 /**
@@ -102,18 +102,18 @@ private:
  */
 template<typename Archive, typename T>
 	requires (std::is_class_v<T> || std::is_union_v<T>)
-		&& THasSerializeMethod<T, Archive>
-ZE_FORCEINLINE void Serialize(Archive& InArchive, T& InData)
+		&& HasSerializeMethod<T, Archive>
+ZE_FORCEINLINE void serialize(Archive& archive, T& data)
 { 
-	InData.Serialize(InArchive);
+	data.serialize(archive);
 }
 
 template<typename Archive, typename T>
 	requires (std::is_class_v<T> || std::is_union_v<T>) 
-		&& THasSerializeMethodWithVersion<T, Archive> 
-ZE_FORCEINLINE void Serialize(Archive& InArchive, T& InData, const uint32_t& InVersion)
+		&& HasSerializeMethodWithVersion<T, Archive> 
+ZE_FORCEINLINE void serialize(Archive& archive, T& data, const uint32_t& version)
 { 
-	InData.Serialize(InArchive, InVersion);
+	data.serialize(archive, version);
 }
 
 }

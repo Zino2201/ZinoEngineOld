@@ -2,7 +2,7 @@
 #include "Editor/EntityList.h"
 #include "Editor/EntityProperties.h"
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 CMapEditor::CMapEditor()

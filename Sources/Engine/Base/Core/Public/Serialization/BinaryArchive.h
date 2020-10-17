@@ -1,36 +1,37 @@
 #pragma once
 
 #include "Archive.h"
+#include <type_traits>
 
-namespace ZE::Serialization
+namespace ze::serialization
 {
 
 /**
  * Input binary archive
  */
-class CORE_API CIBinaryArchive : public TInputArchive<CIBinaryArchive>
+class CORE_API BinaryInputArchive : public InputArchive<BinaryInputArchive>
 {
 public:
-	CIBinaryArchive(std::istream& InStream) : TInputArchive<CIBinaryArchive>(*this),
-		Stream(InStream) {}
+	BinaryInputArchive(std::istream& in_stream) : InputArchive<BinaryInputArchive>(*this),
+		stream(in_stream) {}
 
-	void LoadBytes(void* InData, const uint64_t& InSize);
+	void load_bytes(void* data, const uint64_t& size);
 private:
-	std::istream& Stream;
+	std::istream& stream;
 };
 
 /**
  * Output binary archive
  */
-class CORE_API COBinaryArchive : public TOutputArchive<COBinaryArchive>
+class CORE_API BinaryOutputArchive : public OutputArchive<BinaryOutputArchive>
 {
 public:
-	COBinaryArchive(std::ostream& InStream) : TOutputArchive<COBinaryArchive>(*this), 
-		Stream(InStream) {}
+	BinaryOutputArchive(std::ostream& in_stream) : OutputArchive<BinaryOutputArchive>(*this), 
+		stream(in_stream) {}
 
-	void SaveBytes(const void* InData, const uint64_t& InSize);
+	void save_bytes(const void* data, const uint64_t& size);
 private:
-	std::ostream& Stream;
+	std::ostream& stream;
 };
 
 /** Serialize functions for binary archives */
@@ -38,42 +39,42 @@ private:
 /** Arithmetic types */
 template<typename T>
 	requires std::is_arithmetic_v<T>
-ZE_FORCEINLINE void Serialize(CIBinaryArchive& InArchive, T& InData)
+ZE_FORCEINLINE void serialize(BinaryInputArchive& archive, T& data)
 {
-	InArchive.LoadBytes(&InData, sizeof(T));
+	archive.load_bytes(&data, sizeof(T));
 }
 
 template<typename T>
 	requires std::is_arithmetic_v<T>
-ZE_FORCEINLINE void Serialize(COBinaryArchive& InArchive, const T& InData)
+ZE_FORCEINLINE void serialize(BinaryOutputArchive& archive, const T& data)
 {
-	InArchive.SaveBytes(&InData, sizeof(T));
+	archive.save_bytes(&data, sizeof(T));
 }
 
 /** Binary archives */
 template<typename T>
-ZE_FORCEINLINE void Serialize(CIBinaryArchive& InArchive, TBinaryData<T>& InData)
+ZE_FORCEINLINE void serialize(BinaryInputArchive& archive, BinaryData<T>& data)
 {
-	InArchive.LoadBytes(InData.Data, InData.Size);
+	archive.load_bytes(data.data, data.size);
 }
 
 template<typename T>
-ZE_FORCEINLINE void Serialize(COBinaryArchive& InArchive, const TBinaryData<T>& InData)
+ZE_FORCEINLINE void serialize(BinaryOutputArchive& archive, const BinaryData<T>& data)
 {
-	InArchive.SaveBytes(InData.Data, InData.Size);
+	archive.save_bytes(data.sata, data.size);
 }
 
 /** Containers size */
 template<typename T>
-ZE_FORCEINLINE void Serialize(CIBinaryArchive& InArchive, TSize<T>& InData)
+ZE_FORCEINLINE void serialize(BinaryInputArchive& archive, Size<T>& data)
 {
-	InArchive <=> InData.Size;
+	archive <=> data.size;
 }
 
 template<typename T>
-ZE_FORCEINLINE void Serialize(COBinaryArchive& InArchive, const TSize<T>& InData)
+ZE_FORCEINLINE void Serialize(BinaryOutputArchive& archive, const Size<T>& data)
 {
-	InArchive <=> InData.Size;
+	archive <=> data.size;
 }
 
 }

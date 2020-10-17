@@ -7,16 +7,17 @@ namespace ZE::AssetCache
 {
 
 std::filesystem::path CacheDir =
-	FileSystem::Paths::GetCurrentWorkingDir() / std::filesystem::path("AssetCache");
+	ze::filesystem::get_current_working_dir() / std::filesystem::path("AssetCache");
 
 void Cache(const std::string_view& InKey, const std::vector<uint8_t>& InData)
 {
-	FileSystem::COFileStream Stream(CacheDir / InKey,
+#if 0
+	ze::FileSystem::COFileStream Stream(CacheDir / InKey,
 		FileSystem::EFileWriteFlagBits::Binary |
 		FileSystem::EFileWriteFlagBits::ReplaceExisting);
 	if (!Stream)
 	{
-		ZE::Logger::Error("Failed to cache key {}: can't open output stream", InKey);
+		ze::logger::error("Failed to cache key {}: can't open output stream", InKey);
 		return;
 	}
 
@@ -24,6 +25,7 @@ void Cache(const std::string_view& InKey, const std::vector<uint8_t>& InData)
 		InData.size());
 
 	ZE::Logger::Verbose("Cached asset key {}", InKey);
+#endif
 }
 
 std::vector<uint8_t> Get(const std::string_view& InKey)

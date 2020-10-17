@@ -86,7 +86,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice& InDevice,
 			if(Res == VK_ERROR_EXTENSION_NOT_PRESENT)
 				ErrorMsg = "No memory type meeting all requirements has been found";
 
-			ZE::Logger::Fatal("Failed to create Vulkan image: {}", ErrorMsg);
+			ze::logger::fatal("Failed to create Vulkan image: {}", ErrorMsg);
 		}
 	}
 
@@ -119,7 +119,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice& InDevice,
 			nullptr,
 			&ImageView);
 		if (!ImageView)
-			ZE::Logger::Fatal("Failed to create image view: {}",
+			ze::logger::fatal("Failed to create image view: {}",
 				vk::to_string(ResView).c_str());
 	}
 }
@@ -159,7 +159,7 @@ CVulkanTexture::CVulkanTexture(CVulkanDevice& InDevice,
 		nullptr,
 		&ImageView);
 	if (!ImageView)
-		ZE::Logger::Fatal("Failed to create image view: {}",
+		ze::logger::fatal("Failed to create image view: {}",
 			vk::to_string(ResView).c_str());
 }
 
@@ -369,7 +369,7 @@ void CVulkanTexture::TransitionImageLayout(const vk::ImageLayout& InOldLayout,
 	}
 	else
 	{
-		ZE::Logger::Fatal("Unsupported transition layout");
+		ze::logger::fatal("Unsupported transition layout");
 	}
 
 	CmdBuffer.pipelineBarrier(
@@ -393,7 +393,7 @@ void CVulkanTexture::TransitionImageLayout(const vk::ImageLayout& InOldLayout,
 	Device.WaitIdle();
 }
 
-TOwnerPtr<CRSTexture> CVulkanRenderSystem::CreateTexture(
+OwnerPtr<CRSTexture> CVulkanRenderSystem::CreateTexture(
 	const SRSTextureCreateInfo& InCreateInfo) const
 {
 	return new CVulkanTexture(*Device.get(),

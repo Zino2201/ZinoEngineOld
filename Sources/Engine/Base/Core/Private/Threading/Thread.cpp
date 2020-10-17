@@ -4,28 +4,28 @@
 #include <mutex>
 #include <robin_hood.h>
 
-namespace ZE::Threading
+namespace ze::threading
 {
 
-robin_hood::unordered_map<std::thread::id, std::string> ThreadNames;
-std::mutex ThreadNamesMutex;
+robin_hood::unordered_map<std::thread::id, std::string> thread_names;
+std::mutex thread_names_mutex;
 
-void SetThreadName(const std::string_view& InStr)
+void set_thread_name(const std::string_view& name)
 {
-	std::lock_guard<std::mutex> Guard(ThreadNamesMutex);
-	ThreadNames[std::this_thread::get_id()] = InStr;
+	std::lock_guard<std::mutex> guard(thread_names_mutex);
+	thread_names[std::this_thread::get_id()] = name;
 }
 
-std::string GetThreadName()
+std::string get_thread_name()
 {
-	std::lock_guard<std::mutex> Guard(ThreadNamesMutex);
-	return ThreadNames[std::this_thread::get_id()];
+	std::lock_guard<std::mutex> guard(thread_names_mutex);
+	return thread_names[std::this_thread::get_id()];
 }
 
-std::string GetThreadName(const std::thread::id& InID)
+std::string get_thread_name(const std::thread::id& id)
 {
-	std::lock_guard<std::mutex> Guard(ThreadNamesMutex);
-	return ThreadNames[InID];
+	std::lock_guard<std::mutex> guard(thread_names_mutex);
+	return thread_names[id];
 }
 
 }

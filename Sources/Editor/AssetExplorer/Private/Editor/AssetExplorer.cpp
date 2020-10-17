@@ -9,9 +9,9 @@
 #include "Editor/AssetUtils/AssetUtils.h"
 #include "ZEFS/Paths.h"
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, AssetExplorer);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, AssetExplorer);
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 CAssetExplorer::CAssetExplorer() : MaxHierarchyWidth(250.f) {}
@@ -56,7 +56,7 @@ void CAssetExplorer::SelectDirectory(const std::filesystem::path& InPath)
 
 void CAssetExplorer::DrawRecurseHierachy(const std::filesystem::path& InPath)
 {
-	std::vector<std::filesystem::path> Subdirs = ZE::AssetDatabase::GetSubDirectories(InPath);
+	std::vector<std::filesystem::path> Subdirs = ze::assetdatabase::get_subdirectories(InPath);
 	
 	for (const auto& Subdir : Subdirs)
 	{
@@ -82,8 +82,8 @@ void CAssetExplorer::DrawAssetHierarchy()
 	ImGui::SameLine();
 	if (ImGui::Button("Import", ImVec2(75, 25)))
 	{
-		ZE::Editor::AssetUtils::ImportAssetsDialog(
-			ZE::FileSystem::Paths::GetCurrentWorkingDir() / CurrentDirectory, CurrentDirectory);
+		ze::editor::assetutils::ImportAssetsDialog(
+			ze::filesystem::get_current_working_dir() / CurrentDirectory, CurrentDirectory);
 	}
 	
 	ImGui::Separator();
@@ -102,7 +102,7 @@ void CAssetExplorer::DrawAssetHierarchy()
 
 void CAssetExplorer::DrawAssetList()
 {
-	auto Tokens = ZE::StringUtil::Split(CurrentDirectory.string(),
+	auto Tokens = ze::stringutil::split(CurrentDirectory.string(),
 		std::filesystem::path::preferred_separator);
 	
 	if (Tokens.empty())
@@ -134,7 +134,7 @@ void CAssetExplorer::DrawAssetList()
 	ImGui::BeginChild("ASL_ScrollArea", ImGui::GetContentRegionAvail());
 
 	/** Display subdirectories */
-	for (const auto& Subdir : ZE::AssetDatabase::GetSubDirectories(CurrentDirectory))
+	for (const auto& Subdir : ze::assetdatabase::get_subdirectories(CurrentDirectory))
 	{
 		ImVec2 Cursor = ImGui::GetCursorPos();
 		std::string ID = "##" + Subdir.string();
@@ -167,28 +167,28 @@ void CAssetExplorer::DrawAssetList()
 	}
 
 	/** Display assets */
-	for (const auto& Asset : ZE::AssetDatabase::GetAssets(CurrentDirectory))
+	for (const auto& Asset : ze::assetdatabase::get_assets(CurrentDirectory))
 	{
 		ImVec2 Cursor = ImGui::GetCursorPos();
-		std::string ID = "##" + Asset.Name;
+		std::string ID = "##" + Asset.name;
 		ImGui::Selectable(ID.c_str(), false, ImGuiSelectableFlags_None, ImVec2(75, 100));
 		if (ImGui::IsItemHovered())
 		{
 			ImGui::BeginTooltip();
 			ImGui::Text("Type: %s\nFull path: %s\nSize: %f Mb",
 				"===class===",
-				Asset.Path.string().c_str(),
-				static_cast<float>(Asset.Size / 1024.f / 1024.f));
+				Asset.path.string().c_str(),
+				static_cast<float>(Asset.size / 1024.f / 1024.f));
 			ImGui::Separator();
 			ImGui::Text("Last modified on ");
 			ImGui::Separator();
-			ImGui::Text("ZE %d.%d.%d", Asset.EngineVer.Major,
-				Asset.EngineVer.Minor,
-				Asset.EngineVer.Patch);
+			ImGui::Text("ZE %d.%d.%d", Asset.engine_ver.major,
+				Asset.engine_ver.minor,
+				Asset.engine_ver.patch);
 			ImGui::EndTooltip();
 		}
 		ImGui::SetCursorPos(Cursor);
-		if (ImGui::BeginChild(Asset.Name.c_str(), ImVec2(75, 100), false, ImGuiWindowFlags_NoScrollbar |
+		if (ImGui::BeginChild(Asset.name.c_str(), ImVec2(75, 100), false, ImGuiWindowFlags_NoScrollbar |
 			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoInputs))
 		{
 			ImVec2 ThumbSize = ImVec2(50, 50);
@@ -199,8 +199,8 @@ void CAssetExplorer::DrawAssetList()
 			
 			ImGui::PushTextWrapPos(75.f);
 			ImGui::SetCursorPosX((ImGui::GetWindowSize().x -
-				ImGui::CalcTextSize(Asset.Name.c_str()).x) * 0.5f);
-			ImGui::Text(Asset.Name.c_str());
+				ImGui::CalcTextSize(Asset.name.c_str()).x) * 0.5f);
+			ImGui::Text(Asset.name.c_str());
 			ImGui::PopTextWrapPos();
 		}
 		ImGui::EndChild();

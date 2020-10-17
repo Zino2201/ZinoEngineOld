@@ -4,24 +4,24 @@
 #include <vector>
 #include "Delegates/MulticastDelegate.h"
 
-namespace ZE::Module
+namespace ze::module
 {
 
-class CModule;
+class Module;
 
-using OnModuleLoadedDelegate = TMulticastDelegateNoRet<const std::string_view&>;
+using OnModuleLoadedDelegate = MulticastDelegateNoRet<const std::string_view&>;
 
-CORE_API CModule* LoadModule(const std::string_view& InName);
+CORE_API Module* load_module(const std::string_view& InName);
 
 template<typename T>
-T* LoadModule(const std::string& InName)
+T* load_module(const std::string& name)
 {
-	return reinterpret_cast<T*>(LoadModule(InName));
+	return reinterpret_cast<T*>(load_module(name));
 }
 
-CORE_API void UnloadModule(const std::string_view& InName);
-CORE_API void UnloadModules();
+CORE_API void unload_module(const std::string_view& name);
+CORE_API void unload_modules();
 
-CORE_API OnModuleLoadedDelegate& GetOnModuleLoadedDelegate();
+CORE_API OnModuleLoadedDelegate& get_on_module_loaded_delegate();
 
 }

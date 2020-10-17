@@ -13,140 +13,136 @@
 #include "ZEFS/ZEFS.h"
 #include "PathTree.h"
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, AssetDatabase);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, AssetDatabase);
 
-namespace ZE::AssetDatabase
+namespace ze::assetdatabase
 {
 
-CPathTree PathTree;
-robin_hood::unordered_map<std::filesystem::path, SAssetPrimitiveData> DataMap;
+PathTree path_tree;
+robin_hood::unordered_map<std::filesystem::path, AssetPrimitiveData> data_map;
+OnAssetRegistered on_asset_registered;
+OnAssetScanCompleted on_asset_scan_completed;
+std::mutex map_mutex;
 
-/** Delegates */
-TOnAssetRegistered OnAssetRegistered;
-TOnAssetScanCompleted OnAssetScanCompleted;
-
-std::mutex MapMutex;
-
-void RegisterAsset(const std::filesystem::path& InPath)
+void register_asset(const std::filesystem::path& path)
 {
-	std::lock_guard<std::mutex> Guard(MapMutex);
+	std::lock_guard<std::mutex> guard(map_mutex);
 
-	SAssetPrimitiveData Data;
-	Data.Name = InPath.stem().string();
-	Data.Path = InPath;
+	AssetPrimitiveData data;
+	data.name = path.stem().string();
+	data.path = path;
 
 	/** Open the asset */
-	ZE::FileSystem::CIFileStream Stream(InPath, ZE::FileSystem::EFileReadFlagBits::Binary |
-		ZE::FileSystem::EFileReadFlagBits::End);
-	if (!Stream)
+	filesystem::FileIStream stream(path, filesystem::FileReadFlagBits::Binary |
+		filesystem::FileReadFlagBits::End);
+	if (!stream)
 	{
-		ZE::Logger::Error("Failed to open asset {}", InPath.string());
+		ze::logger::error("Failed to open asset {}", path.string());
 		return;
 	}
 
 	/** Get size */
-	Data.Size = Stream.tellg();
-	Stream.seekg(0, std::ios::beg);
+	data.size = stream.tellg();
+	stream.seekg(0, std::ios::beg);
 
 	/** Parse the header */
-	SAssetHeader Header;
-	ZE::Serialization::CIBinaryArchive Ar(Stream);
-	Ar <=> Header;
+	AssetHeader header;
+	ze::serialization::BinaryInputArchive ar(stream);
+	ar <=> header;
 
-	if (!Header.IsValid())
+	if (!header.is_valid())
 	{
-		ZE::Logger::Error("Invalid asset {} (bad header)", InPath.string());
+		ze::logger::error("Invalid asset {} (bad header)", path.string());
 		return;
 	}
 
-	Data.EngineVer = Header.EngineVer;
-	Data.Class = ze::reflection::Class::get_by_name(Header.ClassName.c_str());
+	data.engine_ver = header.engine_ver;
+	data.asset_class = ze::reflection::Class::get_by_name(header.class_name);
 
-	PathTree.Add(InPath);
-	DataMap.insert({ InPath, Data });
+	path_tree.add(path);
+	data_map.insert({ path , data });
 
-	ZE::Logger::Verbose("Registered asset {} ({})", InPath.string(),
-		Header.ClassName);
+	ze::logger::verbose("Registered asset {} ({})", path.string(),
+		header.class_name);
 
-	OnAssetRegistered.Broadcast(Data);
+	on_asset_registered.broadcast(data);
 }
 
-bool IsRegistered(const std::filesystem::path& InPath)
+bool is_registered(const std::filesystem::path& path)
 {
-	return PathTree.HasPath(InPath);
+	return path_tree.has_path(path);
 }
 
-bool IsValidAsset(const std::filesystem::path& InPath)
+bool is_valid_asset(const std::filesystem::path& path)
 {
-	return InPath.extension().string() == ".zasset";
+	return path.extension().string() == ".zasset";
 }
 
-void ScanInternal(const std::filesystem::path& InPath)
+void scan_internal(const std::filesystem::path& path)
 {
-	ZE::FileSystem::IterateDirectories(InPath,
-		[&](const ZE::FileSystem::SDirectoryEntry& InEntry)
+	filesystem::iterate_directories(path,
+		[&](const filesystem::DirectoryEntry& entry)
 		{
-			if (ZE::FileSystem::IsDirectory(InPath / InEntry.Path) ||
-				!IsValidAsset(InEntry.Path) || 
-				IsRegistered(InEntry.Path))
+			if (filesystem::is_directory(path / entry.path) ||
+				!is_valid_asset(entry.path) || 
+				is_registered(entry.path))
 				return;
 
-			RegisterAsset(InPath / InEntry.Path);
-		}, ZE::FileSystem::EIterateDirectoriesFlagBits::Recursive);
+			register_asset(path/ entry.path);
+		}, filesystem::IterateDirectoriesFlagBits::Recursive);
 
-	OnAssetScanCompleted.Broadcast();
+	on_asset_scan_completed.broadcast();
 }
 
-void Scan(const std::filesystem::path& InPath, const EAssetScanMode& InScanMode)
+void scan(const std::filesystem::path& path, const AssetScanMode& scanmode)
 {
-	switch (InScanMode)
+	switch (scanmode)
 	{
-	case EAssetScanMode::Async:
-		ZE::Async(
-			[InPath](const ZE::JobSystem::SJob& InJob)
+	case AssetScanMode::Async:
+		ze::jobsystem::async(
+			[path](const ze::jobsystem::Job& in_job)
 			{
-				ScanInternal(InPath);
+				scan_internal(path);
 			});
 		break;
-	case EAssetScanMode::Sync:
-		ScanInternal(InPath);
+	case AssetScanMode::Sync:
+		scan_internal(path);
 		break;
 	}
 }
 
-std::vector<SAssetPrimitiveData> GetAssets(const std::filesystem::path& InDirectory)
+std::vector<AssetPrimitiveData> get_assets(const std::filesystem::path& dir)
 {
-	auto Childs = PathTree.GetChilds(InDirectory, true);
+	auto childs = path_tree.get_childs(dir, true);
 	
-	std::vector<SAssetPrimitiveData> Assets;
-	Assets.reserve(Childs.size());
+	std::vector<AssetPrimitiveData> assets;
+	assets.reserve(childs.size());
 
-	for (const auto& Child : Childs)
+	for (const auto& child : childs)
 	{
-		auto It = DataMap.find(InDirectory / Child);
-
-		if (It != DataMap.end())
-			Assets.emplace_back(It->second);
+		auto it = data_map.find(dir / child);
+		if (it != data_map.end())
+			assets.emplace_back(it->second);
 	}
 
-	return Assets;
+	return assets;
 }
 
-std::optional<SAssetPrimitiveData> GetAssetPrimitiveData(const std::filesystem::path& InPath)
+std::optional<AssetPrimitiveData> get_asset_primitive_data(const std::filesystem::path& path)
 {
-	auto Data = DataMap.find(InPath);
-	if (Data != DataMap.end())
-		return Data->second;
+	auto data = data_map.find(path);
+	if (data != data_map.end())
+		return data->second;
 
 	return std::nullopt;
 }
 
-std::vector<std::filesystem::path> GetSubDirectories(const std::filesystem::path& InRoot)
+std::vector<std::filesystem::path> get_subdirectories(const std::filesystem::path& root)
 {
-	return PathTree.GetChilds(InRoot, false);
+	return path_tree.get_childs(root, false);
 }
 
-TOnAssetRegistered& GetOnAssetRegistered() { return OnAssetRegistered; }
-TOnAssetScanCompleted& GetOnAssetScanCompleted() { return OnAssetScanCompleted; }
+OnAssetRegistered& get_on_asset_registered() { return on_asset_registered; }
+OnAssetScanCompleted& get_on_asset_scan_completed() { return on_asset_scan_completed; }
 
 }

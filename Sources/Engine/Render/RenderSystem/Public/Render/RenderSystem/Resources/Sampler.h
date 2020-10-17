@@ -2,7 +2,7 @@
 
 #include "Resource.h"
 
-namespace ZE
+namespace ze
 {
 
 enum class ERSFilter

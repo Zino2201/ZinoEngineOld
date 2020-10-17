@@ -3,52 +3,52 @@
 #include <map>
 #include "Module/Module.h"
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, ZEFS);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEFS);
 
-namespace ZE::FileSystem
+namespace ze::filesystem
 {
 
-struct SFSEntry
+struct FSEntry
 {
-	std::string Name;
-	uint8_t Priority;
-	std::string Alias;
+	std::string name;
+	uint8_t priority;
+	std::string alias;
 
-	SFSEntry() : Priority(0), Alias() {}
-	SFSEntry(const std::string& InName, const std::string& InAlias,
-		const uint8_t& InPriority) : Name(InName), Priority(InPriority), Alias(InAlias) {}
+	FSEntry() : priority(0) {}
+	FSEntry(const std::string& in_name, const std::string& in_alias,
+		const uint8_t& in_priority) : name(in_name), priority(in_priority), alias(in_alias) {}
 
-	bool operator<(const SFSEntry& InOther) const
+	bool operator<(const FSEntry& other) const
 	{
-		return Priority < InOther.Priority;
+		return priority < other.priority;
 	}
 };
 
 /** Sorted map of all file systems */
-std::map<SFSEntry, std::unique_ptr<IFileSystem>> Filesystems;
+std::map<FSEntry, std::unique_ptr<FileSystem>> filesystems;
 
 /** Ref to the writer file system, if specified.
  * Defaults to the first added that is not read only */
-IFileSystem* WriteFS = nullptr;
+FileSystem* write_fs = nullptr;
 
 /**
  * Get filesystems that has a matching alias inside the path
  */
-std::vector<IFileSystem*> GetFileSystemsMatchingAlias(const std::filesystem::path& InPath)
+std::vector<FileSystem*> get_filesystems_matching_alias(const std::filesystem::path& path)
 {
-	std::vector<IFileSystem*> FileSystems;
-	FileSystems.reserve(2);
+	std::vector<FileSystem*> r_filesystems;
+	r_filesystems.reserve(2);
 
-	for (const auto& [Entry, FS] : Filesystems)
+	for (const auto& [entry, fs] : filesystems)
 	{
-		if (Entry.Alias == "/" ||
-			InPath.string().rfind(Entry.Alias, 0) == 0)
+		if (entry.alias == "/" ||
+			path.string().rfind(entry.alias, 0) == 0)
 		{
-			FileSystems.emplace_back(FS.get());
+			r_filesystems.emplace_back(fs.get());
 		}
 	}
 
-	return FileSystems;
+	return r_filesystems;
 }
 
 /**
@@ -56,118 +56,119 @@ std::vector<IFileSystem*> GetFileSystemsMatchingAlias(const std::filesystem::pat
  * gathered using GetFileSystemsMatchingAlias
  */
 template<typename Lambda>
-bool Execute(const std::filesystem::path& InPath, Lambda&& InLambda)
+bool execute(const std::filesystem::path& path, Lambda&& lambda)
 {
-	std::vector<IFileSystem*> FileSystems = GetFileSystemsMatchingAlias(InPath);
+	std::vector<FileSystem*> r_filesystems = get_filesystems_matching_alias(path);
 
-	for (const auto& FS : FileSystems)
+	for (const auto& fs : r_filesystems)
 	{
-		if (InLambda(FS))
+		if (lambda(fs))
 			return true;
 	}
 
 	return false;
 }
 
-template<typename Ret, bool bWriteOp = false, typename Lambda>
-Ret ExecutePtr(const std::filesystem::path& InPath, Lambda&& InLambda)
+template<typename Ret, bool write = false, typename Lambda>
+Ret execute_ptr(const std::filesystem::path& path, Lambda&& lambda)
 {
-	std::vector<IFileSystem*> FileSystems = GetFileSystemsMatchingAlias(InPath);
+	std::vector<FileSystem*> r_filesystems = get_filesystems_matching_alias(path);
 
-	if constexpr (bWriteOp)
+	if constexpr(write)
 	{
-		if (WriteFS)
-			return InLambda(WriteFS);
+		if (write_fs)
+			return lambda(write_fs);
 	}
 	else
 	{
-		for (const auto& FS : FileSystems)
+		for (const auto& fs : r_filesystems)
 		{
-			Ret Ptr = InLambda(FS);
-			if (Ptr)
-				return Ptr;
+			Ret ptr = lambda(fs);
+			if (ptr)
+				return ptr;
 		}
 	}
 
 	return nullptr;
 }
 
-TOwnerPtr<std::streambuf> Read(const std::filesystem::path& InPath,
-	const EFileReadFlags& InReadFlags)
+OwnerPtr<std::streambuf> read(const std::filesystem::path& path,
+	const FileReadFlags& flags)
 {
-	return ExecutePtr<TOwnerPtr<std::streambuf>>(InPath,
-		[InPath, InReadFlags](IFileSystem* InFS) -> TOwnerPtr<std::streambuf>
+	return execute_ptr<OwnerPtr<std::streambuf>>(path,
+		[path, flags](FileSystem* fs) -> OwnerPtr<std::streambuf>
 		{
-			return InFS->Read(InPath, InReadFlags);
+			return fs->read(path, flags);
 		});
 }
 
-TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath,
-	const EFileWriteFlags& InWriteFlags)
+OwnerPtr<std::streambuf> write(const std::filesystem::path& path,
+	const FileWriteFlags& flags)
 {
-	return ExecutePtr<TOwnerPtr<std::streambuf>, true>(InPath,
-		[InPath, InWriteFlags](IFileSystem* InFS) -> TOwnerPtr<std::streambuf>
+	return execute_ptr<OwnerPtr<std::streambuf>, true>(path,
+		[path, flags](FileSystem* fs) -> OwnerPtr<std::streambuf>
 		{
-			if (InFS->Exists(InPath))
+			if (fs->exists(path))
 			{
-				if (!(InWriteFlags & EFileWriteFlagBits::ReplaceExisting))
+				if (!(flags & FileWriteFlagBits::ReplaceExisting))
 				{
-					ZE::Logger::Error("Can't write to file {}: file already exists",
-						InPath.string());
+					ze::logger::error("Can't write to file {}: file already exists",
+						path.string());
 					return nullptr;
 				}
 			}
 
-			return InFS->Write(InPath, InWriteFlags);
+			return fs->write(path, flags);
 		});
 }
 
-bool Exists(const std::filesystem::path& InPath)
+bool exists(const std::filesystem::path& path)
 {
-	return Execute(InPath,
-		[InPath](IFileSystem* InFS) -> bool
+	return execute(path,
+		[path](FileSystem* fs) -> bool
 		{
-			return InFS->Exists(InPath);
+			return fs->exists(path);
 		});
 }
 
-bool IsDirectory(const std::filesystem::path& InPath)
+bool is_directory(const std::filesystem::path& path)
 {
-	return Execute(InPath,
-		[InPath](IFileSystem* InFS) -> bool
+	return execute(path,
+		[path](FileSystem* fs) -> bool
 		{
-			return InFS->IsDirectory(InPath);
+			return fs->is_directory(path);
 		});
 }
 
-bool IterateDirectories(const std::filesystem::path& InPath,
-	const TDirectoryIterator& InIt, const EIterateDirectoriesFlags& InFlags)
+bool iterate_directories(const std::filesystem::path& path,
+	const DirectoryIterator& iterator, const IterateDirectoriesFlags& flags)
 {
-	return Execute(InPath,
-		[InPath, InIt, InFlags](IFileSystem* InFS) -> bool
+	return execute(path,
+		[path, iterator, flags](FileSystem* fs) -> bool
 		{
-			return InFS->IterateDirectories(InPath, InIt, InFlags);
+			return fs->iterate_directories(path, iterator, flags);
 		});
 }
 
-void SetWriteFS(IFileSystem& InFS)
+void set_write_fs(FileSystem& fs)
 {
-	must(!InFS.IsReadOnly());
+	ZE_ASSERT(!fs.is_read_only());
 	
-	WriteFS = &InFS;
+	write_fs = &fs;
 }
 
-IFileSystem& AddFileSystem(const std::string& InName, const std::string& InAlias,
-	const uint8_t& InPriority, TOwnerPtr<IFileSystem> InFS)
+FileSystem& add_filesystem(const std::string& name, const std::string& alias,
+	const uint8_t& priority, OwnerPtr<FileSystem> fs)
 {
-	Filesystems.insert({ SFSEntry(InName, InAlias, InPriority),
-		std::unique_ptr<IFileSystem>(InFS) });
+	filesystems.insert({ FSEntry(name, alias, priority),
+		std::unique_ptr<FileSystem>(fs) });
 
-	ZE::Logger::Info("Added new filesystem {} (alias {}/{})", InName,
-		InAlias.c_str(),
-		InPriority);
+	ze::logger::info("Added new filesystem {} (alias {}/{})", 
+		name,
+		alias.c_str(),
+		priority);
 
-	return *InFS;
+	return *fs;
 }
 
 }

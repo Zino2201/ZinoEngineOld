@@ -1,13 +1,13 @@
 #pragma once
 
-namespace ZE::Serialization
+namespace ze::serialization
 {
 
 template<typename Archive, typename T1, typename T2>
-void Serialize(Archive& InArchive, std::pair<T1, T2>& InValue)
+void serialize(Archive& archive, std::pair<T1, T2>& pair)
 {
-	InArchive <=> InValue.first;
-	InArchive <=> InValue.second;
+	archive <=> pair.first;
+	archive <=> pair.second;
 }
 
 }

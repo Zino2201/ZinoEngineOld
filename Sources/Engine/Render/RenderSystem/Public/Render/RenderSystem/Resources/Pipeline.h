@@ -3,11 +3,16 @@
 #include "Resource.h"
 #include "Shader/ShaderCore.h"
 
-namespace ZE
+using namespace ze::gfx::shaders;
+
+namespace ze
 {
 
+namespace gfx::shaders
+{
 /** Forward */
 class CRSShader;
+}
 
 /** Vertex input rate */
 enum class EVertexInputRate
@@ -40,9 +45,9 @@ struct SVertexInputBindingDescriptionHash
 	{
 		uint64_t Hash = 0;
 
-		HashCombine(Hash, InDesc.Binding);
-		HashCombine(Hash, InDesc.Stride);
-		HashCombine(Hash, InDesc.InputRate);
+		hash_combine(Hash, InDesc.Binding);
+		hash_combine(Hash, InDesc.Stride);
+		hash_combine(Hash, InDesc.InputRate);
 
 		return Hash;
 	}
@@ -77,10 +82,10 @@ struct SVertexInputAttributeDescriptionHash
 	{
 		uint64_t Hash = 0;
 
-		HashCombine(Hash, InDesc.Binding);
-		HashCombine(Hash, InDesc.Location);
-		HashCombine(Hash, InDesc.Format);
-		HashCombine(Hash, InDesc.Offset);
+		hash_combine(Hash, InDesc.Binding);
+		hash_combine(Hash, InDesc.Location);
+		hash_combine(Hash, InDesc.Format);
+		hash_combine(Hash, InDesc.Offset);
 
 		return Hash;
 	}
@@ -150,13 +155,13 @@ struct SRSRenderTargetBlendDescHash
 	{
 		uint64_t Hash = 0;
 
-		HashCombine(Hash, InDesc.bEnableBlend);
-		HashCombine(Hash, InDesc.SrcColor);
-		HashCombine(Hash, InDesc.DstColor);
-		HashCombine(Hash, InDesc.ColorOp);
-		HashCombine(Hash, InDesc.SrcAlpha);
-		HashCombine(Hash, InDesc.DstAlpha);
-		HashCombine(Hash, InDesc.AlphaOp);
+		hash_combine(Hash, InDesc.bEnableBlend);
+		hash_combine(Hash, InDesc.SrcColor);
+		hash_combine(Hash, InDesc.DstColor);
+		hash_combine(Hash, InDesc.ColorOp);
+		hash_combine(Hash, InDesc.SrcAlpha);
+		hash_combine(Hash, InDesc.DstAlpha);
+		hash_combine(Hash, InDesc.AlphaOp);
 
 		return Hash;
 	}
@@ -185,7 +190,7 @@ struct SRSBlendStateHash
 		uint64_t Hash = 0;
 
         for(const auto& Desc : InState.BlendDescs)
-            HashCombine<SRSRenderTargetBlendDesc, SRSRenderTargetBlendDescHash>(Hash, Desc);
+            hash_combine<SRSRenderTargetBlendDesc, SRSRenderTargetBlendDescHash>(Hash, Desc);
 
 		return Hash;
 	}
@@ -236,10 +241,10 @@ struct SRSDepthStencilOpHash
 	{
 		uint64_t Hash = 0;
 
-		HashCombine(Hash, InOp.FailOp);
-		HashCombine(Hash, InOp.PassOp);
-		HashCombine(Hash, InOp.DepthFailOp);
-		HashCombine(Hash, InOp.CompareOp);
+		hash_combine(Hash, InOp.FailOp);
+		hash_combine(Hash, InOp.PassOp);
+		hash_combine(Hash, InOp.DepthFailOp);
+		hash_combine(Hash, InOp.CompareOp);
 
 		return Hash;
 	}
@@ -291,13 +296,13 @@ struct SRSDepthStencilStateHash
 	{
 		uint64_t Hash = 0;
 
-		HashCombine(Hash, InState.bEnableDepthTest);
-		HashCombine(Hash, InState.bEnableDepthWrite);
-		HashCombine(Hash, InState.DepthCompareOp);
-		HashCombine(Hash, InState.bDepthBoundsTestEnable);
-		HashCombine(Hash, InState.bStencilTestEnable);
-		HashCombine<SRSDepthStencilOp, SRSDepthStencilOpHash>(Hash, InState.FrontFace);
-		HashCombine<SRSDepthStencilOp, SRSDepthStencilOpHash>(Hash, InState.BackFace);
+		hash_combine(Hash, InState.bEnableDepthTest);
+		hash_combine(Hash, InState.bEnableDepthWrite);
+		hash_combine(Hash, InState.DepthCompareOp);
+		hash_combine(Hash, InState.bDepthBoundsTestEnable);
+		hash_combine(Hash, InState.bStencilTestEnable);
+		hash_combine<SRSDepthStencilOp, SRSDepthStencilOpHash>(Hash, InState.FrontFace);
+		hash_combine<SRSDepthStencilOp, SRSDepthStencilOpHash>(Hash, InState.BackFace);
 
 		return Hash;
 	}
@@ -360,11 +365,11 @@ struct SRSRasterizerStateHash
     {
         uint64_t Hash = 0;
 
-        HashCombine(Hash, InState.PolygonMode);
-        HashCombine(Hash, InState.CullMode);
-        HashCombine(Hash, InState.FrontFace);
-        HashCombine(Hash, InState.bEnableDepthClamp);
-        HashCombine(Hash, InState.bEnableRasterizerDiscard);
+        hash_combine(Hash, InState.PolygonMode);
+        hash_combine(Hash, InState.CullMode);
+        hash_combine(Hash, InState.FrontFace);
+        hash_combine(Hash, InState.bEnableDepthClamp);
+        hash_combine(Hash, InState.bEnableRasterizerDiscard);
 
         return Hash;
     }
@@ -375,12 +380,12 @@ struct SRSRasterizerStateHash
  */
 struct SRSPipelineShaderStage
 {
-    EShaderStage Stage;
-    CRSShader* Shader;
+    ShaderStage Stage;
+    gfx::shaders::CRSShader* Shader;
     const char* EntryPoint;
 
     SRSPipelineShaderStage(
-		const EShaderStage& InStage,
+		const ShaderStage& InStage,
 	    CRSShader* InShader,
         const char* InEntryPoint) : 
         Stage(InStage), Shader(InShader), EntryPoint(InEntryPoint) {}
@@ -399,9 +404,9 @@ struct SRSPipelineShaderStageHash
 	{
 		uint64_t Hash = 0;
 
-		HashCombine(Hash, InStage.Stage);
-		HashCombine(Hash, InStage.Shader);
-		HashCombine(Hash, InStage.EntryPoint);
+		hash_combine(Hash, InStage.Stage);
+		hash_combine(Hash, InStage.Shader);
+		hash_combine(Hash, InStage.EntryPoint);
 
 		return Hash;
 	}

@@ -4,7 +4,7 @@
 #include "WorldView.h"
 #include "RendererTransientData.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class CClusteredForwardRenderingPath;

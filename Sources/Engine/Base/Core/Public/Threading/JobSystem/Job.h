@@ -5,16 +5,16 @@
 #include <array>
 #include <memory>
 
-namespace ZE::JobSystem
+namespace ze::jobsystem
 {
 
 #if __cpp_lib_hardware_interference_size >= 201603
-static constexpr size_t GJobAlignement = std::hardware_destructive_interference_size;
+static constexpr size_t job_alignement = std::hardware_destructive_interference_size;
 #else
-static constexpr size_t GJobAlignement = 64;
+static constexpr size_t job_alignement = 64;
 #endif
 
-enum class EJobType
+enum class JobType
 {
 	/** 
 	 * The default job type,
@@ -37,65 +37,65 @@ enum class EJobType
  * To schedule a job, use ZE::JobSystem::ScheduleJob
  * You can wait for a job using ZE::JobSystem::WaitJob
  */
-struct CORE_API alignas(GJobAlignement) SJob
+struct CORE_API alignas(job_alignement) Job
 {
-	using JobFunction = void(*)(const SJob& InJob);
-	static constexpr size_t UserdataSize = 128;
-	static constexpr size_t MaxDependents = 16;
-	static constexpr uint8_t MaxChilds = 255;
+	using JobFunction = void(*)(const Job& job);
+	static constexpr size_t userdata_size = 128;
+	static constexpr size_t max_dependents = 16;
+	static constexpr uint8_t max_childs = 255;
 
-	EJobType Type;
-	const char* Name;
-	const SJob* Parent;
+	JobType type;
+	const char* nmae;
+	const Job* parent;
 	/** Unfinished job count, 0 = finished, 1 = not finished, > 1 = childs running */
-	mutable std::atomic_uint8_t UnfinishedJobs;
-	const JobFunction Function;
-	mutable std::atomic_uint8_t DependancesCount;
-	mutable std::atomic_uint8_t DependentCount;
-	mutable std::array<const SJob*, MaxDependents> Dependents;
-	mutable std::array<uint8_t, UserdataSize> Userdata;
+	mutable std::atomic_uint8_t unfinished_jobs;
+	const JobFunction function;
+	mutable std::atomic_uint8_t dependances_count;
+	mutable std::atomic_uint8_t dependent_count;
+	mutable std::array<const Job*, max_dependents> dependents;
+	mutable std::array<uint8_t, userdata_size> userdata;
 
-	SJob() : Type(EJobType::Normal), Parent(nullptr), UnfinishedJobs(0), Function(nullptr) {}
-	SJob(const JobFunction& InJobFunction, EJobType InType = EJobType::Normal,
-		const SJob* InParent = nullptr) : 
-		Type(InType), Parent(InParent),
-		UnfinishedJobs(1), Function(InJobFunction), DependancesCount(0),
-		DependentCount(0) {}
+	Job() : type(JobType::Normal), parent(nullptr), unfinished_jobs(0), function(nullptr) {}
+	Job(const JobFunction& in_job_func, JobType in_type = JobType::Normal,
+		const Job* in_parent = nullptr) : 
+		type(in_type), parent(in_parent),
+		unfinished_jobs(1), function(in_job_func), dependances_count(0),
+		dependent_count(0) {}
 		 
 	/**
 	 * Get casted user data
 	 */
 	template<typename T>
-	ZE_FORCEINLINE T* GetUserdata() const
+	ZE_FORCEINLINE T* get_userdata() const
 	{
-		return reinterpret_cast<T*>(Userdata.data());
+		return reinterpret_cast<T*>(userdata.data());
 	}
 
-	ZE_FORCEINLINE bool IsFinished() const { return UnfinishedJobs == 0; }
+	ZE_FORCEINLINE bool is_finished() const { return unfinished_jobs == 0; }
 };
 
 /** Schedule the job */
-CORE_API void ScheduleJob(const SJob& InJob);
+CORE_API void schedule(const Job& job);
 
 /** Schedule the job after the specified job finish */
-CORE_API void ScheduleJob(const SJob& InJob, const SJob& InDependence);
+CORE_API void schedule(const Job& job, const Job& dependence);
 
 /** Wait for a job */
-CORE_API void WaitJob(const SJob& InJob);
+CORE_API void wait(const Job& job);
 
-namespace Internal
+namespace detail
 {
 	/**
 	 * Execute the job
 	 */
-	CORE_API void ExecuteJob(const SJob& InJob);
+	CORE_API void execute(const Job& InJob);
 
 	/**
 	 * Finish the job
 	 * If this job has any childs, it will wait
 	 * If this job has dependents, it will execute them
 	 */
-	CORE_API void FinishJob(const SJob& InJob);
+	CORE_API void finish(const Job& InJob);
 }
 
 

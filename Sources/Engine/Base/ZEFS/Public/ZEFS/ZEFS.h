@@ -5,7 +5,7 @@
 /**
  * ZinoEngine FileSystem
  */
-namespace ZE::FileSystem
+namespace ze::filesystem
 {
 
 /**
@@ -17,10 +17,10 @@ namespace ZE::FileSystem
 /**
  * Check if the specified file or directory exists
  */
-ZEFS_API bool Exists(const std::filesystem::path& InPath);
+ZEFS_API bool exists(const std::filesystem::path& path);
 
 /** Check if the specified path is a directory */
-ZEFS_API bool IsDirectory(const std::filesystem::path& InPath);
+ZEFS_API bool is_directory(const std::filesystem::path& path);
 
 /**
  * ***************************************
@@ -32,15 +32,15 @@ ZEFS_API bool IsDirectory(const std::filesystem::path& InPath);
  * Create a file archive of the specified path for reading
  * @return Returns a stream buffer for manipulating the file
  */
-ZEFS_API TOwnerPtr<std::streambuf> Read(const std::filesystem::path& InPath,
-	const EFileReadFlags& InReadFlags = EFileReadFlagBits::None);
+ZEFS_API OwnerPtr<std::streambuf> read(const std::filesystem::path& path,
+	const FileReadFlags& flags = FileReadFlagBits::None);
 
 /**
  * Create a file archive of the specified path for writing
  * @return Returns a stream buffer for manipulating the file
  */
-ZEFS_API TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath,
-	const EFileWriteFlags& InWriteFlags = EFileWriteFlagBits::None); 
+ZEFS_API OwnerPtr<std::streambuf> write(const std::filesystem::path& path,
+	const FileWriteFlags& flags = FileWriteFlagBits::None); 
 
 
 /**
@@ -52,8 +52,8 @@ ZEFS_API TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath,
 /**
  * Iterate over all directories
  */
-ZEFS_API bool IterateDirectories(const std::filesystem::path& InPath,
-	const TDirectoryIterator& InIt, const EIterateDirectoriesFlags& InFlags = EIterateDirectoriesFlagBits::None);
+ZEFS_API bool iterate_directories(const std::filesystem::path& path,
+	const DirectoryIterator& iterator, const IterateDirectoriesFlags& flags = IterateDirectoriesFlagBits::None);
 /**
  * ***************************************
  *					Misc
@@ -61,22 +61,22 @@ ZEFS_API bool IterateDirectories(const std::filesystem::path& InPath,
  */
 
 /** Set the current write file system */
-ZEFS_API void SetWriteFS(IFileSystem& InFS);
+ZEFS_API void set_write_fs(FileSystem& fs);
 
 /** 
  * Add a file system 
  * @param InName Name of the FS. Must be unique !
  * @param Alias
  */
-ZEFS_API IFileSystem& AddFileSystem(const std::string& InName, const std::string& InAlias,
-	const uint8_t& InPriority, TOwnerPtr<IFileSystem> InFS);
+ZEFS_API FileSystem& add_filesystem(const std::string& name, const std::string& alias,
+	const uint8_t& priority, OwnerPtr<FileSystem> fs);
 
 template<typename T, typename... Args>
-ZE_FORCEINLINE IFileSystem& AddFileSystem(const std::string& InName, const std::string& InAlias,
-	const uint8_t& InPriority, Args&&... InArgs)
+ZE_FORCEINLINE FileSystem& add_filesystem(const std::string& name, const std::string& alias,
+	const uint8_t& priority, Args&&... args)
 {
-	return AddFileSystem(InName, InAlias, InPriority,
-		new T(InAlias, InPriority, std::forward<Args>(InArgs)...));
+	return add_filesystem(name, alias, priority,
+		new T(alias, priority, std::forward<Args>(args)...));
 }
 
 }

@@ -1,9 +1,10 @@
 #pragma once
 
-namespace ZE
+#include "Resource.h"
+
+namespace ze
 {
 
-#include "Resource.h"
 
 /**
  * Buffer usage flags

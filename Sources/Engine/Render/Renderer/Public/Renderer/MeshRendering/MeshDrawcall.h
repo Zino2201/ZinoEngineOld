@@ -6,7 +6,7 @@
 #include "Containers/CoherentArray.h"
 #include "Shader/ShaderCore.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 /**
@@ -16,7 +16,7 @@ struct SMeshDrawcallShaderBinding
 {
 	uint32_t Set;
 	uint32_t Binding;
-	EShaderParameterType ParameterType;
+	ShaderParameterType ParameterType;
 	union
 	{
 		CRSBuffer* Buffer;
@@ -25,12 +25,12 @@ struct SMeshDrawcallShaderBinding
 	};
 
 	SMeshDrawcallShaderBinding() : Set(0), Binding(0),
-		ParameterType(EShaderParameterType::UniformBuffer),
+		ParameterType(ShaderParameterType::UniformBuffer),
 		Buffer(nullptr) {}
 
 	SMeshDrawcallShaderBinding(const uint32_t& InSet,
 		const uint32_t& InBinding,
-		const EShaderParameterType& InParameterType,
+		const ShaderParameterType& InParameterType,
 		CRSBuffer* InBuffer) : Set(InSet), Binding(InBinding),
 		ParameterType(InParameterType),
 		Buffer(InBuffer) {}

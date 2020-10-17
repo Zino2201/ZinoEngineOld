@@ -2,7 +2,7 @@
 #include "FrameGraph.h"
 #include "Render/RenderSystem/RenderSystem.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 void CRenderPass::SetLoadOp(const RenderPassResourceID& InResource, 
@@ -198,9 +198,9 @@ void CRenderPassPersistentResourceManager::UpdateLifetimes()
 	for(const auto& Texture : TexturesToDelete)
 		TextureMap.erase(Texture);
 
-#ifdef _DEBUG
+#ifdef ZE_DEBUG
 	if(!TexturesToDelete.empty())
-		ZE::Logger::Verbose("Cleared {} unused textures", TexturesToDelete.size());
+		ze::logger::verbose("Cleared {} unused textures", TexturesToDelete.size());
 #endif
 }
 

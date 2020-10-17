@@ -5,7 +5,7 @@
 #include <istream>
 #include "Engine/Assets/Texture.h"
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 CStbTextureFactory::CStbTextureFactory()
@@ -13,7 +13,7 @@ CStbTextureFactory::CStbTextureFactory()
 	SupportedFormats = { "png", "jpg" };
 }
 
-TOwnerPtr<CAsset> CStbTextureFactory::CreateFromStream(std::istream& InStream)
+OwnerPtr<Asset> CStbTextureFactory::CreateFromStream(std::istream& InStream)
 {
 	/** Read texture to a vector */
 
@@ -31,19 +31,20 @@ TOwnerPtr<CAsset> CStbTextureFactory::CreateFromStream(std::istream& InStream)
 		&Width, &Height, &Channels, STBI_rgb_alpha));
 	if (!Data)
 	{
-		ZE::Logger::Error("Can't import texture: {}", stbi_failure_reason());
+		ze::logger::error("Can't import texture: {}", stbi_failure_reason());
 		return nullptr;
 	}
 
 	/** Instantiate the texture */
-	TOwnerPtr<CTexture> Texture = new CTexture;
+	OwnerPtr<CTexture> Texture = new CTexture;
 	Texture->SetTextureType(ETextureType::Tex2D);
 	Texture->SetFormat(ETextureFormat::R8G8B8A8);
 	Texture->SetCompression(ETextureCompressionMode::Normal);
 	Texture->SetFilter(ETextureFilter::Linear);
 	Texture->SetData(std::vector<uint8_t>(reinterpret_cast<uint8_t*>(Data.get()),
 		Data.get() + (Width * Height * Channels)));
-	return Texture;
+	ZE_ASSERT(false);
+	return nullptr;
 }
 
 }

@@ -4,32 +4,32 @@
 #include "FileSystem.h"
 #include <filesystem>
 
-namespace ZE::FileSystem
+namespace ze::filesystem
 {
 
 /**
  * File system using std library
  */
-class ZEFS_API CStdFileSystem final : public IFileSystem
+class ZEFS_API StdFileSystem final : public FileSystem
 {
 public:
-	CStdFileSystem(const std::string& InAlias,
-		const uint8_t& InPriority, const std::string& InRoot);
+	StdFileSystem(const std::string& in_alias,
+		const uint8_t& in_priority, const std::string& in_root);
 
-	TOwnerPtr<std::streambuf> Read(const std::filesystem::path& InPath, const EFileReadFlags& InFlags) override;
-	TOwnerPtr<std::streambuf> Write(const std::filesystem::path& InPath, const EFileWriteFlags& InFlags) override;
+	OwnerPtr<std::streambuf> read(const std::filesystem::path& path, const FileReadFlags& flags) override;
+	OwnerPtr<std::streambuf> write(const std::filesystem::path& path, const FileWriteFlags& flags) override;
 
-	bool IterateDirectories(const std::filesystem::path& InPath,
-		const TDirectoryIterator& InIt, const EIterateDirectoriesFlags& InFlags) override;
+	bool iterate_directories(const std::filesystem::path& path,
+		const DirectoryIterator& iterator, const IterateDirectoriesFlags& flags) override;
 
-	bool Exists(const std::filesystem::path& InPath) override;
-	bool IsDirectory(const std::filesystem::path& InPath) override;
+	bool exists(const std::filesystem::path& path) override;
+	bool is_directory(const std::filesystem::path& path) override;
 
-	bool IsReadOnly() const override { return false; }
+	bool is_read_only() const override { return false; }
 private:
-	std::filesystem::path GetCorrectPath(const std::filesystem::path& InPath) const;
+	std::filesystem::path get_correct_path(const std::filesystem::path& path) const;
 private:
-	std::filesystem::path Root;
+	std::filesystem::path root;
 };
 
 }

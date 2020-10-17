@@ -3,10 +3,10 @@
 #include "Module/Module.h"
 #include "Render/RenderSystem/Resources/Buffer.h"
 
-namespace ZE
+namespace ze
 {
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, RenderSystem)
+ZE_DEFINE_MODULE(ze::module::DefaultModule, RenderSystem)
 
 RENDERSYSTEM_API extern IRenderSystem* GRenderSystem = nullptr;
 RENDERSYSTEM_API extern IRenderSystemContext* GRSContext = nullptr;

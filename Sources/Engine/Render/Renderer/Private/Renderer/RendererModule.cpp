@@ -6,17 +6,17 @@
 #include "Renderer/WorldRenderer.h"
 #include "ImGui/ImGuiRender.h"
 
-DEFINE_MODULE(ZE::Renderer::CRendererModule, Renderer);
+ZE_DEFINE_MODULE(ze::renderer::CRendererModule, Renderer);
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 const std::array<SQuadVertex, 4> QuadVertices =
 {
-	SQuadVertex(Math::SVector2f(-1, -1), Math::SVector2f(0, 0)),
-	SQuadVertex(Math::SVector2f(1, -1), Math::SVector2f(1, 0)),
-	SQuadVertex(Math::SVector2f(1, 1), Math::SVector2f(1, 1)),
-	SQuadVertex(Math::SVector2f(-1, 1), Math::SVector2f(0, 1)),
+	SQuadVertex(maths::Vector2f(-1, -1), maths::Vector2f(0, 0)),
+	SQuadVertex(maths::Vector2f(1, -1), maths::Vector2f(1, 0)),
+	SQuadVertex(maths::Vector2f(1, 1), maths::Vector2f(1, 1)),
+	SQuadVertex(maths::Vector2f(-1, 1), maths::Vector2f(0, 1)),
 };
 
 const std::array<uint16_t, 6> QuadIndices = 
@@ -52,13 +52,13 @@ CRendererModule::~CRendererModule()
 
 CRendererModule& CRendererModule::Get()
 {
-	static CRendererModule& Module = *ZE::Module::LoadModule<CRendererModule>("Renderer");
+	static CRendererModule& Module = *ze::module::load_module<CRendererModule>("Renderer");
 	return Module;
 }
 
 void CRendererModule::CreateImGuiRenderer()
 {
-	ImGuiRenderer = std::make_unique<UI::CImGuiRender>();
+	ImGuiRenderer = std::make_unique<ui::CImGuiRender>();
 }
 
 void CRendererModule::EnqueueView(const SWorldView& InView)
@@ -86,7 +86,7 @@ void CRendererModule::WaitRendering()
 {
 	/** Wait any rendering jobs if they are not finished */
 	for (const auto& Job : RenderingJobs)
-		ZE::JobSystem::WaitJob(*Job);
+		ze::jobsystem::wait(*Job);
 
 	RenderingJobs.clear();
 }
@@ -114,15 +114,15 @@ void CRendererModule::BeginDrawView(const SWorldView& InView)
 	WorldRenderer->CopyGameState(TransientFrameDataMap);
 
 	/** Queue the rendering */
-	const JobSystem::SJob& Job = JobSystem::CreateJob(JobSystem::EJobType::Normal,
-		[&](const JobSystem::SJob& InJob)
+	const jobsystem::Job& Job = jobsystem::create_job(jobsystem::JobType::Normal,
+		[&](const jobsystem::Job& InJob)
 	{
 		WorldRenderer->Prepare();
 		WorldRenderer->Draw();
 	});
 
 	RenderingJobs.emplace_back(&Job);
-	JobSystem::ScheduleJob(Job);
+	jobsystem::schedule(Job);
 }
 
 }

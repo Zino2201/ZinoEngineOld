@@ -117,7 +117,7 @@ void serialize(ArchiveType& archive, T& object)
 	auto& map = get_archive_map(ze::reflection::ArchiveName<ArchiveType>);
 	auto serializer = Map.find(object.get_class()->get_name());
 
-	verify(serializer != map.end());
+	ZE_CHECK(serializer != map.end());
 
 	if(serializer != map.end())
 	{

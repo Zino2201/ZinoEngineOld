@@ -2,7 +2,7 @@
 #include "Renderer/MeshRendering/MeshDrawcall.h"
 #include "Renderer/Mesh.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 CRenderPassDrawcallFactory::CRenderPassDrawcallFactory(CWorldProxy& InWorld)

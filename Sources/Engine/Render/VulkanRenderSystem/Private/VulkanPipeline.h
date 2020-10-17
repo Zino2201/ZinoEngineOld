@@ -35,8 +35,8 @@ class CVulkanPipelineManager
         {
             uint64_t Hash = 0;
 
-            HashCombine<SRSGraphicsPipeline, SRSGraphicsPipelineHash>(Hash, InEntry.Pipeline);
-            HashCombine(Hash, 
+            hash_combine<SRSGraphicsPipeline, SRSGraphicsPipelineHash>(Hash, InEntry.Pipeline);
+            hash_combine(Hash, 
                 reinterpret_cast<uint64_t>(static_cast<VkRenderPass>(InEntry.RenderPass)));
 
             return Hash;

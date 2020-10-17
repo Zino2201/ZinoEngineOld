@@ -9,7 +9,7 @@
 #include "Render/UniformBuffer.h"
 #include <robin_hood.h>
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class CWorldProxy;
@@ -23,13 +23,13 @@ struct SWorldView
 	CWorldProxy& WorldProxy;
 
 	/** Viewport info */
-	Math::SRect2D Scissor;
+	maths::Rect2D Scissor;
 	SViewport Viewport;
 
 	/** Camera infos */
-	Math::SVector3 ViewPos;
-	Math::SVector3 ViewForward;
-	Math::SMatrix4 ViewProj;
+	maths::Vector3f ViewPos;
+	maths::Vector3f ViewForward;
+	maths::Matrix4 ViewProj;
 
 	/** Where to render ? */
 	CRSTexture* TargetRT;
@@ -38,8 +38,8 @@ struct SWorldView
 	struct alignas(16) SWorldViewUBO
 	{
 		glm::mat4 ViewProj;
-		Math::SVector3Float ViewPos;
-		Math::SVector3Float ViewForward;
+		maths::Vector3f ViewPos;
+		maths::Vector3f ViewForward;
 	};
 	TUniformBuffer<SWorldViewUBO> TEST_ViewUBO;
 

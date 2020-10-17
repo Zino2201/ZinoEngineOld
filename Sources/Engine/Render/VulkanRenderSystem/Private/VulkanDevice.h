@@ -162,17 +162,17 @@ class CVulkanRenderPassFramebufferManager
         {
             uint64_t Hash = 0;
 
-			HashCombine<uint64_t, robin_hood::hash<uint64_t>>(Hash,
+			hash_combine<uint64_t, robin_hood::hash<uint64_t>>(Hash,
                 reinterpret_cast<uint64_t>(static_cast<VkRenderPass>(InKey.RenderPass)));
 
 			for (const auto& RT : InKey.ColorRTs)
 			{
-				HashCombine<uint64_t, robin_hood::hash<uint64_t>>(Hash, RT);
+				hash_combine<uint64_t, robin_hood::hash<uint64_t>>(Hash, RT);
 			}
 
 			for (const auto& RT : InKey.DepthRTs)
 			{
-				HashCombine<uint64_t, robin_hood::hash<uint64_t>>(Hash, RT);
+				hash_combine<uint64_t, robin_hood::hash<uint64_t>>(Hash, RT);
 			}
 
             return Hash;

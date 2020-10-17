@@ -3,20 +3,20 @@
 #include "Resource.h"
 #include "Shader/ShaderCore.h"
 
-namespace ZE
+namespace ze::gfx::shaders
 {
 
 struct SRSShaderCreateInfo
 {
-    EShaderStage Stage;
+    ShaderStage Stage;
     uint64_t BytecodeSize;
     const void* Bytecode;
-    SShaderParameterMap ParameterMap;
+    ShaderParameterMap ParameterMap;
 
-	SRSShaderCreateInfo(const EShaderStage& InStage,
+	SRSShaderCreateInfo(const ShaderStage& InStage,
 		const uint64_t& InBytecodeSize,
 		const void* InBytecode,
-		const SShaderParameterMap& InParameterMap) :
+		const ShaderParameterMap& InParameterMap) :
 	    Stage(InStage), BytecodeSize(InBytecodeSize), Bytecode(InBytecode), 
         ParameterMap(InParameterMap) {}
 };

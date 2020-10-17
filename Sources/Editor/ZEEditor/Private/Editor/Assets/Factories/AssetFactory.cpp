@@ -3,7 +3,7 @@
 #include "Reflection/Class.h"
 #include <robin_hood.h>
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 robin_hood::unordered_set<const ze::reflection::Class*> AddedFactories;
@@ -18,7 +18,7 @@ void ScanForFactories()
 		if (AddedFactories.find(Class) != AddedFactories.end())
 			continue;
 
-		TOwnerPtr<CAssetFactory> Factory = Class->instantiate<CAssetFactory>();
+		OwnerPtr<CAssetFactory> Factory = Class->instantiate<CAssetFactory>();
 		Factories.emplace_back(Factory);
 		AddedFactories.insert(Class);
 	}
@@ -31,13 +31,13 @@ void OnModuleLoaded(const std::string_view& InName)
 
 void InitializeAssetFactoryMgr()
 {
-	ModuleLoadedDelegate = ZE::Module::GetOnModuleLoadedDelegate().Bind(&OnModuleLoaded);
+	ModuleLoadedDelegate = ze::module::get_on_module_loaded_delegate().bind(&OnModuleLoaded);
 	ScanForFactories();
 }
 
 void ClearAssetFactoryMgr()
 {
-	ZE::Module::GetOnModuleLoadedDelegate().Remove(ModuleLoadedDelegate);
+	ze::module::get_on_module_loaded_delegate().remove(ModuleLoadedDelegate);
 }
 
 CAssetFactory* GetFactoryForFormat(const std::string& InSupportedFormat)

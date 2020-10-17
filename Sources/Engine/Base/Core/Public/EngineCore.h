@@ -44,7 +44,7 @@
 #include <type_traits>
 #include "Flags/Flags.h"
 
-namespace ZE
+namespace ze
 {
 
 /** Format */
@@ -75,7 +75,4 @@ enum class ESampleCount
 	Sample64 = 1 << 6
 };
 
-#define HAS_FLAG(Enum, Other) (Enum & Other) == Other
-#define HASN_FLAG(Enum, Other) !(HAS_FLAG(Enum, Other))
-
-} /* namespace ZE */
+} /* namespace ze */

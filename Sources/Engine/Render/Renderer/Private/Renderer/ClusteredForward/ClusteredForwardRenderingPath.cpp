@@ -10,7 +10,7 @@
 #include "Renderer/RendererModule.h"
 #include "Renderer/RenderableComponentProxy.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 SRSGraphicsPipeline Test;
@@ -35,11 +35,11 @@ CClusteredForwardRenderingPath::CClusteredForwardRenderingPath()
 	std::vector<SRSPipelineShaderStage> Stages = 
 	{
 		SRSPipelineShaderStage(
-			EShaderStage::Vertex,
+			ShaderStage::Vertex,
 			CBasicShaderManager::Get().GetShader("BasePassVS")->GetShader(),
 			"Main"),
 		SRSPipelineShaderStage(
-			EShaderStage::Fragment,
+			ShaderStage::Fragment,
 			CBasicShaderManager::Get().GetShader("BasePassFS")->GetShader(),
 			"Main")
 	};
@@ -62,7 +62,7 @@ CClusteredForwardRenderingPath::CClusteredForwardRenderingPath()
 
 void CClusteredForwardRenderingPath::Draw(const SWorldView& InView)
 {
-	must(InView.TargetRT);
+	ZE_ASSERT(InView.TargetRT);
 	if(!InView.TargetRT)
 		return;
 

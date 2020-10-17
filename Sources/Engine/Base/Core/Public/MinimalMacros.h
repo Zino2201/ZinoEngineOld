@@ -1,12 +1,11 @@
 #pragma once
 
-
 /**
  * Minmal macros
  * https://www.fluentcpp.com/2019/05/28/better-macros-better-flags/
  */
 
-namespace ZE
+namespace ze
 {
 
 /** Platforms */

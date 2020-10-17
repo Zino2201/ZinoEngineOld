@@ -1,55 +1,55 @@
 #include "Console/Console.h"
 #include <charconv>
 
-namespace ZE
+namespace ze
 {
 
 void CConsole::Execute(const std::string_view& InCmdName, 
 	const std::vector<std::string_view>& InParams)
 {
 	/** Search for convars */
-	for(SConVar& ConVar : ConVars)
+	for(ConVar& ConVar : ConVars)
 	{
-		if(ConVar.Name == InCmdName)
+		if(ConVar.name == InCmdName)
 		{
 			if(InParams.empty())
 			{
-				if(ConVar.Data.index() == SConVar::DataTypeFloat)
-					ZE::Logger::Error("Invalid syntax.\n{}\n\t- Min: {}\n\t- Max: {}\n\t- Current: {}", 
-						ConVar.Help.c_str(),
-						ConVar.GetMinAsFloat(), ConVar.GetMaxAsFloat(),
-						ConVar.GetAsFloat());
-				else if (ConVar.Data.index() == SConVar::DataTypeInt32)
-					ZE::Logger::Error( 
+				if(ConVar.data.index() == ConVar::DataTypeFloat)
+					ze::logger::error("Invalid syntax.\n{}\n\t- Min: {}\n\t- Max: {}\n\t- Current: {}", 
+						ConVar.help.c_str(),
+						ConVar.get_min_as_float(), ConVar.get_max_as_float(),
+						ConVar.get_max_as_float());
+				else if (ConVar.data.index() == ConVar::DataTypeInt32)
+					ze::logger::error( 
 						"Invalid syntax\n{}\n\t- Min: {}\n\t- Max: {}\n\t- Current: {}", 
-						ConVar.Help.c_str(),
-						ConVar.GetMinAsInt(), ConVar.GetMaxAsInt(),
-						ConVar.GetAsInt());
+						ConVar.help.c_str(),
+						ConVar.get_min_as_int(), ConVar.get_max_as_int(),
+						ConVar.get_as_int());
 				else
-					ZE::Logger::Error("Invalid syntax\n{}\n\t- Current:", 
-						ConVar.Help.c_str(),
-						ConVar.GetAsString().c_str());
+					ze::logger::error("Invalid syntax\n{}\n\t- Current:", 
+						ConVar.help.c_str(),
+						ConVar.get_as_string().c_str());
 			}
 			else
 			{
 				const auto& Arg = InParams[0];
-				switch(ConVar.Data.index())
+				switch(ConVar.data.index())
 				{
-				case SConVar::DataTypeInt32:
+				case ConVar::DataTypeInt32:
 				{
 					int32_t Int = 0;
 					auto Result = std::from_chars(Arg.data(), Arg.data() + Arg.size(), Int);
 					if(Result.ec == std::errc::invalid_argument)
 					{
-						ZE::Logger::Error("Invalid argument \"{}\"", InParams[0].data());
+						ze::logger::error("Invalid argument \"{}\"", InParams[0].data());
 						return;
 					}
 					else
-						ConVar.SetInt(Int);
+						ConVar.set_int(Int);
 
 					break;
 				}
-				case SConVar::DataTypeFloat:
+				case ConVar::DataTypeFloat:
 				{
 					// For some reasons
 					// Clang doesn't have std::from_chars for floats
@@ -57,26 +57,26 @@ void CConsole::Execute(const std::string_view& InCmdName,
 
 					/*if (Result.ec == std::errc::invalid_argument)
 					{
-						ZE::Logger::Error("Invalid argument \"{}\"", InParams[0].data());
+						ze::logger::error("Invalid argument \"{}\"", InParams[0].data());
 						return;
 					}
 					else*/
-						ConVar.SetFloat(Float);
+						ConVar.set_float(Float);
 					break;
 				}
-				case SConVar::DataTypeString:
-					ConVar.SetString(InParams[0].data());
+				case ConVar::DataTypeString:
+					ConVar.set_string(InParams[0].data());
 					break;
 				}
 
-				ZE::Logger::Info("\"{}\" changed to \"{}\"", InCmdName.data(),
+				ze::logger::info("\"{}\" changed to \"{}\"", InCmdName.data(),
 					InParams[0].data());
 			}
 			return;
 		}
 	}
 
-	ZE::Logger::Error("Unknown concmd/convar \"{}\"", InCmdName.data());
+	ze::logger::error("Unknown concmd/convar \"{}\"", InCmdName.data());
 }
 
 }

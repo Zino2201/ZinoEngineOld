@@ -4,7 +4,7 @@
 #include "Engine/UI/Console.h"
 #include "Editor/AssetExplorer.h"
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 /**

@@ -3,7 +3,7 @@
 #include "Resource.h"
 #include <array>
 
-namespace ZE
+namespace ze
 {
 
 /** Render pass */
@@ -127,11 +127,11 @@ struct SRSRenderPassAttachmentHash
 	{
 		std::size_t Seed = 0;
 
-		HashCombine(Seed, InAttachment.Format);
-		HashCombine(Seed, InAttachment.Load);
-		HashCombine(Seed, InAttachment.Store);
-		HashCombine(Seed, InAttachment.InitialLayout);
-		HashCombine(Seed, InAttachment.FinalLayout);
+		hash_combine(Seed, InAttachment.Format);
+		hash_combine(Seed, InAttachment.Load);
+		hash_combine(Seed, InAttachment.Store);
+		hash_combine(Seed, InAttachment.InitialLayout);
+		hash_combine(Seed, InAttachment.FinalLayout);
 
 		return Seed;
 	}
@@ -143,8 +143,8 @@ struct SRSRenderPassSubpassAttachmentRefHash
 	{
 		std::size_t Seed = 0;
 
-		HashCombine(Seed, InRef.Index);
-		HashCombine(Seed, InRef.Layout);
+		hash_combine(Seed, InRef.Index);
+		hash_combine(Seed, InRef.Layout);
 
 		return Seed;
 	}
@@ -158,7 +158,7 @@ struct SRSRenderPassSubpassHash
 
 		for (const auto& Ref : InSubpass.ColorAttachmentRefs)
 		{
-			HashCombine<SRSRenderPassSubpassAttachmentRef,
+			hash_combine<SRSRenderPassSubpassAttachmentRef,
 				SRSRenderPassSubpassAttachmentRefHash>(Seed, Ref);
 		}
 
@@ -174,13 +174,13 @@ struct SRSRenderPassHash
 
 		for (const auto& Attachment : InPass.ColorAttachments)
 		{
-			HashCombine<SRSRenderPassAttachment,
+			hash_combine<SRSRenderPassAttachment,
 				SRSRenderPassAttachmentHash>(Seed, Attachment);
 		}
 
 		for (const auto& Subpass : InPass.Subpasses)
 		{
-			HashCombine<SRSRenderPassSubpass,
+			hash_combine<SRSRenderPassSubpass,
 				SRSRenderPassSubpassHash>(Seed, Subpass);
 		}
 

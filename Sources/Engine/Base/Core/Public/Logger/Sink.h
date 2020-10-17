@@ -4,29 +4,29 @@
 #include "Severity.h"
 #include <string>
 
-namespace ZE::Logger
+namespace ze::logger
 {
 
-struct SMessage;
+struct Message;
 
 /**
  * Abstract class for a Logger sink
  */
-class CORE_API CSink
+class CORE_API Sink
 {
 public:
-	CSink(const std::string& InName) : Name(InName), SeverityFlags(ESeverityFlagBits::All) {}
-	virtual ~CSink() = default;
+	Sink(const std::string& in_name) : name(in_name), severity_flags(SeverityFlagBits::All) {}
+	virtual ~Sink() = default;
 
-	virtual void Log(const SMessage& InMessage) = 0;
+	virtual void log(const Message& message) = 0;
 
-	inline const ESeverityFlags& GetSeverityFlags() const { return SeverityFlags; }
-	inline const std::string& GetName() const { return Name; }
+	ZE_FORCEINLINE const std::string& get_name() const { return name; }
+	ZE_FORCEINLINE const SeverityFlags& get_severity_flags() const { return severity_flags; }
 protected:
-	std::string Format(const SMessage& InMessage);
+	std::string format(const Message& message);
 protected:
-	std::string Name;
-	ESeverityFlags SeverityFlags;
+	std::string name;
+	SeverityFlags severity_flags;
 };
 
 }

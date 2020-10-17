@@ -2,7 +2,7 @@
 
 #include "EngineCore.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 /**
@@ -11,7 +11,7 @@ namespace ZE::Renderer
 class RENDERER_API IRenderableComponent
 {
 public:
-	virtual Math::STransform& GetTransform() const = 0;
+	virtual maths::Transform& GetTransform() const = 0;
 };
 
 }

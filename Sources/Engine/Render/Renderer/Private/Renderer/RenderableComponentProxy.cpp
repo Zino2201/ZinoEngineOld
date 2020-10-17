@@ -1,7 +1,7 @@
 #include "Renderer/RenderableComponentProxy.h"
 #include "Renderer/RenderableComponentInterface.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 CRenderableComponentProxy::CRenderableComponentProxy(const IRenderableComponent* InComponent,
@@ -9,7 +9,7 @@ CRenderableComponentProxy::CRenderableComponentProxy(const IRenderableComponent*
 	Type(InType)
 {
 	StaticTransform = InComponent->GetTransform();
-	StaticWorldMatrix = StaticTransform.ToWorldMatrix();
+	StaticWorldMatrix = StaticTransform.to_world_matrix();
 }
 
 }

@@ -4,19 +4,19 @@
 #include "Module/Module.h"
 #include <robin_hood.h>
 
-namespace ZE
+namespace ze::gfx::shaders
 {
 
 /**
  * Shaders
  */
-enum class EShaderStage
+enum class ShaderStage
 {
     Vertex = 1 << 0,
     Fragment = 1 << 1,
 };
 
-enum class EShaderParameterType
+enum class ShaderParameterType
 {
 	UniformBuffer,
 	CombinedImageSampler,
@@ -25,94 +25,94 @@ enum class EShaderParameterType
 	StorageBuffer
 };
 
-struct SShaderParameterMember
+struct ShaderParameterMember
 {
-	const char* Name;
-	uint64_t Size;
-	uint64_t Offset;
+	const char* name;
+	uint64_t size;
+	uint64_t offset;
 };
 
 /**
  * A shader parameter
  */
-struct SHADERCORE_API SShaderParameter
+struct SHADERCORE_API ShaderParameter
 {
-    std::string Name;
-    EShaderParameterType Type;
-    uint32_t Set;
-    uint32_t Binding;
-    uint64_t Size;
-    uint32_t Count;
-    std::vector<SShaderParameterMember> Members;
+    std::string name;
+    ShaderParameterType type;
+    uint32_t set;
+    uint32_t binding;
+    uint64_t size;
+    uint32_t count;
+    std::vector<ShaderParameterMember> members;
 
-	SShaderParameter() : Name(), Type(EShaderParameterType::UniformBuffer),
-		Set(0), Binding(0), Size(0), Count(0) {}
+	ShaderParameter() : type(ShaderParameterType::UniformBuffer),
+		set(0), binding(0), size(0), count(0) {}
 
-	SShaderParameter(const std::string& InName,
-		const EShaderParameterType& InType,
-		const uint32_t& InSet,
-		const uint32_t& InBinding,
-		const uint32_t& InCount) :
-		Name(InName), Type(InType), Set(InSet), Binding(InBinding), Size(0), Count(InCount) {}
+	ShaderParameter(const std::string& in_name,
+		const ShaderParameterType& in_type,
+		const uint32_t& in_set,
+		const uint32_t& in_binding,
+		const uint32_t& in_count) :
+		name(in_name), type(in_type), set(in_set), binding(in_binding), size(0), count(in_count) {}
 
-	SShaderParameter(const std::string& InName,
-		const EShaderParameterType& InType,
-		const uint32_t& InSet,
-		const uint32_t& InBinding,
-		const uint64_t& InSize,
-		const uint32_t& InCount,
-		const std::vector<SShaderParameterMember>& InMembers) :
-		Name(InName), Type(InType), Set(InSet), Binding(InBinding), Size(InSize), Count(InCount),
-		Members(InMembers) {}
+	ShaderParameter(const std::string& in_name,
+		const ShaderParameterType& in_type,
+		const uint32_t& in_set,
+		const uint32_t& in_binding,
+		const uint64_t& in_size,
+		const uint32_t& in_count,
+		const std::vector<ShaderParameterMember>& in_members) :
+		name(in_name), type(in_type), set(in_set), binding(in_binding), size(in_size), count(in_count),
+		members(in_members) {}
 };
 
-struct SShaderParameterHash
+struct ShaderParameterHash
 {
-	std::size_t operator()(const SShaderParameter& InParameter) const noexcept
+	std::size_t operator()(const ShaderParameter& parameter) const noexcept
 	{
-		std::size_t Seed = 0;
+		std::size_t seed = 0;
 
 		/**
 		 * Don't hash set
 		 */
 
-		HashCombine(Seed, InParameter.Name);
-		HashCombine(Seed, InParameter.Type);
-		HashCombine(Seed, InParameter.Binding);
-		HashCombine(Seed, InParameter.Size);
-		HashCombine(Seed, InParameter.Count);
+		hash_combine(seed, parameter.name);
+		hash_combine(seed, parameter.type);
+		hash_combine(seed, parameter.binding);
+		hash_combine(seed, parameter.size);
+		hash_combine(seed, parameter.count);
 
-		return Seed;
+		return seed;
 	}
 };
 
-class SShaderParameterMap
+class ShaderParameterMap
 {
 public:
-	void AddParameter(const char* InName, const SShaderParameter& InParameter)
+	void add_parameter(const char* name, const ShaderParameter& parameter)
 	{
-		Parameters.insert({ InName, InParameter });
+		parameters.insert({ name, parameter});
 	}
 
-    const SShaderParameter& GetParameterByName(const std::string& InName) const
+    const ShaderParameter& get_parameter_by_name(const std::string& name) const
 	{
-		return Parameters.find(InName)->second;
+		return parameters.find(name)->second;
 	}
 
-	std::vector<SShaderParameter> GetParameters() const
+	std::vector<ShaderParameter> get_parameters() const
 	{
-		std::vector<SShaderParameter> OutParameters;
-		OutParameters.reserve(Parameters.size());
+		std::vector<ShaderParameter> out_params;
+		out_params.reserve(parameters.size());
 
-		for(const auto& [Name, Parameter]: Parameters)
+		for(const auto& [name, param] : parameters)
 		{
-			OutParameters.push_back(Parameter);
+			out_params.push_back(param);
 		}
 
-		return OutParameters;
+		return out_params;
 	}
 private:
-    robin_hood::unordered_map<std::string, SShaderParameter> Parameters;
+    robin_hood::unordered_map<std::string, ShaderParameter> parameters;
 };
 
 }

@@ -2,7 +2,7 @@
 
 #include "Pipeline.h"
 
-namespace ZE
+namespace ze
 {
 
 /**
@@ -46,19 +46,19 @@ struct SRSGraphicsPipelineHash
         uint64_t Hash = 0;
 
         for(const auto& Stage : InPipeline.ShaderStages)
-            HashCombine<SRSPipelineShaderStage, SRSPipelineShaderStageHash>(Hash, Stage);
+            hash_combine<SRSPipelineShaderStage, SRSPipelineShaderStageHash>(Hash, Stage);
 
 		for (const auto& BindingDescription : InPipeline.BindingDescriptions)
-			HashCombine<SVertexInputBindingDescription, SVertexInputBindingDescriptionHash>(Hash,
+			hash_combine<SVertexInputBindingDescription, SVertexInputBindingDescriptionHash>(Hash,
                 BindingDescription);
 
 		for (const auto& AttributeDescription : InPipeline.AttributeDescriptions)
-			HashCombine<SVertexInputAttributeDescription, SVertexInputAttributeDescriptionHash>(Hash,
+			hash_combine<SVertexInputAttributeDescription, SVertexInputAttributeDescriptionHash>(Hash,
 				AttributeDescription);
 
-        HashCombine<SRSBlendState, SRSBlendStateHash>(Hash, InPipeline.BlendState);
-        HashCombine<SRSRasterizerState, SRSRasterizerStateHash>(Hash, InPipeline.RasterizerState);
-        HashCombine<SRSDepthStencilState, SRSDepthStencilStateHash>(Hash, 
+        hash_combine<SRSBlendState, SRSBlendStateHash>(Hash, InPipeline.BlendState);
+        hash_combine<SRSRasterizerState, SRSRasterizerStateHash>(Hash, InPipeline.RasterizerState);
+        hash_combine<SRSDepthStencilState, SRSDepthStencilStateHash>(Hash, 
             InPipeline.DepthStencilState);
 
         return Hash;

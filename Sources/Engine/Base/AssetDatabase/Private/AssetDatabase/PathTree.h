@@ -16,29 +16,29 @@ namespace std
 	};
 }
 
-namespace ZE
+namespace ze::assetdatabase
 {
 
 /**
  * A path tree
  */
-class CPathTree
+class PathTree
 {
-	struct SPathDirectory
+	struct PathDirectory
 	{
-		std::filesystem::path Parent;
-		std::unordered_set<std::filesystem::path> Childs;
+		std::filesystem::path parent;
+		std::unordered_set<std::filesystem::path> childs;
 	};
 public:
 	/** Add the specified path to the path tree (path must be relative) */
-	void Add(const std::filesystem::path& InPath);
+	void add(const std::filesystem::path& path);
 
-	std::vector<std::filesystem::path> GetChilds(const std::filesystem::path& InPath,
-		const bool& bInIncludeFiles);
+	std::vector<std::filesystem::path> get_childs(const std::filesystem::path& path,
+		const bool& include_files);
 
-	bool HasPath(const std::filesystem::path& InPath) const;
+	bool has_path(const std::filesystem::path& path) const;
 private:
-	std::unordered_map<std::filesystem::path, SPathDirectory> Paths;
+	std::unordered_map<std::filesystem::path, PathDirectory> paths;
 };
 
 }

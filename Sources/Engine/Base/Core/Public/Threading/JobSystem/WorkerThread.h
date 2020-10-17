@@ -6,15 +6,15 @@
 #include <atomic>
 #include <condition_variable>
 
-namespace ZE::JobSystem
+namespace ze::jobsystem
 {
 
-struct SJob;
+struct Job;
 
 /**
  * Type of the worker thread
  */
-enum class EWorkerThreadType
+enum class WorkerThreadType
 {
 	/** A worker that is run inside a thread dedicated to run jobs */
 	Full,
@@ -28,48 +28,48 @@ enum class EWorkerThreadType
 /**
  * A worker thread
  */
-class CORE_API CWorkerThread
+class CORE_API WorkerThread
 {
 public:
-	CWorkerThread();
-	CWorkerThread(EWorkerThreadType InType,
-		const std::thread::id& InThreadId);
+	WorkerThread();
+	WorkerThread(WorkerThreadType in_type,
+		const std::thread::id& thread_id);
 
 	template<typename T>
-	CWorkerThread(EWorkerThreadType InType, const T& InThreadFunc) :
-		Type(InType), Active(true), Thread(InThreadFunc), 
-		ThreadId(Thread.get_id()) { }
+	WorkerThread(WorkerThreadType in_type, const T& thread_func) :
+		type(in_type), active(true), thread(thread_func),
+		thread_id(thread.get_id()) { }
 
 	/** Flush the thread queue */
-	void Flush();
+	void flush();
 
-	static std::condition_variable& GetSleepConditionVariable();
+	static std::condition_variable& get_sleep_condition_var();
 
-	ZE_FORCEINLINE const EWorkerThreadType& GetType() const { return Type; }
-	ZE_FORCEINLINE std::thread& GetThread() { return Thread; }
-	ZE_FORCEINLINE const std::thread::id& GetThreadId() const { return ThreadId; }
-	ZE_FORCEINLINE TJobDeque& GetJobQueue() { return JobQueue; }
-	ZE_FORCEINLINE bool IsActive() const { return Active; }
-	ZE_FORCEINLINE bool HasJobs() const { return !JobQueue.IsEmpty(); }
+	ZE_FORCEINLINE const WorkerThreadType& get_type() const { return type; }
+	ZE_FORCEINLINE std::thread& get_thread() { return thread; }
+	ZE_FORCEINLINE const std::thread::id& get_thread_id() const { return thread_id; }
+	ZE_FORCEINLINE JobDeque& get_job_queue() { return job_queue; }
+	ZE_FORCEINLINE bool is_active() const { return active; }
+	ZE_FORCEINLINE bool has_jobs() const { return !job_queue.is_empty(); }
 
-	bool operator==(const CWorkerThread& InOther) const
+	bool operator==(const WorkerThread& other) const
 	{
-		return ThreadId == InOther.ThreadId;
+		return thread_id == other.thread_id;
 	}
 
-	bool operator!=(const CWorkerThread& InOther) const
+	bool operator!=(const WorkerThread& other) const
 	{
-		return ThreadId != InOther.ThreadId;
+		return thread_id != other.thread_id;
 	}
 private:
-	const SJob* TryGetOrStealJob(const size_t& InWorkerIdx = -1);
+	const Job* try_get_or_steal_job(const size_t& in_worker_idx = -1);
 private:
-	EWorkerThreadType Type;
-	std::atomic_bool Active;
-	std::thread Thread;
-	std::thread::id ThreadId;
-	TJobDeque JobQueue;
-	std::mutex SleepMutex;
+	WorkerThreadType type;
+	std::atomic_bool active;
+	std::thread thread;
+	std::thread::id thread_id;
+	JobDeque job_queue;
+	std::mutex sleep_mutex;
 };
 
 }

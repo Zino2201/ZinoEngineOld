@@ -5,29 +5,29 @@
 #include <istream>
 #include <ostream>
 
-namespace ZE::FileSystem
+namespace ze::filesystem
 {
 
 /**
  * Input filestream
  */
-class ZEFS_API CIFileStream : public std::istream
+class ZEFS_API FileIStream : public std::istream
 {
 public:
-	CIFileStream(const std::filesystem::path& InPath,
-		const ZE::FileSystem::EFileReadFlags& InReadFlags = ZE::FileSystem::EFileReadFlagBits::None);
-	~CIFileStream() { delete rdbuf(); }
+	FileIStream(const std::filesystem::path& path,
+		const FileReadFlags& flags = FileReadFlagBits::None);
+	~FileIStream() { delete rdbuf(); }
 };
 
 /**
  * Output filestream
  */
-class ZEFS_API COFileStream : public std::ostream
+class ZEFS_API FileOStream : public std::ostream
 {
 public:
-	COFileStream(const std::filesystem::path& InPath,
-		const ZE::FileSystem::EFileWriteFlags& InWriteFlags = ZE::FileSystem::EFileWriteFlagBits::None);
-	~COFileStream() { delete rdbuf(); }
+	FileOStream(const std::filesystem::path& path,
+		const FileWriteFlags& flags = FileWriteFlagBits::None);
+	~FileOStream() { delete rdbuf(); }
 };
 
 }

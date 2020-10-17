@@ -1,14 +1,14 @@
 #include "Renderer/WorldProxy.h"
 #include "Renderer/RenderableComponentProxy.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 CWorldProxy::~CWorldProxy() = default;
 
-void CWorldProxy::AddProxy(const TOwnerPtr<CRenderableComponentProxy>& InProxy)
+void CWorldProxy::AddProxy(const OwnerPtr<CRenderableComponentProxy>& InProxy)
 {
-	must(InProxy);
+	ZE_CHECK(InProxy);
 
 	Proxies.emplace_back(InProxy);
 
@@ -23,7 +23,7 @@ void CWorldProxy::AddProxy(const TOwnerPtr<CRenderableComponentProxy>& InProxy)
 
 void CWorldProxy::RemoveProxy(CRenderableComponentProxy* InProxy)
 {
-	must(InProxy);
+	ZE_CHECK(InProxy);
 
 	size_t Idx = 0;
 	for (const auto& Proxy : Proxies)

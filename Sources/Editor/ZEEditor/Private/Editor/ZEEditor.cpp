@@ -22,14 +22,14 @@
 #include "Editor/AssetUtils/AssetUtils.h"
 #include "ZEFS/FileStream.h"
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, ZEEditor);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 int StaticOnWindowResized(void* InUserData, SDL_Event* InEvent)
 {
-	must(InUserData);
+	ZE_ASSERT(InUserData);
 
 	return reinterpret_cast<CZEEditor*>(InUserData)->OnWindowResized(InEvent);
 }
@@ -38,15 +38,15 @@ SRSRenderPass MainRenderPass;
 
 CZEEditor::CZEEditor() : CZinoEngineApp(true) 
 {
-	ZE::Editor::InitializeAssetFactoryMgr();
-	ZE::Editor::AssetUtils::GetOnAssetImported().Bind(
+	InitializeAssetFactoryMgr();
+	assetutils::GetOnAssetImported().bind(
 		std::bind(&CZEEditor::OnAssetImported, 
 			this,
 			std::placeholders::_1,
 			std::placeholders::_2));
 
 	/** Scan Assets directory */
-	ZE::AssetDatabase::Scan("Assets", ZE::AssetDatabase::EAssetScanMode::Async);
+	assetdatabase::scan("Assets", assetdatabase::AssetScanMode::Async);
 
 	SDL_Rect WindowSize;
 	SDL_GetDisplayUsableBounds(0, &WindowSize);
@@ -78,7 +78,7 @@ CZEEditor::CZEEditor() : CZinoEngineApp(true)
 	
 	Font = IO.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 16.f);
 
-	Renderer::CRendererModule::Get().CreateImGuiRenderer();
+	renderer::CRendererModule::Get().CreateImGuiRenderer();
 
 	MainRenderPass =
 	{
@@ -118,7 +118,7 @@ CZEEditor::CZEEditor() : CZinoEngineApp(true)
 
 CZEEditor::~CZEEditor() 
 { 
-	ZE::Editor::ClearAssetFactoryMgr();
+	ClearAssetFactoryMgr();
 	ImGui_ImplSDL2_Shutdown(); 
 }
 
@@ -185,8 +185,8 @@ void CZEEditor::Tick(const float& InDeltaTime)
 		{
 			ImGui::SameLine(ImGui::GetColumnWidth() - 500);
 			ImGui::Text("ZinoEngine v%d.%d.%d (FPS: %f)",
-				GetZEVersion().Major, GetZEVersion().Minor,
-				GetZEVersion().Patch, (1.f / InDeltaTime));
+				get_version().major, get_version().minor,
+				get_version().patch, (1.f / InDeltaTime));
 			DrawMainTab();
 			ImGui::EndTabBar();
 		}
@@ -201,8 +201,8 @@ void CZEEditor::Draw()
 	/** Trigger rendering */
 	GRenderSystem->NewFrame();
 
-	Renderer::CRendererModule::Get().GetImGuiRenderer()->CopyDrawdata();
-	Renderer::CRendererModule::Get().GetImGuiRenderer()->Update();
+	renderer::CRendererModule::Get().GetImGuiRenderer()->CopyDrawdata();
+	renderer::CRendererModule::Get().GetImGuiRenderer()->Update();
 
 	if(MainViewport->Begin())
 	{
@@ -211,7 +211,7 @@ void CZEEditor::Draw()
 		GRSContext->BeginRenderPass(MainRenderPass, Framebuffer, { 1, 0, 0, 1 });
 		GRSContext->SetViewports({ { { { 0, 0 }, { MainWindow->GetWidth(), MainWindow->GetHeight()} }, 0.f, 1.f } });
 		GRSContext->SetScissors({ { { 0, 0 }, { MainWindow->GetWidth(), MainWindow->GetHeight()} } });
-		Renderer::CRendererModule::Get().GetImGuiRenderer()->Draw(GRSContext);
+		renderer::CRendererModule::Get().GetImGuiRenderer()->Draw(GRSContext);
 		GRSContext->EndRenderPass();
 		MainViewport->End();
 	}
@@ -220,12 +220,13 @@ void CZEEditor::Draw()
 void CZEEditor::OnAssetImported(const std::filesystem::path& InPath,
 	const std::filesystem::path& InTarget)
 {
+#if 0
 	/** Try to find an asset factory compatible with this format */
 	std::string Extension = InPath.extension().string().substr(1, InPath.extension().string().size() - 1);
 	CAssetFactory* Factory = GetFactoryForFormat(Extension);
 	if (!Factory)
 	{
-		ZE::Logger::Error("Asset {} can't be imported: unknown format", InPath.string());
+		ze::logger::error("Asset {} can't be imported: unknown format", InPath.string());
 		return;
 	}
 
@@ -233,7 +234,7 @@ void CZEEditor::OnAssetImported(const std::filesystem::path& InPath,
 	FileSystem::CIFileStream Stream(InPath, FileSystem::EFileReadFlagBits::Binary);
 	if (!Stream)
 	{
-		ZE::Logger::Error("Failed to open an input stream for file {}", InPath.string());
+		ze::logger::error("Failed to open an input stream for file {}", InPath.string());
 		return;
 	}
 
@@ -245,9 +246,10 @@ void CZEEditor::OnAssetImported(const std::filesystem::path& InPath,
 
 	/** Notify the database */
 	ZE::AssetDatabase::Scan(InTarget);
+#endif
 }
 
-TOwnerPtr<CZinoEngineApp> CreateEditor()
+OwnerPtr<CZinoEngineApp> CreateEditor()
 {
 	return new CZEEditor;
 }

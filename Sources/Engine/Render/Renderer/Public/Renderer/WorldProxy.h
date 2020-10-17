@@ -5,7 +5,7 @@
 #include "MeshRendering/MeshDrawcall.h"
 #include "NonCopyable.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class CRenderableComponentProxy;
@@ -19,7 +19,7 @@ class RENDERER_API CWorldProxy final : public CNonCopyable
 public:
 	~CWorldProxy();
 
-	void AddProxy(const TOwnerPtr<CRenderableComponentProxy>& InProxy);
+	void AddProxy(const OwnerPtr<CRenderableComponentProxy>& InProxy);
 	void RemoveProxy(CRenderableComponentProxy* InProxy);
 
 	auto& GetProxies() { return Proxies; }

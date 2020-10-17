@@ -3,7 +3,7 @@
 #include "JobSystem.h"
 #include <span>
 
-namespace ZE
+namespace ze::jobsystem
 {
 
 /**
@@ -11,95 +11,94 @@ namespace ZE
  */
 
 template<typename T>
-struct TNoSplit
+struct NoSplit
 {
-	CORE_API bool Split(const size_t& InDataSize) { return false; }
+	CORE_API bool split(const size_t& data_size) { return false; }
 };
 
 /**
  * Split on a threshold (default is 4)
  */
 template<typename T, size_t Threshold = 4>
-struct TCountSplitter
+struct CountSplitter
 {
-	size_t Count;
-	size_t MaxThreshold;
+	size_t count;
+	size_t max_threshold;
 
-	TCountSplitter() : Count(1)
+	CountSplitter() : count(1)
 	{
-		MaxThreshold = Threshold;
+		max_threshold = Threshold;
 	}
 
-	bool Split(const size_t& InDataSize) 
+	bool split(const size_t& data_size) 
 	{ 
-		return Count++ < MaxThreshold;
+		return count++ < MaxThreshold;
 	}
 };
 
-namespace ParallelForInternal
+namespace detail
 {
 
 template<typename T, typename LambdaType, typename SplitterType>
-struct SParallelForJobData
+struct ParallelForJobData
 {
 	using DataType = T;
 
-	size_t Offset;
-	std::span<T> Data;
-	LambdaType Lambda;
-	SplitterType Splitter;
+	size_t offset;
+	std::span<T> data;
+	LambdaType lambda;
+	SplitterType splitter;
 
-	SParallelForJobData(const std::span<T> InData,
-		const size_t& InOffset,
-		const LambdaType& InLambda,
-		const SplitterType& InSplitter) 
-		: Data(InData), Offset(InOffset), Lambda(InLambda), Splitter(InSplitter) {}
+	ParallelForJobData(const std::span<T> in_data,
+		const size_t& in_offset,
+		const LambdaType& in_lambda,
+		const SplitterType& in_splitter) 
+		: data(in_data), offset(in_offset), lambda(in_lambda), splitter(in_splitter) {}
 };
 
 /**
  * Job function of ParallelFor
  */
 template<typename T, typename Lambda, typename Splitter>
-void ParellelForJobFunc(const ZE::JobSystem::SJob& InJob)
+void parellel_for_impl(const Job& job)
 {
-	SParallelForJobData<T, Lambda, Splitter>* Data = 
-		InJob.GetUserdata<SParallelForJobData<T, Lambda, Splitter>>();
-	if(Data)
+	ParallelForJobData<T, Lambda, Splitter>* data = 
+		job.get_userdata<ParallelForJobData<T, Lambda, Splitter>>();
+	if(data)
 	{
 		/** Should we split into a job ? */
-		if(Data->Splitter.Split(Data->Data.size()))
+		if(data->splitter.split(data->data.size()))
 		{
-			std::span<T> Left = Data->Data.subspan(0, 
-				Data->Data.size() / 2);
-			std::span<T> Right = Data->Data.subspan(Left.size(), 
-				Data->Data.size() - Left.size());
+			std::span<T> left = data->data.subspan(0, 
+				data->data.size() / 2);
+			std::span<T> Right = data->data.subspan(Left.size(), 
+				data->data.size() - left.size());
 
-			const ZE::JobSystem::SJob& LeftJob = 
-				ZE::JobSystem::CreateChildJobUserdata<SParallelForJobData<T, Lambda, Splitter>>(
-				&ParellelForJobFunc<T, Lambda, Splitter>,
-				InJob,
-				Left,
-				Data->Offset,
-				Data->Lambda,
-				Data->Splitter);
-			ZE::JobSystem::ScheduleJob(LeftJob);
+			const Job& left_job = 
+				create_child_job_with_userdata<ParallelForJobData<T, Lambda, Splitter>>(
+				&parellel_for_impl<T, Lambda, Splitter>,
+				job,
+				left,
+				data->offset,
+				data->lambda,
+				data->splitter);
+			schedule(left_job);
 
-			const ZE::JobSystem::SJob& RightJob = 
-				ZE::JobSystem::CreateChildJobUserdata<SParallelForJobData<T, Lambda, Splitter>>(
-				&ParellelForJobFunc<T, Lambda, Splitter>,
-				InJob,
-				Right,
-				Data->Offset + Left.size(),
-				Data->Lambda,
-				Data->Splitter);
-
-			ZE::JobSystem::ScheduleJob(RightJob);
+			const Job& right_job = 
+				create_child_job_with_userdata<ParallelForJobData<T, Lambda, Splitter>>(
+				&parellel_for_impl<T, Lambda, Splitter>,
+				job,
+				right,
+				data->offset + left.size(),
+				data->lambda,
+				data->splitter);
+			schedule(right_job);
 		}
 		else
 		{
-			for(size_t i = 0; i < Data->Data.size(); ++i)
+			for(size_t i = 0; i < data->data.size(); ++i)
 			{
-				Data->Lambda(i + Data->Offset);
+				data->lambda(i + data->offset);
 			}
 		}
 	}
@@ -110,107 +109,51 @@ void ParellelForJobFunc(const ZE::JobSystem::SJob& InJob)
 /**
  * ParallelFor implementation without dependence
  */
-template<typename T, typename Lambda, bool bSchedule = true, 
-	typename Splitter = TCountSplitter<T>>
-const ZE::JobSystem::SJob& ParallelFor(const size_t& InSize, T* InData, const Lambda& InLambda)
+template<typename T, typename Lambda, 
+	typename Splitter = CountSplitter<T>>
+const Job& parellel_for(const size_t& size, T* data, const Lambda& lambda, const bool& in_schedule = true)
 {
 	static_assert(
-		sizeof(ParallelForInternal::SParallelForJobData<T, Lambda, Splitter>) < ZE::JobSystem::SJob::UserdataSize, 
+		sizeof(detail::ParallelForJobData<T, Lambda, Splitter>) < Job::userdata_size, 
 		"Lambda too big !");
 
-	const ZE::JobSystem::SJob& Job =
-		ZE::JobSystem::CreateJobUserdata<ParallelForInternal::SParallelForJobData<T, Lambda,
+	const Job& job =
+		create_job_with_userdata<detail::ParallelForJobData<T, Lambda,
 			Splitter>>(
-			ZE::JobSystem::EJobType::Normal,
-			&ParallelForInternal::ParellelForJobFunc<T, Lambda, Splitter>,
-			std::span<T>(InData, InSize),
+			JobType::Normal,
+			&detail::parellel_for_impl<T, Lambda, Splitter>,
+			std::span<T>(data, size),
 			0,
-			InLambda,
+			lambda,
 			Splitter());
-	if constexpr(bSchedule)
-		ZE::JobSystem::ScheduleJob(Job);
-	return Job;
+	if(in_schedule)
+		schedule(job);
+	return job;
 }
 
 /**
  * ParallelFor implementation with dependence
  */
-template<typename T, typename Lambda, bool bSchedule = true,
-	typename Splitter = TCountSplitter<T>>
-	const ZE::JobSystem::SJob& ParallelFor(const size_t& InSize, T* InData, 
-		const ZE::JobSystem::SJob& InDependence, const Lambda& InLambda)
+template<typename T, typename Lambda, 
+	typename Splitter = CountSplitter<T>>
+const Job& parellel_for(const size_t& size, T* data, const Job& dependence, 
+	const Lambda& lambda, const bool& in_schedule = true)
 {
 	static_assert(
-		sizeof(ParallelForInternal::SParallelForJobData<T, Lambda, Splitter>) < ZE::JobSystem::SJob::UserdataSize,
+		sizeof(detail::ParallelForJobData<T, Lambda, Splitter>) < Job::userdata_size, 
 		"Lambda too big !");
 
-	const ZE::JobSystem::SJob& Job =
-		ZE::JobSystem::CreateJobUserdata<ParallelForInternal::SParallelForJobData<T, Lambda,
-		Splitter>>(
-			ZE::JobSystem::EJobType::Normal,
-			&ParallelForInternal::ParellelForJobFunc<T, Lambda, Splitter>,
-			std::span<T>(InData, InSize),
+	const Job& job =
+		create_job_with_userdata<detail::ParallelForJobData<T, Lambda, Splitter>>(
+			JobType::Normal,
+			&detail::parellel_for_impl<T, Lambda, Splitter>,
+			std::span<T>(data, size),
 			0,
-			InLambda,
+			lambda,
 			Splitter());
-	if constexpr (bSchedule)
-		ZE::JobSystem::ScheduleJob(Job, InDependence);
-	return Job;
-}
-
-/** Parallel for specializations (no dependence) */
-template<typename T, typename Lambda, bool bSchedule = true, 
-	typename Splitter = TCountSplitter<T>>
-const ZE::JobSystem::SJob& ParallelFor(std::span<T>& InData, const Lambda& InLambda)
-{
-	return ParallelFor<T, Lambda, bSchedule, Splitter>(InData.size(), InData.data(), InLambda);
-}
-
-template<typename T, size_t Size, 
-	typename Lambda, bool bSchedule = true, 
-	typename Splitter = TCountSplitter<T>>
-const ZE::JobSystem::SJob& ParallelFor(std::array<T, Size>& InData, const Lambda& InLambda)
-{
-	return ParallelFor<T, Lambda, bSchedule, Splitter>(InData.size(), InData.data(), InLambda);
-}
-
-template<typename T, typename Lambda, bool bSchedule = true,
-	typename Splitter = TCountSplitter<T>>
-	const ZE::JobSystem::SJob& ParallelFor(std::vector<T>& InData, const Lambda& InLambda)
-{
-	return ParallelFor<T, Lambda, bSchedule, Splitter>(InData.size(), InData.data(), InLambda);
-}
-
-/** ParrallelFor specialization with dependances */
-template<typename T, typename Lambda, bool bSchedule = true,
-	typename Splitter = TCountSplitter<T>>
-	const ZE::JobSystem::SJob& ParallelFor(std::span<T>& InData, 
-		const ZE::JobSystem::SJob& InDependence,
-		const Lambda& InLambda)
-{
-	return ParallelFor<T, Lambda, bSchedule, Splitter>(InData.size(), InData.data(), InDependence,
-		InLambda);
-}
-
-template<typename T, size_t Size,
-	typename Lambda, bool bSchedule = true,
-	typename Splitter = TCountSplitter<T>>
-	const ZE::JobSystem::SJob& ParallelFor(std::array<T, Size>& InData, 
-		const ZE::JobSystem::SJob& InDependence,
-		const Lambda& InLambda)
-{
-	return ParallelFor<T, Lambda, bSchedule, Splitter>(InData.size(), InData.data(), InDependence,
-		InLambda);
-}
-
-template<typename T, typename Lambda, bool bSchedule = true,
-	typename Splitter = TCountSplitter<T>>
-	const ZE::JobSystem::SJob& ParallelFor(std::vector<T>& InData, 
-		const ZE::JobSystem::SJob& InDependence,
-		const Lambda& InLambda)
-{
-	return ParallelFor<T, Lambda, bSchedule, Splitter>(InData.size(), InData.data(), InDependence,
-		InLambda);
+	if(in_schedule)
+		schedule(job, dependence);
+	return job;
 }
 
 }

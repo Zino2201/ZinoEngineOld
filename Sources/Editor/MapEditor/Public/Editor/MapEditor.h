@@ -2,7 +2,7 @@
 
 #include "ImGui/ImGui.h"
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 class CEntityList;

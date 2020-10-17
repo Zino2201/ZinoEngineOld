@@ -14,7 +14,7 @@ RegistrationManager::~RegistrationManager()
 	unregister_registration_mgr(this);
 }
 
-const Type* RegistrationManager::register_type(TOwnerPtr<Type> in_type)
+const Type* RegistrationManager::register_type(OwnerPtr<Type> in_type)
 {
 	types.emplace_back(in_type);
 	type_name_to_ptr.insert({ types.back()->get_name(), types.back().get() });

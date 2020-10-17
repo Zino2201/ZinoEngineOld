@@ -14,10 +14,10 @@ CVulkanShader::CVulkanShader(CVulkanDevice& InDevice,
 
 	ShaderModule = Device.GetDevice().createShaderModuleUnique(CreateInfos).value;
 	if (!ShaderModule)
-		ZE::Logger::Fatal("Failed to create shader module");
+		ze::logger::fatal("Failed to create shader module");
 }
 
-TOwnerPtr<CRSShader> CVulkanRenderSystem::CreateShader(
+OwnerPtr<CRSShader> CVulkanRenderSystem::CreateShader(
 	const SRSShaderCreateInfo& InCreateInfo) const
 {
 	return new CVulkanShader(*Device.get(),

@@ -3,7 +3,7 @@
 #include "EngineCore.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 
-namespace ZE
+namespace ze
 {
 
 class IRenderCommandContext;
@@ -25,11 +25,11 @@ public:
     virtual void NewFrame() = 0;
     virtual void WaitGPU() = 0;
 
-	virtual TOwnerPtr<CRSSurface> CreateSurface(const SRSSurfaceCreateInfo& InCreateInfo) const = 0;
-	virtual TOwnerPtr<CRSBuffer> CreateBuffer(const SRSBufferCreateInfo& InCreateInfo) const = 0;
-	virtual TOwnerPtr<CRSTexture> CreateTexture(const SRSTextureCreateInfo& InCreateInfo) const = 0;
-	virtual TOwnerPtr<CRSSampler> CreateSampler(const SRSSamplerCreateInfo& InCreateInfo) const = 0;
-	virtual TOwnerPtr<CRSShader> CreateShader(const SRSShaderCreateInfo& InCreateInfo) const = 0;
+	virtual OwnerPtr<CRSSurface> CreateSurface(const SRSSurfaceCreateInfo& InCreateInfo) const = 0;
+	virtual OwnerPtr<CRSBuffer> CreateBuffer(const SRSBufferCreateInfo& InCreateInfo) const = 0;
+	virtual OwnerPtr<CRSTexture> CreateTexture(const SRSTextureCreateInfo& InCreateInfo) const = 0;
+	virtual OwnerPtr<CRSSampler> CreateSampler(const SRSSamplerCreateInfo& InCreateInfo) const = 0;
+	virtual OwnerPtr<gfx::shaders::CRSShader> CreateShader(const gfx::shaders::SRSShaderCreateInfo& InCreateInfo) const = 0;
 
 	/** Utils */
 	virtual const char* GetName() const = 0;

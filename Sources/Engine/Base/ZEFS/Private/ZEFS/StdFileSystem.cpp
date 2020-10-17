@@ -1,104 +1,101 @@
 #include "ZEFS/StdFileSystem.h"
 #include <fstream>
 
-namespace ZE::FileSystem
+namespace ze::filesystem
 {
 
-/** File system */
+StdFileSystem::StdFileSystem(const std::string& in_alias,
+	const uint8_t& in_priority, const std::string& in_root) : FileSystem(in_alias,
+		in_priority), root(in_root) {}
 
-CStdFileSystem::CStdFileSystem(const std::string& InAlias,
-	const uint8_t& InPriority, const std::string& InRoot) : IFileSystem(InAlias,
-		InPriority), Root(InRoot) {}
-
-TOwnerPtr<std::streambuf> CStdFileSystem::Read(const std::filesystem::path& InPath, const EFileReadFlags& InFlags)
+OwnerPtr<std::streambuf> StdFileSystem::read(const std::filesystem::path& path, const FileReadFlags& flags)
 {
-	std::filesystem::path Path = GetCorrectPath(InPath);
-
-	TOwnerPtr<std::filebuf> File = new std::filebuf;
+	std::filesystem::path correct_path = get_correct_path(path);
+	std::filebuf* file = new std::filebuf;
 	
-	uint32_t Flags = std::ios::in;
-	if (InFlags & EFileReadFlagBits::Binary)
-		Flags |= std::ios::binary;
+	uint32_t rflags = std::ios::in;
+	if (flags & FileReadFlagBits::Binary)
+		rflags |= std::ios::binary;
 	
-	if (InFlags & EFileReadFlagBits::End)
-		Flags |= std::ios::ate;
+	if (flags & FileReadFlagBits::End)
+		rflags |= std::ios::ate;
 	
-	File->open(InPath, Flags);
-	if (!File->is_open())
+	file->open(correct_path, rflags);
+	if (!file->is_open())
 	{
-		ZE::Logger::Error("Failed to open file {}",
-			InPath.string());
-		delete File;
-		File = nullptr;
+		ze::logger::error("Failed to open file {}",
+			path.string());
+		delete file;
+		file = nullptr;
 	}
 
-	return File;
+	return file;
 }
 
-TOwnerPtr<std::streambuf> CStdFileSystem::Write(const std::filesystem::path& InPath, const EFileWriteFlags& InFlags)
+OwnerPtr<std::streambuf> StdFileSystem::write(const std::filesystem::path& path, const FileWriteFlags& flags)
 {
-	std::filesystem::path Path = GetCorrectPath(InPath);
+	std::filesystem::path correct_path = get_correct_path(path);
 
-	TOwnerPtr<std::filebuf> File = new std::filebuf;
+	OwnerPtr<std::filebuf> file= new std::filebuf;
 
-	uint32_t Flags = std::ios::out;
-	if (InFlags & EFileWriteFlagBits::Binary)
-		Flags |= std::ios::binary;
+	uint32_t wflags = std::ios::out;
+	if (flags & FileWriteFlagBits::Binary)
+		wflags |= std::ios::binary;
 
-	File->open(InPath, Flags);
-	if (!File->is_open())
+	file->open(correct_path, wflags);
+	if (!file->is_open())
 	{
-		ZE::Logger::Error("Failed to open file {}",
-			InPath.string());
-		delete File;
-		File = nullptr;
+		ze::logger::error("Failed to open file {}",
+			path.string());
+		delete file;
+		file = nullptr;
 	}
 
-	return File;
+	return file;
 }
 
-bool CStdFileSystem::IterateDirectories(const std::filesystem::path& InPath,
-	const TDirectoryIterator& InIt, const EIterateDirectoriesFlags& InFlags)
+bool StdFileSystem::iterate_directories(const std::filesystem::path& path,
+	const DirectoryIterator& iterator, const IterateDirectoriesFlags& flags)
 {
-	std::filesystem::path Path = GetCorrectPath(InPath);
-	if (!InIt)
+	std::filesystem::path correct_path = get_correct_path(path);
+	if (!iterator)
 		return false;
 
-	if (InFlags & EIterateDirectoriesFlagBits::Recursive)
+	if (flags & IterateDirectoriesFlagBits::Recursive)
 	{
-		for (auto& Entry : std::filesystem::recursive_directory_iterator(Path))
+		for (auto& entry : std::filesystem::recursive_directory_iterator(correct_path))
 		{
-			InIt.Execute(SDirectoryEntry(std::filesystem::relative(Entry.path(), Path)));
+			iterator.execute(DirectoryEntry(std::filesystem::relative(entry.path(), correct_path)));
 		}
 	}
 	else
 	{
-		for (auto& Entry : std::filesystem::directory_iterator(Path))
+		for (auto& Entry : std::filesystem::directory_iterator(correct_path))
 		{
-			InIt.Execute(SDirectoryEntry(std::filesystem::relative(Entry.path(), Path)));
+			iterator.execute(DirectoryEntry(std::filesystem::relative(Entry.path(), correct_path)));
 		}
 	}
 
 	return true;
 }
 
-bool CStdFileSystem::Exists(const std::filesystem::path& InPath)
+bool StdFileSystem::exists(const std::filesystem::path& path)
 {
-	return std::filesystem::exists(GetCorrectPath(InPath));
+	return std::filesystem::exists(get_correct_path(path));
 }
 
-bool CStdFileSystem::IsDirectory(const std::filesystem::path& InPath)
+bool StdFileSystem::is_directory(const std::filesystem::path& path)
 {
-	return std::filesystem::is_directory(GetCorrectPath(InPath));
+	return std::filesystem::is_directory(get_correct_path(path));
 }
 
-std::filesystem::path CStdFileSystem::GetCorrectPath(const std::filesystem::path& InPath) const
+std::filesystem::path StdFileSystem::get_correct_path(const std::filesystem::path& path) const
 {
-	std::filesystem::path Path = InPath;
-	if (Path.is_relative())
-		Path = Root / InPath;
+	std::filesystem::path correct_path = path;
+	if (correct_path.is_relative())
+		correct_path = root / path;
 
-	return Path;
+	return correct_path;
 }
 
 }

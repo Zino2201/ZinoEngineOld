@@ -11,7 +11,7 @@
 
 struct ImFont;
 
-namespace ZE
+namespace ze
 {
 
 class CWindow;
@@ -36,7 +36,7 @@ private:
 	std::unique_ptr<CWindow> Window;
 	std::unique_ptr<CViewport> Viewport;
 	std::shared_ptr<class CStaticMesh> testSM;
-	std::unique_ptr<ZE::UI::CImGuiRender> ImGuiRenderer;
+	std::unique_ptr<ze::ui::CImGuiRender> ImGuiRenderer;
 	ImFont* Font;
 };
 

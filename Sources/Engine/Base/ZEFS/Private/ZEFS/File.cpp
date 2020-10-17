@@ -1,15 +1,15 @@
 #include "ZEFS/FileStream.h"
 #include "ZEFS/ZEFS.h"
 
-namespace ZE::FileSystem
+namespace ze::filesystem
 {
 
-CIFileStream::CIFileStream(const std::filesystem::path& InPath,
-	const ZE::FileSystem::EFileReadFlags& InReadFlags) :
-	std::istream(Read(InPath, InReadFlags)) {}
+FileIStream::FileIStream(const std::filesystem::path& path,
+	const FileReadFlags& flags) :
+	std::istream(filesystem::read(path, flags)) {}
 
-COFileStream::COFileStream(const std::filesystem::path& InPath,
-	const ZE::FileSystem::EFileWriteFlags& InWriteFlags) :
-	std::ostream(Write(InPath, InWriteFlags)) {}
+FileOStream::FileOStream(const std::filesystem::path& path,
+	const FileWriteFlags& flags) :
+	std::ostream(filesystem::write(path, flags)) {}
 
 }

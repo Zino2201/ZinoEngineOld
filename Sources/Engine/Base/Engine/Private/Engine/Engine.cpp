@@ -10,45 +10,45 @@
 #include "Module/Module.h"
 #include "AssetDatabase/AssetDatabase.h"
 
-namespace ZE
+namespace ze
 {
 
-static ZE::TConVar<int32_t> CVarMaxFPS("r_maxfps", 144,
+static ConVarRef<int32_t> CVarMaxFPS("r_maxfps", 144,
 	"Max FPS.",
 	1,
 	GMaxFPS);
 
-static ZE::TConVar<int32_t> CVarSimFPS("sim_fixed_dt", 20,
+static ConVarRef<int32_t> CVarSimFPS("sim_fixed_dt", 20,
 	"Fixed simulation/Physics delta time",
 	1,
 	60);
 
 bool bRun = true;
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, Engine)
+ZE_DEFINE_MODULE(ze::module::DefaultModule, Engine)
 
 /**
  * Try to load a required module
  * Crash if it fails
  */
-ZE::Module::CModule* LoadRequiredModule(const std::string_view& InName)
+ze::module::Module* LoadRequiredModule(const std::string_view& InName)
 {
-	ZE::Module::CModule* Ptr = ZE::Module::LoadModule(InName);
+	ze::module::Module* Ptr = ze::module::load_module(InName);
 	if (!Ptr)
-		ZE::Logger::Fatal("Failed to load required module {} ! Exiting", InName);
+		ze::logger::fatal("Failed to load required module {} ! Exiting", InName);
 
 	return Ptr;
 }
 
 CZinoEngineApp::CZinoEngineApp(const bool& bInWaitForEvents) 
-	: CApp(0, nullptr), bWaitForEvents(bInWaitForEvents), Now(SDL_GetPerformanceCounter()), Last(0)
+	: app::App(0, nullptr), bWaitForEvents(bInWaitForEvents), Now(SDL_GetPerformanceCounter()), Last(0)
 {
 	/** Load asset related modules */
 	LoadRequiredModule("Asset");
 	LoadRequiredModule("AssetDatabase");
 
 	/** LOAD RENDERER MODULE */
-	ZE::Logger::Info("Initializing renderer");
+	ze::logger::info("Initializing renderer");
 	LoadRequiredModule("Renderer");
 }
 
@@ -57,7 +57,7 @@ CZinoEngineApp::~CZinoEngineApp()
 	
 }
 
-void CZinoEngineApp::ProcessEvents()
+void CZinoEngineApp::process_events()
 {
 	SDL_Event Event;
 	
@@ -81,16 +81,16 @@ void CZinoEngineApp::ProcessEvent(SDL_Event& InEvent)
 {
 	if (InEvent.type == SDL_QUIT)
 	{
-		App::Exit(0);
+		App::exit(0);
 	}
 
 	if (InEvent.type == SDL_KEYDOWN)
-		ZE::Input::OnKeyPressed(InEvent);
+		ze::input::on_key_pressed(InEvent);
 	if (InEvent.type == SDL_KEYUP)
-		ZE::Input::OnKeyReleased(InEvent);
+		ze::input::on_key_released(InEvent);
 }
 
-void CZinoEngineApp::Loop()
+void CZinoEngineApp::loop()
 {
 	double DeltaTime = 0.0;
 
@@ -108,7 +108,7 @@ void CZinoEngineApp::Loop()
 
 	/** Fps limiter */
 	double SleepTime = 0.0;
-	SleepTime += (1000.0 / CVarMaxFPS.Get()) - DeltaTime;
+	SleepTime += (1000.0 / CVarMaxFPS.get()) - DeltaTime;
 	SleepTime = std::max<double>(SleepTime, 0.0);
 	if (SleepTime > 0.0)
 	{

@@ -2,7 +2,7 @@
 
 #include "Renderer/FrameGraph/FrameGraph.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 struct SBarrelDistortionData

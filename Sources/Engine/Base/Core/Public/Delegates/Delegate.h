@@ -2,42 +2,43 @@
 
 #include <functional>
 
-namespace ZE
+namespace ze
 {
 
 /**
  * A singlecast delegate
  */
 template<typename Ret, typename... Args>
-class TDelegate
+class Delegate
 {
-	using TSignature = Ret(Args...);
+	using Signature = Ret(Args...);
 
 public:
-	TDelegate() {}
+	Delegate() {}
+	
 	template<typename Func>
-	TDelegate(Func&& InFunction)
-		: Function(InFunction) {}
+	Delegate(Func&& in_func)
+		: function(in_func) {}
 
 	/**
 	 * Bind a function to delegate
 	 */
-	void Bind(const std::function<TSignature>& InFunction)
+	void bind(const std::function<Signature>& in_func)
 	{
-		Function = InFunction;
+		function = in_func;
 	}
 
 	/**
 	 * Call all functions
 	 */
-	Ret Execute(Args&&... InArgs) const
+	Ret execute(Args&&... args) const
 	{
-		if(Function)
+		if(function)
 		{
 			if constexpr(!std::is_void_v<Ret>)
-				return Function(std::forward<Args>(InArgs)...);
+				return function(std::forward<Args>(args)...);
 			else
-				Function(std::forward<Args>(InArgs)...);
+				function(std::forward<Args>(args)...);
 		}
 		else
 		{
@@ -48,13 +49,13 @@ public:
 
 	operator bool() const
 	{
-		return Function != nullptr;
+		return function != nullptr;
 	}
 private:
-	std::function<TSignature> Function;
+	std::function<Signature> function;
 };
 
 template<typename... Args>
-using TDelegateNoRet = TDelegate<void, Args...>;
+using DelegateNoRet = Delegate<void, Args...>;
 
 }

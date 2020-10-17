@@ -4,29 +4,29 @@
 #include "Pair.h"
 #include <robin_hood.h>
 
-namespace ZE::Serialization
+namespace ze::serialization
 {
 
 template<typename Archive, typename Key, typename Val>
-void Serialize(Archive& InArchive, robin_hood::unordered_map<Key, Val>& InValue)
+void serialize(Archive& archive, robin_hood::unordered_map<Key, Val>& value)
 {
-	typename robin_hood::unordered_map<Key, Val>::size_type Size = InValue.size();
+	typename robin_hood::unordered_map<Key, Val>::size_type size = value.size();
 
-	InArchive <=> MakeSize(Size);
+	archive <=> make_size(size);
 
-	if constexpr(TIsInputArchive<Archive>)
+	if constexpr(IsInputArchive<Archive>)
 	{
-		for(decltype(Size) i = 0; i < Size; ++i)
+		for(decltype(size) i = 0; i < size; ++i)
 		{
-			std::pair<Key, Val> Pair;
-			InArchive <=> Pair;
-			InValue.insert({ std::move(Pair.first), std::move(Pair.second) });
+			std::pair<Key, Val> pair;
+			archive <=> pair;
+			value.insert({ std::move(pair.first), std::move(pair.second) });
 		}
 	}
 	else
 	{
-		for (auto& Elem : InValue)
-			InArchive <=> std::make_pair(Elem.first, Elem.second);
+		for (auto& elem : value)
+			archive <=> std::make_pair(elem.first, elem.second);
 	}
 }
 

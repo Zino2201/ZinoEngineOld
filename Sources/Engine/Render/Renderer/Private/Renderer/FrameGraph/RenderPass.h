@@ -8,9 +8,9 @@
 #include <optional>
 #include <robin_hood.h>
 
-namespace ZE { class IRenderSystemContext; }
+namespace ze { class IRenderSystemContext; }
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class CFrameGraph;
@@ -47,8 +47,8 @@ struct SRenderPassTextureInfosHash
     {
         uint64_t Hash = 0;
 
-        HashCombine(Hash, InInfos.Width);
-        HashCombine(Hash, InInfos.Height);
+        hash_combine(Hash, InInfos.Width);
+        hash_combine(Hash, InInfos.Height);
 
         return Hash;
     }

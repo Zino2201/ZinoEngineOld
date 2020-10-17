@@ -1,7 +1,7 @@
 #include "EntityProperties.h"
 #include "ImGui/ImGui.h"
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 CEntityProperties::CEntityProperties(CMapEditor& InMapEditor) : MapEditor(InMapEditor) {}

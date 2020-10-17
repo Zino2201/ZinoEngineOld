@@ -1,10 +1,10 @@
 #include "ZEFS/Paths.h"
 #include <filesystem>
 
-namespace ZE::FileSystem::Paths
+namespace ze::filesystem
 {
 
-std::string GetCurrentWorkingDir()
+std::string get_current_working_dir()
 {
 	return std::filesystem::current_path().string();
 }

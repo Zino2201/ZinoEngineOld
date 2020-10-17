@@ -16,15 +16,11 @@ public:
 	void NewFrame() override;
 	void WaitGPU() override;
 
-	TOwnerPtr<CRSSurface> CreateSurface(const SRSSurfaceCreateInfo& InCreateInfo) const override;
-
-	TOwnerPtr<CRSBuffer> CreateBuffer(const SRSBufferCreateInfo& InCreateInfo) const override;
-
-	TOwnerPtr<CRSTexture> CreateTexture(const SRSTextureCreateInfo& InCreateInfo) const override;
-
-	TOwnerPtr<CRSSampler> CreateSampler(const SRSSamplerCreateInfo& InCreateInfo) const override;
-
-	TOwnerPtr<CRSShader> CreateShader(const SRSShaderCreateInfo& InCreateInfo) const override;
+	OwnerPtr<CRSSurface> CreateSurface(const SRSSurfaceCreateInfo& InCreateInfo) const override;
+	OwnerPtr<CRSBuffer> CreateBuffer(const SRSBufferCreateInfo& InCreateInfo) const override;
+	OwnerPtr<CRSTexture> CreateTexture(const SRSTextureCreateInfo& InCreateInfo) const override;
+	OwnerPtr<CRSSampler> CreateSampler(const SRSSamplerCreateInfo& InCreateInfo) const override;
+	OwnerPtr<gfx::shaders::CRSShader> CreateShader(const gfx::shaders::SRSShaderCreateInfo& InCreateInfo) const override;
 
 	/** Utils */
 	const char* GetName() const override { return "Vulkan"; }

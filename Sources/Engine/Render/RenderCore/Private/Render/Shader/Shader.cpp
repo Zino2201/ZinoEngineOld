@@ -1,13 +1,15 @@
+#include "EngineCore.h"
 #include "Render/Shader/Shader.h"
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/RenderSystem/Resources/Shader.h"
+#include "Shader/ShaderCore.h"
 
-namespace ZE
+namespace ze::gfx::shaders
 {
 
 /** Shader Type */
 CShaderType::CShaderType(const char* InName, const char* InFilename, const char* InEntryPoint,
-	EShaderStage InStage,
+	ShaderStage InStage,
 	InstantiateFunctionType InFunc)
 	: Name(InName), Filename(InFilename), EntryPoint(InEntryPoint), Stage(InStage), 
 	InstantiateFunc(InFunc)
@@ -15,21 +17,21 @@ CShaderType::CShaderType(const char* InName, const char* InFilename, const char*
 	CShaderManager::Get().AddShaderType(InName, this);
 }
 
-CShader* CShaderType::InstantiateShader(const SShaderCompilerOutput& InOutput) const
+CShader* CShaderType::InstantiateShader(const ShaderCompilerOutput& InOutput) const
 {
 	return InstantiateFunc(this, InOutput);
 }
 
 /** Shader */
 
-CShader::CShader(const CShaderType* InShaderType, const SShaderCompilerOutput& InOutput)
+CShader::CShader(const CShaderType* InShaderType, const ShaderCompilerOutput& InOutput)
 {
 	Shader = GRenderSystem->CreateShader({ InShaderType->GetStage(),
-		InOutput.Bytecode.size(),
-		InOutput.Bytecode.data(),
-		InOutput.ReflectionData.ParameterMap });
+		InOutput.bytecode.size(),
+		InOutput.bytecode.data(),
+		InOutput.reflection_data.parameter_map });
 	if(!Shader)
-		ZE::Logger::Error("Failed to create RS shader");
+		ze::logger::error("Failed to create RS shader");
 }
 
 CShader::~CShader() = default;

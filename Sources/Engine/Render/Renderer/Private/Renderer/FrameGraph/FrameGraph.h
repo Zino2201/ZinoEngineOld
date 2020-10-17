@@ -6,7 +6,7 @@
 #include <robin_hood.h>
 #include "Render/RenderSystem/RenderSystemContext.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 /**
@@ -162,7 +162,7 @@ struct SFrameGraphHash
 
         for(const auto& ExecLayout : InGraph.ExecutionLayout)
         {
-            HashCombine(Hash, ExecLayout);
+            hash_combine(Hash, ExecLayout);
         }
 
         return Hash;

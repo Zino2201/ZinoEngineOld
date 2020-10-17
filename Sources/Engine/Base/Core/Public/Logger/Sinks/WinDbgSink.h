@@ -2,19 +2,19 @@
 
 #include "Logger/Sink.h"
 
-namespace ZE::Logger::Sinks
+namespace ze::logger
 {
 
 /**
  * Win32 debug sink
  * Print using OutputDebugMessageA
  */
-class CORE_API CWinDbgSink : public CSink
+class CORE_API WinDbgSink : public Sink
 {
 public:
-	CWinDbgSink(const std::string& InName) : CSink(InName) {}
+	WinDbgSink(const std::string& name) : Sink(name) {}
 
-	void Log(const SMessage& InMessage) override;
+	void log(const Message& message) override;
 };
 
 }

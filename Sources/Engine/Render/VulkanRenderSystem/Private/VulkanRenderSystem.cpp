@@ -9,7 +9,7 @@
 #include <set>
 #include <assert.h>
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, VulkanRenderSystem)
+ZE_DEFINE_MODULE(ze::module::DefaultModule, VulkanRenderSystem)
 
 extern class CVulkanRenderSystem* GVulkanRenderSystem = nullptr;
 extern class CVulkanRenderSystemContext* GRenderSystemContext = nullptr;
@@ -26,16 +26,16 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 	switch (InSeverity)
 	{
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-		ZE::Logger::Info(InCallbackData->pMessage);
+		ze::logger::info(InCallbackData->pMessage);
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-		ZE::Logger::Verbose(InCallbackData->pMessage);
+		ze::logger::verbose(InCallbackData->pMessage);
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-		ZE::Logger::Warn(InCallbackData->pMessage);
+		ze::logger::warn(InCallbackData->pMessage);
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-		ZE::Logger::Fatal(InCallbackData->pMessage);
+		ze::logger::fatal(InCallbackData->pMessage);
 		ZE_DEBUGBREAK();
 		return VK_TRUE;
 	}
@@ -91,12 +91,12 @@ void CVulkanRenderSystem::Initialize()
 		vk::ApplicationInfo ApplicationInfos(nullptr,
 			0, nullptr, 0, VK_API_VERSION_1_1);
 
-		ZE::Logger::Info("Validation layers: {}",
+		ze::logger::info("Validation layers: {}",
 			GVulkanEnableValidationLayers ? "Yes": "No");
 
 		if constexpr(GVulkanEnableValidationLayers)
 		{
-			ZE::Logger::Warn("Validation layers are enabled! Except bad performances !");
+			ze::logger::warn("Validation layers are enabled! Except bad performances !");
 		}
 
 		/** Get required extensions */
@@ -107,7 +107,7 @@ void CVulkanRenderSystem::Initialize()
 			vk::enumerateInstanceExtensionProperties().value;
 
 		/** Check if required extensions are supported */
-		ZE::Logger::Verbose("--- Vulkan Extensions ---");
+		ze::logger::verbose("--- Vulkan Extensions ---");
 		int FoundExtensionCount = 0;
 		for (const char* RequiredExtension : RequiredExtensions)
 		{
@@ -116,7 +116,7 @@ void CVulkanRenderSystem::Initialize()
 			for (const vk::ExtensionProperties& Extension : SupportedExtensions)
 			{
 				if (FoundExtensionCount == 0)
-					ZE::Logger::Verbose("- {}", Extension.extensionName);
+					ze::logger::verbose("- {}", Extension.extensionName);
 
 				if (strcmp(Extension.extensionName, RequiredExtension) == 0)
 				{
@@ -132,13 +132,13 @@ void CVulkanRenderSystem::Initialize()
 
 		if (FoundExtensionCount < RequiredExtensions.size())
 		{
-			ZE::Logger::Fatal("This system doesn't support required Vulkan extensions ({} found, {} required)",
+			ze::logger::fatal("This system doesn't support required Vulkan extensions ({} found, {} required)",
 				FoundExtensionCount,
 				RequiredExtensions.size());
 		}
 		else
 		{
-			ZE::Logger::Info("Found all required Vulkan extensions!");
+			ze::logger::info("Found all required Vulkan extensions!");
 		}
 
 		vk::InstanceCreateInfo CreateInfos(
@@ -150,7 +150,7 @@ void CVulkanRenderSystem::Initialize()
 			RequiredExtensions.data());
 		auto [Result, InstanceHandle] = vk::createInstanceUnique(CreateInfos);
 		if (Result != vk::Result::eSuccess)
-			ZE::Logger::Fatal("Failed to create Vulkan instance: {}",
+			ze::logger::fatal("Failed to create Vulkan instance: {}",
 				vk::to_string(Result).c_str());
 		Instance = std::move(InstanceHandle);
 	}
@@ -188,7 +188,7 @@ void CVulkanRenderSystem::Initialize()
 		}
 
 		if (!PhysicalDevice)
-			ZE::Logger::Fatal("Failed to find a Vulkan compatible GPU.");
+			ze::logger::fatal("Failed to find a Vulkan compatible GPU.");
 
 		Device = std::make_unique<CVulkanDevice>(PhysicalDevice);
 		GRenderSystemContext = Device->GetContext();
@@ -222,7 +222,7 @@ std::vector<const char*> CVulkanRenderSystem::GetRequiredExtensions() const
 {
 	SDL_Window* DummyWindow = SDL_CreateWindow("", 0, 0, 1, 1, SDL_WINDOW_VULKAN);
 	if (!DummyWindow)
-		ZE::Logger::Fatal("{}", SDL_GetError());
+		ze::logger::fatal("{}", SDL_GetError());
 	uint32_t ExtensionCount = 0;
 	SDL_Vulkan_GetInstanceExtensions(DummyWindow, &ExtensionCount, nullptr);
 	std::vector<const char*> ExtensionNames(ExtensionCount);

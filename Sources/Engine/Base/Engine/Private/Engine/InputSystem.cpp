@@ -2,44 +2,44 @@
 #include <robin_hood.h>
 #include <SDL.h>
 
-namespace ZE::Input
+namespace ze::input
 {
 
-robin_hood::unordered_map<SDL_Scancode, bool> HeldKeys;
-robin_hood::unordered_map<SDL_Scancode, bool> PressedKeys;
-robin_hood::unordered_map<SDL_Scancode, bool> ReleasedKeys;
+robin_hood::unordered_map<SDL_Scancode, bool> held_keys;
+robin_hood::unordered_map<SDL_Scancode, bool> pressed_keys;
+robin_hood::unordered_map<SDL_Scancode, bool> released_keys;
 
-void Clear()
+void clear()
 {
-	PressedKeys.clear();
-	ReleasedKeys.clear();
+	pressed_keys.clear();
+	released_keys.clear();
 }
 
-void OnKeyPressed(const SDL_Event& InEvent)
+void on_key_pressed(const SDL_Event& event)
 {
-	PressedKeys[InEvent.key.keysym.scancode] = true;
-	HeldKeys[InEvent.key.keysym.scancode] = true;
+	pressed_keys[event.key.keysym.scancode] = true;
+	held_keys[event.key.keysym.scancode] = true;
 }
 
-void OnKeyReleased(const SDL_Event& InEvent)
+void on_key_released(const SDL_Event& event)
 {
-	ReleasedKeys[InEvent.key.keysym.scancode] = true;
-	HeldKeys[InEvent.key.keysym.scancode] = false;
+	released_keys[event.key.keysym.scancode] = true;
+	held_keys[event.key.keysym.scancode] = false;
 }
 
-bool IsKeyPressed(const SDL_Scancode& InKey)
+bool is_key_pressed(const SDL_Scancode& key)
 {
-	return PressedKeys[InKey];
+	return pressed_keys[key];
 }
 
-bool IsKeyReleased(const SDL_Scancode& InKey)
+bool is_key_released(const SDL_Scancode& key)
 {
-	return ReleasedKeys[InKey];
+	return released_keys[key];
 }
 
-bool IsKeyHeld(const SDL_Scancode& InKey)
+bool is_key_held(const SDL_Scancode& key)
 {
-	return HeldKeys[InKey];
+	return held_keys[key];
 }
 
 }

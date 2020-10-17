@@ -4,7 +4,7 @@
 #include "Mesh.h"
 #include "Render/UniformBuffer.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class IRenderableComponent;
@@ -34,15 +34,15 @@ public:
 	virtual std::vector<SMesh> GetDynamicMeshes(const SWorldView& InView) const = 0;
 
 	const ERenderableComponentProxyType& GetType() const { return Type; }
-	const Math::SMatrix4& GetStaticWorldMatrix() const { return StaticWorldMatrix; }
+	const maths::Matrix4& GetStaticWorldMatrix() const { return StaticWorldMatrix; }
 	const IRenderableComponent* GetComponent() const { return Component; }
 private:
 	/** Pointer to the game version */
 	const IRenderableComponent* Component;
 
 	/** Static transform/world matrix, used for hint Static */
-	Math::STransform StaticTransform;
-	Math::SMatrix4 StaticWorldMatrix;
+	maths::Transform StaticTransform;
+	maths::Matrix4 StaticWorldMatrix;
 
 	ERenderableComponentProxyType Type;
 public:

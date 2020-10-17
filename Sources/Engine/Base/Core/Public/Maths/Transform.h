@@ -4,19 +4,19 @@
 #include "Vector.h"
 #include "Matrix.h"
 
-namespace ZE::Math
+namespace ze::maths
 {
 
 /**
  * An transform
  */
-struct STransform
+struct Transform
 {
-    SVector3 Position;
+    Vector3d Position;
     
-    [[nodiscard]] SMatrix4 ToWorldMatrix() const
+    ZE_FORCEINLINE Matrix4 to_world_matrix() const
     {
-        return glm::translate(glm::mat4(1.0f), glm::vec3(Position.X, Position.Y, Position.Z));
+        return glm::translate(glm::mat4(1.0f), glm::vec3(Position.x, Position.y, Position.z));
     }
 };
 

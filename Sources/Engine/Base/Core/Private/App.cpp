@@ -1,39 +1,34 @@
 #include "App.h"
 #include <cstdlib>
 
-namespace ZE
+namespace ze::app
 {
 
-CApp::CApp(const int& InArgc, const char** InArgv) : ErrCode(0), bRun(true)
+App::App(const int& argc, const char** argv) : err_code(0), _run(true)
 { 
-	must(!CurrentApp); CurrentApp = this; 
+	ZE_ASSERT(!current_app); current_app = this; 
 }
 
-int CApp::Run()
+int App::run()
 {
-	while(bRun)
+	while(_run)
 	{
-		ProcessEvents();
-		Loop();
+		process_events();
+		loop();
 	}
 
-	return ErrCode;
+	return err_code;
 }
 
-void CApp::Exit(const int& InErrCode)
+void App::exit(const int& in_err_code)
 {
-	ErrCode = InErrCode;
-	bRun = false;
+	err_code = in_err_code;
+	_run = false;
 }
 
-namespace App
+void exit(const int& err_code)
 {
-
-void Exit(const int& InErrCode)
-{
-	CApp::GetCurrentApp()->Exit(InErrCode);
-}
-
+	App::get()->exit(err_code);
 }
 
 }

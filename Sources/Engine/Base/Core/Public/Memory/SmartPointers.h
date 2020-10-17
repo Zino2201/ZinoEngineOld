@@ -8,4 +8,4 @@
  * Declare a raw pointer that own its resource
  */
 template<typename T>
-using TOwnerPtr = T*;
+using OwnerPtr = T*;

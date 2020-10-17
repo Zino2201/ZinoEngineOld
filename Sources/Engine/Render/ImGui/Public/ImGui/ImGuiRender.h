@@ -4,9 +4,9 @@
 #include "Render/RenderSystem/Resources/GraphicsPipeline.h"
 #include "ImGui/ImGui.h"
 
-namespace ZE { class IRenderSystemContext; }
+namespace ze { class IRenderSystemContext; }
 
-namespace ZE::UI
+namespace ze::ui
 {
 
 /**

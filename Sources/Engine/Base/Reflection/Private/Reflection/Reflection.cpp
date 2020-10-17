@@ -2,7 +2,7 @@
 #include "Reflection/Builders.h"
 #include "Module/Module.h"
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, Reflection);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, Reflection);
 
 namespace ze::reflection
 {

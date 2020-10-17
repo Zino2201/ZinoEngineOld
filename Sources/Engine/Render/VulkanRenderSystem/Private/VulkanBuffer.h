@@ -36,7 +36,7 @@ public:
     void* GetMappedData() const override 
     { 
         /** GetMappedData() require Mapped hint */
-        verify(CreateInfo.Hints & ERSMemoryHintFlagBits::Mapped);
+        ZE_CHECK(CreateInfo.Hints & ERSMemoryHintFlagBits::Mapped);
         return AllocationInfo.pMappedData;
     }
 private:

@@ -2,92 +2,92 @@
 #include <sstream>
 #include "StringUtil.h"
 
-namespace ZE
+namespace ze::assetdatabase
 {
 
-void CPathTree::Add(const std::filesystem::path& InPath)
+void PathTree::add(const std::filesystem::path& path)
 {
-	verify(InPath.is_relative());
+	ZE_CHECK(path.is_relative());
 
 	/** Check if path already exists */
-	if (HasPath(InPath))
+	if (has_path(path))
 		return;
 
 	/** Insert the path in the map if it is a directory */
-	if (!InPath.has_extension())
-		Paths.insert({ InPath, SPathDirectory() });
+	if (!path.has_extension())
+		paths.insert({ path, PathDirectory() });
 
 	/** Now scan each part to build a tree */
-	std::vector<std::string> Tokens = ZE::StringUtil::Split(InPath.string(),
+	std::vector<std::string> tokens = stringutil::split(path.string(),
 		std::filesystem::path::preferred_separator);
 
 	/** Insert at root */
-	if (Tokens.size() == 1)
+	if (tokens.size() == 1)
 	{
-		Paths[""].Childs.insert(InPath);
+		paths[""].childs.insert(path);
 	}
 	else
 	{
-		std::filesystem::path FinalPath;
+		std::filesystem::path final_path;
 
-		std::filesystem::path Parent = "";
-		for (size_t i = 0; i < Tokens.size() - 1; ++i)
+		std::filesystem::path parent = "";
+		for (size_t i = 0; i < tokens.size() - 1; ++i)
 		{
-			const auto& Token = Tokens[i];
-			FinalPath = FinalPath / Token;
+			const auto& token = tokens[i];
+			final_path = final_path / token;
 
-			if (Paths[Parent].Childs.find(Token) == Paths[Parent].Childs.end())
+			if (paths[parent].childs.find(token) == paths[parent].childs.end())
 			{
-				Paths[Parent / Token].Parent = Parent;
-				Paths[Parent].Childs.insert(Token);
+				paths[parent / token].parent = parent;
+				paths[parent].childs.insert(token);
 			}
 
 			/** Insert file */
-			if (i == Tokens.size() - 2)
+			if (i == tokens.size() - 2)
 			{
-				Paths[Parent / Token].Childs.insert(Tokens[Tokens.size() - 1]);
+				paths[parent / token].childs.insert(tokens[tokens.size() - 1]);
 			}
 
-			Parent /= Token;
+			parent /= token;
 		}
 	}
 }
 
-std::vector<std::filesystem::path> CPathTree::GetChilds(const std::filesystem::path& InPath,
-	const bool& bInIncludeFiles)
+std::vector<std::filesystem::path> PathTree::get_childs(const std::filesystem::path& path,
+	const bool& include_files)
 {
-	std::vector<std::filesystem::path> Childs;
-	if (Paths.find(InPath) == Paths.end())
-		return Childs;
+	std::vector<std::filesystem::path> childs;
+	if (paths.find(path) == paths.end())
+		return childs;
 
-	Childs.reserve(Paths[InPath].Childs.size());
-	for (const auto& Child : Paths[InPath].Childs)
+	childs.reserve(paths[path].childs.size());
+	for (const auto& child : paths[path].childs)
 	{
-		if (!bInIncludeFiles && Child.has_extension())
+		if (!include_files && child.has_extension())
 			continue;
 		
-		Childs.emplace_back(Child);
+		childs.emplace_back(child);
 	}
 
-	return Childs;
+	return childs;
 }
 
-bool CPathTree::HasPath(const std::filesystem::path& InPath) const
+bool PathTree::has_path(const std::filesystem::path& path) const
 {
-	if (InPath.has_filename())
+	if (path.has_filename())
 	{
 		/** Check to the parent of the file */
-		auto ParentIt = Paths.find(InPath.parent_path());
-		if (ParentIt != Paths.end())
+		auto parent_it = paths.find(path.parent_path());
+		if (parent_it != paths.end())
 		{
-			return ParentIt->second.Childs.find(InPath.filename()) != ParentIt->second.Childs.end();
+			return parent_it->second.childs.find(path.filename()) != parent_it->second.childs.end();
 		}
 
 		return false;
 	}
 	else
 	{
-		return Paths.find(InPath) != Paths.end();
+		return paths.find(path) != paths.end();
 	}
 }
 

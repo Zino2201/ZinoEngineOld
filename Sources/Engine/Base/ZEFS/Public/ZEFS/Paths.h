@@ -5,12 +5,12 @@
 /**
  * Functions to manipulate paths
  */
-namespace ZE::FileSystem::Paths
+namespace ze::filesystem
 {
 
 /**
  * Get current working directory
  */
-ZEFS_API std::string GetCurrentWorkingDir();
+ZEFS_API std::string get_current_working_dir();
 
 }

@@ -10,7 +10,7 @@
 #include <utility>
 #include "Reflection/ArchivesFwd.h"
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, Asset);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, Asset);
 
 namespace std
 {
@@ -30,6 +30,7 @@ robin_hood::unordered_map<std::filesystem::path, std::weak_ptr<CAsset>> CachedAs
 
 std::shared_ptr<CAsset> GetAsset(const std::filesystem::path& InPath)
 {
+#if 0
 	/** Try returning an existing instance */
 	auto CachedAsset = CachedAssets.find(InPath);
 	if (CachedAsset != CachedAssets.end() && 
@@ -37,11 +38,11 @@ std::shared_ptr<CAsset> GetAsset(const std::filesystem::path& InPath)
 		return CachedAsset->second.lock();
 
 	/** Instantiate the asset */
-	std::optional<ZE::AssetDatabase::SAssetPrimitiveData> Data 
-		= ZE::AssetDatabase::GetAssetPrimitiveData(InPath);
+	std::optional<ze::assetdatabase::AssetPrimitiveData> Data 
+		= ze::assetdatabase::get_asset_primitive_data(InPath);
 	if (!Data)
 	{
-		ZE::Logger::Error("Can't load asset {}: Not registered in asset database, may be an invalid asset", 
+		ze::logger::error("Can't load asset {}: Not registered in asset database, may be an invalid asset", 
 			InPath.string());
 		return nullptr;
 	}
@@ -49,7 +50,7 @@ std::shared_ptr<CAsset> GetAsset(const std::filesystem::path& InPath)
 	/** Check if asset class is valid */
 	if(!Data->Class)
 	{
-		ZE::Logger::Error("Can't load asset {}: Asset class invalid", InPath.string());
+		ze::logger::error("Can't load asset {}: Asset class invalid", InPath.string());
 		return nullptr;
 	}
 
@@ -57,6 +58,7 @@ std::shared_ptr<CAsset> GetAsset(const std::filesystem::path& InPath)
 	//std::shared_ptr<CAsset> AssetInstance = std::shared_ptr<CAsset>(Data->Class->Instantiate<CAsset>());
 	//AssetInstance->SetPath(InPath);
 	//CachedAssets[InPath] = AssetInstance;
+#endif
 	return nullptr;
 }
 

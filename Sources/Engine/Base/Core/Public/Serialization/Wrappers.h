@@ -1,51 +1,51 @@
 #pragma once
 
-namespace ZE::Serialization
+namespace ze::serialization
 {
 
 /** Wrapper for a size, used to omit size for special archives (e.g JSON) */
 template<typename T>
-struct TSize
+struct Size
 {
-	T Size;
+	T size;
 	
-	TSize(T&& InSize) : Size(std::forward<T>(InSize)) {}
+	Size(T&& in_size) : size(std::forward<T>(in_size)) {}
 };
 
 template<typename T>
-ZE_FORCEINLINE TSize<T> MakeSize(T&& InSize)
+ZE_FORCEINLINE Size<T> make_size(T&& in_size)
 {
-	return TSize<T>(std::forward<T>(InSize));
+	return Size<T>(std::forward<T>(in_size));
 }
 
 /** Wrapper for contiguous binary data */
 template<typename T>
-struct TBinaryData
+struct BinaryData
 {
-	void* Data;
-	uint64_t Size;
+	void* data;
+	uint64_t size;
 
-	TBinaryData(T* InData, const uint64_t& InSize) : Data(InData), Size(InSize) {}
+	BinaryData(T* in_data, const uint64_t& in_size) : data(in_data), size(in_size) {}
 
 	operator bool() const { return !!Data;  }
 };
 
 template<typename T>
-ZE_FORCEINLINE TBinaryData<T> MakeBinaryData(T* InData, const uint64_t& InSize)
+ZE_FORCEINLINE BinaryData<T> make_binary_data(T* data, const uint64_t& size)
 {
-	return TBinaryData<T>(InData, InSize);
+	return BinaryData<T>(data, size);
 }
 
 /**
  * Data with a name
  */
 template<typename T>
-struct TNamedData
+struct NamedData
 {
-	std::string_view Name;
-	T& Data;
+	std::string_view name;
+	T& data;
 	
-	TNamedData(const std::string_view& InName, T& InData) : InName(Name), Data(InData) {}
+	NamedData(const std::string_view& in_name, T& in_data) : name(in_name), data(in_data) {}
 };
 
 }

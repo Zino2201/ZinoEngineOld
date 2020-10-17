@@ -6,65 +6,66 @@
 #include <functional>
 #include "ModuleManager.h"
 
-namespace ZE::Module
+namespace ze::module
 {
 
-using InstantiateModuleFunc = CModule*();
-using PFN_InstantiateModuleFunc = CModule*(*)();
+class Module;
+
+using InstantiateModuleFunc = Module*();
+using PFN_InstantiateModuleFunc = Module*(*)();
 
 /**
  * Module interface
  */
-class CORE_API CModule : public CNonCopyable
+class CORE_API Module : public CNonCopyable
 {
 public:
-    virtual ~CModule() = default;
+    virtual ~Module() = default;
 
-    const std::string& GetName() const { return Name; }
-    void SetName(const char* InName) { Name = InName; }
-    void* GetHandle() const { return Handle; }
+    const std::string& get_name() const { return name; }
+    void set_name(const char* in_name) { name = in_name; }
+    void* get_handle() const { return handle; }
 
     /** Used for monolithic builds */
     inline static robin_hood::unordered_map<std::string_view, 
-        std::function<InstantiateModuleFunc>> InstantiateModuleFuncs;
+        std::function<InstantiateModuleFunc>> instantiate_module_funcs;
 public:
-    void* Handle;
+    void* handle;
 private:
-    std::string Name;
+    std::string name;
 };
 
 /**
  * Default module implementation
  */
-class CORE_API CDefaultModule : public CModule {};
+class CORE_API DefaultModule : public Module {};
 
-constexpr const char* GInstantiateModuleFuncName = "InstantiateModule";
+constexpr const char* instantiate_module_func_name = "instantiate_module";
 
 #if ZE_MONOLITHIC
-
-struct SMonolithicRegister
+struct MonolithicRegister
 {
-    SMonolithicRegister(const char* InName, InstantiateModuleFunc InInstantiateFunc)
+    MonolithicRegister(const char* name, InstantiateModuleFunc func)
     {
-        CModule::InstantiateModuleFuncs.insert({InName, InInstantiateFunc});
+        ze::module::Module::instantiate_module_funcs.insert({name, func});
     }
 };
 
-#define DEFINE_MODULE(Class, Name) \
-    ZE::Module::CModule* InstantiateModule_##Name() \
+#define ZE_DEFINE_MODULE(Class, Name) \
+    ze::module::Module* instantiate_module_##Name() \
     { \
-        ZE::Module::CModule* Module = new Class;\
-        Module->SetName(#Name); \
-        return Module; \
+        ze::module::Module* module = new Class;\
+        module->set_name(#Name); \
+        return module; \
     } \
-    static ZE::Module::SMonolithicRegister ModuleAutoInit##Name(#Name, &InstantiateModule_##Name);
+    static ze::module::MonolithicRegister module_auto_init_##Name(#Name, &InstantiateModule_##Name);
 #else
-#define DEFINE_MODULE(Class, Name) \
-    extern "C" ZE_DLLEXPORT ZE::Module::CModule* InstantiateModule_##Name() \
+#define ZE_DEFINE_MODULE(Class, Name) \
+    extern "C" ZE_DLLEXPORT ze::module::Module* instantiate_module_##Name() \
     { \
-        ZE::Module::CModule* Module = new Class;\
-        Module->SetName(#Name); \
-        return Module; \
+        ze::module::Module* module = new Class;\
+        module->set_name(#Name); \
+        return module; \
     }
 #endif
 

@@ -3,10 +3,10 @@
 #include "EngineCore.h"
 #include "Delegates/Delegate.h"
 
-namespace ZE
+namespace ze::app
 {
 
-enum class EAppOS
+enum class Platform
 {
 	Windows,
 	Mac,
@@ -20,51 +20,46 @@ enum class EAppOS
  * Base abstract class for applications
  * Provides a main loop to operate on
  */
-class CORE_API CApp
+class CORE_API App
 {
 public:
-	CApp(const int& InArgc, const char** InArgv);
-	virtual ~CApp() = default;
+	App(const int& argc, const char** argv);
+	virtual ~App() = default;
 
 	/** Run the main loop, will return only when Exit is called */
-	int Run();
-	void Exit(const int& InErrCode);
+	int run();
+	void exit(const int& err_code);
 
-	/** Process all pending events, called by Run() loop by default but can be called if needed */
-	virtual void ProcessEvents() = 0;
+	/** Process all pending events, called by run() loop by default but can be called if needed */
+	virtual void process_events() = 0;
 
-	ZE_FORCEINLINE static CApp* GetCurrentApp() { return CurrentApp; }
+	ZE_FORCEINLINE static App* get() { return current_app; }
 protected:
-	virtual void Loop() = 0;
+	virtual void loop() = 0;
 private:
-	inline static CApp* CurrentApp = nullptr;
-	int ErrCode;
+	inline static App* current_app = nullptr;
+	int err_code;
 protected:
-	bool bRun;
+	bool _run;
 };
 
-namespace App
-{
+CORE_API void exit(const int& err_code);
 
-CORE_API void Exit(const int& InErrCode);
-
-ZE_FORCEINLINE constexpr EAppOS GetOS()
+ZE_FORCEINLINE constexpr Platform get_platform()
 {
 #if ZE_PLATFORM(WINDOWS)
-	return EAppOS::Windows;
+	return Platform::Windows;
 #elif ZE_PLATFORM(OSX)
-	return EAppOS::Mac;
+	return Platform::Mac;
 #elif ZE_PLATFORM(LINUX)
-	return EAppOS::Linux;
+	return Platform::Linux;
 #elif ZE_PLATFORM(FREEBSD)
-	return EAppOS::FreeBSD;
+	return Platform::FreeBSD;
 #elif ZE_PLATFORM(ANDROID)
-	return EAppOS::Android;
+	return Platform::Android;
 #else
-	return EAppOS::Unknown;
+	return Platform::Unknown;
 #endif
-}
-
 }
 
 }

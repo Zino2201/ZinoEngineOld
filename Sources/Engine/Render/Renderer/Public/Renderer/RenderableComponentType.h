@@ -2,7 +2,7 @@
 
 #include "WorldView.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class CRenderableComponentProxy;
@@ -35,7 +35,7 @@ public:
 };
 
 RENDERER_API IRenderableComponentType* RegisterRenderableComponentType(
-	TOwnerPtr<IRenderableComponentType> InComponentType);
+	OwnerPtr<IRenderableComponentType> InComponentType);
 
 template<typename T>
 T* RegisterRenderableComponentType()

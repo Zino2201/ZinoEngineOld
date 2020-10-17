@@ -2,70 +2,70 @@
 #include "Threading/JobSystem/WorkerThread.h"
 #include "Threading/JobSystem/JobSystem.h"
 
-namespace ZE::JobSystem
+namespace ze::jobsystem
 {
 
-void ScheduleJob(const SJob& InJob)
+void schedule(const Job& job)
 {
-	if(InJob.Type != EJobType::Lightweight)
+	if(job.type != JobType::Lightweight)
 	{
-		GetWorker().GetJobQueue().Push(&InJob);	
+		get_worker().get_job_queue().push(&job);	
 
-		/** Wake all workers */
-		CWorkerThread::GetSleepConditionVariable().notify_one();
+		/** Wake one random worker */
+		WorkerThread::get_sleep_condition_var().notify_one();
 	}
 	else
-		Internal::ExecuteJob(InJob);
+		detail::execute(job);
 }
 
-void ScheduleJob(const SJob& InJob, const SJob& InDependence)
+void schedule(const Job& job, const Job& dependance)
 {
-	must(InDependence.DependentCount + 1 < SJob::MaxDependents);
+	ZE_ASSERT(dependance.dependent_count + 1 < Job::max_dependents);
 
-	InJob.DependancesCount++;
-	InDependence.Dependents[InDependence.DependentCount++] = &InJob;
+	job.dependances_count++;
+	dependance.dependents[dependance.dependent_count++] = &job;
 }
 
-void WaitJob(const SJob& InJob)
+void wait(const Job& job)
 {
-	while (!InJob.IsFinished())
+	while (!job.is_finished())
 	{
-		CWorkerThread::GetSleepConditionVariable().notify_one();
-		GetWorker().Flush();
+		WorkerThread::get_sleep_condition_var().notify_one();
+		get_worker().flush();
 	}
 }
 
-void Internal::ExecuteJob(const SJob& InJob)
+void detail::execute(const Job& job)
 {
-	InJob.Function(InJob);
-	FinishJob(InJob);
+	job.function(job);
+	finish(job);
 }
 
-void Internal::FinishJob(const SJob& InJob)
+void detail::finish(const Job& job)
 {
-	InJob.UnfinishedJobs--;
+	job.unfinished_jobs--;
 
-	if (InJob.IsFinished())
+	if (job.is_finished())
 	{
 		/** Tell the parent that we finished */
-		if (InJob.Parent)
+		if (job.parent)
 		{
-			FinishJob(*InJob.Parent);
+			finish(*job.parent);
 		}
 
 		/** Run dependents */
-		for (uint8_t i = 0; i < InJob.DependentCount; ++i)
+		for (uint8_t i = 0; i < job.dependent_count; ++i)
 		{
-			const SJob* Dependent = InJob.Dependents[i];
-			if(Dependent)
+			const Job* dependent = job.dependents[i];
+			if(dependent)
 			{
-				switch(Dependent->Type)
+				switch(dependent->type)
 				{
 				default:
-					GetWorker().GetJobQueue().Push(Dependent);
+					get_worker().get_job_queue().push(dependent);
 					break;
-				case EJobType::Lightweight:
-					ExecuteJob(*Dependent);
+				case JobType::Lightweight:
+					execute(*dependent);
 					break;
 				}
 			}

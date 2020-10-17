@@ -3,38 +3,39 @@
 #include <future>
 #include "JobSystem.h"
 
-namespace ZE
+namespace ze::jobsystem
 {
 
 /**
  * std::async version using ZE jobsystem
  */
-
 template<typename Lambda>
-void Async(Lambda InLambda)
+void async(Lambda lambda)
 {
-	const auto& Job = ZE::JobSystem::CreateJob(ZE::JobSystem::EJobType::Normal, 
-		[InLambda](const ZE::JobSystem::SJob& InJob)
+	const auto& job = create_job(
+		JobType::Normal, 
+		[lambda](const Job& in_job)
 		{
-			InLambda(InJob);
+			lambda(in_job);
 		});
-	ZE::JobSystem::ScheduleJob(Job);
+	schedule(job);
 }
 
 template<typename Ret, typename Lambda>
-std::future<Ret> Async(Lambda InLambda)
+std::future<Ret> async(Lambda lambda)
 {
-	using TaskType = std::packaged_task<Ret(const ZE::JobSystem::SJob& InJob)>;
+	using TaskType = std::packaged_task<Ret(const Job&)>;
 
-	TaskType Task(InLambda);
-	std::future<Ret> Future = Task.get_future();
-	const auto& Job = ZE::JobSystem::CreateJob(ZE::JobSystem::EJobType::Normal, 
-		[Task = std::move(Task)](const ZE::JobSystem::SJob& InJob)
+	TaskType task(lambda);
+	std::future<Ret> future = task.get_future();
+	const auto& job = create_job(
+		JobType::Normal, 
+		[task = std::move(task)](const Job& in_job)
 		{
-			const_cast<TaskType&>(Task)(InJob);
+			const_cast<TaskType&>(task)(in_job);
 		});
-	ZE::JobSystem::ScheduleJob(Job);
-	return Future;
+	schedule(job);
+	return future;
 }
 
 }

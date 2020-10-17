@@ -97,11 +97,11 @@ namespace std
 		{
 			std::size_t Seed = 0;
 
-			HashCombine(Seed, InBindings.Bindings.size());
+			hash_combine(Seed, InBindings.Bindings.size());
 
 			for (const auto& Binding : InBindings.Bindings)
 			{
-				HashCombine(Seed, &Binding);
+				hash_combine(Seed, &Binding);
 			}
 
 			return Seed;
@@ -116,7 +116,7 @@ namespace std
 
 			for(const auto& Entry : InEntry.SetLayoutBindings)
 			{
-				HashCombine(Seed, Entry);
+				hash_combine(Seed, Entry);
 			}
 	
 			return Seed;
@@ -201,11 +201,11 @@ class CVulkanDescriptorSetManager
 		{
 			uint64_t Hash = 0;
 
-			HashCombine<uint32_t, robin_hood::hash<uint32_t>>(Hash, InKey.Set);
+			hash_combine<uint32_t, robin_hood::hash<uint32_t>>(Hash, InKey.Set);
 
 			for (const auto& Handle : InKey.Handles)
 			{
-				HashCombine<uint64_t, robin_hood::hash<uint64_t>>(Hash, Handle);
+				hash_combine<uint64_t, robin_hood::hash<uint64_t>>(Hash, Handle);
 			}
 
 			return Hash;

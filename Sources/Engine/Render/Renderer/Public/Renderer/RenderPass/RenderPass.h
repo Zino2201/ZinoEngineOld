@@ -2,7 +2,7 @@
 
 #include "EngineCore.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 /**

@@ -1,8 +1,8 @@
 #pragma once
 
-namespace ZE
+namespace ze
 {
 	class IRenderSystem;
 }
 
-VULKANRENDERSYSTEM_API ZE::IRenderSystem* CreateVulkanRenderSystem();
+VULKANRENDERSYSTEM_API ze::IRenderSystem* CreateVulkanRenderSystem();

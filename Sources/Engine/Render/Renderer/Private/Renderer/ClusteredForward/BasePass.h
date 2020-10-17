@@ -2,23 +2,23 @@
 
 #include "Render/Shader/BasicShader.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
-class CBasePassShaderVS : public CBasicShader
+class CBasePassShaderVS : public gfx::shaders::CBasicShader
 {
-	DECLARE_SHADER(CBasePassShaderVS, CBasicShader)
+	DECLARE_SHADER(CBasePassShaderVS, gfx::shaders::CBasicShader)
 
 public:
-	CBasePassShaderVS(const CShaderType* InType, const SShaderCompilerOutput& InOutput);
+	CBasePassShaderVS(const gfx::shaders::CShaderType* InType, const gfx::shaders::ShaderCompilerOutput& InOutput);
 };
 
-class CBasePassShaderFS : public CBasicShader
+class CBasePassShaderFS : public gfx::shaders::CBasicShader
 {
-	DECLARE_SHADER(CBasePassShaderFS, CBasicShader)
+	DECLARE_SHADER(CBasePassShaderFS, gfx::shaders::CBasicShader)
 
 public:
-	CBasePassShaderFS(const CShaderType* InType, const SShaderCompilerOutput& InOutput);
+	CBasePassShaderFS(const gfx::shaders::CShaderType* InType, const gfx::shaders::ShaderCompilerOutput& InOutput);
 };
 
 }

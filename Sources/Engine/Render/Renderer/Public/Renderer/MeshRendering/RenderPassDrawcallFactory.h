@@ -7,7 +7,7 @@
 
 namespace ZE { class CRSShader; }
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class CWorldProxy;
@@ -50,7 +50,7 @@ namespace RenderPassDrawcallFactory
 
 struct IRenderPassDrawcallFactoryCreator 
 { 
-	virtual TOwnerPtr<CRenderPassDrawcallFactory> Instantiate(CWorldProxy& InWorld) = 0; 
+	virtual OwnerPtr<CRenderPassDrawcallFactory> Instantiate(CWorldProxy& InWorld) = 0; 
 	virtual ERenderPassFlagBits GetRenderPass() const = 0;
 
 	inline static robin_hood::unordered_map<ERenderPassFlagBits, IRenderPassDrawcallFactoryCreator*> Creators;
@@ -72,7 +72,7 @@ struct TRenderPassDrawcallFactoryCreator : public IRenderPassDrawcallFactoryCrea
 		RegisterDrawcallFactory(RenderPass, this);
 	}
 
-	TOwnerPtr<CRenderPassDrawcallFactory> Instantiate(CWorldProxy& InWorld) override
+	OwnerPtr<CRenderPassDrawcallFactory> Instantiate(CWorldProxy& InWorld) override
 	{
 		return new T(InWorld);
 	}
@@ -85,6 +85,6 @@ struct TRenderPassDrawcallFactoryCreator : public IRenderPassDrawcallFactoryCrea
 
 }
 
-#define DEFINE_RENDER_PASS_DRAWCALL_FACTORY(RenderPass, FactoryClass) ZE::Renderer::RenderPassDrawcallFactory::TRenderPassDrawcallFactoryCreator<RenderPass, FactoryClass> G##FactoryClass;
+#define DEFINE_RENDER_PASS_DRAWCALL_FACTORY(RenderPass, FactoryClass) ze::renderer::RenderPassDrawcallFactory::TRenderPassDrawcallFactoryCreator<RenderPass, FactoryClass> G##FactoryClass;
 
 }

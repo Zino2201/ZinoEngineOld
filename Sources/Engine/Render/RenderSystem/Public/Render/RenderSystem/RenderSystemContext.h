@@ -5,7 +5,7 @@
 #include <array>
 #include <vector>
 
-namespace ZE
+namespace ze
 {
 
 /**
@@ -30,7 +30,7 @@ public:
     /** States commands */
     virtual void BindGraphicsPipeline(const SRSGraphicsPipeline& InGraphicsPipeline) = 0;
     virtual void SetViewports(const std::vector<SViewport>& InViewports) = 0;
-    virtual void SetScissors(const std::vector<ZE::Math::SRect2D>& InScissors) = 0;
+    virtual void SetScissors(const std::vector<maths::Rect2D>& InScissors) = 0;
     
     /** Resources bindings */
     virtual void BindVertexBuffers(const std::vector<CRSBuffer*> InVertexBuffers) = 0;

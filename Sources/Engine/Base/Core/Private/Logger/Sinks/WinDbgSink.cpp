@@ -1,19 +1,19 @@
 #include "EngineCore.h"
 #include "Logger/Sinks/WinDbgSink.h"
-#ifdef _WIN32
+#if ZE_PLATFORM(WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
 
-namespace ZE::Logger::Sinks
+namespace ze::logger
 {
 
-void CWinDbgSink::Log(const SMessage& InMessage)
+void WinDbgSink::log(const Message& message)
 {
-	std::string Msg = Format(InMessage);
+#if ZE_PLATFORM(WINDOWS)
+	std::string msg = format(message);
 
-#ifdef _WIN32
-	OutputDebugStringA(Msg.c_str());
+	OutputDebugStringA(msg.c_str());
 #endif
 }
 

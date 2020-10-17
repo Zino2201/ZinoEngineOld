@@ -6,7 +6,7 @@
 #include "Renderer/MeshRendering/RenderPassDrawcallFactory.h"
 #include "Render/RenderSystem/Resources/Texture.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 CWorldRenderer::CWorldRenderer(const SWorldView& InView) : View(InView),
@@ -35,8 +35,8 @@ void CWorldRenderer::CopyGameState(TransientPerFrameDataMap& InPerFrameMap)
 	for(size_t i = 0; i < VisibleProxies.size(); ++i)
 	{
 		CRenderableComponentProxy* Proxy = VisibleProxies[i];
-		must(Proxy);
-		must(Proxy->GetComponentType());
+		ZE_CHECK(Proxy);
+		ZE_CHECK(Proxy->GetComponentType());
 
 		/** Check if we have frame data in cache, if not, cache it */
 		if(!InPerFrameMap.contains(Proxy))
@@ -61,8 +61,8 @@ void CWorldRenderer::Prepare()
 	/** Update view ubo */
 	SWorldView::SWorldViewUBO UBO;
 	UBO.ViewProj = View.ViewProj;
-	UBO.ViewPos = Math::SVector3Float(View.ViewPos.X, View.ViewPos.Y, View.ViewPos.Z);
-	UBO.ViewForward = Math::SVector3Float(View.ViewForward.X, View.ViewForward.Y, View.ViewForward.Z);
+	UBO.ViewPos = maths::Vector3f(View.ViewPos.x, View.ViewPos.y, View.ViewPos.z);
+	UBO.ViewForward = maths::Vector3f(View.ViewForward.x, View.ViewForward.y, View.ViewForward.z);
 	View.TEST_ViewUBO.Copy(UBO);
 
 	/** Gather dynamic meshes from visible proxies */
@@ -96,7 +96,7 @@ void CWorldRenderer::Prepare()
 	 */
 	for(const auto [RenderPass, Creator] : RenderPassDrawcallFactory::GetCreators())
 	{
-		TOwnerPtr<CRenderPassDrawcallFactory> Factory = 
+		OwnerPtr<CRenderPassDrawcallFactory> Factory = 
 			Creator->Instantiate(View.WorldProxy);
 
 		View.RenderPassRendererMap.insert({ RenderPass, CRenderPassRenderer(View.WorldProxy) });

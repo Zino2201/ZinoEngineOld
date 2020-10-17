@@ -2,11 +2,11 @@
 #include "Renderer/WorldProxy.h"
 #include "Renderer/RenderableComponentProxy.h"
 
-namespace ZE
+namespace ze
 {
 
 CWorld::CWorld()
-	: Proxy(std::make_unique<Renderer::CWorldProxy>())
+	: Proxy(std::make_unique<renderer::CWorldProxy>())
 {
 
 }

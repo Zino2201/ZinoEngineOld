@@ -1,24 +1,24 @@
 #pragma once
 
-namespace ZE::Serialization
+namespace ze::serialization
 {
 
 /** Type traits for archives */
-namespace Traits 
+namespace traits 
 {
-	struct TextArchive {};
+struct TextArchive {};
 }
 
 template<typename T>
-static constexpr bool TIsInputArchive = std::is_base_of_v<TInputArchive<T>, T>;
+static constexpr bool IsInputArchive = std::is_base_of_v<InputArchive<T>, T>;
 
 template<typename T>
-static constexpr bool TIsOutputArchive = std::is_base_of_v<TOutputArchive<T>, T>;
+static constexpr bool IsOutputArchive = std::is_base_of_v<OutputArchive<T>, T>;
 
 template<typename T>
-static constexpr bool TIsArchive = TIsInputArchive<T> || TIsOutputArchive<T>;
+static constexpr bool IsArchive = IsInputArchive<T> || IsOutputArchive<T>;
 
 template<typename T>
-static constexpr bool TIsTextArchive = std::is_base_of_v<Traits::TextArchive, T>;
+static constexpr bool IsTextArchive = std::is_base_of_v<traits::TextArchive, T>;
 
 }

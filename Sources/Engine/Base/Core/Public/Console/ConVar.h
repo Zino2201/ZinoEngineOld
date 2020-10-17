@@ -6,10 +6,10 @@
 #include "Delegates/Delegate.h"
 #include <algorithm>
 
-namespace ZE
+namespace ze
 {
 
-enum class EConVarFlagBits
+enum class ConVarFlagBits
 {
 	None = 0,
 
@@ -19,12 +19,12 @@ enum class EConVarFlagBits
 	/** Allow saving this convar */
 	Saved = 1 << 1,
 };
-ENABLE_FLAG_ENUMS(EConVarFlagBits, EConVarFlags);
+ENABLE_FLAG_ENUMS(ConVarFlagBits, ConVarFlags);
 
 /**
  * A console variable
  */
-struct SConVar
+struct ConVar
 {
 	using ConvarDataType = std::variant<float, int32_t, std::string>;
 
@@ -35,109 +35,109 @@ struct SConVar
 		DataTypeString = 2,
 	};
 
-	std::string Name;
-	ConvarDataType Data;
+	std::string name;
+	ConvarDataType data;
 
 	/** Only for numbers */
-	ConvarDataType Minimum;
+	ConvarDataType minimum;
 
 	/** Only for numbers */
-	ConvarDataType Maximum;
+	ConvarDataType maximum;
 
-	std::string Help;
-	EConVarFlags Flags;
+	std::string help;
+	ConVarFlags flags;
 	
 	/** Delegates */
-	TDelegateNoRet<const ConvarDataType&> OnMinChanged;
-	TDelegateNoRet<const ConvarDataType&> OnMaxChanged;
-	TDelegateNoRet<const ConvarDataType&> OnValueChanged;
+	DelegateNoRet<const ConvarDataType&> on_min_changed;
+	DelegateNoRet<const ConvarDataType&> on_max_changed;
+	DelegateNoRet<const ConvarDataType&> on_value_changed;
 
-	SConVar(const std::string& InName, 
-		const float& InDefaultValue,
-		const std::string& InHelp,
-		const EConVarFlags& InFlags = EConVarFlagBits::None) : Name(InName), Data(std::in_place_index<0>,
-			InDefaultValue),
-			Minimum(std::in_place_index<0>, std::numeric_limits<float>::min()),
-			Maximum(std::in_place_index<0>, std::numeric_limits<float>::max()), Help(InHelp), 
-		Flags(InFlags) {}
+	ConVar(const std::string& in_name, 
+		const float& in_default_value,
+		const std::string& in_help,
+		const ConVarFlags& in_flags = ConVarFlagBits::None) : name(in_name), data(std::in_place_index<0>,
+			in_default_value),
+			minimum(std::in_place_index<0>, std::numeric_limits<float>::min()),
+			maximum(std::in_place_index<0>, std::numeric_limits<float>::max()), help(in_help), 
+		flags(in_flags) {}
 
-	SConVar(const std::string& InName, 
-		const int32_t& InDefaultValue,
-		const std::string& InHelp,
-		const EConVarFlags& InFlags = EConVarFlagBits::None) : Name(InName), Data(std::in_place_index<1>,
-			InDefaultValue),
-			Minimum(std::in_place_index<1>, std::numeric_limits<int32_t>::min()),
-			Maximum(std::in_place_index<1>, std::numeric_limits<int32_t>::max()), Help(InHelp), Flags(InFlags) {}
+	ConVar(const std::string& in_name, 
+		const int32_t& in_default_value,
+		const std::string& in_help,
+		const ConVarFlags& in_flags = ConVarFlagBits::None) : name(in_name), data(std::in_place_index<1>, in_default_value),
+			minimum(std::in_place_index<1>, std::numeric_limits<int32_t>::min()),
+			maximum(std::in_place_index<1>, std::numeric_limits<int32_t>::max()), help(in_help), 
+		flags(in_flags) {}
 
-	SConVar(const std::string& InName, 
-		const std::string& InDefaultValue,
-		const std::string& InHelp,
-		const EConVarFlags& InFlags = EConVarFlagBits::None) : Name(InName), Data(std::in_place_index<2>,
-			InDefaultValue), Help(InHelp), Flags(InFlags) {}
+	ConVar(const std::string& in_name, 
+		const std::string& in_default_value,
+		const std::string& in_help,
+		const ConVarFlags& in_flags = ConVarFlagBits::None) : name(in_name), data(std::in_place_index<2>,
+			in_default_value), help(in_help), flags(in_flags) {}
 
-	void SetMin(const ConvarDataType& InData)
+	void set_min(const ConvarDataType& in_data)
 	{
-		Minimum = InData;
-		OnMinChanged.Execute(Minimum);
+		minimum = in_data;
+		on_min_changed.execute(minimum);
 	}
 
-	void SetMax(const ConvarDataType& InData)
+	void set_max(const ConvarDataType& in_data)
 	{
-		Maximum = InData;
-		OnMaxChanged.Execute(Maximum);
+		maximum = in_data;
+		on_max_changed.execute(maximum);
 	}
 
-	void SetFloat(const float& InFloat)
+	void set_float(const float& in_float)
 	{
-		Data = std::clamp<float>(InFloat, std::get<float>(Minimum), std::get<float>(Maximum));
-		OnValueChanged.Execute(Data);
+		data = std::clamp<float>(in_float, std::get<float>(minimum), std::get<float>(maximum));
+		on_value_changed.execute(data);
 	}
 
-	void SetInt(const int32_t& InInt)
+	void set_int(const int32_t& in_int)
 	{
-		Data = std::clamp<int32_t>(InInt, std::get<int32_t>(Minimum), std::get<int32_t>(Maximum));
-		OnValueChanged.Execute(Data);
+		data = std::clamp<int32_t>(in_int, std::get<int32_t>(minimum), std::get<int32_t>(maximum));
+		on_value_changed.execute(data);
 	}
 
-	void SetString(const std::string& InStr)
+	void set_string(const std::string& in_str)
 	{
-		Data = InStr;
-		OnValueChanged.Execute(Data);
+		data = in_str;
+		on_value_changed.execute(data);
 	}
 
-	const float& GetMinAsFloat()
+	const float& get_min_as_float()
 	{
-		return std::get<float>(Minimum);
+		return std::get<float>(minimum);
 	}
 
-	const float& GetMaxAsFloat()
+	const float& get_max_as_float()
 	{
-		return std::get<float>(Maximum);
+		return std::get<float>(maximum);
 	}
 
-	const int32_t& GetMinAsInt()
+	const int32_t& get_min_as_int()
 	{
-		return std::get<int32_t>(Minimum);
+		return std::get<int32_t>(minimum);
 	}
 
-	const int32_t& GetMaxAsInt()
+	const int32_t& get_max_as_int()
 	{
-		return std::get<int32_t>(Maximum);
+		return std::get<int32_t>(maximum);
 	}
 
-	const float& GetAsFloat()
+	const float& get_as_float()
 	{
-		return std::get<float>(Data);
+		return std::get<float>(data);
 	}
 
-	const int32_t& GetAsInt()
+	const int32_t& get_as_int()
 	{
-		return std::get<int32_t>(Data);
+		return std::get<int32_t>(data);
 	}
 
-	const std::string& GetAsString()
+	const std::string& get_as_string()
 	{
-		return std::get<std::string>(Data);
+		return std::get<std::string>(data);
 	}
 };
 

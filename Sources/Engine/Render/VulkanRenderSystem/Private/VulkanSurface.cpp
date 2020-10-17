@@ -21,7 +21,7 @@ CVulkanSurface::CVulkanSurface(CVulkanDevice& InDevice,
 		if (!SDL_Vulkan_CreateSurface(reinterpret_cast<SDL_Window*>(InCreateInfo.WindowHandle),
 			static_cast<VkInstance>(GVulkanRenderSystem->GetInstance()),
 			&SurfaceTmp))
-			ZE::Logger::Fatal("Failed to create surface: {}",
+			ze::logger::fatal("Failed to create surface: {}",
 				 SDL_GetError());
 
 		Surface = vk::UniqueSurfaceKHR(SurfaceTmp, vk::ObjectDestroy<vk::Instance,
@@ -56,7 +56,7 @@ bool CVulkanSurface::AcquireImage()
 	}
 	else if(Result != vk::Result::eSuccess && Result != vk::Result::eSuboptimalKHR)
 	{
-		ZE::Logger::Fatal("Failed to acquire swap chain image");
+		ze::logger::fatal("Failed to acquire swap chain image");
 	}
 
 	return true;
@@ -75,7 +75,7 @@ void CVulkanSurface::Present(CVulkanQueue* InPresentQueue)
 	}
 	else if(Result != vk::Result::eSuccess)
 	{
-		ZE::Logger::Fatal("Failed to present swap chain image");
+		ze::logger::fatal("Failed to present swap chain image");
 	}
 }
 
@@ -117,7 +117,7 @@ CRSTexture* CVulkanSurface::GetBackbufferTexture()
 	return SwapChain->GetBackbufferTexture();
 }
 
-TOwnerPtr<CRSSurface> CVulkanRenderSystem::CreateSurface(const SRSSurfaceCreateInfo& InCreateInfo) const
+OwnerPtr<CRSSurface> CVulkanRenderSystem::CreateSurface(const SRSSurfaceCreateInfo& InCreateInfo) const
 {
 	return new CVulkanSurface(
 		*Device.get(),

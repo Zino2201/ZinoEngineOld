@@ -3,7 +3,7 @@
 #include "ConVar.h"
 #include "NonCopyable.h"
 
-namespace ZE
+namespace ze
 {
 
 /**
@@ -27,111 +27,116 @@ public:
 
 	void Execute(const std::string_view& InCmdName, const std::vector<std::string_view>& InParams);
 
-	SConVar& GetConVar(const size_t& InIdx) { return ConVars[InIdx]; }
+	ConVar& GetConVar(const size_t& InIdx) { return ConVars[InIdx]; }
 private:
 	/** Coherent array of convars */
-	std::vector<SConVar> ConVars;
+	std::vector<ConVar> ConVars;
 };
 /**
  * Type trait that return true if the type can be used as a number for convars
  */
 template<typename T>
-constexpr bool TIsValidConVarNumber = std::is_same_v<T, float> || std::is_same_v<T, int32_t>;
+constexpr bool IsValidConVarNumber = std::is_same_v<T, float> || std::is_same_v<T, int32_t>;
 
 /**
  * Helper type to make convar creation & manipulation easier
  */
 template<typename T>
-class TConVar
+class ConVarRef
 {
 public:
-	TConVar(const std::string& InName, 
-		const T& InDefaultValue,
-		const std::string& InHelp,
-		const EConVarFlags& InFlags = EConVarFlagBits::None) :
-		ConVar(CConsole::Get().EmplaceConVar(InName, InDefaultValue, InHelp, InFlags)) {}
+	ConVarRef(const std::string& in_name, 
+		const T& in_default_value,
+		const std::string& in_help,
+		const ConVarFlags& in_flags = ConVarFlagBits::None) :
+		idx(CConsole::Get().EmplaceConVar(in_name, in_default_value, in_help, in_flags)) {}
 	
 	/**
 	 * Constructor with min/max, only works for valid convars numbers
 	 */
-	TConVar(const std::string& InName,
-		const T& InDefaultValue,
-		const std::string& InHelp, 
-		const T& InMin,
-		const T& InMax,
-		const EConVarFlags& InFlags = EConVarFlagBits::None) requires TIsValidConVarNumber<T> :
-		ConVar(CConsole::Get().EmplaceConVar(InName, InDefaultValue, InHelp, InFlags)) 
+	ConVarRef(const std::string& in_name,
+		const T& in_default_value,
+		const std::string& in_help, 
+		const T& in_min,
+		const T& in_max,
+		const ConVarFlags& in_flags = ConVarFlagBits::None) requires IsValidConVarNumber<T> :
+		idx(CConsole::Get().EmplaceConVar(in_name, in_default_value, in_help, in_flags)) 
 	{
-		CConsole::Get().GetConVar(ConVar).SetMin(InMin);
-		CConsole::Get().GetConVar(ConVar).SetMax(InMax);
+		get_convar().set_min(in_min);
+		get_convar().set_max(in_max);
+	}
+
+	ZE_FORCEINLINE ConVar& get_convar()
+	{
+		return CConsole::Get().GetConVar(idx);
 	}
 
 	/**
 	 * Call the specified function when the convar is changed
 	 */
-	void BindOnChanged(void(*InFunc)(const T& InData))
+	void bind_on_changed(void(*in_func)(const T& in_data))
 	{
-		CConsole::Get().GetConVar(ConVar).OnValueChanged.Bind(
-			[=](const SConVar::ConvarDataType& InData)
+		get_convar().on_value_changed.bind(
+			[=](const ConVar::ConvarDataType& in_data)
 			{
-				(*InFunc)(std::get<T>(InData));
+				(*in_func)(std::get<T>(in_data));
 			});
 	}
 
 	/**
-	 * Same as above but supported member function
+	 * Same as above but with support for member functions
 	 */
 	template<typename Binder>
-	void BindOnChanged(Binder* InBinder, void(Binder::*InFunc)(const T& InData))
+	void BindOnChanged(Binder* binder, void(Binder::*func)(const T& in_data))
 	{
-		CConsole::Get().GetConVar(ConVar).OnValueChanged.Bind(
-			[=](const SConVar::ConvarDataType& InData)
+		get_convar().on_value_changed.bind(
+			[=](const ConVar::ConvarDataType& data)
 			{
-				(InBinder->*InFunc)(std::get<T>(InData));
+				(binder->*func)(std::get<T>(data));
 			});
 	}
 
-	const T& Get()
+	ZE_FORCEINLINE const T& get()
 	{
 		if constexpr(std::is_same_v<T, float>)
-			return GetAsFloat();
+			return get_as_float();
 		else if constexpr(std::is_same_v<T, int32_t>)
-			return GetAsInt();
+			return get_as_int();
 		else
-			return GetAsString();
+			return get_as_string();
 	}
 
-	const T& GetMin()
+	ZE_FORCEINLINE const T& get_min()
 	{
-		return std::get<T>(CConsole::Get().GetConVar(ConVar).Minimum);
+		return std::get<T>(get_convar().minimum);
 	}
 
-	const T& GetMax()
+	ZE_FORCEINLINE const T& get_max()
 	{
-		return std::get<T>(CConsole::Get().GetConVar(ConVar).Maximum);
+		return std::get<T>(get_convar().maximum);
 	}
 
-	const float& GetAsFloat()
+	ZE_FORCEINLINE const float& get_as_float()
 	{
-		return CConsole::Get().GetConVar(ConVar).GetAsFloat();
+		return get_convar().get_as_float();
 	}
 
-	const int32_t& GetAsInt()
+	ZE_FORCEINLINE const int32_t& get_as_int()
 	{
-		return CConsole::Get().GetConVar(ConVar).GetAsInt();
+		return get_convar().get_as_int();
 	}
 
-	const std::string& GetAsString()
+	ZE_FORCEINLINE const std::string& get_as_string()
 	{
 		if constexpr(std::is_same_v<T, float>)
-			return std::to_string(GetAsFloat());
+			return std::to_string(get_as_float());
 		else if constexpr(std::is_same_v<T, int32_t>)
-			return std::to_string(GetAsInt());
+			return std::to_string(get_as_int());
 		else
-			return CConsole::Get().GetConVar(ConVar).GetAsString();
+			return get_convar().get_as_string();
 	}
 private:
-	size_t ConVar;
+	size_t idx;
 };
 
 }

@@ -12,9 +12,9 @@
 #endif /** ZE_COMPILER(MSVC) */
 
 /** Assertions */
-#define must(condition) if(!(condition)) { ZE::Logger::Fatal("Assertion failed: {}", #condition); }
+#define ZE_ASSERT(condition) if(!(condition)) { ze::logger::fatal("Assertion failed: {}", #condition); }
 #ifdef ZE_DEBUG
-#define verify(condition) if(!(condition)) { ZE::Logger::Error("Verify assertion failed: {}", #condition); ZE_DEBUGBREAK(); }
+#define ZE_CHECK(condition) if(!(condition)) { ze::logger::error("Check failed: {}", #condition); ZE_DEBUGBREAK(); }
 #else
-#define verify(condition)
+#define ZE_CHECK(condition)
 #endif

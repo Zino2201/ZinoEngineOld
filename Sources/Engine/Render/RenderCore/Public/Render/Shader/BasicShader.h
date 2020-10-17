@@ -4,7 +4,7 @@
 #include "NonCopyable.h"
 #include <robin_hood.h>
 
-namespace ZE
+namespace ze::gfx::shaders
 {
 
 /**
@@ -19,7 +19,7 @@ class RENDERCORE_API CBasicShaderType : public CShaderType
 public:
     CBasicShaderType(const char* InName, const char* InFilename, 
         const char* InEntryPoint,
-        EShaderStage InStage,
+        ShaderStage InStage,
         InstantiateFunctionType InFunc);
     ~CBasicShaderType();
 public:
@@ -33,7 +33,7 @@ class RENDERCORE_API CBasicShader : public CShader
 {
 public:
     CBasicShader(const CShaderType* InShaderType,
-        const SShaderCompilerOutput& InOutput) : CShader(InShaderType, InOutput) {}
+        const ShaderCompilerOutput& InOutput) : CShader(InShaderType, InOutput) {}
 };
 
 class RENDERCORE_API CBasicShaderManager : public CNonCopyable

@@ -2,7 +2,7 @@
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/RenderSystem/Resources/Buffer.h"
 
-namespace ZE
+namespace ze
 {
 
 CStaticMeshRenderData::CStaticMeshRenderData(CStaticMesh* InStaticMesh) : StaticMesh(InStaticMesh) 
@@ -18,7 +18,7 @@ CStaticMeshRenderData::CStaticMeshRenderData(CStaticMesh* InStaticMesh) : Static
 		ERSMemoryHintFlagBits::None,
 		Vertices.size() * sizeof(Vertices.front()) });
 	if(!VertexBuffer)
-		ZE::Logger::Error("Failed to create a vertex buffer");
+		ze::logger::error("Failed to create a vertex buffer");
 
 	VertexBuffer->SetName("StaticMesh VertexBuffer");
 	RSUtils::Copy(Vertices.data(), VertexBuffer.get());
@@ -29,7 +29,7 @@ CStaticMeshRenderData::CStaticMeshRenderData(CStaticMesh* InStaticMesh) : Static
 		ERSMemoryHintFlagBits::None,
 		Indices.size() * sizeof(Indices.front()) });
 	if (!IndexBuffer)
-		ZE::Logger::Error("Failed to create a index buffer");
+		ze::logger::error("Failed to create a index buffer");
 	
 	IndexBuffer->SetName("StaticMesh IndexBuffer");
 	RSUtils::Copy(Indices.data(), IndexBuffer.get());

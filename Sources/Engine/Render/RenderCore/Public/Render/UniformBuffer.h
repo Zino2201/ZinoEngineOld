@@ -6,7 +6,7 @@
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/RenderSystem/Resources/Buffer.h"
 
-namespace ZE
+namespace ze
 {
 
 /**

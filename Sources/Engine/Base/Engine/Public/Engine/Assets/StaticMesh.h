@@ -4,7 +4,7 @@
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "Render/RenderSystem/Resources/Pipeline.h"
 
-namespace ZE
+namespace ze
 {
 
 class CStaticMesh;
@@ -14,8 +14,8 @@ class CStaticMesh;
  */
 struct SStaticMeshVertex
 {
-    Math::SVector3Float Position;
-    Math::SVector3Float Normal;
+    maths::Vector3f Position;
+    maths::Vector3f Normal;
 
     bool operator==(const SStaticMeshVertex& InOther) const
     {
@@ -50,8 +50,8 @@ struct SStaticMeshVertexHash
 	{
 		std::size_t Seed = 0;
 
-		HashCombine<Math::SVector3Float, Math::SVector3FloatHash>(Seed, InVertex.Position);
-		HashCombine<Math::SVector3Float, Math::SVector3FloatHash>(Seed, InVertex.Normal);
+		hash_combine<maths::Vector3f>(Seed, InVertex.Position);
+		hash_combine<maths::Vector3f>(Seed, InVertex.Normal);
 
 		return Seed;
 	}

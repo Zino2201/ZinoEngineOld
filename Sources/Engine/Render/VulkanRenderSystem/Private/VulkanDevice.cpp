@@ -74,7 +74,7 @@ void CVulkanDeferredDestructionManager::DestroyResources()
 				reinterpret_cast<VkSampler>(Entry.Handle));
 			break;
 		default:
-			must(false); // Not implemented
+			ZE_ASSERT(false); // Not implemented
 			break;
 		}
 	}
@@ -228,7 +228,7 @@ vk::RenderPass CVulkanRenderPassFramebufferManager::GetRenderPass(const SRSRende
 		vk::UniqueRenderPass RenderPass = Device.GetDevice().createRenderPassUnique(
 			CreateInfo).value;
 		if(!RenderPass)
-			ZE::Logger::Fatal("Failed to create render pass");
+			ze::logger::fatal("Failed to create render pass");
 
 		vk::RenderPass RetRenderPass = *RenderPass;
 		RenderPasses.insert({ InRenderPass, std::move(RenderPass) });
@@ -311,7 +311,7 @@ vk::Framebuffer CVulkanRenderPassFramebufferManager::GetFramebuffer(const SRSFra
 	vk::UniqueFramebuffer Framebuffer = Device.GetDevice().createFramebufferUnique(
 		CreateInfo).value;
 	if (!Framebuffer)
-		ZE::Logger::Fatal("Failed to create framebuffer");
+		ze::logger::fatal("Failed to create framebuffer");
 
 	vk::Framebuffer RetFramebuffer = *Framebuffer;
 
@@ -368,7 +368,7 @@ CVulkanDevice::CVulkanDevice(const vk::PhysicalDevice& InPhysicalDevice) :
 
 		Device = PhysicalDevice.createDeviceUnique(CreateInfos).value;
 		if (!Device)
-			ZE::Logger::Fatal("Failed to create logical device");
+			ze::logger::fatal("Failed to create logical device");
 
 		/** Get queues */
 		GraphicsQueue = std::make_unique<CVulkanQueue>(*this, QueueFamilyIndices.Graphics.value());
@@ -399,7 +399,7 @@ CVulkanDevice::SVMADestructor::~SVMADestructor()
 	/** Print a output to check for any uncleared resources */
 	char* Output;
 	vmaBuildStatsString(Device.GetAllocator(), &Output, VK_TRUE);
-	ZE::Logger::Verbose("{}", Output);
+	ze::logger::verbose("{}", Output);
 	vmaFreeStatsString(Device.GetAllocator(), Output);
 #endif
 	vmaDestroyAllocator(Device.GetAllocator());

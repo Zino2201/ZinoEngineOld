@@ -9,13 +9,13 @@
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 
-namespace ZE::Math
+namespace ze::maths
 {
 
 /*
  * A 2D rectangle
  */
-struct SRect2D
+struct Rect2D
 {
 	glm::vec2 Position;
 	glm::vec2 Size;
@@ -23,12 +23,15 @@ struct SRect2D
 
 } /* namespace ZE::Math */
 
+namespace ze
+{
 /**
  * From boost's hash_combine
  */
 template <class T, class H = std::hash<T>>
-inline void HashCombine(std::size_t& Seed, const T& V)
+ZE_FORCEINLINE void hash_combine(std::size_t& seed, const T& v)
 {
-	H Hasher;
-	Seed ^= Hasher(V) + 0x9e3779b9 + (Seed << 6) + (Seed >> 2);
+	seed ^= H()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
 }

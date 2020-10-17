@@ -3,9 +3,9 @@
 #include "EngineCore.h"
 #include "AssetFactory.gen.h"
 
-namespace ZE { class CAsset; }
+namespace ze { class Asset; }
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 /**
@@ -25,7 +25,7 @@ public:
 	 * Create a new asset from a stream
 	 * @param InStream The imported asset stream
 	 */
-	virtual TOwnerPtr<CAsset> CreateFromStream(std::istream& InStream) = 0;
+	virtual OwnerPtr<Asset> CreateFromStream(std::istream& InStream) = 0;
 
 	const std::vector<std::string>& GetSupportedFormats() const { return SupportedFormats;  }
 protected:

@@ -7,16 +7,16 @@ namespace ZE::Serialization
 {
 
 template<typename Archive, typename T>
-ZE_FORCEINLINE void Serialize(Archive& InArchive, std::vector<T>& InValue)
+ZE_FORCEINLINE void serialize(Archive& archive, std::vector<T>& vector)
 {
-	typename std::vector<T>::size_type Size = InValue.size();
+	typename std::vector<T>::size_type size = vector.size();
 
-	InArchive <=> MakeSize(Size);
+	archive <=> make_size(size);
 	if constexpr (TIsInputArchive<Archive>)
-		InValue.resize(Size);
+		vector.resize(size);
 
-	for (auto& Elem : InValue)
-		InArchive <=> Elem;
+	for (auto& elem : vector)
+		archive <=> elem;
 }
 
 }

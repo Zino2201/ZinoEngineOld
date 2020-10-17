@@ -6,7 +6,7 @@
 #include "Render/RenderSystem/Resources/RenderPass.h"
 #include "Shader/ShaderCore.h"
 
-namespace ZE
+namespace ze
 {
 	enum class EShaderStage;
 	enum class ERSBufferUsageFlagBits;
@@ -27,15 +27,16 @@ namespace ZE
 }
 
 /** OOF */
-using namespace ZE;
-using namespace ZE::Math;
+using namespace ze;
+using namespace ze::maths;
+using namespace ze::gfx::shaders;
 
 VULKANRENDERSYSTEM_API extern class CVulkanRenderSystem* GVulkanRenderSystem;
 VULKANRENDERSYSTEM_API extern class CVulkanRenderSystemContext* GRenderSystemContext;
 
 #define VULKAN_HPP_NO_EXCEPTIONS
-#define VULKAN_HPP_ASSERT must
-#define VMA_ASSERT(expr) must(expr)
+#define VULKAN_HPP_ASSERT ZE_ASSERT
+#define VMA_ASSERT(expr) ZE_ASSERT(expr)
 
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
@@ -148,8 +149,8 @@ namespace VulkanUtil
 	ZE_FORCEINLINE vk::SampleCountFlagBits SampleCountToVkSampleCount(
 		const ESampleCount& InSampleCount);
     ZE_FORCEINLINE vk::ImageAspectFlagBits GetImageAspectFromFormat(const EFormat& InFormat);
-    ZE_FORCEINLINE vk::ShaderStageFlagBits ShaderStageToVkShaderStage(const EShaderStage& InShader);
-    ZE_FORCEINLINE vk::DescriptorType ShaderParameterTypeToVkDescriptorType(const EShaderParameterType& InType);
+    ZE_FORCEINLINE vk::ShaderStageFlagBits ShaderStageToVkShaderStage(const ShaderStage& InShader);
+    ZE_FORCEINLINE vk::DescriptorType ShaderParameterTypeToVkDescriptorType(const ShaderParameterType& InType);
 	ZE_FORCEINLINE vk::VertexInputRate VertexInputRateToVkVertexInputRate(const EVertexInputRate& InRate);
 
     /** Rasterizer */
@@ -270,14 +271,14 @@ namespace VulkanUtil
 		}
 	}
 
-	vk::ShaderStageFlagBits ShaderStageToVkShaderStage(const EShaderStage& InShader)
+	vk::ShaderStageFlagBits ShaderStageToVkShaderStage(const ShaderStage& InShader)
 	{
 		switch (InShader)
 		{
 		default:
-		case EShaderStage::Vertex:
+		case ShaderStage::Vertex:
 			return vk::ShaderStageFlagBits::eVertex;
-		case EShaderStage::Fragment:
+		case ShaderStage::Fragment:
 			return vk::ShaderStageFlagBits::eFragment;
 		}
 	}

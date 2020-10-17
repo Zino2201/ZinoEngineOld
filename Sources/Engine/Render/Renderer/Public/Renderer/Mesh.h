@@ -2,7 +2,7 @@
 
 #include "Render/RenderSystem/RenderSystemResources.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 /**

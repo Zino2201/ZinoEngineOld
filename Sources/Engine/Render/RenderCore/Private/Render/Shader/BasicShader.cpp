@@ -1,19 +1,20 @@
+#include "EngineCore.h"
 #include "Render/Shader/BasicShader.h"
 #include "Shader/ShaderCompiler.h"
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include "Render/RenderSystem/Resources/Shader.h"
 
-namespace ZE
+namespace ze::gfx::shaders
 {
 
 CBasicShaderType::CBasicShaderType(const char* InName, const char* InFilename, 
-	const char* InEntryPoint, EShaderStage InStage,
+	const char* InEntryPoint, ShaderStage InStage,
 	InstantiateFunctionType InFunc) :
 	CShaderType(InName, InFilename, InEntryPoint, InStage, InFunc)
 {
 	if (bBasicShadersCompiled)
-		ZE::Logger::Fatal("Basic shader type created after basic shaders compilation ! Aborting.");
+		ze::logger::fatal("Basic shader type created after basic shaders compilation ! Aborting.");
 
 	CBasicShaderManager::Get().AddShaderType(this);
 }
@@ -38,17 +39,18 @@ void CBasicShaderManager::CompileShaders()
 	{
 		Compile:
 
-		auto Future = CGlobalShaderCompiler::Get().CompileShader(
+		auto Future = ze::gfx::shaders::compile_shader(
 			ShaderType->GetStage(),
 			ShaderType->GetFilename(),
 			ShaderType->GetEntryPoint(),
-			EShaderCompilerTarget::VulkanSpirV);
+			ShaderCompilerTarget::VulkanSpirV,
+			true);
 	
 		auto Output = Future.get();
-		if(!Output.bSucceed)
+		if(!Output.success)
 		{
-			ZE::Logger::Fatal("Failed to compile basic shader {} ({}), can't continue.\n\n{}",
-				ShaderType->GetName(), ShaderType->GetFilename(), Output.ErrMsg.c_str());
+			ze::logger::fatal("Failed to compile basic shader {} ({}), can't continue.\n\n{}",
+				ShaderType->GetName(), ShaderType->GetFilename(), Output.err_msg.c_str());
 
 			goto Compile;
 		}
@@ -56,7 +58,7 @@ void CBasicShaderManager::CompileShaders()
 		{
 			CShader* Shader = ShaderType->InstantiateShader(Output);
 			if(!Shader)
-				ZE::Logger::Fatal("Failed to instantiate basic shader {} ({}), exiting",
+				ze::logger::fatal("Failed to instantiate basic shader {} ({}), exiting",
 					ShaderType->GetName(), ShaderType->GetFilename());
 
 			ShaderMap.insert( { ShaderType->GetName(), Shader });

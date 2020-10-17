@@ -2,7 +2,7 @@
 
 #include "MinimalMacros.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class CWorldRenderer;

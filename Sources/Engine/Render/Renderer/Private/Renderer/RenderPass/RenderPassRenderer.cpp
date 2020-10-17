@@ -6,7 +6,7 @@
 #include "Render/RenderSystem/RenderSystemContext.h"
 #include "Renderer/RenderableComponentProxy.h"
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 CRenderPassRenderer::CRenderPassRenderer(CWorldProxy& InProxy) : WorldProxy(InProxy) {}
@@ -15,7 +15,7 @@ void CRenderPassRenderer::PrepareDrawcalls(SWorldView& InView,
 	const ERenderPassFlagBits& InRenderPass,
 	CRenderPassDrawcallFactory& InDrawcallFactory)
 {
-	using namespace JobSystem;
+	using namespace jobsystem;
 
 	InDrawcallFactory.SetDrawcallList(&DynamicDrawcalls);
 
@@ -33,8 +33,8 @@ void CRenderPassRenderer::PrepareDrawcalls(SWorldView& InView,
 	/**
 	 * Create and sort dynamic drawcalls
 	 */
-	PrepareJob = &CreateJob(EJobType::Normal,
-		[&, InRenderPass](const SJob& InJob)
+	PrepareJob = &create_job(JobType::Normal,
+		[&, InRenderPass](const Job& InJob)
 		{
 			/**
 			 * Generate drawcalls for dynamic mesh batches
@@ -53,15 +53,15 @@ void CRenderPassRenderer::PrepareDrawcalls(SWorldView& InView,
 			for(const auto& Call : DynamicDrawcalls)
 				FinalDrawcalls.emplace_back(&Call);
 		});
-	ScheduleJob(*PrepareJob);
+	schedule(*PrepareJob);
 }
 
 void CRenderPassRenderer::Draw(IRenderSystemContext& InContext) const
 {
-	using namespace JobSystem;
+	using namespace jobsystem;
 
 	/** Wait for prepare job if not finished */
-	WaitJob(*PrepareJob);
+	wait(*PrepareJob);
 
 	for(const auto& Drawcall : FinalDrawcalls)
 	{
@@ -85,16 +85,16 @@ void CRenderPassRenderer::SubmitDrawcall(IRenderSystemContext& InContext,
 		switch(Binding.ParameterType)
 		{
 		default:
-			ZE::Logger::Error("Unknown parameter type for binding {} set {}",
+			ze::logger::error("Unknown parameter type for binding {} set {}",
 				Binding.Binding, Binding.Set);
 			break;
-		case EShaderParameterType::UniformBuffer:
+		case ShaderParameterType::UniformBuffer:
 			InContext.SetShaderUniformBuffer(Binding.Set, Binding.Binding, Binding.Buffer);
 			break;
-		case EShaderParameterType::Texture:
+		case ShaderParameterType::Texture:
 			InContext.SetShaderTexture(Binding.Set, Binding.Binding, Binding.Texture);
 			break;
-		case EShaderParameterType::Sampler:
+		case ShaderParameterType::Sampler:
 			InContext.SetShaderSampler(Binding.Set, Binding.Binding, Binding.Sampler);
 			break;
 		}

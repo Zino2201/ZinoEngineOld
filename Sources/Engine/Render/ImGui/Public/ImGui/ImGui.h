@@ -4,14 +4,14 @@
 #include <imgui.h>
 #include "Module/Module.h"
 
-namespace ZE::UI
+namespace ze::ui
 {
 
-class IMGUI_API CImGuiModule : public ZE::Module::CModule
+class IMGUI_API ImGuiModule : public ze::module::Module
 {
 public:
-	CImGuiModule();
-	~CImGuiModule();
+	ImGuiModule();
+	~ImGuiModule();
 };
 
 struct SImGuiAutoStyleColor

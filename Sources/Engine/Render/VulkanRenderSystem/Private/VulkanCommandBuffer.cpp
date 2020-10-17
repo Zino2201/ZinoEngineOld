@@ -18,7 +18,7 @@ CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanDevice& InDevice,
 	Fence = Device.GetDevice().createFenceUnique(
 		vk::FenceCreateInfo(Flags)).value;
 	if(!Fence)
-		ZE::Logger::Fatal("Failed to create fence");
+		ze::logger::fatal("Failed to create fence");
 
 	Begin();
 }

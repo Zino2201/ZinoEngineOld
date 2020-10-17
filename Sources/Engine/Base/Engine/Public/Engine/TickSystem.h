@@ -8,7 +8,7 @@
 /**
  * Tick system
  */
-namespace ZE
+namespace ze
 {
 
 /**

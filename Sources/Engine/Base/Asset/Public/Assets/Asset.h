@@ -6,10 +6,8 @@
 #include "Reflection/Serialization.h"
 #include "Asset.gen.h"
 
-namespace ZE
+namespace ze
 {
-
-namespace Serialization { class IArchive; }
 
 /**
  * Base class for assets

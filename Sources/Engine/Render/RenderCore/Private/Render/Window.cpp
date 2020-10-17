@@ -2,10 +2,10 @@
 #include <SDL.h>
 #include "Module/Module.h"
 
-namespace ZE
+namespace ze
 {
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, RenderCore);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, RenderCore);
 
 CWindow::CWindow(const char* InName, const uint32_t& InWidth, const uint32_t& InHeight, 
 	const EWindowFlags& InFlags)

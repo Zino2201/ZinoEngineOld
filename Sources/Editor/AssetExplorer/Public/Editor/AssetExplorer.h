@@ -3,7 +3,7 @@
 #include "EngineCore.h"
 #include <filesystem>
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 class ASSETEXPLORER_API CAssetExplorer

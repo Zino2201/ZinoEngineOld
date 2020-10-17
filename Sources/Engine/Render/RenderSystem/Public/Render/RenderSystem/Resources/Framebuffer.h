@@ -2,7 +2,7 @@
 
 #include "Resource.h"
 
-namespace ZE
+namespace ze
 {
 
 constexpr uint32_t GMaxRenderTargetPerFramebuffer = 8;
@@ -39,8 +39,8 @@ struct SRSFramebufferHash
 
 		for (int i = 0; i < GMaxRenderTargetPerFramebuffer; ++i)
 		{
-			HashCombine(Seed, InFramebuffer.ColorRTs[i]);
-			HashCombine(Seed, InFramebuffer.DepthRTs[i]);
+			hash_combine(Seed, InFramebuffer.ColorRTs[i]);
+			hash_combine(Seed, InFramebuffer.DepthRTs[i]);
 		}
 
 		return Seed;

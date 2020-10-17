@@ -3,10 +3,10 @@
 #include "EngineCore.h"
 #include "TickSystem.h"
 
-namespace ZE
+namespace ze
 {
 
-namespace Renderer { class CWorldProxy; }
+namespace renderer { class CWorldProxy; }
 
 /**
  * A world
@@ -18,9 +18,9 @@ public:
     CWorld();
     ~CWorld();
 
-    Renderer::CWorldProxy* GetProxy() const { return Proxy.get(); }
+    renderer::CWorldProxy* GetProxy() const { return Proxy.get(); }
 private:
-    std::unique_ptr<Renderer::CWorldProxy> Proxy;
+    std::unique_ptr<renderer::CWorldProxy> Proxy;
 };
 
 } /* namespace ZE */

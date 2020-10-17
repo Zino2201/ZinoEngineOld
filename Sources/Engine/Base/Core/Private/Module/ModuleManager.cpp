@@ -10,46 +10,46 @@
 #endif
 #include "Logger/Logger.h"
 
-namespace ZE::Module
+namespace ze::module
 {
 
-std::vector<std::unique_ptr<CModule>> Modules;
-OnModuleLoadedDelegate OnModuleLoaded;
+std::vector<std::unique_ptr<Module>> modules;
+OnModuleLoadedDelegate on_module_loaded;
 
-void* LoadModuleHandle(const std::string& InPath)
+void* load_module_handle(const std::string& path)
 {
 #if ZE_PLATFORM(WINDOWS)
-	return (void*) LoadLibraryA(InPath.c_str());
+	return (void*) LoadLibraryA(path.c_str());
 #elif ZE_PLATFORM(OSX) || ZE_PLATFORM(LINUX)
-	return dlopen(InPath.c_str(), RTLD_LAZY);
+	return dlopen(path.c_str(), RTLD_LAZY);
 #endif
 }
 
-void FreeModuleHandle(void* InHandle)
+void free_module_handle(void* handle)
 {
 #if ZE_PLATFORM(WINDOWS)
-	FreeLibrary((HMODULE) InHandle);
+	FreeLibrary((HMODULE) handle);
 #elif ZE_PLATFORM(OSX) || ZE_PLATFORM(LINUX)
-	dlclose(InHandle);
+	dlclose(handle);
 #endif 
 }
 
 /** Platform specific variables */
 #if ZE_PLATFORM(WINDOWS)
-constexpr static std::string_view GetSharedLibExtension() { return "dll"; }
+constexpr static std::string_view get_shared_lib_extension() { return "dll"; }
 #elif ZE_PLATFORM(OSX) || ZE_PLATFORM(LINUX)
-constexpr static std::string_view GetSharedLibExtension() { return "so"; }
+constexpr static std::string_view get_shared_lib_extension() { return "so"; }
 #endif
 
-CModule* LoadModule(const std::string_view& InName)
+Module* load_module(const std::string_view& name)
 {
 	/**
 	 * Search the module
 	 */
-	for(const auto& Module : Modules)
+	for(const auto& module : modules)
 	{
-		if(Module->GetName() == InName)
-			return Module.get();
+		if(module->get_name() == name)
+			return module.get();
 	}
 
 	/** Load it */
@@ -58,90 +58,89 @@ CModule* LoadModule(const std::string_view& InName)
 	/**
 	 * Load the library
 	 */
-	CModule* Module = nullptr;
+	Module* module = nullptr;
 
 #if ZE_PLATFORM(WINDOWS)
-	std::string Path = std::string(InName);
-	Path += ".";
-	Path += GetSharedLibExtension();
+	std::string path = std::string(name);
+	path += ".";
+	path += get_shared_lib_extension();
 
-	void* Handle = LoadModuleHandle(Path.c_str());
-	if(!Handle)
+	void* handle = load_module_handle(path.c_str());
+	if(!handle)
 	{
-		DWORD ErrMsg = GetLastError();
+		DWORD err_msg = GetLastError();
 
-		LPSTR Buf = nullptr;
-		size_t Size = FormatMessageA(
+		LPSTR buf = nullptr;
+		size_t size = FormatMessageA(
 			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM 
 				| FORMAT_MESSAGE_IGNORE_INSERTS,
 			NULL, 
-			ErrMsg, 
+			err_msg, 
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
-			(LPSTR) &Buf, 
+			(LPSTR) &buf, 
 			0, 
 			NULL);
 
-		std::string Msg(Buf, Size);
-
-		ZE::Logger::Error("Failed to load module {}: {}", InName,
-			Msg);
-		LocalFree(Buf);
+		std::string msg(buf, size);
+		ze::logger::error("Failed to load module {}: {}", name,
+			msg);
+		LocalFree(buf);
 		return nullptr;
 	}
 
 	/**
 	 * Get proc address of InstantiateModule
 	 */
-	std::string FuncName = GInstantiateModuleFuncName;
-	FuncName += "_";
-	FuncName += InName;
-	PFN_InstantiateModuleFunc InstantiateFunc = (PFN_InstantiateModuleFunc) GetProcAddress(
-		static_cast<HMODULE>(Handle), FuncName.c_str());
-	if (!InstantiateFunc)
-		ZE::Logger::Fatal("Module {} isn't a valid Module ! (missing or incorrect DEFINE_MODULE)", InName);
-	Module = InstantiateFunc();
-	if (!Module)
+	std::string func_name = instantiate_module_func_name;
+	func_name += "_";
+	func_name += name;
+	PFN_InstantiateModuleFunc func = (PFN_InstantiateModuleFunc) GetProcAddress(
+		static_cast<HMODULE>(handle), func_name.c_str());
+	if (!func)
+		ze::logger::fatal("Module {} isn't a valid Module ! (missing or incorrect DEFINE_MODULE)", name);
+	module = func();
+	if (!module)
 	{
-		ZE::Logger::Verbose("Failed to instantiate module {}", InName);
+		ze::logger::verbose("Failed to instantiate module {}", name);
 		return nullptr;
 	}
 	
-	Module->Handle = Handle;
+	module->handle = handle;
 #elif ZE_PLATFORM(OSX) || ZE_PLATFORM(LINUX)
-	std::string Path = "lib";
-	Path += InName;
-	Path += ".";
-	Path += GetSharedLibExtension();
+	std::string path = "lib";
+	path += name;
+	path += ".";
+	path += get_shared_lib_extension();
 
-	void* Handle = LoadModuleHandle(Path.c_str());
-	if(!Handle)
+	void* handle = load_module_handle(path.c_str());
+	if(!handle)
 	{
-		ZE::Logger::Fatal("Failed to load module {}", InName);
+		ze::logger::fatal("Failed to load module {}", name);
 	}
 
 	/**
 	 * Get proc address of InstantiateModule
 	 */
-	std::string FuncName = GInstantiateModuleFuncName;
-	FuncName += "_";
-	FuncName += InName;
-	PFN_InstantiateModuleFunc InstantiateFunc = (PFN_InstantiateModuleFunc) dlsym(Handle,
-		FuncName.c_str());
-	Module = InstantiateFunc();
-	if (!Module)
+	std::string func_name = instantiate_module_func_name;
+	func_name += "_";
+	func_name += name;
+	PFN_InstantiateModuleFunc func = (PFN_InstantiateModuleFunc) dlsym(handle,
+		func_name.c_str());
+	module = func();
+	if (!module)
 	{
-		ZE::Logger::Verbose("Failed to instantiate module {}", InName);
+		ze::logger::verbose("Failed to instantiate module {}", name);
 		return nullptr;
 	}
 
-	Module->Handle = Handle;
+	module->handle = handle;
 #endif /** ZE_PLATFORM(WINDOWS) */
 
 #else /** ZE_MONOLITHIC */
 	CModule* Module = nullptr;
 	auto InstantiateFunc = CModule::InstantiateModuleFuncs[InName];
 	if(!InstantiateFunc)
-		ZE::Logger::Fatal("Module {} isn't a valid Module ! (missing or incorrect DEFINE_MODULE)", InName);
+		ze::logger::fatal("Module {} isn't a valid Module ! (missing or incorrect DEFINE_MODULE)", InName);
 
 	Module = InstantiateFunc();
 	if (!Module)
@@ -153,50 +152,48 @@ CModule* LoadModule(const std::string_view& InName)
 	Module->Handle = nullptr;
 #endif /** ZE_MONOLITHIC */
 
-	Modules.emplace_back(Module);
+	modules.emplace_back(module);
 	
-	ZE::Logger::Verbose("Loaded module {}", InName);
+	ze::logger::verbose("Loaded module {}", name);
 
-	OnModuleLoaded.Broadcast(InName.data());
+	on_module_loaded.broadcast(name.data());
 
-	return Module;
+	return module;
 }
 
-void UnloadModule(const std::string_view& InName)
+void unload_module(const std::string_view& name)
 {
-	size_t Idx = 0;
-	for (auto& Module : Modules)
+	size_t idx = 0;
+	for (auto& module : modules)
 	{
-		if (Module->GetName() == InName)
+		if (module->get_name() == name)
 		{
-			void* Handle = Module->GetHandle();
-			Modules.erase(Modules.begin() + Idx);
-#ifndef ZE_MONOLITHIC
-			FreeModuleHandle(Handle);
-#else
-			UNUSED_VARIABLE(Handle);
+			modules.erase(modules.begin() + idx);
+#if !ZE_MONOLITHIC
+			void* handle = module->get_handle();
+			free_module_handle(handle);
 #endif
 			break;
 		}
 
-		Idx++;
+		idx++;
 	}
 }
 
-void UnloadModules()
+void unload_modules()
 {
-	for (size_t i = Modules.size() - 1; i > 0; --i)
+	for (size_t i = modules.size() - 1; i > 0; --i)
 	{
-		CModule* Module = Modules[i].get();
-		UnloadModule(Module->GetName());
+		Module* module = modules[i].get();
+		unload_module(module->get_name());
 	}
 
-	Modules.clear();
+	modules.clear();
 }
 
-OnModuleLoadedDelegate& GetOnModuleLoadedDelegate()
+OnModuleLoadedDelegate& get_on_module_loaded_delegate()
 {
-	return OnModuleLoaded;
+	return on_module_loaded;
 }
 
 }

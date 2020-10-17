@@ -5,18 +5,18 @@
 
 union SDL_Event;
 
-namespace ZE::Input
+namespace ze::input
 {
 
 /**
  * Clear the input system state
  */
-ENGINE_API void Clear();
+ENGINE_API void clear();
 
-ENGINE_API void OnKeyPressed(const SDL_Event& InEvent);
-ENGINE_API void OnKeyReleased(const SDL_Event& InEvent);
-ENGINE_API bool IsKeyPressed(const SDL_Scancode& InKey);
-ENGINE_API bool IsKeyReleased(const SDL_Scancode& InKey);
-ENGINE_API bool IsKeyHeld(const SDL_Scancode& InKey);
+ENGINE_API void on_key_pressed(const SDL_Event& event);
+ENGINE_API void on_key_released(const SDL_Event& event);
+ENGINE_API bool is_key_pressed(const SDL_Scancode& key);
+ENGINE_API bool is_key_released(const SDL_Scancode& key);
+ENGINE_API bool is_key_held(const SDL_Scancode& key);
 
 }

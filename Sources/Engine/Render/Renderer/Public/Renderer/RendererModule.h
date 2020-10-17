@@ -5,24 +5,24 @@
 #include "Renderer/WorldView.h"
 #include "Renderer/RendererTransientData.h"
 
-namespace ZE::UI { class CImGuiRender; }
-namespace ZE::JobSystem { struct SJob; }
+namespace ze::ui { class CImGuiRender; }
+namespace ze::jobsystem { struct Job; }
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 	
 class CWorldRenderer;
 
 struct SQuadVertex
 {
-	Math::SVector2f Position;
-	Math::SVector2f TexCoord;
+	maths::Vector2f Position;
+	maths::Vector2f TexCoord;
 
-	SQuadVertex(const Math::SVector2f& InPosition,
-		const Math::SVector2f& InTexCoord) : Position(InPosition), TexCoord(InTexCoord) {}
+	SQuadVertex(const maths::Vector2f& InPosition,
+		const maths::Vector2f& InTexCoord) : Position(InPosition), TexCoord(InTexCoord) {}
 };
 
-class CRendererModule : public ZE::Module::CModule
+class CRendererModule : public ze::module::Module
 {
 public:
 	RENDERER_API CRendererModule();
@@ -51,7 +51,7 @@ public:
 	RENDERER_API static inline CRSBufferPtr QuadVBuffer;
 	RENDERER_API static inline CRSBufferPtr QuadIBuffer;
 
-	RENDERER_API UI::CImGuiRender* GetImGuiRenderer() { return ImGuiRenderer.get(); }
+	RENDERER_API ui::CImGuiRender* GetImGuiRenderer() { return ImGuiRenderer.get(); }
 private:
 	void BeginDrawView(const SWorldView& InView);
 private:
@@ -59,11 +59,11 @@ private:
 	std::vector<SWorldView> Views;
 
 	/** Rendering jobs to wait before flushing views */
-	std::vector<const ZE::JobSystem::SJob*> RenderingJobs;
+	std::vector<const ze::jobsystem::Job*> RenderingJobs;
 
 	TransientPerFrameDataMap TransientFrameDataMap;
 
-	std::unique_ptr<UI::CImGuiRender> ImGuiRenderer;
+	std::unique_ptr<ui::CImGuiRender> ImGuiRenderer;
 	std::vector<std::unique_ptr<CWorldRenderer>> WorldRenderers;
 };
 

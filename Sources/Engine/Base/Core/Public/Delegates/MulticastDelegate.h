@@ -3,7 +3,7 @@
 #include <vector>
 #include <functional>
 
-namespace ZE
+namespace ze
 {
 
 using DelegateHandle = size_t;
@@ -12,43 +12,42 @@ using DelegateHandle = size_t;
  * Simple multicast delegate
  */
 template<typename Ret, typename... Args>
-class TMulticastDelegate
+class MulticastDelegate
 {
-	using TSignature = Ret(Args...);
+	using Signature = Ret(Args...);
 
 public:
 	/**
 	 * Bind a function to delegate
 	 */
-	DelegateHandle Bind(const std::function<TSignature>& InFunction)
+	DelegateHandle bind(const std::function<Signature>& func)
 	{
-		Functions.push_back(InFunction);
-		return Functions.size() - 1;
+		functions.push_back(func);
+		return functions.size() - 1;
 	}
 
 	/**
 	 * Call all functions
 	 */
-	void Broadcast(Args... InArgs)
+	void broadcast(Args... args)
 	{
-		for (const auto& Function : Functions)
-			Function(std::forward<Args>(InArgs)...);
+		for (const auto& function : functions)
+			function(std::forward<Args>(args)...);
 	}
 
 	/**
 	 * Remove the function from the delegate
 	 */
-	void Remove(const DelegateHandle& InFunction)
+	void remove(const DelegateHandle& handle)
 	{
-		verify(InFunction < Functions.size());
-
-		Functions.erase(Functions.begin() + InFunction);
+		ZE_CHECK(handle < functions.size());
+		functions.erase(functions.begin() + handle);
 	}
 private:
-	std::vector<std::function<TSignature>> Functions;
+	std::vector<std::function<Signature>> functions;
 };
 
 template<typename... Args>
-using TMulticastDelegateNoRet = TMulticastDelegate<void, Args...>;
+using MulticastDelegateNoRet = MulticastDelegate<void, Args...>;
 
 } /* namespace ZE */

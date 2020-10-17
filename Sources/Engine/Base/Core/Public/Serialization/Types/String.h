@@ -3,25 +3,25 @@
 #include "Serialization/Archive.h"
 #include <string>
 
-namespace ZE::Serialization
+namespace ze::serialization
 {
 
 template<typename Archive, size_t N>
-ZE_FORCEINLINE void Serialize(Archive& InArchive, char (&InChar)[N])
+ZE_FORCEINLINE void serialize(Archive& archive, char (&char_arr)[N])
 {
-	InArchive <=> MakeBinaryData(InChar, sizeof(char) * N);
+	archive <=> make_binary_data(char_arr, sizeof(char) * N);
 }
 
 template<typename Archive>
-ZE_FORCEINLINE void Serialize(Archive& InArchive, std::string& InString)
+ZE_FORCEINLINE void serialize(Archive& archive, std::string& string)
 {
-	std::string::size_type Size = InString.size();
+	std::string::size_type size = string.size();
 	
-	InArchive <=> MakeSize(Size);
-	if constexpr(TIsInputArchive<Archive>)
-		InString.resize(Size);
+	archive <=> make_size(size);
+	if constexpr(IsInputArchive<Archive>)
+		string.resize(size);
 
-	InArchive <=> MakeBinaryData(InString.data(), Size);
+	archive <=> make_binary_data(string.data(), size);
 }
 
 }

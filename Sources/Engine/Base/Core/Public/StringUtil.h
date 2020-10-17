@@ -5,14 +5,14 @@
 #include <sstream>
 #include <vector>
 
-namespace ZE::StringUtil
+namespace ze::stringutil
 {
 
 
 /**
  * Split a string using the following delimiter
  */
-CORE_API std::vector<std::string> Split(const std::string& InString, 
-	const char& InDelimiter);
+CORE_API std::vector<std::string> split(const std::string& string, 
+	const char& delimiter);
 
 }

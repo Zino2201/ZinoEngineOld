@@ -4,7 +4,7 @@
 #include "Render/RenderSystem/RenderSystemResources.h"
 #include <robin_hood.h>
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class CRenderableComponentProxy;
@@ -32,7 +32,7 @@ using TransientPerFrameDataMap = robin_hood::unordered_map<const CRenderableComp
 struct STransientProxyDataPerView
 {
 	STransientProxyDataPerFrame& PerFrameData;
-	Math::SMatrix4 World;
+	maths::Matrix4 World;
 
 	STransientProxyDataPerView(STransientProxyDataPerFrame& InPerFrameData) 
 		: PerFrameData(InPerFrameData) {}

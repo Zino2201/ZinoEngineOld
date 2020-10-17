@@ -1,7 +1,7 @@
 #include "EntityList.h"
 #include "ImGui/ImGui.h"
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 CEntityList::CEntityList(CMapEditor& InMapEditor) : MapEditor(InMapEditor) {}

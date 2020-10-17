@@ -63,7 +63,7 @@ public:
 	/** States commands */
     void BindGraphicsPipeline(const SRSGraphicsPipeline& InGraphicsPipeline) override;
     void SetViewports(const std::vector<SViewport>& InViewports) override;
-    void SetScissors(const std::vector<SRect2D>& InScissors) override;
+    void SetScissors(const std::vector<maths::Rect2D>& InScissors) override;
 
     /** Resource bindings */
     void BindVertexBuffers(const std::vector<CRSBuffer*> InVertexBuffers) override;

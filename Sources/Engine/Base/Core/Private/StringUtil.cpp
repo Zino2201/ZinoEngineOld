@@ -1,25 +1,23 @@
 #include "StringUtil.h"
 
-namespace ZE::StringUtil
+namespace ze::stringutil
 {
 
-std::vector<std::string> Split(const std::string& InString, 
-	const char& InDelimiter)
+std::vector<std::string> split(const std::string& string, 
+	const char& delimiter)
 {
-	std::vector<std::string> Tokens;
-	Tokens.reserve(5);
+	std::vector<std::string> tokens;
+	tokens.reserve(5);
 
-	std::stringstream Stream(InString);
-	std::string Token;
-	while (std::getline(Stream, Token, InDelimiter)) 
+	std::stringstream stream(string);
+	std::string token;
+	while (std::getline(stream, token, delimiter)) 
 	{
-		/** Remove tabs */
-		Token.erase(std::remove(Token.begin(), Token.end(), '\t'), Token.end());
-		if(!Token.empty())
-			Tokens.push_back(std::move(Token));
+		if(!token.empty())
+			tokens.push_back(std::move(token));
 	}
 
-	return Tokens;
+	return tokens;
 }
 
 }

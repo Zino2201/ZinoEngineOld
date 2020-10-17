@@ -3,7 +3,7 @@
 #include "EngineCore.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
 
-namespace ZE
+namespace ze
 {
 
 /**

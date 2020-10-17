@@ -7,19 +7,19 @@
 struct ImGuiInputTextCallbackData;
 struct ImVec4;
 
-namespace ZE
+namespace ze
 {
 
-class ENGINE_API CConsoleSink : public Logger::CSink
+class ENGINE_API ConsoleSink : public logger::Sink
 {
 public:
-	CConsoleSink();
+	ConsoleSink();
 
-	void Log(const Logger::SMessage& InMessage) override;
+	void log(const logger::Message& InMessage) override;
 
-	ZE_FORCEINLINE const auto& GetMessages() const { return Messages; }
+	ZE_FORCEINLINE const auto& get_messages() const { return messages; }
 private:
-	std::vector<Logger::SMessage> Messages;
+	std::vector<logger::Message> messages;
 };
 
 /**
@@ -33,11 +33,11 @@ public:
 	void Draw();
 private:
 	int OnTextEdited(ImGuiInputTextCallbackData* InData);
-	ImVec4 ToColor(const Logger::ESeverityFlagBits& InSeverity) const;
+	ImVec4 ToColor(const logger::SeverityFlagBits& InSeverity) const;
 private:
 	std::array<char, 32> Input;
 	size_t CurrentConsoleSize;
-	CConsoleSink* Sink;
+	ConsoleSink* Sink;
 };
 
 }

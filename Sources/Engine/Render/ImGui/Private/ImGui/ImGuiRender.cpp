@@ -8,7 +8,7 @@
 #include "Render/Shader/BasicShader.h"
 #include "Module/ModuleManager.h"
 
-namespace ZE::UI
+namespace ze::ui
 {
 
 class CImGuiVS : public CBasicShader
@@ -16,7 +16,7 @@ class CImGuiVS : public CBasicShader
 	DECLARE_SHADER(CImGuiVS, CBasicShader)
 
 public:
-	CImGuiVS(const CShaderType* InType, const SShaderCompilerOutput& InOutput) 
+	CImGuiVS(const CShaderType* InType, const ShaderCompilerOutput& InOutput) 
 		: CBasicShader(InType, InOutput) {}
 };
 
@@ -25,20 +25,20 @@ class CImGuiFS : public CBasicShader
 	DECLARE_SHADER(CImGuiFS, CBasicShader)
 
 public:
-	CImGuiFS(const CShaderType* InType, const SShaderCompilerOutput& InOutput) 
+	CImGuiFS(const CShaderType* InType, const ShaderCompilerOutput& InOutput) 
 		: CBasicShader(InType, InOutput) {}
 };
 
 IMPLEMENT_SHADER(CImGuiVS, "ImGuiVS", 
-	"UI/ImGuiVS.hlsl", "Main", EShaderStage::Vertex);
+	"UI/ImGuiVS.hlsl", "Main", ShaderStage::Vertex);
 
 IMPLEMENT_SHADER(CImGuiFS, "ImGuiFS",
-	"UI/ImGuiFS.hlsl", "Main", EShaderStage::Fragment);
+	"UI/ImGuiFS.hlsl", "Main", ShaderStage::Fragment);
 
 struct SGlobalData
 {
-	Math::SVector2f Scale;
-	Math::SVector2f Translate;
+	maths::Vector2f Scale;
+	maths::Vector2f Translate;
 };
 
 CImGuiRender::CImGuiRender()
@@ -67,7 +67,7 @@ CImGuiRender::CImGuiRender()
 		ESampleCount::Sample1});
 	if(!Font)
 	{
-		ZE::Logger::Error("Failed to create ImGui font, will not render");
+		ze::logger::error("Failed to create ImGui font, will not render");
 		return;
 	}
 
@@ -84,7 +84,7 @@ CImGuiRender::CImGuiRender()
 		sizeof(SGlobalData) });
 	if(!GlobalData)
 	{
-		ZE::Logger::Error("Failed to create ImGui ubo, will not render");
+		ze::logger::error("Failed to create ImGui ubo, will not render");
 		return;
 	}
 	GlobalData->SetName("ImGuiRender Global Data UBO");
@@ -93,16 +93,16 @@ CImGuiRender::CImGuiRender()
 	Sampler = GRenderSystem->CreateSampler(SRSSamplerCreateInfo());
 	if (!Sampler)
 	{
-		ZE::Logger::Error("Failed to create ImGui sampler, will not render");
+		ze::logger::error("Failed to create ImGui sampler, will not render");
 		return;
 	}
 
 	/**
 	 * Pipeline configuration
 	 */
-	Pipeline.ShaderStages.emplace_back(EShaderStage::Vertex,
+	Pipeline.ShaderStages.emplace_back(ShaderStage::Vertex,
 		CBasicShaderManager::Get().GetShader("ImGuiVS")->GetShader(), "Main");
-	Pipeline.ShaderStages.emplace_back(EShaderStage::Fragment,
+	Pipeline.ShaderStages.emplace_back(ShaderStage::Fragment,
 		CBasicShaderManager::Get().GetShader("ImGuiFS")->GetShader(), "Main");
 	Pipeline.AttributeDescriptions = 
 	{
@@ -183,7 +183,7 @@ void CImGuiRender::Update()
 			VertexSize });
 		if (!VertexBuffer)
 		{
-			ZE::Logger::Error("Failed to create ImGui vertex buffer");
+			ze::logger::error("Failed to create ImGui vertex buffer");
 			return;
 		}
 
@@ -202,7 +202,7 @@ void CImGuiRender::Update()
 			IndexSize });
 		if (!IndexBuffer)
 		{
-			ZE::Logger::Error("Failed to create ImGui index buffer");
+			ze::logger::error("Failed to create ImGui index buffer");
 			return;
 		}
 
@@ -238,8 +238,8 @@ void CImGuiRender::Draw(IRenderSystemContext* InContext)
 
 	/** Update UBO */
 	SGlobalData GD;
-	GD.Scale = Math::SVector2f(2.0f / IO.DisplaySize.x, 2.0f / IO.DisplaySize.y);
-	GD.Translate = Math::SVector2f(-1.0f);
+	GD.Scale = maths::Vector2f(2.0f / IO.DisplaySize.x, 2.0f / IO.DisplaySize.y);
+	GD.Translate = maths::Vector2f(-1.0f);
 	memcpy(GlobalData->GetMappedData(), &GD, sizeof(GD));
 
 	/** Render */

@@ -7,23 +7,23 @@
 #include <ctime>
 #include <iomanip>
 
-namespace ZE
+namespace ze
 {
 
 /** Console sink */
 
-CConsoleSink::CConsoleSink() : CSink("ConsoleWidget") {}	
+ConsoleSink::ConsoleSink() : Sink("ConsoleWidget") {}	
 	
-void CConsoleSink::Log(const Logger::SMessage& InMessage)
+void ConsoleSink::log(const logger::Message& InMessage)
 {
-	Messages.emplace_back(InMessage);
+	messages.emplace_back(InMessage);
 }
 
 CConsoleWidget::CConsoleWidget() : CurrentConsoleSize(0), Sink(nullptr)
 {
-	std::unique_ptr<CConsoleSink> ConSink = std::make_unique<CConsoleSink>();
+	std::unique_ptr<ConsoleSink> ConSink = std::make_unique<ConsoleSink>();
 	Sink = ConSink.get();
-	ZE::Logger::AddSink(std::move(ConSink));
+	ze::logger::add_sink(std::move(ConSink));
 
 	memset(Input.data(), 0, Input.size());
 }
@@ -59,28 +59,28 @@ void CConsoleWidget::Draw()
 	const float FooterHeight =
 		ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
 
-	using namespace Logger;
+	using namespace logger;
 
 	/** Filters */
-	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ESeverityFlagBits::Verbose));
+	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(SeverityFlagBits::Verbose));
 	ImGui::Button("VERBOSE");
 	ImGui::PopStyleColor();
 
 	ImGui::SameLine();
 
-	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ESeverityFlagBits::Info));
+	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(SeverityFlagBits::Info));
 	ImGui::Button("INFO");
 	ImGui::PopStyleColor();
 
 	ImGui::SameLine();
 
-	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ESeverityFlagBits::Warn));
+	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(SeverityFlagBits::Warn));
 	ImGui::Button("WARN");
 	ImGui::PopStyleColor();
 
 	ImGui::SameLine();
 
-	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(ESeverityFlagBits::Error));
+	ImGui::PushStyleColor(ImGuiCol_Text, ToColor(SeverityFlagBits::Error));
 	ImGui::Button("ERROR");
 	ImGui::PopStyleColor();
 
@@ -90,25 +90,25 @@ void CConsoleWidget::Draw()
 	if(ImGui::BeginChild("ScrollingRegion", 
 		ImVec2(0, -FooterHeight), true, ImGuiWindowFlags_HorizontalScrollbar))
 	{
-		const auto& Messages = Sink->GetMessages();
+		const auto& Messages = Sink->get_messages();
 		for (const auto& Msg : Messages)
 		{
 			{
-				UI::SImGuiAutoStyleColor TextCol(ImGuiCol_Text, ToColor(Msg.Severity));
-				ImGui::TextWrapped("%s", Msg.Message.c_str());
+				ui::SImGuiAutoStyleColor TextCol(ImGuiCol_Text, ToColor(Msg.severity));
+				ImGui::TextWrapped("%s", Msg.message.c_str());
 			}
 
 			if (ImGui::IsItemHovered())
 			{
 				// TODO: Optimize ?
-				std::time_t Time = std::chrono::system_clock::to_time_t(Msg.Time);
+				std::time_t Time = std::chrono::system_clock::to_time_t(Msg.time);
 				std::tm* LocalTime = localtime(&Time);
 
 				std::stringstream TimeStr;
 				TimeStr << std::put_time(LocalTime, "%H:%M:%S");
 
 				ImGui::SetTooltip("%s - %s", TimeStr.str().c_str(), 
-					ZE::Threading::GetThreadName(Msg.ThreadId).data());
+					ze::threading::get_thread_name(Msg.thread_id).data());
 			}
 		}
 
@@ -142,7 +142,7 @@ void CConsoleWidget::Draw()
 				else
 					Parameters.emplace_back(InputStr[1]);
 			}
-			ZE::Logger::Info("> {}", Input.data());
+			ze::logger::info("> {}", Input.data());
 			CConsole::Get().Execute(InputStr[0], Parameters);
 			memset(Input.data(), 0, Input.size());
 		}
@@ -166,20 +166,20 @@ int CConsoleWidget::OnTextEdited(ImGuiInputTextCallbackData* InData)
 	return 0;
 }
 
-ImVec4 CConsoleWidget::ToColor(const Logger::ESeverityFlagBits& InSeverity) const
+ImVec4 CConsoleWidget::ToColor(const logger::SeverityFlagBits& InSeverity) const
 {
 	switch (InSeverity)
 	{
-	case Logger::ESeverityFlagBits::Verbose:
+	case logger::SeverityFlagBits::Verbose:
 		return ImVec4(0.22f, 0.58f, 0.62f, 1);
 	default:
-	case Logger::ESeverityFlagBits::Info:
+	case logger::SeverityFlagBits::Info:
 		return ImVec4(1, 1, 1, 1);
-	case Logger::ESeverityFlagBits::Warn:
+	case logger::SeverityFlagBits::Warn:
 		return ImVec4(0.97f, 0.94f, 0.47f, 1);
-	case Logger::ESeverityFlagBits::Error:
+	case logger::SeverityFlagBits::Error:
 		return ImVec4(0.90f, 0.28f, 0.24f, 1);
-	case Logger::ESeverityFlagBits::Fatal:
+	case logger::SeverityFlagBits::Fatal:
 		return ImVec4(0.9f, 0, 0, 1);
 	}
 }

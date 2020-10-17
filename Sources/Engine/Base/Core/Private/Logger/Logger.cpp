@@ -14,82 +14,82 @@
 #endif
 #include "App.h"
 
-namespace ZE::Logger
+namespace ze::logger
 {
 
-std::mutex LoggerMutex;
-std::vector<std::unique_ptr<CSink>> Sinks;
+std::mutex logger_mutex;
+std::vector<std::unique_ptr<Sink>> sinks;
 
 /**
  * Display a message box for the specified message
  */
-void MsgBox(const SMessage& InMessage)
+void msg_box(const Message& message)
 {
-#ifdef _WIN32
+#if ZE_PLATFORM(WINDOWS)
 	UINT Type = MB_OK;
 
-	switch(InMessage.Severity)
+	switch(message.severity)
 	{
 	default:
 		Type |= MB_ICONINFORMATION;
 		break;
-	case ESeverityFlagBits::Warn:
+	case SeverityFlagBits::Warn:
 		Type |= MB_ICONWARNING;
 		break;
-	case ESeverityFlagBits::Error:
-	case ESeverityFlagBits::Fatal:
+	case SeverityFlagBits::Error:
+	case SeverityFlagBits::Fatal:
 		Type |= MB_ICONERROR;
 		break;
 	}
 
-	MessageBoxA(nullptr, InMessage.Message.c_str(), 
-		"ZINOENGINE", Type);
+	MessageBoxA(nullptr, message.message.c_str(), 
+		"ZinoEngine Fatal Error", Type);
 #endif
 }
 
-void Log(ESeverityFlagBits InSeverity, const std::string& InMessage)
+void log(SeverityFlagBits severity, const std::string& str)
 {
-	std::lock_guard<std::mutex> Guard(LoggerMutex);
+	std::lock_guard<std::mutex> guard(logger_mutex);
 
-	SMessage Message(
+	Message message(
 		std::chrono::system_clock::now(),
 		std::this_thread::get_id(),
-		InSeverity,
-		std::move(InMessage));
+		severity,
+		std::move(str));
 
 	/**
 	 * Call sinks
 	 */
-	for(const auto& Sink : Sinks)
+	for(const auto& sink : sinks)
 	{
-		if(Sink->GetSeverityFlags() & InSeverity)
-			Sink->Log(Message);
+		if(sink->get_severity_flags() & severity)
+			sink->log(message);
 	}
 
-	if(InSeverity == ESeverityFlagBits::Fatal)
+	if(severity == SeverityFlagBits::Fatal)
 	{
-		MsgBox(Message);
+		msg_box(message);
 #if ZE_DEBUG
 		ZE_DEBUGBREAK();
 #endif
-		App::Exit(-1);
+		app::exit(-1);
 	}
 }
 
 /**
  * Sink manipulation
  */
-void AddSink(std::unique_ptr<CSink>&& InSink)
+void add_sink(std::unique_ptr<Sink>&& sink)
 {
 	/**
 	 * Scope so that we can print a verbose message without making a infinite mutex loop
 	 */
 	{
-		std::lock_guard<std::mutex> Guard(LoggerMutex);
-		Sinks.push_back(std::move(InSink));
+		std::lock_guard<std::mutex> guard(logger_mutex);
+		sinks.push_back(std::move(sink));
 	}
 
-	ZE::Logger::Verbose("Added sink {}", Sinks.back()->GetName());
+	verbose("Added sink {}", sinks.back()->get_name());
 }
 
 }

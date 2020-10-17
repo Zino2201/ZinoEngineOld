@@ -3,7 +3,7 @@
 #include "Editor/Assets/AssetFactory.h"
 #include "StbTextureFactory.gen.h"
 
-namespace ZE::Editor
+namespace ze::editor
 {
 
 /**
@@ -17,7 +17,7 @@ class CStbTextureFactory : public CAssetFactory
 public:
 	CStbTextureFactory();
 
-	TOwnerPtr<CAsset> CreateFromStream(std::istream& InStream) override;
+	OwnerPtr<Asset> CreateFromStream(std::istream& InStream) override;
 };
 
 }

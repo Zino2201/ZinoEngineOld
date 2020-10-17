@@ -2,9 +2,9 @@
 
 #include "MathCore.h"
 
-namespace ZE::Math
+namespace ze::maths
 {
 
-using SMatrix4 = glm::mat4;
+using Matrix4 = glm::mat4;
 
 }

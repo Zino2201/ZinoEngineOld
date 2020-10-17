@@ -22,7 +22,7 @@ public:
 	/**
 	 * Register a type (will take ownership of the type)
 	 */
-	const Type* register_type(TOwnerPtr<Type> in_type);
+	const Type* register_type(OwnerPtr<Type> in_type);
 
 	/**
 	 * Tries to get the specified type

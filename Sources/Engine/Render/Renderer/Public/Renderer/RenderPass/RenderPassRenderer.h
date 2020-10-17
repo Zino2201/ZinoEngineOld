@@ -3,10 +3,10 @@
 #include "RenderPass.h"
 #include "Renderer/MeshRendering/MeshDrawcall.h"
 
-namespace ZE { class IRenderSystemContext; }
-namespace ZE::JobSystem { struct SJob; }
+namespace ze { class IRenderSystemContext; }
+namespace ze::jobsystem { struct Job; }
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 class CWorldProxy;
@@ -40,7 +40,7 @@ private:
 	/** Final sorted drawcall list */
 	TTransientDrawcallRefList FinalDrawcalls;
 
-	const JobSystem::SJob* PrepareJob;
+	const jobsystem::Job* PrepareJob;
 };
 
 }

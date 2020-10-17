@@ -5,7 +5,7 @@
 #include "Reflection/Enum.h"
 #include "Texture.gen.h"
 
-namespace ZE
+namespace ze
 {
 
 /**

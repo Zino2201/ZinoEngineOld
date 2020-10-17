@@ -6,14 +6,14 @@
 
 union SDL_Event;
 
-namespace ZE
+namespace ze
 {
 
 /**
  * Base abstract class for ZinoEngine apps (like editor or game)
  * Manage ticking tickable objects and fps limit
  */
-class ENGINE_API CZinoEngineApp : public CApp
+class ENGINE_API CZinoEngineApp : public app::App
 {
 public:
     CZinoEngineApp(const bool& bInWaitForEvents);
@@ -21,15 +21,15 @@ public:
 
     static CZinoEngineApp* Get()
     {
-        return static_cast<CZinoEngineApp*>(CApp::GetCurrentApp());
+        return static_cast<CZinoEngineApp*>(app::App::get());
     }
 
-    void ProcessEvents() final;
+    void process_events() final;
     virtual void ProcessEvent(SDL_Event& InEvent);
 
     CTickSystem& GetTickSystem() { return TickSystem; }
 protected:
-    void Loop() final;
+    void loop() final;
     virtual void Tick(const float& InDeltaTime) = 0;
     virtual void Draw() = 0;
 protected:

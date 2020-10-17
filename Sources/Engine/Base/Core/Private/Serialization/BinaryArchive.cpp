@@ -2,17 +2,17 @@
 #include <istream>
 #include <ostream>
 
-namespace ZE::Serialization
+namespace ze::serialization
 {
 
-void CIBinaryArchive::LoadBytes(void* InData, const uint64_t& InSize)
+void BinaryInputArchive::load_bytes(void* data, const uint64_t& size)
 {
-	Stream.read(reinterpret_cast<char*>(InData), InSize);
+	stream.read(reinterpret_cast<char*>(data), size);
 }
 
-void COBinaryArchive::SaveBytes(const void* InData, const uint64_t& InSize)
+void BinaryOutputArchive::save_bytes(const void* data, const uint64_t& size)
 {
-	Stream.write(reinterpret_cast<const char*>(InData), InSize);
+	stream.write(reinterpret_cast<const char*>(data), size);
 }
 
 }

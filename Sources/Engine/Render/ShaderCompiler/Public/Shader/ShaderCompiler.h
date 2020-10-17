@@ -7,13 +7,13 @@
 #include "NonCopyable.h"
 #include <robin_hood.h>
 
-namespace ZE
+namespace ze::gfx::shaders
 {
 
 /**
  * Target formats
  */
-enum class EShaderCompilerTargetFormat
+enum class ShaderCompilerTargetFormat
 {
     SpirV,
 };
@@ -21,25 +21,25 @@ enum class EShaderCompilerTargetFormat
 /**
  * Reflection data output
  */
-struct SShaderCompilerReflectionDataOutput
+struct ShaderCompilerReflectionDataOutput
 {
-    SShaderParameterMap ParameterMap;
+    ShaderParameterMap parameter_map;
 };
 
 /**
  * Output of the shader compiler
  */
-struct SShaderCompilerOutput
+struct ShaderCompilerOutput
 {
-    std::string ErrMsg;
-    bool bSucceed;
-    std::vector<uint32_t> Bytecode;
-    SShaderCompilerReflectionDataOutput ReflectionData;
+    std::string err_msg;
+    bool success;
+    std::vector<uint32_t> bytecode;
+    ShaderCompilerReflectionDataOutput reflection_data;
 
-    SShaderCompilerOutput() : bSucceed(false), Bytecode() {}
+    ShaderCompilerOutput() : success(false) {}
 };
 
-enum class EShaderCompilerTarget
+enum class ShaderCompilerTarget
 {
     VulkanSpirV
 };
@@ -48,56 +48,34 @@ enum class EShaderCompilerTarget
  * Shader compiler interface
  * Should be implemented for each target
  */
-class SHADERCOMPILER_API IShaderCompiler
+class SHADERCOMPILER_API ShaderCompiler
 {
 public:
-    IShaderCompiler(const EShaderCompilerTarget& InTarget);
-    virtual ~IShaderCompiler() = default;
+    ShaderCompiler(const ShaderCompilerTarget& InTarget);
+    virtual ~ShaderCompiler() = default;
 
-	virtual SShaderCompilerOutput CompileShader(
-		const EShaderStage& InStage,
-		const std::string_view& InShaderFilename,
-		const std::string_view& InEntryPoint,
-		const EShaderCompilerTarget& InTargetFormat,
-		const bool& bInShouldOptimize) = 0;
+	virtual ShaderCompilerOutput compile_shader(
+		const ShaderStage& stage,
+		const std::string_view& shader_filename,
+		const std::string_view& entry_point,
+		const ShaderCompilerTarget& target_format,
+		const bool& optimize) = 0;
 protected:
-    EShaderCompilerTarget Target;
+    ShaderCompilerTarget target;
 };
 
-#define DEFINE_SHADER_COMPILER(Target, Class) static Class* ShaderCompiler_##Class = new Class(Target)
+#define ZE_DEFINE_SHADER_COMPILER(Target, Class) static Class* ShaderCompiler_##Class = new Class(Target)
 
-/**
- * Global shader compiler
+SHADERCOMPILER_API void register_shader_compiler(ShaderCompilerTarget target, OwnerPtr<ShaderCompiler> compiler);
+
+/*
+ * Compile a shader (async operation)
+ * \return Future shader compiler output
  */
-class SHADERCOMPILER_API CGlobalShaderCompiler : public CNonCopyable
-{
-public:
-    static CGlobalShaderCompiler& Get()
-    {
-        static CGlobalShaderCompiler Instance;
-        return Instance;
-    }
-
-    CGlobalShaderCompiler();
-    ~CGlobalShaderCompiler();
-
-    template<typename T>
-    void Register(EShaderCompilerTarget InTarget)
-    {
-        ShaderCompilers.insert({ InTarget, std::make_unique<T>(InTarget) });
-    }
-
-    /**
-     * Begin a shader compiling process
-     */
-    std::future<SShaderCompilerOutput> CompileShader(
-        const EShaderStage& InStage,
-        const std::string_view& InShaderFilename,
-        const std::string_view& InEntryPoint,
-        const EShaderCompilerTarget& InTargetFormat,
-        const bool& bInShouldOptimize = true);
-public:
-    robin_hood::unordered_map<EShaderCompilerTarget, std::unique_ptr<IShaderCompiler>> ShaderCompilers;
-};
+SHADERCOMPILER_API std::future<ShaderCompilerOutput> compile_shader(const ShaderStage& stage,
+    const std::string_view& shader_filename,
+    const std::string_view& entry_point,
+    const ShaderCompilerTarget& target,
+    const bool& should_optimize);
 
 }

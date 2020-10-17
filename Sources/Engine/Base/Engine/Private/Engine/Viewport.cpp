@@ -3,7 +3,7 @@
 #include "Render/RenderSystem/RenderSystemContext.h"
 #include "Render/RenderSystem/Resources/Surface.h"
 
-namespace ZE
+namespace ze
 {
 
 CViewport::CViewport(void* InWindowHandle, const uint32_t& InWidth,
@@ -14,7 +14,7 @@ CViewport::CViewport(void* InWindowHandle, const uint32_t& InWidth,
 		WindowHandle, Width,
 		Height, bInVSync});
 	if (!Surface)
-		ZE::Logger::Fatal("Failed to create viewport");
+		ze::logger::fatal("Failed to create viewport");
 }
 
 bool CViewport::Begin()
@@ -42,7 +42,7 @@ void CViewport::SetVSync(const bool& bInVSync)
 		WindowHandle, Width,
 		Height, bInVSync });
 	if (!Surface)
-		ZE::Logger::Fatal("Failed to create viewport");
+		ze::logger::fatal("Failed to create viewport");
 }
 
 } /* namespace ZE */

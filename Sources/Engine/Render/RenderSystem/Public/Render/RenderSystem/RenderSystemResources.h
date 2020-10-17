@@ -3,14 +3,13 @@
 #include "EngineCore.h"
 #include "Resources/Resource.h"
 
-namespace ZE
+namespace ze
 {
 
 /** Forward */
 class CRSSurface;
 class CRSBuffer;
 class CRSTexture;
-class CRSShader;
 class CRSSampler;
 
 struct SRSGraphicsPipeline;
@@ -19,14 +18,17 @@ struct SRSFramebuffer;
 struct SRSSamplerCreateInfo;
 struct SRSBufferCreateInfo;
 struct SRSTextureCreateInfo;
+namespace gfx::shaders {
+class CRSShader;
 struct SRSShaderCreateInfo;
+using CRSShaderPtr = boost::intrusive_ptr<CRSShader>;
+}
 struct SRSSurfaceCreateInfo;
 
 /** Intrusive ptrs */
 using CRSSurfacePtr = boost::intrusive_ptr<CRSSurface>;
 using CRSBufferPtr = boost::intrusive_ptr<CRSBuffer>;
 using CRSTexturePtr = boost::intrusive_ptr<CRSTexture>;
-using CRSShaderPtr = boost::intrusive_ptr<CRSShader>;
 using CRSSamplerPtr = boost::intrusive_ptr<CRSSampler>;
 
 /** Index format */
@@ -41,7 +43,7 @@ enum class EIndexFormat
  */
 struct SViewport
 {
-	Math::SRect2D Rect;
+	maths::Rect2D Rect;
 	float MinDepth;
 	float MaxDepth;
 };

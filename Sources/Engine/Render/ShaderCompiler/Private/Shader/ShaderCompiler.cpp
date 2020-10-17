@@ -2,67 +2,68 @@
 #include "Module/Module.h"
 #include "Threading/JobSystem/Async.h"
 
-namespace ZE
+ZE_DEFINE_MODULE(ze::module::DefaultModule, ShaderCompiler)
+
+namespace ze::gfx::shaders
 {
 
-DEFINE_MODULE(ZE::Module::CDefaultModule, ShaderCompiler)
+robin_hood::unordered_map<ShaderCompilerTarget, std::unique_ptr<ShaderCompiler>> shader_compilers;
 
-IShaderCompiler::IShaderCompiler(const EShaderCompilerTarget& InTarget) : Target(InTarget) 
+ShaderCompiler::ShaderCompiler(const ShaderCompilerTarget& in_target) : target(in_target) {}
+
+void register_shader_compiler(ShaderCompilerTarget target, OwnerPtr<ShaderCompiler> compiler)
 {
-	
+	ZE_ASSERT(shader_compilers.find(target) == shader_compilers.end());
+	shader_compilers.insert({ target, std::unique_ptr<ShaderCompiler>(compiler) });
 }
 
-CGlobalShaderCompiler::CGlobalShaderCompiler() = default;
-CGlobalShaderCompiler::~CGlobalShaderCompiler() = default;
-
-std::future<SShaderCompilerOutput> CGlobalShaderCompiler::CompileShader(
-	const EShaderStage& InStage,
-	const std::string_view& InShaderFilename, 
-	const std::string_view& InEntryPoint,
-	const EShaderCompilerTarget& InTargetFormat,
-	const bool& bInShouldOptimize)
+std::future<ShaderCompilerOutput> compile_shader(const ShaderStage& stage,
+    const std::string_view& shader_filename,
+    const std::string_view& entry_point,
+    const ShaderCompilerTarget& target,
+    const bool& optimize)
 {
-	auto Result = ShaderCompilers.find(InTargetFormat);
+	auto it = shader_compilers.find(target);
 
-	if(Result != ShaderCompilers.end())
+	if(it != shader_compilers.end())
 	{
-		ZE::Logger::Info("Compiling shader ({}) {}",
-			InStage == EShaderStage::Vertex ? "Vertex" : "Fragment",
-			InShaderFilename.data());
+		ze::logger::info("Compiling shader ({}) {}",
+			stage == ShaderStage::Vertex ? "Vertex" : "Fragment",
+			shader_filename);
 
 		// TODO: SET DEFINES
 
-		std::string Path;
-		Path += "Shaders/";
-		Path += InShaderFilename;
+		std::string path;
+		path += "Shaders/";
+		path += shader_filename;
 
-		return ZE::Async<SShaderCompilerOutput>(
-			[Result, InStage, Path = std::move(Path), InEntryPoint,
-				InTargetFormat, bInShouldOptimize](const ZE::JobSystem::SJob& InJob)
+		return ze::jobsystem::async<ShaderCompilerOutput>(
+			[it, stage, path = std::move(path), entry_point,
+				target, optimize](const ze::jobsystem::Job& in_job)
 			{
-				SShaderCompilerOutput Output = Result->second->CompileShader(
-					InStage,
-					Path.c_str(),
-					InEntryPoint,
-					InTargetFormat,
-					bInShouldOptimize);
+				ShaderCompilerOutput output = it->second->compile_shader(
+					stage,
+					path.c_str(),
+					entry_point,
+					target,
+					optimize);
 
-				if(Output.bSucceed)
-					ZE::Logger::Verbose("Shader {} compiled!",
-						Path.c_str());
+				if(output.success)
+					ze::logger::verbose("Shader {} compiled!",
+						path.c_str());
 				else
-					ZE::Logger::Error("Failed to compile shader {} !",
-						Path.c_str());
+					ze::logger::error("Failed to compile shader {} !",
+						path.c_str());
 
-				return Output;
+				return output;
 			});
 	}
 	else
 	{
-		ZE::Logger::Error("Failed to compile shader {}: unsupported format",
-			InShaderFilename.data());
+		ze::logger::error("Failed to compile shader {}: unsupported format",
+			shader_filename.data());
 		return {};
 	}
 }
 
-} /** namespace ZE */
+}

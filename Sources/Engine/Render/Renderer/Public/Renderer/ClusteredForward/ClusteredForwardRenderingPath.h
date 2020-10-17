@@ -5,7 +5,7 @@
 namespace ZE { class IRenderSystemContext; }
 namespace ZE::UI { class CImGuiRender; }
 
-namespace ZE::Renderer
+namespace ze::renderer
 {
 
 /**

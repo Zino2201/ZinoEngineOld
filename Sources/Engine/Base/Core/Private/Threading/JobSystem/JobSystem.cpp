@@ -3,125 +3,125 @@
 #include "Threading/JobSystem/Job.h"
 #include "Threading/Thread.h"
 #include <sstream>
-namespace ZE::JobSystem
+
+namespace ze::jobsystem
 {
 
 /** Worker list */
-std::array<CWorkerThread, 32> Workers;
-size_t WorkerCount = 0;
+std::array<WorkerThread, 32> workers;
+size_t worker_count = 0;
 
 /** Job pool (one for each worker) */
-thread_local std::array<SJob, GMaxJobCountPerFrame> JobPool;
+thread_local std::array<Job, max_job_count_per_frame> job_pool;
 
 /** Allocated jobs counter (one for each worker) */
-thread_local std::size_t AllocatedJobs = 0;
+thread_local std::size_t allocated_jobs = 0;
 
 /** This worker id */
-thread_local size_t WorkerIdx = 0;
+thread_local size_t worker_idx = 0;
 
-void InitThreadLocalIdx()
+void init_thread_local_idx()
 {
-	size_t Idx = 0;
-	for (auto& Worker : Workers)
+	size_t idx = 0;
+	for (auto& worker : workers)
 	{
-		if (Worker.GetThreadId() == std::this_thread::get_id())
+		if (worker.get_thread_id() == std::this_thread::get_id())
 		{
-			WorkerIdx = Idx;
+			worker_idx = idx;
 			break;
 		}
 
-		Idx++;
+		idx++;
 	}
 }
 
-void Initialize()
+void initialize()
 {
-	uint32_t NumCores = std::thread::hardware_concurrency();
-	uint32_t WorkerThreadCount = std::max<uint32_t>(1, NumCores);
-	WorkerCount = WorkerThreadCount;
+	uint32_t num_cores = std::thread::hardware_concurrency();
+	uint32_t worker_thread_count = std::max<uint32_t>(1, num_cores);
+	worker_count = worker_thread_count;
 	
-	ZE::Logger::Info("{} hardware cores detected, spawning {} workers", 
-		NumCores, WorkerThreadCount - 1);
+	ze::logger::info("{} hardware cores detected, spawning {} workers", 
+		num_cores, worker_thread_count - 1);
 
 	/** Add main thread */
-	InitThreadLocalIdx();
-	new (Workers.data()) CWorkerThread(EWorkerThreadType::Partial, 
+	init_thread_local_idx();
+	new (workers.data()) WorkerThread(WorkerThreadType::Partial, 
 		std::this_thread::get_id());
 	
 	/** Workers */
-	for(size_t i = 1; i < WorkerThreadCount; ++i)
+	for(size_t i = 1; i < worker_thread_count; ++i)
 	{
-		new (Workers.data() + i) CWorkerThread(EWorkerThreadType::Full, 
+		new (workers.data() + i) WorkerThread(WorkerThreadType::Full, 
 			[i]()
 			{
-				InitThreadLocalIdx();
-				auto& Worker = GetWorker();
+				init_thread_local_idx();
+				auto& worker = get_worker();
 
 				/** Set a name to this thread */
-				std::stringstream Name;
-				Name << "Worker Thread " << i;
-				ZE::Threading::SetThreadName(Name.str());
+				std::stringstream name;
+				name << "Worker Thread " << i;
+				ze::threading::set_thread_name(name.str());
 
-				while(Worker.IsActive())
+				while(worker.is_active())
 				{
-					Worker.Flush();
+					worker.flush();
 				}
 			});
 	}
 }
 
 template<typename... Args>
-const SJob& AllocateJob(Args&&... InArgs)
+const Job& allocate_job(Args&&... args)
 {
-	SJob& Job = JobPool[++AllocatedJobs & (GMaxJobCountPerFrame - 1)];
-	Job.~SJob();
-	new (&Job) SJob(std::forward<Args>(InArgs)...);
-	return Job;
+	Job& job = job_pool[++allocated_jobs & (max_job_count_per_frame - 1)];
+	job.~Job();
+	new (&job) Job(std::forward<Args>(args)...);
+	return job;
 }
 
-const SJob& CreateJob(EJobType InType, const SJob::JobFunction& InJobFunc)
+const Job& create_job(JobType type, const Job::JobFunction& job_func)
 {
-	return AllocateJob(InJobFunc, InType);
+	return allocate_job(job_func, type);
 }
 
-const SJob& CreateJob(EJobType InType, const SJob::JobFunction& InJobFunc, const SJob& InParent)
+const Job& create_job(JobType type, const Job::JobFunction& job_func, const Job& parent)
 {
-	must(InParent.UnfinishedJobs < SJob::MaxChilds)
-	InParent.UnfinishedJobs++;
-	return AllocateJob(InJobFunc, InType, &InParent);
+	ZE_ASSERT(parent.unfinished_jobs < Job::max_childs);
+	parent.unfinished_jobs++;
+	return allocate_job(job_func, type, &parent);
 }
 
 /** Getters */
-CWorkerThread& GetWorkerById(const std::thread::id& InThreadId)
+WorkerThread& get_worker_by_id(const std::thread::id& thread_id)
 {
-	for (auto& Worker : Workers)
+	for (auto& worker : workers)
 	{
-		if (Worker.GetThreadId() == InThreadId)
-			return Worker;
+		if (worker.get_thread_id() == thread_id)
+			return worker;
 	}
 
-	return Workers[0];
+	return workers[0];
 }
 
-CWorkerThread& GetWorkerByIdx(const size_t& InIdx)
+WorkerThread& get_worker_by_idx(const size_t& idx)
 {
-	return Workers[InIdx];
+	return workers[idx];
 }
 
-CWorkerThread& GetWorker()
+WorkerThread& get_worker()
 {
-	return Workers[WorkerIdx];
+	return workers[worker_idx];
 }
 
-size_t GetWorkerIdx()
+size_t get_worker_idx()
 {
-	return WorkerIdx;
+	return worker_idx;
 }
 
-size_t GetWorkerCount()
+size_t get_worker_count()
 { 
-	return WorkerCount; 
+	return worker_count; 
 }
-
 
 }
