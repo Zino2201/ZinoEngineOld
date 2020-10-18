@@ -1,6 +1,7 @@
 #pragma once
 
 #include <type_traits>
+#include <functional>
 
 namespace ze
 {
@@ -98,4 +99,16 @@ private:
 	} \
 	using FlagsType = ze::Flags<EnumType>;
 
+}
+
+namespace std
+{
+	template<typename T> 
+	struct hash<ze::Flags<T>>
+	{
+		ZE_FORCEINLINE uint64_t operator()(const ze::Flags<T>& in_flags) const
+		{
+			return std::hash<ze::Flags<T>::MaskType>()(static_cast<ze::Flags<T>::MaskType>(in_flags));
+		}
+	};
 }
