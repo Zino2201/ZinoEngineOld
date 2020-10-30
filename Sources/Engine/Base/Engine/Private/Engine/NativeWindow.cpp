@@ -5,8 +5,6 @@
 namespace ze
 {
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, RenderCore);
-
 NativeWindow::NativeWindow(const char* in_name, const uint32_t in_width, const uint32_t in_height, 
 	const int x, const int y, const NativeWindowFlags in_flags)
 	: handle(nullptr), name(in_name), width(in_width), height(in_height)

@@ -43,36 +43,3 @@
 /** Flags */
 #include <type_traits>
 #include "Flags/Flags.h"
-
-namespace ze
-{
-
-/** Format */
-enum class EFormat
-{
-	Undefined,
-	D32Sfloat,
-	D32SfloatS8Uint,
-	D24UnormS8Uint,
-	R32Uint, /** uint32_t */
-	R8G8B8A8UNorm, /** rgba 255 */
-    B8G8R8A8UNorm, /** bgra 255 */
-	R32G32Sfloat, /** vec2*/
-	R32G32B32Sfloat, /** vec3 */
-	R32G32B32A32Sfloat,	/** vec4 */
-    R32G32B32A32Uint,
-	R64Uint	/** uint64 */
-};
-
-enum class ESampleCount
-{	
-	Sample1 = 1 << 0,
-	Sample2 = 1 << 1,
-	Sample4 = 1 << 2,
-	Sample8 = 1 << 3, 
-	Sample16 = 1 << 4,
-	Sample32 = 1 << 5,
-	Sample64 = 1 << 6
-};
-
-} /* namespace ze */

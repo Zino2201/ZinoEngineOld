@@ -6,7 +6,7 @@ ze_create_module(ImGui Private/ImGui/ImGuiModule.cpp Private/ImGui/ImGuiRenderer
     ${ZE_LIBS_DIR}/imgui/imgui_draw.cpp
     ${ZE_LIBS_DIR}/imgui/imgui_widgets.cpp
     ${ZE_LIBS_DIR}/imgui/examples/imgui_impl_sdl.cpp)
-ze_add_public_modules(ImGui Core RenderCore ShaderCore ShaderCompiler GfxCore)
+ze_add_public_modules(ImGui Core ShaderCore ShaderCompiler GfxCore)
 
 target_include_directories(ImGui
     PUBLIC 

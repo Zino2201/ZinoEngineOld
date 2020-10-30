@@ -6,7 +6,7 @@ ze_create_module(Engine Private/Engine/Assets/Texture.cpp
     Private/Engine/TickSystem.cpp Private/Engine/Viewport.cpp
     Private/Engine/NativeWindow.cpp)
 
-ze_add_public_modules(Engine Core ZEFS RenderCore ShaderCore RenderSystem ShaderCompiler Reflection ImGui Asset AssetDatabase GfxCore)
+ze_add_public_modules(Engine Core ZEFS ShaderCore ShaderCompiler Reflection ImGui Asset AssetDatabase GfxCore)
 
 target_include_directories(Engine
     PUBLIC 
