@@ -22,6 +22,8 @@
 
 #if ZE_WITH_EDITOR
 #include "Editor/ZEEditor.h"
+#else
+#include "Engine/EngineGame.h"
 #endif
 
 #include "Shader/ShaderCore.h"

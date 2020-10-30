@@ -137,19 +137,19 @@ Module* load_module(const std::string_view& name)
 #endif /** ZE_PLATFORM(WINDOWS) */
 
 #else /** ZE_MONOLITHIC */
-	CModule* Module = nullptr;
-	auto InstantiateFunc = CModule::InstantiateModuleFuncs[InName];
-	if(!InstantiateFunc)
-		ze::logger::fatal("Module {} isn't a valid Module ! (missing or incorrect DEFINE_MODULE)", InName);
+	Module* module = nullptr;
+	auto instantiate_func = Module::instantiate_module_funcs[name];
+	if(!instantiate_func)
+		ze::logger::fatal("Module {} isn't a valid Module ! (missing or incorrect DEFINE_MODULE)", name);
 
-	Module = InstantiateFunc();
-	if (!Module)
+	module = instantiate_func();
+	if (!module)
 	{
-		ZE::Logger::Verbose("Failed to instantiate module {}", InName);
+		ze::logger::verbose("Failed to instantiate module {}", name);
 		return nullptr;
 	}
 
-	Module->Handle = nullptr;
+	module->handle = nullptr;
 #endif /** ZE_MONOLITHIC */
 
 	modules.emplace_back(module);

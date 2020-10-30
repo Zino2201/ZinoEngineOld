@@ -105,7 +105,7 @@ public:
 
 		std::array<ShaderConductor::Compiler::TargetDesc, 1> targets = 
 		{
-			{ ShaderConductor::ShadingLanguage::SpirV, "1_0", false }
+			{ { ShaderConductor::ShadingLanguage::SpirV, "1_0", false } }
 		};
 
 		ShaderConductor::Compiler::ResultDesc result;

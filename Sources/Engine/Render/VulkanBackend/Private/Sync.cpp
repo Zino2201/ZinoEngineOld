@@ -93,6 +93,8 @@ ResourceHandle VulkanBackend::semaphore_create()
 			static_cast<VkSemaphore>(semaphore.get_semaphore()), 0);
 		semaphores.insert({ handle, std::move(semaphore)});
 	}
+
+	return handle;
 }
 
 void VulkanBackend::semaphore_destroy(const ResourceHandle& in_handle)

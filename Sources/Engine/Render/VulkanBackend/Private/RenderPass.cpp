@@ -16,7 +16,7 @@ struct FramebufferEntry
 	uint8_t lifetime;
 	vk::UniqueFramebuffer framebuffer;
 
-	FramebufferEntry(vk::UniqueFramebuffer&& in_fb) : framebuffer(std::move(in_fb)), lifetime(0) {}
+	FramebufferEntry(vk::UniqueFramebuffer&& in_fb) : lifetime(0), framebuffer(std::move(in_fb)) {}
 };
 
 robin_hood::unordered_map<ResourceHandle, RenderPass> render_passes;

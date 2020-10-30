@@ -45,7 +45,7 @@ ze::module::Module* LoadRequiredModule(const std::string_view& InName)
 	return Ptr;
 }
 
-EngineApp::EngineApp() : should_run(false), err_code(0), now(0), last(0), focused(true)
+EngineApp::EngineApp() : should_run(false), focused(true), now(0), last(0), err_code(0)
 {
 	/** Load asset related modules */
 	LoadRequiredModule("Asset");

@@ -26,9 +26,11 @@ public:
     void set_name(const char* in_name) { name = in_name; }
     void* get_handle() const { return handle; }
 
+#if ZE_MONOLITHIC
     /** Used for monolithic builds */
     inline static robin_hood::unordered_map<std::string_view, 
         std::function<InstantiateModuleFunc>> instantiate_module_funcs;
+#endif
 public:
     void* handle;
 private:
@@ -58,7 +60,7 @@ struct MonolithicRegister
         module->set_name(#Name); \
         return module; \
     } \
-    static ze::module::MonolithicRegister module_auto_init_##Name(#Name, &InstantiateModule_##Name);
+    static ze::module::MonolithicRegister module_auto_init_##Name(#Name, &instantiate_module_##Name);
 #else
 #define ZE_DEFINE_MODULE(Class, Name) \
     extern "C" ZE_DLLEXPORT ze::module::Module* instantiate_module_##Name() \

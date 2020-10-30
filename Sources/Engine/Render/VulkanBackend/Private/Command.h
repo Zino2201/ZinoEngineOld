@@ -34,6 +34,7 @@ public:
 	static CommandList* get(const ResourceHandle& in_handle);
 
 	ZE_FORCEINLINE bool is_valid() const { return !!buffer; }
+	ZE_FORCEINLINE vk::CommandPool& get_pool() { return pool.get_pool(); }
 	ZE_FORCEINLINE vk::CommandBuffer& get_buffer() { return buffer; }
 private:
 	Device& device;

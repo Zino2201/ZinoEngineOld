@@ -13,7 +13,7 @@ std::condition_variable& WorkerThread::get_sleep_condition_var() { return sleep_
 
 WorkerThread::WorkerThread() : type(WorkerThreadType::Full), active(false) {}
 WorkerThread::WorkerThread(WorkerThreadType type,
-	const std::thread::id& in_thread_id) : active(true), type(type), thread_id(in_thread_id) {}
+	const std::thread::id& in_thread_id) : type(type), active(true), thread_id(in_thread_id) {}
 
 const Job* WorkerThread::try_get_or_steal_job(const size_t& in_worker_idx)
 {
