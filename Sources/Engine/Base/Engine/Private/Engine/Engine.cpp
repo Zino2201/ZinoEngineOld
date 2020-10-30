@@ -4,7 +4,6 @@
 #include "Engine/TickSystem.h"
 #include "Profiling/Profiling.h"
 #include "Console/Console.h"
-#include "Render/RenderCore.h"
 #include <SDL.h>
 #include "Engine/InputSystem.h"
 #include "Module/Module.h"
@@ -16,7 +15,7 @@ namespace ze
 static ConVarRef<int32_t> cvar_maxfps("r_maxfps", 144,
 	"Max FPS.",
 	1,
-	GMaxFPS);
+	2048);
 
 static ConVarRef<int32_t> cvar_unfocus_fps("r_unfocusfps", 15,
 	"Max FPS when unfocused",

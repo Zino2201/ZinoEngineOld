@@ -1,5 +1,5 @@
 ze_create_module(VulkanShaderCompiler Private/VulkanShaderCompiler.cpp)
-ze_add_public_modules(VulkanShaderCompiler Core ZEFS ShaderCore VulkanRenderSystem ShaderCompiler RenderCore)
+ze_add_public_modules(VulkanShaderCompiler Core ZEFS ShaderCore ShaderCompiler)
 
 target_include_directories(VulkanShaderCompiler
     PUBLIC 

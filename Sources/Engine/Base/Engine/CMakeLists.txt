@@ -1,13 +1,12 @@
 find_package(SDL2 CONFIG REQUIRED)
 
-ze_create_module(Engine Private/Engine/Assets/Texture.cpp Private/Engine/Assets/StaticMesh.cpp
+ze_create_module(Engine Private/Engine/Assets/Texture.cpp
     Private/Engine/UI/Console.cpp
     Private/Engine/Engine.cpp Private/Engine/EngineGame.cpp Private/Engine/InputSystem.cpp
-    Private/Engine/TickSystem.cpp Private/Engine/Viewport.cpp Private/Engine/World.cpp
+    Private/Engine/TickSystem.cpp Private/Engine/Viewport.cpp
     Private/Engine/NativeWindow.cpp)
 
-ze_add_public_modules(Engine Core ZEFS RenderCore ShaderCore RenderSystem ShaderCompiler Reflection ImGui Renderer 
-    Asset AssetDatabase GfxCore)
+ze_add_public_modules(Engine Core ZEFS RenderCore ShaderCore RenderSystem ShaderCompiler Reflection ImGui Asset AssetDatabase GfxCore)
 
 target_include_directories(Engine
     PUBLIC 

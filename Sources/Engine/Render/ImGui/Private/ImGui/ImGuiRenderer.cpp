@@ -1,8 +1,8 @@
 #include "ImGui/ImGuiRenderer.h"
 #include "ImGui/ImGui.h"
 #include "Gfx/Backend.h"
-#include "Render/Shader/BasicShader.h"
 #include "Module/ModuleManager.h"
+#include "Shader/ShaderCompiler.h"
 
 namespace ze::ui::imgui
 {

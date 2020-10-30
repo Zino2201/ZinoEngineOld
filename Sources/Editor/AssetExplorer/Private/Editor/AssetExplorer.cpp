@@ -200,7 +200,7 @@ void CAssetExplorer::DrawAssetList()
 			ImGui::PushTextWrapPos(75.f);
 			ImGui::SetCursorPosX((ImGui::GetWindowSize().x -
 				ImGui::CalcTextSize(Asset.name.c_str()).x) * 0.5f);
-			ImGui::Text(Asset.name.c_str());
+			ImGui::TextUnformatted(Asset.name.c_str());
 			ImGui::PopTextWrapPos();
 		}
 		ImGui::EndChild();

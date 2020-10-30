@@ -1,4 +1,4 @@
-#include "Editor/Widgets/ConVarViewer.h"
+#include "Editor/Widgets/ConvarViewer.h"
 #include "ImGui/ImGui.h"
 #include "Console/Console.h"
 
@@ -19,7 +19,7 @@ void ConvarViewer::draw()
 			{
 				ImGui::TextUnformatted(convar.name.c_str());
 				if(ImGui::IsItemHovered())
-					ImGui::SetTooltip(convar.help.c_str());
+					ImGui::SetTooltip("%s", convar.help.c_str());
 				ImGui::SameLine();
 				if(convar.data.index() == ConVar::DataTypeFloat)
 					ImGui::SliderFloat(std::string("##" + convar.name).c_str(), &std::get<float>(convar.data),

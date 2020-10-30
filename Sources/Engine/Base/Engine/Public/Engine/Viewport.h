@@ -1,7 +1,6 @@
 #pragma once
 
 #include "EngineCore.h"
-#include "Render/RenderSystem/RenderSystemResources.h"
 #include "Gfx/Resource.h"
 
 namespace ze

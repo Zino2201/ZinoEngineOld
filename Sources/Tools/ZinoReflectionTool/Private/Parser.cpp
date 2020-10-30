@@ -83,8 +83,7 @@ CParser::CParser(CHeader* InHeader, const std::string_view& InPathHeader,
 	const bool& bInIgnorePropertiesAndFunctions)
 	: Header(InHeader), Path(InPathHeader), Filename(std::filesystem::path(InPathHeader).filename().string()), 
 	CurrentType(EType::None), CurrentAccess(EAccess::Public), 
-	NestedEncounters(0),
-	CurrentStruct(nullptr), CurrentClass(nullptr), ScopeCounter(0), 
+	CurrentStruct(nullptr), NestedEncounters(0), CurrentClass(nullptr), ScopeCounter(0), 
 	bIgnorePropertiesAndFunctions(bInIgnorePropertiesAndFunctions)
 {
 	std::vector<std::string> Lines = ReadTextFile(InPathHeader);

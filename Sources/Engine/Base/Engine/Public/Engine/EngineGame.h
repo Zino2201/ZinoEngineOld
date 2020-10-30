@@ -1,11 +1,8 @@
 #pragma once
 
 #include "Engine.h"
-#include "Render/RenderSystem/RenderSystemResources.h"
 #include <future>
 #include "Shader/ShaderCompiler.h"
-#include "Render/UniformBuffer.h"
-#include "Renderer/WorldRenderer.h"
 #include "Console/Console.h"
 
 namespace ze

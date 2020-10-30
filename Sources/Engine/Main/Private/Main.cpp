@@ -1,13 +1,9 @@
 #include "Module/ModuleManager.h"
-#include "Render/VulkanRenderSystem/VulkanRenderSystemInterface.h"
-#include "Render/RenderSystem/RenderSystem.h"
-#include "Render/RenderSystem/RenderSystemResources.h"
 #include "EngineCore.h"
 #include "Logger/Logger.h"
 #include <SDL.h>
 #include "Engine/Engine.h"
 #include "Shader/ShaderCompiler.h"
-#include "Render/Shader/BasicShader.h"
 #include "ZEFS/ZEFS.h"
 #include "ZEFS/StdFileSystem.h"
 #include "ZEFS/Paths.h"
@@ -15,7 +11,6 @@
 #include <chrono>
 #include "Threading/JobSystem/WorkerThread.h"
 #include "Console/Console.h"
-#include "Render/RenderCore.h"
 #include "Engine/TickSystem.h"
 #include "Engine/InputSystem.h"
 #include "Gfx/Vulkan/Backend.h"
@@ -213,8 +208,6 @@ void Exit()
 
 	/** Delete engine */
 	engine_app.reset();
-
-	ze::gfx::shaders::CBasicShaderManager::Get().DestroyAll();
 
 	/** Delete render system */
 	RenderBackend.reset();

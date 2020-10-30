@@ -1422,8 +1422,8 @@ private:
 		handle = ResourceHandle();
 	}
 public:
-	std::shared_ptr<uint32_t> ref_count;
 	ResourceHandle handle;
+	std::shared_ptr<uint32_t> ref_count;
 };
 
 /** Deleters */

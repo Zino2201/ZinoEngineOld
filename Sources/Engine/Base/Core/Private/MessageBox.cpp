@@ -24,6 +24,7 @@ int message_box(const std::string& in_title, const std::string& in_text, const M
 	case MessageBoxIcon::Question:
 		type |= MB_ICONQUESTION;
 		break;
+	default:
 	case MessageBoxIcon::Information:
 		type |= MB_ICONINFORMATION;
 		break;
