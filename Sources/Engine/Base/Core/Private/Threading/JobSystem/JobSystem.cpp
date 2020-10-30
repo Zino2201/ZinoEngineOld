@@ -8,7 +8,7 @@ namespace ze::jobsystem
 {
 
 /** Worker list */
-std::array<WorkerThread, 32> workers;
+std::array<WorkerThread, 128> workers;
 size_t worker_count = 0;
 
 /** Job pool (one for each worker) */
@@ -68,6 +68,14 @@ void initialize()
 					worker.flush();
 				}
 			});
+	}
+}
+
+void stop()
+{
+	for(size_t i = 1; i < worker_count; ++i)
+	{
+		workers[i].stop();
 	}
 }
 

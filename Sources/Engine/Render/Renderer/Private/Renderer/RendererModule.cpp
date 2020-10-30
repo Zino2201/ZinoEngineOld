@@ -4,7 +4,6 @@
 #include <array>
 #include "Threading/JobSystem/JobSystem.h"
 #include "Renderer/WorldRenderer.h"
-#include "ImGui/ImGuiRender.h"
 
 ZE_DEFINE_MODULE(ze::renderer::CRendererModule, Renderer);
 
@@ -58,7 +57,7 @@ CRendererModule& CRendererModule::Get()
 
 void CRendererModule::CreateImGuiRenderer()
 {
-	ImGuiRenderer = std::make_unique<ui::CImGuiRender>();
+	//ImGuiRenderer = std::make_unique<ui::CImGuiRender>();
 }
 
 void CRendererModule::EnqueueView(const SWorldView& InView)
@@ -74,7 +73,7 @@ void CRendererModule::FlushViews()
 	WorldRenderers.clear();
 	WorldRenderers.reserve(Views.size());
 
-	ImGuiRenderer->CopyDrawdata();
+	//ImGuiRenderer->CopyDrawdata();
 
 	for(const auto& View : Views)
 		BeginDrawView(View);

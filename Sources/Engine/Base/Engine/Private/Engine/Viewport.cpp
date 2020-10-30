@@ -1,48 +1,25 @@
 #include "Engine/Viewport.h"
-#include "Render/RenderSystem/RenderSystem.h"
-#include "Render/RenderSystem/RenderSystemContext.h"
-#include "Render/RenderSystem/Resources/Surface.h"
+#include "Gfx/Backend.h"
 
 namespace ze
 {
 
-CViewport::CViewport(void* InWindowHandle, const uint32_t& InWidth,
-	const uint32_t& InHeight, const bool& bInVSync) : WindowHandle(InWindowHandle), Width(InWidth),
-		Height(InHeight) 
+Viewport::Viewport(void* in_parent_window,
+	uint32_t in_width,
+	uint32_t in_height,
+	gfx::ResourceHandle in_render_target) : parent_window(in_parent_window),
+	width(in_width), height(in_height), render_target(in_render_target)
 {
-	Surface = GRenderSystem->CreateSurface({
-		WindowHandle, Width,
-		Height, bInVSync});
-	if (!Surface)
-		ze::logger::fatal("Failed to create viewport");
+	ZE_CHECKF(render_target.type == gfx::ResourceType::TextureView, "Viewport requires an render target");
 }
 
-bool CViewport::Begin()
+void Viewport::begin()
 {
-	return GRSContext->BeginSurface(Surface.get());
+	
 }
 
-void CViewport::End()
+void Viewport::end()
 {
-	/** Present viewport surface */
-	GRSContext->PresentSurface(Surface.get());
-}
-
-void CViewport::Resize(const uint32_t& InWidth, const uint32_t& InHeight)
-{
-	Width = InWidth;
-	Height = InHeight;
-
-	Surface->Resize(InWidth, InHeight);
-}
-
-void CViewport::SetVSync(const bool& bInVSync)
-{
-	Surface = GRenderSystem->CreateSurface({
-		WindowHandle, Width,
-		Height, bInVSync });
-	if (!Surface)
-		ze::logger::fatal("Failed to create viewport");
 }
 
 } /* namespace ZE */

@@ -232,13 +232,7 @@ void CVulkanRenderSystemContext::SetViewports(const std::vector<SViewport>& InVi
 
 	for (const auto& Viewport : InViewports)
 	{
-		Viewports.emplace_back(
-			Viewport.Rect.Position.x,
-			Viewport.Rect.Position.y,
-			Viewport.Rect.Size.x,
-			Viewport.Rect.Size.y,
-			Viewport.MinDepth,
-			Viewport.MaxDepth);
+	
 	}
 
 	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()
@@ -253,10 +247,7 @@ void CVulkanRenderSystemContext::SetScissors(const std::vector<maths::Rect2D>& I
 
 	for (const auto& Scissor : InScissors)
 	{
-		Scissors.emplace_back(vk::Offset2D(
-			static_cast<int32_t>(Scissor.Position.x),
-			static_cast<int32_t>(Scissor.Position.y)), vk::Extent2D(
-				static_cast<uint32_t>(Scissor.Size.x), static_cast<uint32_t>(Scissor.Size.y)));
+	
 	}
 
 	CmdBufferMgr.GetGraphicsCmdBuffer()->GetCommandBuffer()

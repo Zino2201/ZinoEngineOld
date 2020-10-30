@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include "Resources/Resource.h"
+#include "Maths/Rect.h"
 
 namespace ze
 {

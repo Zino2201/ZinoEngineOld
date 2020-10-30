@@ -2,30 +2,29 @@
 
 #include "EngineCore.h"
 #include "Render/RenderSystem/RenderSystemResources.h"
+#include "Gfx/Resource.h"
 
 namespace ze
 {
 
 /**
- * Represents a viewport
+ * A viewport on a window, draws to an render target
  */
-class ENGINE_API CViewport
+class ENGINE_API Viewport
 {
 public:
-    CViewport(void* InWindowHandle, const uint32_t& InWidth,
-        const uint32_t& InHeight, const bool& bInVSync);
+    Viewport(void* in_parent_window,
+        uint32_t in_width,
+        uint32_t in_height,
+        gfx::ResourceHandle in_render_target = gfx::ResourceHandle());
 
-    bool Begin();
-    void End();
-    void Resize(const uint32_t& InWidth, const uint32_t& InHeight);
-    void SetVSync(const bool& bInVSync);
-
-    CRSSurface* GetSurface() const { return Surface.get(); }
+    void begin();
+    void end();
 private:
-    CRSSurfacePtr Surface;
-    void* WindowHandle;
-    uint32_t Width;
-    uint32_t Height;
+    void* parent_window;
+    uint32_t width;
+    uint32_t height;
+    gfx::ResourceHandle render_target;
 };
 
 } /* namespace ZE */

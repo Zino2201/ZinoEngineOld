@@ -82,7 +82,7 @@ void CAssetExplorer::DrawAssetHierarchy()
 	ImGui::SameLine();
 	if (ImGui::Button("Import", ImVec2(75, 25)))
 	{
-		ze::editor::assetutils::ImportAssetsDialog(
+		ze::editor::assetutils::import_assets_dialog(
 			ze::filesystem::get_current_working_dir() / CurrentDirectory, CurrentDirectory);
 	}
 	

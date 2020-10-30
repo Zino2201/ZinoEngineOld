@@ -156,7 +156,7 @@ void ProcessParents(std::ofstream& InFile, const CStruct& InStruct)
 	for(const auto& Parent : InStruct.GetParents())
 	{
 		if(CTypeDatabase::Get().HasType(Parent))
-			InFile << "\n\t" << BuilderName << ".parent(\"" << Parent << "\");";
+			InFile << "\n\t" << BuilderName << ".parent(\"" << GetObjectType(InStruct.GetNamespace(), Parent) << "\");";
 	}
 }
 
@@ -181,7 +181,7 @@ void ProcessCppStruct(std::ofstream& File, const CStruct& InStruct)
 	std::string BuilderName = "Builder_" + InStruct.GetName();
 
 	File << "\t" << GStructBuilder << "<" << Type << "> " << BuilderName
-		<< "(\"" << InStruct.GetName() << "\");\n";
+		<< ";\n";
 	ProcessCtors(File, InStruct);
 	for(const auto& Property : InStruct.GetProperties())
 		ProcessProperty(File, Type, InStruct, Property);
@@ -198,7 +198,7 @@ void ProcessCppClass(std::ofstream& File, const CClass& InClass)
 	std::string BuilderName = "Builder_" + InClass.GetName();
 
 	File << "\t" << GClassBuilder << "<" << Type << "> " << BuilderName
-		<< "(\"" << InClass.GetName() << "\");\n";
+		<< ";\n";
 	ProcessCtors(File, InClass);
 	for (const auto& Property : InClass.GetProperties())
 		ProcessProperty(File, Type, InClass, Property);
@@ -212,7 +212,7 @@ void ProcessCppEnum(std::ofstream& File, const CEnum& InEnum)
 
 	std::string BuilderName = "Builder_" + InEnum.GetName();
 	File << "\t" << "builders::EnumBuilder" << "<" << Type << "> " << BuilderName
-		<< "(\"" << InEnum.GetName() << "\");";
+		<< ";";
 	for(const auto& Value : InEnum.GetValues())
 		File << "\n\t\t" << BuilderName << ".value(\"" << Value << "\", " << Type << "::" << Value << ");";
 	File << "\n";
@@ -271,7 +271,7 @@ void WriteGenCpp(const std::string_view& InOutDir, const CHeader& InHeader)
 	{
 		File << "namespace ze::reflection\n{\n";
 		File << GReflBuilderMacro << "(" << CurrentFileUniqueId << "_" << Filename.string() << ")\n{\n";
-		File << "using namespace ZE;\n";
+		File << "using namespace ze;\n";
 	//	File << "static bool bHasBeenCalled = false;\nif(bHasBeenCalled)\nreturn;\nelse\nbHasBeenCalled = true;\n";
 		for(const auto& Struct : InHeader.GetStructs())
 			ProcessCppStruct(File, Struct);

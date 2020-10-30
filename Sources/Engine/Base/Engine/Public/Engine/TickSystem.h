@@ -8,89 +8,57 @@
 /**
  * Tick system
  */
-namespace ze
+namespace ze::ticksystem
 {
 
-/**
- * Tick group
- */
-enum class ETickFlagBits
+enum class TickFlagBits : uint8_t
 {
     None = 0,
 
     /**
-    * First order called in the game loop
-    * Fixed tick group, this is called at fixed time amount and is preferred for physics
-    * interaction as a physics engine work better at a fixed timestep. 
-    * NOTE: This group is called before actual physics simulation */
+     * Called at a fixed rate (synchronized with physics, independant of fps)
+     */
     Fixed = 1 << 0,
 
-    /** Variable tick group, that is frame-rate dependent, use the provided delta time to
-    * ensure consistency over frames. Do not interact with physics using this group ! Prefer Fixed */
+    /**
+     * Called at a variable rate (dependant of fps)
+     */
     Variable = 1 << 1,
 
     /**
-     * Called before rendering and after fixed & variable tick
+     * Called after Variable & Fixed (variable rate)
      */
-    EndOfSimulation = 1 << 2,
+    Late = 1 << 2
 };
-ENABLE_FLAG_ENUMS(ETickFlagBits, ETickFlags);
+ENABLE_FLAG_ENUMS(TickFlagBits, TickFlags);
 
-/**
- * Base abstract class for objects that can be ticked
- * By default, a tickable object is set to tick at a variable rate, and ticking is enabled by default
- */
-class ENGINE_API CTickable
+/** Base abstract class for tickables objects */
+class ENGINE_API Tickable
 {
-    friend class CTickSystem;
-
 public:
-    CTickable();
-    virtual ~CTickable();
+    Tickable();
+    virtual ~Tickable();
+    
+    virtual void fixed_tick(const float in_delta_time) {}
+    virtual void variable_tick(const float in_delta_time) {}
+    virtual void late_tick(const float in_delta_time) {}
 
-    /**
-     * Variable tick
-     */
-    virtual void Tick(const float& InDeltaTime) {}
-
-    /**
-     * Used for Fixed ticking
-     */
-    virtual void FixedTick(const float& InDeltaTime) {}
-
-    /**
-     * EndOfSimulation
-     */
-    virtual void LateTick(const float& InDeltaTime) {}
-
-    const bool& CanEverTick() const { return bCanEverTick; }
-    const bool& IsTickEnabled() const { return bIsTickEnabled; }
-    const ETickFlags& GetTickFlags() const { return TickFlags; }
+    ZE_FORCEINLINE TickFlags get_tick_flags() const { return tick_flags; }
+    ZE_FORCEINLINE bool can_ever_tick() const { return can_tick; }
+    ZE_FORCEINLINE bool is_tick_enabled() const { return enable_tick; }
 protected:
-    bool bCanEverTick;
-    bool bIsTickEnabled;
-    ETickFlags TickFlags;
-private:
-    size_t TickableIdx;
+    bool can_tick;
+    bool enable_tick;
+    TickFlags tick_flags;
 };
 
 /**
- * Engine tick system
+ * Queue tickable for registration
+ * Registration happens in the next tick (so childs class from Tickable can modify values to control
+ *  if they want to tick, and what tick flags to have)
  */
-class ENGINE_API CTickSystem
-{
-public:
-    CTickSystem() = default;
-
-    void Tick(ETickFlagBits InFlag, const float& InDeltaTime);
-    void Register(CTickable& InTickable);
-    void Unregister(CTickable& InTickable);
-
-    ETickFlagBits GetCurrentTick() const { return CurrentTick; }
-private:
-    robin_hood::unordered_map<ETickFlagBits, TCoherentArray<CTickable*>> TickablesMap;
-    std::vector<CTickable*> TickablesToAdd;
-    ETickFlagBits CurrentTick;
-};
+ENGINE_API void register_tickable(Tickable* in_tickable); 
+ENGINE_API void unregister_tickable(Tickable* in_tickable);
+ENGINE_API void tick(TickFlagBits in_flag_bit, const float in_delta_time);
 
 }

@@ -43,6 +43,9 @@ public:
 	/** Flush the thread queue */
 	void flush();
 
+	/** Stop the worker */
+	void stop();
+
 	static std::condition_variable& get_sleep_condition_var();
 
 	ZE_FORCEINLINE const WorkerThreadType& get_type() const { return type; }

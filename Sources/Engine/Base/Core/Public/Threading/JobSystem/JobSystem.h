@@ -21,6 +21,9 @@ static constexpr size_t max_job_count_per_frame = 4096;
 /** Initialize the job system */
 CORE_API void initialize();
 
+/** Stop all worker threads */
+CORE_API void stop();
+
 /** Create a new job */
 [[nodiscard]] CORE_API const Job& create_job(JobType type, 
 	const Job::JobFunction& job_func);

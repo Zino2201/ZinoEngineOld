@@ -13,9 +13,10 @@
 
 /** Assertions */
 #define ZE_ASSERT(condition) if(!(condition)) { ze::logger::fatal("Assertion failed: {}", #condition); }
+#define ZE_ASSERTF(condition, msg, ...) if(!(condition)) { ze::logger::fatal("{} ({})", fmt::format(msg, __VA_ARGS__), #condition); }
 #ifdef ZE_DEBUG
 #define ZE_CHECK(condition) if(!(condition)) { ze::logger::error("Check failed: {}", #condition); ZE_DEBUGBREAK(); }
-#define ZE_CHECKF(condition, msg, ...) if(!(condition)) { ze::logger::error("Check failed: {} ({})", fmt::format(msg, __VA_ARGS__), #condition); ZE_DEBUGBREAK(); }
+#define ZE_CHECKF(condition, msg, ...) if(!(condition)) { ze::logger::error("{} (Line {})", fmt::format(msg, __VA_ARGS__), #condition); ZE_DEBUGBREAK(); }
 #else
 #define ZE_CHECK(condition)
 #define ZE_CHECKF(condition, msg, ...)

@@ -15,56 +15,58 @@
 namespace ze::editor::assetutils
 {
 	
-TOnAssetImported OnAssetImported;	
+OnAssetImported on_asset_imported;	
 
-void ImportAssetsDialog(const std::filesystem::path& InPath,
-	const std::filesystem::path& InTarget)
+void import_assets_dialog(const std::filesystem::path& in_path,
+	const std::filesystem::path& in_target)
 {
 #if ZE_PLATFORM(WINDOWS)
-	OPENFILENAME Fn;
+	OPENFILENAME fn;
 	
-	char FileBuf[256] = "";
-	char CWD[256] = "";
-	std::string Path = InPath.string();
+	char filebuf[256] = "";
+	char cwd[256] = "";
+	std::string path = in_path.string();
 
-	GetCurrentDirectoryA(256, CWD);
+	GetCurrentDirectoryA(256, cwd);
 
-	ZeroMemory(&Fn, sizeof(Fn));
-	Fn.lStructSize = sizeof(Fn);
-	Fn.hwndOwner = nullptr;
-	Fn.lpstrFile = FileBuf;
-	Fn.nMaxFile = sizeof(FileBuf);
-	Fn.lpstrFileTitle = nullptr;
-	Fn.nMaxFileTitle = 0;
-	Fn.lpstrInitialDir = Path.c_str();
-	Fn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	ZeroMemory(&fn, sizeof(fn));
+	fn.lStructSize = sizeof(fn);
+	fn.hwndOwner = nullptr;
+	fn.lpstrFile = filebuf;
+	fn.nMaxFile = sizeof(filebuf);
+	fn.lpstrFileTitle = nullptr;
+	fn.nMaxFileTitle = 0;
+	fn.lpstrInitialDir = path.c_str();
+	fn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-	if (GetOpenFileName(&Fn) == TRUE)
+	if (GetOpenFileName(&fn) == TRUE)
 	{
-		std::filesystem::path File = FileBuf;
-		SetCurrentDirectory(CWD);
-		OnAssetImported.execute(File, InTarget);
+		std::filesystem::path file = filebuf;
+		SetCurrentDirectory(cwd);
+		on_asset_imported.execute(file, in_target);
 	}
 
-	SetCurrentDirectory(CWD);
+	SetCurrentDirectory(cwd);
 #endif
 }
 
-void SaveAsset(ze::CAsset& InAsset, const std::filesystem::path& InPath,
-	const std::string& InName)
+void save_asset(ze::Asset& in_asset, const std::filesystem::path& in_path,
+	const std::string& in_name)
 {
-	std::string FinalName = InName + ".zasset";
-	ze::filesystem::FileOStream Stream(InPath / FinalName,
+	std::string filename = in_name + ".zasset";
+	ze::filesystem::FileOStream stream(in_path / filename,
 		ze::filesystem::FileWriteFlagBits::Binary |
 		ze::filesystem::FileWriteFlagBits::ReplaceExisting);
-	if (!Stream)
+	if (!stream)
 		return;
+
+	ZE_CHECK(false);
 
 	//Serialization::COBinaryArchive Archive(Stream);
 	//Archive <=> MakeAssetHeader(InAsset.GetClass()->GetName());
 	//ze::reflection::serialization::serialize(Archive, InAsset);
 }
 
-TOnAssetImported& GetOnAssetImported() { return OnAssetImported; }
+OnAssetImported& get_on_asset_imported() { return on_asset_imported; }
 
 }

@@ -36,6 +36,7 @@ struct ConVar
 	};
 
 	std::string name;
+	ConvarDataType default_value;
 	ConvarDataType data;
 
 	/** Only for numbers */
@@ -102,6 +103,12 @@ struct ConVar
 	void set_string(const std::string& in_str)
 	{
 		data = in_str;
+		on_value_changed.execute(data);
+	}
+
+	void set_data(const ConvarDataType& in_data)
+	{
+		data = in_data;
 		on_value_changed.execute(data);
 	}
 

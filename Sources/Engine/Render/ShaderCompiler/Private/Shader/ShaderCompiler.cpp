@@ -1,6 +1,7 @@
 #include "Shader/ShaderCompiler.h"
 #include "Module/Module.h"
 #include "Threading/JobSystem/Async.h"
+#include "MessageBox.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, ShaderCompiler)
 
@@ -11,10 +12,17 @@ robin_hood::unordered_map<ShaderCompilerTarget, std::unique_ptr<ShaderCompiler>>
 
 ShaderCompiler::ShaderCompiler(const ShaderCompilerTarget& in_target) : target(in_target) {}
 
-void register_shader_compiler(ShaderCompilerTarget target, OwnerPtr<ShaderCompiler> compiler)
+ShaderCompiler* register_shader_compiler(ShaderCompilerTarget target, OwnerPtr<ShaderCompiler> compiler)
 {
 	ZE_ASSERT(shader_compilers.find(target) == shader_compilers.end());
 	shader_compilers.insert({ target, std::unique_ptr<ShaderCompiler>(compiler) });
+	return compiler;
+}
+
+void unregister_shader_compiler(ShaderCompiler* compiler)
+{
+	ZE_ASSERT(compiler);
+	shader_compilers.erase(compiler->get_target());
 }
 
 std::future<ShaderCompilerOutput> compile_shader(const ShaderStage& stage,
@@ -52,8 +60,14 @@ std::future<ShaderCompilerOutput> compile_shader(const ShaderStage& stage,
 					ze::logger::verbose("Shader {} compiled!",
 						path.c_str());
 				else
+				{
 					ze::logger::error("Failed to compile shader {} !",
 						path.c_str());
+					ze::message_box("Shader compilation failed!", 
+						output.err_msg, 
+						MessageBoxButtonFlagBits::Ok,
+						MessageBoxIcon::Critical);
+				}
 
 				return output;
 			});

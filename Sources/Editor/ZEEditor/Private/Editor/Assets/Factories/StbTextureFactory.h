@@ -10,14 +10,14 @@ namespace ze::editor
  * Texture format using stb_image for importing common bitmap formats
  */
 ZCLASS()
-class CStbTextureFactory : public CAssetFactory
+class StbTextureFactory : public AssetFactory
 {
 	ZE_REFL_BODY()
 
 public:
-	CStbTextureFactory();
+	StbTextureFactory();
 
-	OwnerPtr<Asset> CreateFromStream(std::istream& InStream) override;
+	OwnerPtr<Asset> create_from_stream(std::istream& in_stream) override;
 };
 
 }

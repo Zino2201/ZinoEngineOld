@@ -213,25 +213,6 @@ void CParser::BeginStructOrClass(const EType& InNewType,
 		return;
 	}
 
-	if (InNewType == EType::Class && CurrentObjectName.rfind("C", 0) == std::string::npos)
-	{
-		if(CurrentObjectName.rfind("I", 0) == std::string::npos)
-		{
-			Fatal("%s(%d) : error: %s must begin with the prefix C or I (interfaces)",
-				Filename.c_str(),
-				InLine + 1,
-				CurrentObjectName.c_str());
-		}
-	}
-	else if (InNewType == EType::Struct && 
-		CurrentObjectName.rfind("S", 0) == std::string::npos)
-	{
-		Fatal("%s(%d) : error: %s must begin with the prefix S",
-			Filename.c_str(),
-			InLine + 1,
-			CurrentObjectName.c_str());
-	}
-
 	/**
 	 * Parse parent structures/classes
 	 */

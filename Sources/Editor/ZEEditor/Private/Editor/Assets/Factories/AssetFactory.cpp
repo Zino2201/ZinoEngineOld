@@ -6,55 +6,54 @@
 namespace ze::editor
 {
 
-robin_hood::unordered_set<const ze::reflection::Class*> AddedFactories;
-std::vector<std::unique_ptr<CAssetFactory>> Factories;
-DelegateHandle ModuleLoadedDelegate;
+robin_hood::unordered_set<const ze::reflection::Class*> added_factories;
+std::vector<std::unique_ptr<AssetFactory>> factories;
+DelegateHandle module_loaded_delegate;
 
-void ScanForFactories()
+void scan_for_factories()
 {
-	for (const auto& Class : 
-		ze::reflection::Class::get_derived_classes_from(ze::reflection::Class::get<CAssetFactory>()))
+	for (const auto& Class : ze::reflection::Class::get_derived_classes_from(ze::reflection::Class::get<AssetFactory>()))
 	{
-		if (AddedFactories.find(Class) != AddedFactories.end())
+		if (added_factories.find(Class) != added_factories.end())
 			continue;
 
-		OwnerPtr<CAssetFactory> Factory = Class->instantiate<CAssetFactory>();
-		Factories.emplace_back(Factory);
-		AddedFactories.insert(Class);
+		OwnerPtr<AssetFactory> factory = Class->instantiate<AssetFactory>();
+		factories.emplace_back(factory);
+		added_factories.insert(Class);
 	}
 }
 
-void OnModuleLoaded(const std::string_view& InName)
+void on_module_loaded(const std::string_view& InName)
 {
-	ScanForFactories();
+	scan_for_factories();
 }
 
-void InitializeAssetFactoryMgr()
+void initialize_asset_factory_mgr()
 {
-	ModuleLoadedDelegate = ze::module::get_on_module_loaded_delegate().bind(&OnModuleLoaded);
-	ScanForFactories();
+	module_loaded_delegate = ze::module::get_on_module_loaded_delegate().bind(&on_module_loaded);
+	scan_for_factories();
 }
 
-void ClearAssetFactoryMgr()
+void destroy_asset_factory_mgr()
 {
-	ze::module::get_on_module_loaded_delegate().remove(ModuleLoadedDelegate);
+	ze::module::get_on_module_loaded_delegate().remove(module_loaded_delegate);
 }
 
-CAssetFactory* GetFactoryForFormat(const std::string& InSupportedFormat)
+AssetFactory* get_factory_for_format(const std::string& in_supported_format)
 {
-	std::string SupportedFormat = InSupportedFormat;
-	std::transform(SupportedFormat.begin(), SupportedFormat.end(), SupportedFormat.begin(),
+	std::string supported_format = in_supported_format;
+	std::transform(supported_format.begin(), supported_format.end(), supported_format.begin(),
 		[](char8_t c) { return std::tolower(c); });
 
-	for (const auto& Factory : Factories)
+	for (const auto& factory : factories)
 	{
-		for (auto Format : Factory->GetSupportedFormats())
+		for (auto format : factory->get_supported_formats())
 		{
-			std::transform(Format.begin(), Format.end(), Format.begin(),
+			std::transform(format.begin(), format.end(), format.begin(),
 				[](char8_t c) { return std::tolower(c); });
 
-			if (SupportedFormat == Format)
-				return Factory.get();
+			if (supported_format == format)
+				return factory.get();
 		}
 	}
 

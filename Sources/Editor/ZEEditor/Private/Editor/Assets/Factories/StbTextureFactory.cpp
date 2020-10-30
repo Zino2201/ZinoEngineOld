@@ -8,41 +8,40 @@
 namespace ze::editor
 {
 
-CStbTextureFactory::CStbTextureFactory()
+StbTextureFactory::StbTextureFactory()
 {
-	SupportedFormats = { "png", "jpg" };
+	supported_formats = { "png", "jpg" };
 }
 
-OwnerPtr<Asset> CStbTextureFactory::CreateFromStream(std::istream& InStream)
+OwnerPtr<Asset> StbTextureFactory::create_from_stream(std::istream& in_stream)
 {
 	/** Read texture to a vector */
+	in_stream.seekg(0, std::ios::end);
+	int64_t Size = in_stream.tellg();
+	in_stream.seekg(0, std::ios::beg);
 
-	InStream.seekg(0, std::ios::end);
-	int64_t Size = InStream.tellg();
-	InStream.seekg(0, std::ios::beg);
+	std::vector<uint8_t> array;
+	array.resize(Size / sizeof(uint8_t));
 
-	std::vector<uint8_t> Array;
-	Array.resize(Size / sizeof(uint8_t));
+	in_stream.read(reinterpret_cast<char*>(array.data()), Size);
 
-	InStream.read(reinterpret_cast<char*>(Array.data()), Size);
-
-	int Width, Height, Channels;
-	std::unique_ptr<stbi_uc> Data = std::unique_ptr<stbi_uc>(stbi_load_from_memory(Array.data(), Array.size(), 
-		&Width, &Height, &Channels, STBI_rgb_alpha));
-	if (!Data)
+	int width, height, channels;
+	std::unique_ptr<stbi_uc> data = std::unique_ptr<stbi_uc>(stbi_load_from_memory(array.data(), array.size(), 
+		&width, &height, &channels, STBI_rgb_alpha));
+	if (!data)
 	{
 		ze::logger::error("Can't import texture: {}", stbi_failure_reason());
 		return nullptr;
 	}
 
 	/** Instantiate the texture */
-	OwnerPtr<CTexture> Texture = new CTexture;
-	Texture->SetTextureType(ETextureType::Tex2D);
-	Texture->SetFormat(ETextureFormat::R8G8B8A8);
-	Texture->SetCompression(ETextureCompressionMode::Normal);
-	Texture->SetFilter(ETextureFilter::Linear);
-	Texture->SetData(std::vector<uint8_t>(reinterpret_cast<uint8_t*>(Data.get()),
-		Data.get() + (Width * Height * Channels)));
+	OwnerPtr<CTexture> texture = new CTexture;
+	texture->SetTextureType(ETextureType::Tex2D);
+	texture->SetFormat(ETextureFormat::R8G8B8A8);
+	texture->SetCompression(ETextureCompressionMode::Normal);
+	texture->SetFilter(ETextureFilter::Linear);
+	texture->SetData(std::vector<uint8_t>(reinterpret_cast<uint8_t*>(data.get()),
+		data.get() + (width * height * channels)));
 	ZE_ASSERT(false);
 	return nullptr;
 }

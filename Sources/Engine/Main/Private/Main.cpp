@@ -18,6 +18,7 @@
 #include "Render/RenderCore.h"
 #include "Engine/TickSystem.h"
 #include "Engine/InputSystem.h"
+#include "Gfx/Vulkan/Backend.h"
 
 #if ZE_WITH_EDITOR
 #include "Editor/ZEEditor.h"
@@ -46,17 +47,12 @@ void Exit();
 /** Global variables */
 
 /** Render system ptr */
-static std::unique_ptr<ze::IRenderSystem> RenderSystem;
+static std::unique_ptr<ze::gfx::RenderBackend> RenderBackend;
 
 /** Current app */
 
 /** Engine ptr */
-static std::unique_ptr<ze::CZinoEngineApp> Engine;
-
-static ze::ConVarRef<int32_t> CVarMaxFPS("r_maxfps", 144,
-	"Max FPS.",
-	1,
-	ze::GMaxFPS);
+static std::unique_ptr<ze::EngineApp> engine_app;
 
 static ze::ConVarRef<int32_t> CVarPhysFPS("phys_fps", 5,
 	"Physics FPS count.",
@@ -169,8 +165,7 @@ void PreInit()
 
 		/** Load render modules */
 		LoadRequiredModule("ShaderCore");
-		LoadRequiredModule("RenderCore");
-		LoadRequiredModule("RenderSystem");
+		LoadRequiredModule("GfxCore");
 		LoadRequiredModule("ImGui");
 		LoadRequiredModule("ShaderCompiler");
 	}
@@ -178,95 +173,33 @@ void PreInit()
 	/** INITIALIZE RENDER SYSTEM **/
 	{
 		ze::logger::info("Initializing render system");
-		LoadRequiredModule("VulkanRenderSystem");
+		LoadRequiredModule("VulkanBackend");
 		LoadRequiredModule("VulkanShaderCompiler");
-		RenderSystem.reset(CreateVulkanRenderSystem());
-		RenderSystem->Initialize();
-	}
-
-	/** INITIALIZE BASIC SHADERS */
-	{
-		ze::logger::info("Initializing & compiling basic shaders");
-		ze::gfx::shaders::CBasicShaderManager::Get().CompileShaders();
+		OwnerPtr<ze::gfx::RenderBackend> backend = ze::gfx::vulkan::create_vulkan_backend();
+		auto [result, msg] = backend->initialize();
+		if(!result)
+			ze::logger::fatal("Failed to initialize backend:\n{}.\n\nCheck logs for additional informations.", msg);
+		
+		RenderBackend = std::unique_ptr<ze::gfx::RenderBackend>(backend);
 	}
 }
-
-#include "Reflection/Registration.h"
-#include "Reflection/Class.h"
-#include "Reflection/Builders.h"
-#include "Reflection/Traits.h"
-#include "Reflection/Cast.h"
-#include "Reflection/Any.h"
-#include "Reflection/Macros.h"
-
-class Parent
-{
-public:
-	int32_t A = 2000;
-	std::string cava = "oui oui";
-
-	Parent() : A (5000)
-	{
-		
-	}
-
-	ZE_REFL_DECLARE_CLASS_BODY(Parent)
-};
-
-class Child : public Parent
-{
-public:
-	int8_t B = 22;
-
-	ZE_REFL_DECLARE_CLASS_BODY(Child)
-};
-
-ZE_REFL_DECLARE_CLASS(Parent)
-ZE_REFL_DECLARE_CLASS(Child)
 
 int Init()
 {
 	PreInit();
-
-	ze::reflection::builders::ClassBuilder<Parent>("Parent")
-		.property<int32_t>("A", &Parent::A);
-	ze::reflection::builders::ClassBuilder<Child>("Child")
-		.constructor()
-		.parent("Parent")
-		.property<int8_t>("B", &Child::B);
-
-	int sz = sizeof(Parent);
-
-	Parent pp;
-	pp.A = 121;
-	const ze::reflection::Property* prop = ze::reflection::Class::get<Parent>()->get_property("A");
-	prop->set_value(&pp, 1201);
-	const auto& val = prop->get_value(&pp);
-	const auto& real_val = val.get_value<int32_t>();
-
-	Parent* a = new Child;
-	Parent* b = new Parent;
-
-	// instantiate
-	Child* test_inst = ze::reflection::Class::get<Child>()->instantiate<Child>();
-
-	Child* legal = ze::reflection::cast<Child>(a);
-	Child* illegal = ze::reflection::cast<Child>(b);
-	
-	ZE_DEBUGBREAK();
 
 	ze::logger::info("Initializing and starting app");
 
 	/** INITIALIZE ENGINE CLASS */
 #if ZE_WITH_EDITOR
 	LoadRequiredModule("ZEEditor");
-	Engine.reset(ze::editor::CreateEditor());
+	engine_app = std::make_unique<ze::editor::EditorApp>();
 #else
-	Engine.reset(ze::CreateGameApp());
+	engine_app = std::make_unique<ze::GameApp>();
 #endif
 
 	/** START GAME LOOP */
-	return Engine->run();
+	return engine_app->run();
 }
 
 void Exit()
@@ -277,15 +210,14 @@ void Exit()
 	ze::module::unload_module("Renderer");
 
 	/** Delete engine */
-	Engine.reset();
-
-	RenderSystem->WaitGPU();
+	engine_app.reset();
 
 	ze::gfx::shaders::CBasicShaderManager::Get().DestroyAll();
 
 	/** Delete render system */
-	RenderSystem->Destroy();
-	RenderSystem.reset();
+	RenderBackend.reset();
+
+	ze::jobsystem::stop();
 
 	/** Clear all modules */
 	ze::module::unload_modules();

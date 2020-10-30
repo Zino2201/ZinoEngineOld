@@ -6,7 +6,6 @@
 #include "Render/Shader/BasicShader.h"
 #include "Render/RenderSystem/RenderSystem.h"
 #include "Renderer/PostProcess/BarrelDistortion.h"
-#include "ImGui/ImGuiRender.h"
 #include "Renderer/RendererModule.h"
 #include "Renderer/RenderableComponentProxy.h"
 
@@ -107,9 +106,7 @@ void CClusteredForwardRenderingPath::Draw(const SWorldView& InView)
 		InContext->SetViewports({ InView.Viewport });
 
 		InView.RenderPassRendererMap.at(ERenderPassFlagBits::BasePass).Draw(*InContext);
-		/** Render UI */
-		CRendererModule::Get().GetImGuiRenderer()->Update();
-		CRendererModule::Get().GetImGuiRenderer()->Draw(GRSContext);
+
 	});
 
 	/** POST PROCESS */

@@ -108,7 +108,7 @@ namespace std
 	{
 		ZE_FORCEINLINE uint64_t operator()(const ze::Flags<T>& in_flags) const
 		{
-			return std::hash<ze::Flags<T>::MaskType>()(static_cast<ze::Flags<T>::MaskType>(in_flags));
+			return std::hash<typename ze::Flags<T>::MaskType>()(static_cast<typename ze::Flags<T>::MaskType>(in_flags));
 		}
 	};
 }

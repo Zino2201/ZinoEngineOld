@@ -7,6 +7,7 @@ namespace ze::jobsystem
 
 /** Global condition_variable for sleeping workers */
 std::condition_variable sleep_condition_var;
+std::atomic_bool should_sleep = true;
 
 std::condition_variable& WorkerThread::get_sleep_condition_var() { return sleep_condition_var; }
 
@@ -63,13 +64,22 @@ void WorkerThread::flush()
 		}
 		else
 		{
-			if (type != WorkerThreadType::Partial)
+			if (type != WorkerThreadType::Partial 
+				&& should_sleep)
 			{
 				std::unique_lock<std::mutex> lock(sleep_mutex);
 				sleep_condition_var.wait(lock);
 			}
 		}
 	}
+}
+
+void WorkerThread::stop()
+{
+	should_sleep = false;
+	active = false;
+	sleep_condition_var.notify_all();
+	thread.join();
 }
 
 }

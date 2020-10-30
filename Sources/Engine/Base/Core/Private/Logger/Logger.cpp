@@ -8,44 +8,14 @@
 #include <filesystem>
 #include "Threading/Thread.h"
 #include "Logger/Sink.h"
-#if ZE_PLATFORM(WINDOWS)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#endif
 #include "App.h"
+#include "MessageBox.h"
 
 namespace ze::logger
 {
 
 std::mutex logger_mutex;
 std::vector<std::unique_ptr<Sink>> sinks;
-
-/**
- * Display a message box for the specified message
- */
-void msg_box(const Message& message)
-{
-#if ZE_PLATFORM(WINDOWS)
-	UINT Type = MB_OK;
-
-	switch(message.severity)
-	{
-	default:
-		Type |= MB_ICONINFORMATION;
-		break;
-	case SeverityFlagBits::Warn:
-		Type |= MB_ICONWARNING;
-		break;
-	case SeverityFlagBits::Error:
-	case SeverityFlagBits::Fatal:
-		Type |= MB_ICONERROR;
-		break;
-	}
-
-	MessageBoxA(nullptr, message.message.c_str(), 
-		"ZinoEngine Fatal Error", Type);
-#endif
-}
 
 void log(SeverityFlagBits severity, const std::string& str)
 {
@@ -68,7 +38,8 @@ void log(SeverityFlagBits severity, const std::string& str)
 
 	if(severity == SeverityFlagBits::Fatal)
 	{
-		msg_box(message);
+		message_box("ZinoEngine Fatal Error", message.message.c_str(),
+			MessageBoxButtonFlagBits::Ok, MessageBoxIcon::Critical);
 #if ZE_DEBUG
 		ZE_DEBUGBREAK();
 #endif

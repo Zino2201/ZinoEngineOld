@@ -17,7 +17,7 @@ struct VSOutput
 };
 
 [[vk::binding(0)]]
-cbuffer GlobalData : register(b0)
+cbuffer GlobalData : register(b0, space0)
 {
 	float2 Scale;
     float2 Translate;

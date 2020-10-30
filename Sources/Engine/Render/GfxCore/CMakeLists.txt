@@ -1,0 +1,9 @@
+ze_create_module(GfxCore Private/GfxCore.cpp)
+
+ze_add_public_modules(GfxCore Core)
+
+target_include_directories(GfxCore
+    PUBLIC 
+        ${CMAKE_CURRENT_SOURCE_DIR}/Public
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/Private)

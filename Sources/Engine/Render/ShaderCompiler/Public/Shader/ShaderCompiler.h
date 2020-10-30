@@ -44,6 +44,22 @@ enum class ShaderCompilerTarget
     VulkanSpirV
 };
 
+class ShaderCompiler;
+
+SHADERCOMPILER_API ShaderCompiler* register_shader_compiler(ShaderCompilerTarget target, OwnerPtr<ShaderCompiler> compiler);
+SHADERCOMPILER_API void unregister_shader_compiler(ShaderCompiler* compiler);
+
+/*
+ * Compile a shader (async operation)
+ * \return Future shader compiler output
+ */
+SHADERCOMPILER_API std::future<ShaderCompilerOutput> compile_shader(const ShaderStage& stage,
+    const std::string_view& shader_filename,
+    const std::string_view& entry_point,
+    const ShaderCompilerTarget& target,
+    const bool& should_optimize);
+
+
 /**
  * Shader compiler interface
  * Should be implemented for each target
@@ -60,22 +76,10 @@ public:
 		const std::string_view& entry_point,
 		const ShaderCompilerTarget& target_format,
 		const bool& optimize) = 0;
+
+    ZE_FORCEINLINE ShaderCompilerTarget get_target() { return target; }
 protected:
     ShaderCompilerTarget target;
 };
-
-#define ZE_DEFINE_SHADER_COMPILER(Target, Class) static Class* ShaderCompiler_##Class = new Class(Target)
-
-SHADERCOMPILER_API void register_shader_compiler(ShaderCompilerTarget target, OwnerPtr<ShaderCompiler> compiler);
-
-/*
- * Compile a shader (async operation)
- * \return Future shader compiler output
- */
-SHADERCOMPILER_API std::future<ShaderCompilerOutput> compile_shader(const ShaderStage& stage,
-    const std::string_view& shader_filename,
-    const std::string_view& entry_point,
-    const ShaderCompilerTarget& target,
-    const bool& should_optimize);
 
 }

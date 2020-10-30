@@ -161,17 +161,25 @@ Module* load_module(const std::string_view& name)
 	return module;
 }
 
-void unload_module(const std::string_view& name)
+ZE_FORCEINLINE void unload_module_impl(const std::string_view& name, bool remove_from_array)
 {
 	size_t idx = 0;
 	for (auto& module : modules)
 	{
 		if (module->get_name() == name)
 		{
-			modules.erase(modules.begin() + idx);
 #if !ZE_MONOLITHIC
 			void* handle = module->get_handle();
+			if(remove_from_array)
+				modules.erase(modules.begin() + idx);
+			else
+				modules[idx].reset();
 			free_module_handle(handle);
+#else
+			if(remove_from_array)
+				modules.erase(modules.begin() + idx);
+			else
+				modules[idx].reset();
 #endif
 			break;
 		}
@@ -180,12 +188,17 @@ void unload_module(const std::string_view& name)
 	}
 }
 
+void unload_module(const std::string_view& name)
+{
+	unload_module_impl(name, true);
+}
+
 void unload_modules()
 {
-	for (size_t i = modules.size() - 1; i > 0; --i)
+	for(decltype(modules)::reverse_iterator i = modules.rbegin(); 
+		i != modules.rend(); ++i)
 	{
-		Module* module = modules[i].get();
-		unload_module(module->get_name());
+		unload_module_impl(i->get()->get_name(), false);
 	}
 
 	modules.clear();

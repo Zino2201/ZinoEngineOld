@@ -100,7 +100,7 @@ public:
 		options.enableDebugInfo = true;
 		options.optimizationLevel = 1;
 #else
-		Options.optimizationLevel = 3;
+		options.optimizationLevel = 3;
 #endif
 
 		std::array<ShaderConductor::Compiler::TargetDesc, 1> targets = 
@@ -206,8 +206,15 @@ class CVulkanShaderCompilerModule : public ze::module::Module
 public:
 	CVulkanShaderCompilerModule()
 	{
-		register_shader_compiler(ShaderCompilerTarget::VulkanSpirV, new VulkanShaderCompiler(ShaderCompilerTarget::VulkanSpirV));
+		sc = register_shader_compiler(ShaderCompilerTarget::VulkanSpirV, new VulkanShaderCompiler(ShaderCompilerTarget::VulkanSpirV));
 	}
+
+	~CVulkanShaderCompilerModule()
+	{
+		unregister_shader_compiler(sc);
+	}
+private:
+	ShaderCompiler* sc;
 };
 
 ZE_DEFINE_MODULE(CVulkanShaderCompilerModule, VulkanShaderCompiler);

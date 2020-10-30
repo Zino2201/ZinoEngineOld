@@ -50,8 +50,6 @@ public:
 
 	RENDERER_API static inline CRSBufferPtr QuadVBuffer;
 	RENDERER_API static inline CRSBufferPtr QuadIBuffer;
-
-	RENDERER_API ui::CImGuiRender* GetImGuiRenderer() { return ImGuiRenderer.get(); }
 private:
 	void BeginDrawView(const SWorldView& InView);
 private:
@@ -62,8 +60,6 @@ private:
 	std::vector<const ze::jobsystem::Job*> RenderingJobs;
 
 	TransientPerFrameDataMap TransientFrameDataMap;
-
-	std::unique_ptr<ui::CImGuiRender> ImGuiRenderer;
 	std::vector<std::unique_ptr<CWorldRenderer>> WorldRenderers;
 };
 

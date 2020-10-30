@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace ze::gfx
 {
 
@@ -41,8 +43,27 @@ enum class Format
 	R64Uint,
 };
 
-// retrocompatibility
+/** Utils structures */
+struct Offset3D
+{
+	int32_t x;
+	int32_t y;
+	int32_t z;
+
+	Offset3D(const int32_t in_x = 0,
+		const int32_t in_y = 0,
+		const int32_t in_z = 0) : x(in_x), y(in_y), z(in_z) {}
+};
+
+struct Extent3D
+{
+	uint32_t x;
+	uint32_t y;
+	uint32_t z;
+
+	Extent3D(const uint32_t in_x,
+		const uint32_t in_y,
+		const uint32_t in_z) : x(in_x), y(in_y), z(in_z) {}
+};
 
 }
-
-namespace ZE { using EFormat = ze::gfx::Format; }

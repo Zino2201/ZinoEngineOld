@@ -9,7 +9,7 @@ ze_create_module(Core
     Private/Module/ModuleManager.cpp
     Private/Serialization/BinaryArchive.cpp
     Private/Threading/JobSystem/Job.cpp Private/Threading/JobSystem/JobSystem.cpp Private/Threading/JobSystem/WorkerThread.cpp
-    Private/Threading/Thread.cpp)
+    Private/Threading/Thread.cpp Private/MessageBox.cpp)
 
 target_include_directories(Core
     PUBLIC 

@@ -28,7 +28,7 @@ namespace ze::reflection::builders
 template<typename T, typename U = Type>
 struct TypeBuilder
 {
-	TypeBuilder(const char* in_name) 
+	TypeBuilder() 
 	{
 		TypeFlags flags;
 
@@ -42,7 +42,7 @@ struct TypeBuilder
 		if constexpr(IsReflEnum<T>)
 			flags |= TypeFlagBits::Enum; 
 
-		type = RegistrationManager::get().register_type(new U(in_name, sizeof(T), flags));
+		type = RegistrationManager::get().register_type(new U(type_name<T>, sizeof(T), flags));
 	}
 
 	const Type* type;
@@ -54,7 +54,7 @@ struct TypeBuilder
 template<typename T>
 struct ClassBuilder : public TypeBuilder<T, Class>
 {
-	ClassBuilder(const char* in_name) : TypeBuilder<T, Class>(in_name) 
+	ClassBuilder() : TypeBuilder<T, Class>() 
 	{
 		class_ = static_cast<const Class*>(type);
 
@@ -107,8 +107,8 @@ struct EnumBuilder : public TypeBuilder<T, Enum>
 public:
     using UnderlyingType = typename std::underlying_type<T>::type;
 
-    EnumBuilder(const char* in_name) : 
-		TypeBuilder<T, Enum>(in_name)
+    EnumBuilder() : 
+		TypeBuilder<T, Enum>()
     {
         enum_ = static_cast<const Enum*>(type);
 

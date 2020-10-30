@@ -1,6 +1,5 @@
 #include "Editor/ZEEditor.h"
 #include "Module/Module.h"
-#include "Render/Window.h"
 #include "Engine/Viewport.h"
 #include "ImGui/ImGui.h"
 #include "examples/imgui_impl_sdl.h"
@@ -11,7 +10,7 @@
 #include "Render/RenderSystem/Resources/Framebuffer.h"
 #include "Render/RenderSystem/Resources/Pipeline.h"
 #include "Render/RenderSystem/Resources/Surface.h"
-#include "ImGui/ImGuiRender.h"
+#include "ImGui/ImGuiRenderer.h"
 #include <SDL.h>
 #include "Editor/Widgets/MapTabWidget.h"
 #include "Assets/Asset.h"
@@ -21,237 +20,243 @@
 #include "Assets/AssetManager.h"
 #include "Editor/AssetUtils/AssetUtils.h"
 #include "ZEFS/FileStream.h"
+#include "Gfx/Backend.h"
+#include "Engine/Viewport.h"
+#include "Shader/ShaderCompiler.h"
+#include <SDL.h>
+#include "imgui_internal.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);
 
 namespace ze::editor
 {
 
-int StaticOnWindowResized(void* InUserData, SDL_Event* InEvent)
+int event_filter(void* pthis, const SDL_Event *event)
 {
-	ZE_ASSERT(InUserData);
+    if (event->type == SDL_WINDOWEVENT &&
+        event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+    {
+        EditorApp* app = (EditorApp*) pthis;
+		app->process_event(*event);
+    }
 
-	return reinterpret_cast<CZEEditor*>(InUserData)->OnWindowResized(InEvent);
+    return 1;
 }
 
-SRSRenderPass MainRenderPass;
-
-CZEEditor::CZEEditor() : CZinoEngineApp(true) 
+EditorApp::EditorApp() : EngineApp(),
+	main_window("ZinoEngine Editor", 1280, 720, 
+		0, 0, 
+		NativeWindowFlagBits::Centered | NativeWindowFlagBits::Resizable | NativeWindowFlagBits::Maximized)
 {
-	InitializeAssetFactoryMgr();
-	assetutils::GetOnAssetImported().bind(
-		std::bind(&CZEEditor::OnAssetImported, 
-			this,
-			std::placeholders::_1,
-			std::placeholders::_2));
+	swapchain = gfx::RenderBackend::get().swapchain_create(
+		ze::gfx::SwapChainCreateInfo(
+			main_window.get_handle(),
+			main_window.get_width(),
+			main_window.get_height()));
+	if(!swapchain)
+		ze::logger::fatal("Failed to create swapchain");
+
+	cmd_pool = gfx::RenderBackend::get().command_pool_create(gfx::CommandPoolType::Gfx);
+	auto lists = gfx::RenderBackend::get().command_pool_allocate(*cmd_pool, 1);
+	cmd_list = lists[0];
+
+	cmd_list_fence = gfx::RenderBackend::get().fence_create(false);
+
+	auto [render_pass_result, render_pass_handle] = gfx::RenderBackend::get().render_pass_create(
+		gfx::RenderPassCreateInfo(
+			{
+				/** backbuffer */
+				gfx::AttachmentDescription(
+					gfx::Format::B8G8R8A8Unorm,
+					gfx::SampleCountFlagBits::Count1,
+					gfx::AttachmentLoadOp::Clear,
+					gfx::AttachmentStoreOp::Store,
+					gfx::AttachmentLoadOp::DontCare,
+					gfx::AttachmentStoreOp::DontCare,
+					gfx::TextureLayout::Undefined,
+					gfx::TextureLayout::Present)
+			},
+			{
+				gfx::SubpassDescription({}, { gfx::AttachmentReference(0, gfx::TextureLayout::ColorAttachment) })
+			}));
+	render_pass = render_pass_handle;
+
+	SDL_SetEventFilter((SDL_EventFilter) &event_filter, this);
+
+	initialize_asset_factory_mgr();
+
+	assetutils::get_on_asset_imported().bind(std::bind(&EditorApp::on_asset_imported,
+		this, std::placeholders::_1, std::placeholders::_2));
 
 	/** Scan Assets directory */
 	assetdatabase::scan("Assets", assetdatabase::AssetScanMode::Async);
 
-	SDL_Rect WindowSize;
-	SDL_GetDisplayUsableBounds(0, &WindowSize);
+	/** Initialize ImGui */
+	ImGui_ImplSDL2_InitForVulkan(reinterpret_cast<SDL_Window*>(main_window.get_handle()));
 
-	MainWindow = std::make_unique<CWindow>("ZinoEngine Editor", WindowSize.w, WindowSize.h,
-		EWindowFlagBits::Resizable | EWindowFlagBits::Centered | EWindowFlagBits::Maximized);
-	MainViewport = std::make_unique<CViewport>(MainWindow->GetHandle(), MainWindow->GetWidth(),
-		MainWindow->GetHeight(), true);
-
-	/** Event on resize */
-	SDL_AddEventWatch(&StaticOnWindowResized, this);
-
-	ImGui_ImplSDL2_InitForVulkan(reinterpret_cast<SDL_Window*>(MainWindow->GetHandle()));
-
-	ImGuiIO& IO = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO();
 	ImGui::StyleColorsDark();
 	/** Default ZE editor style */
 	{
-		ImGuiStyle& Style = ImGui::GetStyle();
-		Style.WindowRounding = 2.f;
-		Style.TabRounding = 2.f;
+		ImGuiStyle& style = ImGui::GetStyle();
+		style.WindowRounding = 2.f;
+		style.TabRounding = 2.f;
 	}
 
-	IO.DisplaySize = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
-	IO.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
-	IO.WantCaptureKeyboard = true;
-	IO.WantCaptureMouse = true;
-	IO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	
-	Font = IO.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 16.f);
+	io.DisplaySize = ImVec2(static_cast<float>(main_window.get_width()), static_cast<float>(main_window.get_height()));
+	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+	io.WantCaptureKeyboard = true;
+	io.WantCaptureMouse = true;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-	renderer::CRendererModule::Get().CreateImGuiRenderer();
+	font = io.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 16.f);
 
-	MainRenderPass =
-	{
-		/** Colors */
-		{
-			/** Main viewport */
-			{
-				{
-					MainViewport->GetSurface()->GetSwapChainFormat(),
-					ESampleCount::Sample1,
-					ERSRenderPassAttachmentLoadOp::DontCare,
-					ERSRenderPassAttachmentStoreOp::Store,
-					ERSRenderPassAttachmentLayout::Undefined,
-					ERSRenderPassAttachmentLayout::Present,
-				}
-			}
-		},
-		/** Depths */
-		{},
-		/** Subpasses */
-		{
-			{
-				/** Main viewport */
-				{
-					/** Color */
-					{
-						0,
-						ERSRenderPassAttachmentLayout::ColorAttachment
-					}
-				},
-				{},
-				{}
-			},
-		}
-	};
+	ze::ui::imgui::initialize(cmd_list, *render_pass);
 }
 
-CZEEditor::~CZEEditor() 
-{ 
-	ClearAssetFactoryMgr();
-	ImGui_ImplSDL2_Shutdown(); 
-}
-
-int CZEEditor::OnWindowResized(SDL_Event* InEvent)
+EditorApp::~EditorApp()
 {
-	switch (InEvent->window.event)
+	destroy_asset_factory_mgr();
+	ze::ui::imgui::destroy();
+}
+
+void EditorApp::process_event(const SDL_Event& in_event)
+{
+	EngineApp::process_event(in_event);
+
+	ImGuiIO& io = ImGui::GetIO();
+
+	if(in_event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
 	{
-	case SDL_WINDOWEVENT_SIZE_CHANGED:
-	case SDL_WINDOWEVENT_RESIZED:
-		MainWindow->SetWidth(static_cast<uint32_t>(InEvent->window.data1));
-		MainWindow->SetHeight(static_cast<uint32_t>(InEvent->window.data2));
+		gfx::RenderBackend::get().swapchain_resize(*swapchain,
+			in_event.window.data1, in_event.window.data2);
 
-		ImGuiIO& IO = ImGui::GetIO();
-		IO.DisplaySize = ImVec2(MainWindow->GetWidth(), MainWindow->GetHeight());
+		io.DisplaySize = ImVec2(in_event.window.data1, in_event.window.data2);
+		main_window.set_width(in_event.window.data1);
+		main_window.set_height(in_event.window.data2);
 
-		// Resize viewport
-		MainViewport->Resize(MainWindow->GetWidth(), MainWindow->GetHeight());
-
-		return SDL_TRUE;
+		post_tick(0);
 	}
 
-	return SDL_FALSE;
+	ImGui_ImplSDL2_ProcessEvent(&in_event);
 }
 
-void CZEEditor::ProcessEvent(SDL_Event& InEvent)
+void EditorApp::post_tick(const float in_delta_time)
 {
-	CZinoEngineApp::ProcessEvent(InEvent);
-
-	ImGui_ImplSDL2_ProcessEvent(&InEvent);
-}
-
-void CZEEditor::DrawMainTab()
-{
-	/** Main tab */
-	if (!ImGui::BeginTabItem("Main"))
-		return;
-
-	static CMapTabWidget Wid;
-	Wid.Draw();
-
-	ImGui::EndTabItem();
-}
-
-void CZEEditor::Tick(const float& InDeltaTime)
-{
-	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(MainWindow->GetHandle()));
+	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(main_window.get_handle()));
 	ImGui::NewFrame();
-
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight())), 
-		ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(static_cast<float>(main_window.get_width()), static_cast<float>(main_window.get_height())),
+		ImGuiCond_Always);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-
-	if(ImGui::Begin("MainEditorWindow", nullptr, ImGuiWindowFlags_NoDocking
+	if (ImGui::Begin("MainEditorWindow", nullptr, ImGuiWindowFlags_NoDocking
 		| ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove
-		| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus))
+		| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoResize))
 	{
 		ImGui::PopStyleVar(3);
-
 		if (ImGui::BeginTabBar("MainTabBar", ImGuiTabBarFlags_TabListPopupButton
 			| ImGuiTabBarFlags_Reorderable))
 		{
 			ImGui::SameLine(ImGui::GetColumnWidth() - 500);
 			ImGui::Text("ZinoEngine v%d.%d.%d (FPS: %f)",
 				get_version().major, get_version().minor,
-				get_version().patch, (1.f / InDeltaTime));
-			DrawMainTab();
+				get_version().patch, (1.f / ImGui::GetIO().DeltaTime));
+			draw_main_tab();
 			ImGui::EndTabBar();
 		}
 	}
-
 	ImGui::End();
 	ImGui::Render();
-}
 
-void CZEEditor::Draw()
-{
-	/** Trigger rendering */
-	GRenderSystem->NewFrame();
+	using namespace gfx;
 
-	renderer::CRendererModule::Get().GetImGuiRenderer()->CopyDrawdata();
-	renderer::CRendererModule::Get().GetImGuiRenderer()->Update();
+	RenderBackend::get().new_frame();
 
-	if(MainViewport->Begin())
+	int w = 0, h = 0;
+	SDL_GetWindowSize(reinterpret_cast<SDL_Window*>(main_window.get_handle()), &w, &h);
+	if((SDL_GetWindowFlags(reinterpret_cast<SDL_Window*>(main_window.get_handle())) 
+		& SDL_WINDOW_MINIMIZED) || w == 0 || h == 0)
+		return;
+
+	ze::ui::imgui::update();
+
+	/** Draw */
+	if(RenderBackend::get().swapchain_acquire_image(*swapchain))
 	{
-		SRSFramebuffer Framebuffer;
-		Framebuffer.ColorRTs[0] = MainViewport->GetSurface()->GetBackbufferTexture();
-		GRSContext->BeginRenderPass(MainRenderPass, Framebuffer, { 1, 0, 0, 1 });
-		GRSContext->SetViewports({ { { { 0, 0 }, { MainWindow->GetWidth(), MainWindow->GetHeight()} }, 0.f, 1.f } });
-		GRSContext->SetScissors({ { { 0, 0 }, { MainWindow->GetWidth(), MainWindow->GetHeight()} } });
-		renderer::CRendererModule::Get().GetImGuiRenderer()->Draw(GRSContext);
-		GRSContext->EndRenderPass();
-		MainViewport->End();
+		RenderBackend::get().command_pool_reset(*cmd_pool);
+		RenderBackend::get().command_list_begin(cmd_list);
+
+		gfx::Framebuffer fb;
+		fb.color_attachments[0] = RenderBackend::get().swapchain_get_backbuffer(*swapchain);
+		fb.width = w;
+		fb.height = h;
+		fb.layers = 1;
+		RenderBackend::get().cmd_begin_render_pass(
+			cmd_list,
+			*render_pass,
+			fb,
+			maths::Rect2D(maths::Vector2f(),
+				maths::Vector2f(w, h)),
+			{
+				gfx::ClearColorValue({0, 0, 0, 1})
+			});
+		RenderBackend::get().cmd_set_viewport(cmd_list, 0, { gfx::Viewport(0, 0, w, h) });
+		ze::ui::imgui::draw(cmd_list);
+		RenderBackend::get().cmd_end_render_pass(cmd_list);
+		RenderBackend::get().command_list_end(cmd_list);
+		RenderBackend::get().queue_execute(
+			RenderBackend::get().get_gfx_queue(),
+			{ cmd_list },
+			*cmd_list_fence);
+		RenderBackend::get().swapchain_present(*swapchain);
 	}
+
+	RenderBackend::get().fence_wait_for({ *cmd_list_fence });
+	RenderBackend::get().fence_reset({ *cmd_list_fence });
 }
 
-void CZEEditor::OnAssetImported(const std::filesystem::path& InPath,
-	const std::filesystem::path& InTarget)
+void EditorApp::draw_main_tab()
 {
-#if 0
+	/** Main tab */
+	if (!ImGui::BeginTabItem("Main"))
+		return;
+
+	static CMapTabWidget wid;
+	wid.Draw();
+
+	ImGui::EndTabItem();
+}
+
+void EditorApp::on_asset_imported(const std::filesystem::path& in_path,
+	const std::filesystem::path& in_target_path)
+{
 	/** Try to find an asset factory compatible with this format */
-	std::string Extension = InPath.extension().string().substr(1, InPath.extension().string().size() - 1);
-	CAssetFactory* Factory = GetFactoryForFormat(Extension);
-	if (!Factory)
+	std::string extension = in_path.extension().string().substr(1, in_path.extension().string().size() - 1);
+	AssetFactory* factory = get_factory_for_format(extension);
+	if (!factory)
 	{
-		ze::logger::error("Asset {} can't be imported: unknown format", InPath.string());
+		ze::logger::error("Asset {} can't be imported: unknown format", in_path.string());
 		return;
 	}
 
 	/** Open a stream to the file */
-	FileSystem::CIFileStream Stream(InPath, FileSystem::EFileReadFlagBits::Binary);
-	if (!Stream)
+	filesystem::FileIStream stream(in_path, filesystem::FileReadFlagBits::Binary);
+	if (!stream)
 	{
-		ze::logger::error("Failed to open an input stream for file {}", InPath.string());
+		ze::logger::error("Failed to open an input stream for file {}", in_path.string());
 		return;
 	}
 
 	/** Serialize the asset and then unload it */
-	CAsset* Asset = Factory->CreateFromStream(Stream);
-	ZE::Editor::AssetUtils::SaveAsset(*Asset, InTarget,
+	Asset* asset = factory->create_from_stream(stream);
+	assetutils::save_asset(*asset, in_target_path,
 		"NewAssetTest");
-	delete Asset;
+	delete asset;
 
 	/** Notify the database */
-	ZE::AssetDatabase::Scan(InTarget);
-#endif
-}
-
-OwnerPtr<CZinoEngineApp> CreateEditor()
-{
-	return new CZEEditor;
+	assetdatabase::scan(in_target_path);
 }
 
 }

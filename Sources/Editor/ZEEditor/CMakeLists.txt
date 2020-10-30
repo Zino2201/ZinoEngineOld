@@ -4,7 +4,7 @@ ze_create_module(ZEEditor
     Private/Editor/Assets/Factories/AssetFactory.cpp
     Private/Editor/Assets/Factories/StbTextureFactory.cpp
     Private/Editor/Widgets/MapTabWidget.cpp
-	Private/Editor/ZEEditor.cpp)
+	Private/Editor/ZEEditor.cpp Private/Editor/Widgets/ConvarViewer.cpp)
 
 ze_add_private_modules(ZEEditor
 	Core RenderCore ShaderCore RenderSystem Engine Reflection ImGui Renderer MapEditor AssetExplorer AssetDatabase

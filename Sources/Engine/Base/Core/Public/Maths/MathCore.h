@@ -9,22 +9,9 @@
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 
-namespace ze::maths
-{
-
-/*
- * A 2D rectangle
- */
-struct Rect2D
-{
-	glm::vec2 Position;
-	glm::vec2 Size;
-};
-
-} /* namespace ZE::Math */
-
 namespace ze
 {
+
 /**
  * From boost's hash_combine
  */

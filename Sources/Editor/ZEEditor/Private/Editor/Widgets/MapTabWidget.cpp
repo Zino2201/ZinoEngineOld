@@ -1,5 +1,6 @@
 #include "Editor/Widgets/MapTabWidget.h"
 #include "ImGui/ImGui.h"
+#include "Editor/Widgets/ConvarViewer.h"
 
 namespace ze::editor
 {
@@ -31,6 +32,8 @@ void CMapTabWidget::Draw()
 	Console.Draw();
 	MapEditor.Draw(DockspaceID);
 	AssetExplorer.Draw();
+	static ConvarViewer viewer;
+	viewer.draw();
 
 	ImGui::EndChild();
 }

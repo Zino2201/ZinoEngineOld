@@ -22,12 +22,14 @@ public:
 	size_t EmplaceConVar(Args&&... InArgs)
 	{
 		ConVars.emplace_back(std::forward<Args>(InArgs)...);
+		ConVars.back().default_value = ConVars.back().data;
 		return ConVars.size() - 1;
 	}
 
 	void Execute(const std::string_view& InCmdName, const std::vector<std::string_view>& InParams);
 
 	ConVar& GetConVar(const size_t& InIdx) { return ConVars[InIdx]; }
+	auto& get_convars() { return ConVars; }
 private:
 	/** Coherent array of convars */
 	std::vector<ConVar> ConVars;
