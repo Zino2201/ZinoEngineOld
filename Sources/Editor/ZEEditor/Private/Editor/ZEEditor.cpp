@@ -154,9 +154,12 @@ void EditorApp::post_tick(const float in_delta_time)
 			| ImGuiTabBarFlags_Reorderable))
 		{
 			ImGui::SameLine(ImGui::GetColumnWidth() - 500);
-			ImGui::Text("ZinoEngine v%d.%d.%d (FPS: %f)",
-				get_version().major, get_version().minor,
-				get_version().patch, (1.f / ImGui::GetIO().DeltaTime));
+			ImGui::Text("ZinoEngine v%d.%d.%d | FPS: %d | MS: %.2f",
+				get_version().major, 
+				get_version().minor,
+				get_version().patch,
+				static_cast<int32_t>(1.0 / in_delta_time), 
+				in_delta_time * 1000.0);
 			draw_main_tab();
 			ImGui::EndTabBar();
 		}
@@ -205,10 +208,12 @@ void EditorApp::post_tick(const float in_delta_time)
 			{ cmd_list },
 			*cmd_list_fence);
 		RenderBackend::get().swapchain_present(*swapchain);
-	}
 
-	RenderBackend::get().fence_wait_for({ *cmd_list_fence });
-	RenderBackend::get().fence_reset({ *cmd_list_fence });
+		// TODO: MOVE UP start signaled
+		RenderBackend::get().fence_wait_for({ *cmd_list_fence });
+		RenderBackend::get().fence_reset({ *cmd_list_fence });
+
+	}
 }
 
 void EditorApp::draw_main_tab()

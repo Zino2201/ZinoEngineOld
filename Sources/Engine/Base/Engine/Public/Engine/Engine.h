@@ -29,11 +29,12 @@ protected:
     virtual void post_tick(const float delta_time) {}
 private:
     void loop();
+protected:
+    int32_t frame_count;
 private:
     bool should_run;
     bool focused;
-    uint64_t now;
-    uint64_t last;
+    std::chrono::high_resolution_clock::time_point previous;
     int err_code;
 };
 

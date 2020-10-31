@@ -44,15 +44,12 @@ ze::module::Module* LoadRequiredModule(const std::string_view& InName)
 	return Ptr;
 }
 
-EngineApp::EngineApp() : should_run(false), focused(true), now(0), last(0), err_code(0)
+EngineApp::EngineApp() : should_run(false), focused(true), err_code(0), frame_count(0),
+	previous(std::chrono::high_resolution_clock::now())
 {
 	/** Load asset related modules */
 	LoadRequiredModule("Asset");
 	LoadRequiredModule("AssetDatabase");
-
-	/** LOAD RENDERER MODULE */
-	//ze::logger::info("Initializing renderer");
-	//LoadRequiredModule("Renderer");
 }
 
 void EngineApp::process_event(const SDL_Event& in_event)
@@ -99,12 +96,11 @@ void EngineApp::exit(int in_err_code)
 
 void EngineApp::loop()
 {
-	double delta_time = 0.0;
-	last = now;
-	now = SDL_GetPerformanceCounter();
-	delta_time = (((now - last) * 1000 / (double) SDL_GetPerformanceFrequency()));
+	auto current = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double, std::milli> delta_time = current - previous;
+	previous = current;
 
-	float delta_time_as_secs = static_cast<float>(delta_time * 0.001f);
+	float delta_time_as_secs = static_cast<float>(delta_time.count() * 0.001f);
 
 	/** Process events */
 	{
@@ -120,12 +116,16 @@ void EngineApp::loop()
 	post_tick(delta_time_as_secs);
 
 	/** Fps limiter */
-	const double max_ms = focused ? (1000.0 / cvar_maxfps.get()) : (1000.0 / cvar_unfocus_fps.get());
-	double sleep_time = std::max(max_ms - delta_time, 0.0);
-	if (sleep_time > 0.0)
 	{
-		std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(sleep_time));
+		using namespace std::chrono_literals;
+
+		const std::chrono::duration<double, std::milli> min_ms(focused ? (1000.0 / cvar_maxfps.get()) : (1000.0 / cvar_unfocus_fps.get()));
+		const auto target_sleep_time = current + min_ms;
+		std::this_thread::sleep_until(target_sleep_time - 1ms);
+		while(std::chrono::high_resolution_clock::now() < target_sleep_time) {}
 	}
+
+	frame_count++;
 }
 
 } /* namespace ze */
