@@ -52,6 +52,13 @@ bool VulkanBackend::swapchain_acquire_image(const ResourceHandle& in_swapchain)
 	return true;
 }
 
+ResourceHandle VulkanBackend::swapchain_get_backbuffer_texture(const ResourceHandle& in_swapchain)
+{
+	SwapChain* swapchain = SwapChain::get(in_swapchain);
+	ZE_CHECKF(swapchain, "Invalid swapchain given to swapchain_get_backbuffer")
+	return swapchain->get_backbuffer_texture();
+}
+
 void VulkanBackend::swapchain_resize(const ResourceHandle& in_swapchain, const uint32_t in_new_width,
 	const uint32_t in_new_height)
 {
@@ -132,7 +139,7 @@ vk::Result SwapChain::create(const uint32_t in_width,
 		format.colorSpace,
 		extent,
 		1,
-		vk::ImageUsageFlagBits::eColorAttachment,
+		vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst,
 		device.get_gfx_queue() != device.get_present_queue() ? vk::SharingMode::eConcurrent 
 			: vk::SharingMode::eExclusive,
 		device.get_gfx_queue() != device.get_present_queue() ? 2 : 0,

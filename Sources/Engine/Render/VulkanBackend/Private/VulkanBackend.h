@@ -54,6 +54,7 @@ public:
 	void swapchain_resize(const ResourceHandle& in_swapchain, const uint32_t in_new_width,
 		const uint32_t in_new_height) override;
 	ResourceHandle swapchain_get_backbuffer(const ResourceHandle& in_swapchain) override;
+	ResourceHandle swapchain_get_backbuffer_texture(const ResourceHandle& in_swapchain) override;
 	void swapchain_present(const ResourceHandle& in_swapchain,
 		const std::vector<ResourceHandle>& in_wait_semaphores) override;
 
@@ -131,6 +132,12 @@ public:
 		const ResourceHandle& in_dst_texture,
 		const TextureLayout& in_dst_layout,
 		const std::vector<BufferTextureCopyRegion>& in_regions) override;
+	void cmd_copy_texture(const ResourceHandle& in_cmd_list,
+		const ResourceHandle& in_src_texture,
+		const TextureLayout in_src_layout,
+		const ResourceHandle& in_dst_texture,
+		const TextureLayout in_dst_layout,
+		const std::vector<TextureCopyRegion>& in_regions) override;
 
 	ZE_FORCEINLINE bool is_valid() const override { return !!instance; }
 	ZE_FORCEINLINE vk::Instance& get_instance() { return *instance; }

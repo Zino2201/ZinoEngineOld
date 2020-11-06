@@ -15,6 +15,12 @@ public:
 	DescriptorSet(Device& in_device, const DescriptorSetCreateInfo& in_create_info);
 	~DescriptorSet();
 
+	DescriptorSet(DescriptorSet&& other) :
+		device(other.device),
+		layout(other.layout),
+		set_idx(std::exchange(other.set_idx, 0)),
+		set(std::exchange(other.set, vk::DescriptorSet())) {}
+
 	static DescriptorSet* get(const ResourceHandle& in_handle);
 
 	ZE_FORCEINLINE vk::DescriptorSet& get_set() { return set; }

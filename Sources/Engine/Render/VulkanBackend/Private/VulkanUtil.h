@@ -119,9 +119,6 @@ ZE_FORCEINLINE vk::ImageUsageFlags convert_texture_usage_flags(TextureUsageFlags
 	if(in_flags & TextureUsageFlagBits::Sampled)
 		flags |= vk::ImageUsageFlagBits::eSampled;
 
-	if(in_flags & TextureUsageFlagBits::ShaderResource)
-		flags |= vk::ImageUsageFlagBits::eInputAttachment;
-
 	return flags;
 }
 
@@ -239,6 +236,9 @@ ZE_FORCEINLINE vk::PipelineStageFlags convert_pipeline_stage_flags(const Pipelin
 		
 	if(in_flags & PipelineStageFlagBits::LateFragmentTests)
 		flags |= vk::PipelineStageFlagBits::eLateFragmentTests;
+
+	if(in_flags & PipelineStageFlagBits::ColorAttachmentOutput)
+		flags |= vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
 	if(in_flags & PipelineStageFlagBits::ComputeShader)
 		flags |= vk::PipelineStageFlagBits::eComputeShader;

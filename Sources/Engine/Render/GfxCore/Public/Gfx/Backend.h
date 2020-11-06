@@ -154,10 +154,9 @@ enum class TextureUsageFlagBits
 {
 	ColorAttachment = 1 << 0,
 	DepthStencilAttachment = 1 << 1,
-	ShaderResource = 1 << 2,
-	Sampled = 1 << 3,
-	TransferSrc = 1 << 4,
-	TransferDst = 1 << 5,
+	Sampled = 1 << 2,
+	TransferSrc = 1 << 3,
+	TransferDst = 1 << 4,
 };
 ENABLE_FLAG_ENUMS(TextureUsageFlagBits, TextureUsageFlags);
 
@@ -284,13 +283,14 @@ enum class PipelineStageFlagBits
 	FragmentShader = 1 << 6,
 	EarlyFragmentTests = 1 << 7,
 	LateFragmentTests = 1 << 8,
-	ComputeShader = 1 << 9,
-	Transfer = 1 << 10,
-	BottomOfPipe = 1 << 11,
+	ColorAttachmentOutput = 1 << 9,
+	ComputeShader = 1 << 10,
+	Transfer = 1 << 11,
+	BottomOfPipe = 1 << 12,
 
 	/** Graphics stages */
 	AllGraphics = InputAssembler | VertexShader | TesselationControlShader | 
-		TesselationEvaluationShader | GeometryShader | FragmentShader | EarlyFragmentTests | LateFragmentTests,
+		TesselationEvaluationShader | GeometryShader | FragmentShader | EarlyFragmentTests | LateFragmentTests | ColorAttachmentOutput,
 };
 ENABLE_FLAG_ENUMS(PipelineStageFlagBits, PipelineStageFlags);
 
@@ -896,10 +896,10 @@ struct Viewport
 	float min_depth;
 	float max_depth;
 
-	Viewport(const float in_x,
-		const float in_y,
-		const float in_width,
-		const float in_height,
+	Viewport(const float in_x = 0.f,
+		const float in_y = 0.f,
+		const float in_width = 0.f,
+		const float in_height = 0.f,
 		const float in_min_depth = 0.0f,
 		const float in_max_depth = 1.0f) : x(in_x), y(in_y),
 		width(in_width), height(in_height), min_depth(in_min_depth), max_depth(in_max_depth) {}
@@ -920,6 +920,23 @@ struct BufferTextureCopyRegion
 		const gfx::Extent3D& in_texture_extent) : buffer_offset(in_buffer_offset),
 		texture_subresource(in_texture_subresource), texture_offset(in_texture_offset),
 		texture_extent(in_texture_extent) {}
+};
+
+struct TextureCopyRegion
+{
+	TextureSubresourceLayers src_subresource;
+	gfx::Offset3D src_offset;
+	TextureSubresourceLayers dst_subresource;
+	gfx::Offset3D dst_offset;
+	gfx::Extent3D extent;
+
+	TextureCopyRegion(const TextureSubresourceLayers& in_src_subresource,
+		const gfx::Offset3D& in_src_offset,
+		const TextureSubresourceLayers& in_dst_subresource,
+		const gfx::Offset3D& in_dst_offset,
+		const gfx::Extent3D& in_extent) : src_subresource(in_src_subresource),
+		src_offset(in_src_offset), dst_subresource(in_dst_subresource),
+		dst_offset(in_dst_offset), extent(in_extent) {}
 };
 
 /** Sampler structures */
@@ -1094,10 +1111,15 @@ public:
 		const uint32_t in_new_height) = 0;
 
 	/**
-	 * Get the backbufer of the specified swapchain
+	 * Get the backbuffer texture view of the specified swapchain
 	 * \return The backbuffer
 	 */
 	virtual ResourceHandle swapchain_get_backbuffer(const ResourceHandle& in_swapchain) = 0;
+
+	/**
+	 * Get the backbuffer texture of the specified swapchain
+	 */
+	virtual ResourceHandle swapchain_get_backbuffer_texture(const ResourceHandle& in_swapchain) = 0;
 
 	/**
 	 * Present a swapchain
@@ -1232,6 +1254,16 @@ public:
 		const TextureLayout& in_dst_layout,
 		const std::vector<BufferTextureCopyRegion>& in_regions) = 0;
 
+	/**
+	 * Copy textures
+	 */
+	virtual void cmd_copy_texture(const ResourceHandle& in_cmd_list,
+		const ResourceHandle& in_src_texture,
+		const TextureLayout in_src_layout,
+		const ResourceHandle& in_dst_texture,
+		const TextureLayout in_dst_layout,
+		const std::vector<TextureCopyRegion>& in_regions) = 0;
+
 	/** QUEUES RELATED FUNCTIONS */
 
 	/**
@@ -1298,7 +1330,7 @@ class UniqueResourceHandle
 {
 public:
 	UniqueResourceHandle() {}
-	UniqueResourceHandle(const ResourceHandle& in_handle)
+	explicit UniqueResourceHandle(const ResourceHandle& in_handle)
 	{
 		reset(in_handle);
 	}
@@ -1367,21 +1399,21 @@ private:
 /**
  * Ref counted resource handle
  */
-template<ResourceType type>
+template<ResourceType type, typename Deleter = void>
 class SharedResourceHandle
 {
 public:
 	SharedResourceHandle() {}
 	SharedResourceHandle(const ResourceHandle& in_handle)
-		: handle(in_handle), ref_count(std::make_shared<uint32_t>(1))
 	{
-		ZE_CHECKF(in_handle.type == type, "Bad type provided to SharedResourceHandle");
+		reset(in_handle);
 	}
 
-	SharedResourceHandle(const SharedResourceHandle<type>& other)
+	SharedResourceHandle(const SharedResourceHandle& other)
 		: handle(other.handle), ref_count(other.ref_count)
 	{
-		++*ref_count;
+		if(handle)
+			++*ref_count;
 	}
 
 	~SharedResourceHandle()
@@ -1389,11 +1421,26 @@ public:
 		free();
 	}
 
-	void operator=(const SharedResourceHandle<type>& other)
+	void operator=(const SharedResourceHandle& other)
 	{
 		handle = other.handle;
 		ref_count = other.ref_count;
-		++*ref_count;
+		if(handle)
+			++*ref_count;
+	}
+
+	void operator=(const ResourceHandle& in_handle)
+	{
+		reset(in_handle);
+	}
+
+	void reset(const ResourceHandle& in_new_handle = ResourceHandle())
+	{
+		if(in_new_handle)
+			ZE_CHECKF(in_new_handle.type == type, "Bad type provided to UniqueResourceHandle");
+		free();
+		handle = in_new_handle;
+		ref_count = std::make_shared<uint32_t>(1);
 	}
 
 	ResourceHandle get()
@@ -1416,7 +1463,8 @@ private:
 	{
 		if(handle && --*ref_count == 0)
 		{
-			//RenderBackend::get().free(handle);
+			if constexpr(!std::is_same_v<Deleter, void>)
+				Deleter()(handle);
 		}
 
 		handle = ResourceHandle();
@@ -1551,19 +1599,25 @@ using UniquePipelineLayout = UniqueResourceHandle<ResourceType::PipelineLayout, 
 using UniqueDescriptorSet = UniqueResourceHandle<ResourceType::DescriptorSet, detail::DescriptorSetDeleter>;
 using UniqueSampler = UniqueResourceHandle<ResourceType::Sampler, detail::SamplerDeleter>;
 
+using SharedBuffer = SharedResourceHandle<ResourceType::Buffer, detail::BufferDeleter>;
+using SharedTexture = SharedResourceHandle<ResourceType::Texture, detail::TextureDeleter>;
+using SharedTextureView = SharedResourceHandle<ResourceType::TextureView, detail::TextureViewDeleter>;
+using SharedSwapchain = SharedResourceHandle<ResourceType::SwapChain, detail::SwapchainDeleter>;
+using SharedSemaphore = SharedResourceHandle<ResourceType::Semaphore, detail::SemaphoreDeleter>;
+using SharedFence = SharedResourceHandle<ResourceType::Fence, detail::FenceDeleter>;
+using SharedCommandPool = SharedResourceHandle<ResourceType::CommandPool, detail::CommandPoolDeleter>;
+using SharedShader = SharedResourceHandle<ResourceType::Shader, detail::ShaderDeleter>;
+using SharedRenderPass = SharedResourceHandle<ResourceType::RenderPass, detail::RenderPassDeleter>;
+using SharedPipeline = SharedResourceHandle<ResourceType::Pipeline, detail::PipelineDeleter>;
+using SharedPipelineLayout = SharedResourceHandle<ResourceType::PipelineLayout, detail::PipelineLayoutDeleter>;
+using SharedDescriptorSet = SharedResourceHandle<ResourceType::DescriptorSet, detail::DescriptorSetDeleter>;
+using SharedSampler = SharedResourceHandle<ResourceType::Sampler, detail::SamplerDeleter>;
+
 }
 
 /** hash functions */
 namespace std
 {
-	template<> struct hash<ze::gfx::ResourceHandle>
-	{
-		ZE_FORCEINLINE uint64_t operator()(const ze::gfx::ResourceHandle& in_handle) const
-		{
-			return std::hash<uint64_t>()(in_handle.handle);
-		}
-	};
-
 	template<> struct hash<ze::gfx::BufferCreateInfo>
 	{
 		ZE_FORCEINLINE uint64_t operator()(const ze::gfx::BufferCreateInfo& in_create_info) const

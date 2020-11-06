@@ -259,4 +259,40 @@ void VulkanBackend::cmd_copy_buffer_to_texture(const ResourceHandle& in_cmd_list
 		regions);
 }
 
+void VulkanBackend::cmd_copy_texture(const ResourceHandle& in_cmd_list,
+	const ResourceHandle& in_src_texture,
+	const TextureLayout in_src_layout,
+	const ResourceHandle& in_dst_texture,
+	const TextureLayout in_dst_layout,
+	const std::vector<TextureCopyRegion>& in_regions)
+{
+	CommandList* list = CommandList::get(in_cmd_list);
+	ZE_CHECKF(list, "Invalid command list given to cmd_copy_texture");
+
+	Texture* src_texture = Texture::get(in_src_texture);
+	ZE_CHECKF(src_texture, "Invalid source texture given to cmd_copy_texture");
+	
+	Texture* dst_texture = Texture::get(in_dst_texture);
+	ZE_CHECKF(dst_texture, "Invalid destination texture given to cmd_copy_texture");
+	
+	std::vector<vk::ImageCopy> regions;
+	regions.reserve(in_regions.size());
+	for(const auto& region : in_regions)
+	{
+		regions.emplace_back(
+			convert_texture_subresource_layers(region.src_subresource),
+			convert_offset3D(region.src_offset),
+			convert_texture_subresource_layers(region.dst_subresource),
+			convert_offset3D(region.dst_offset),
+			convert_extent3D(region.extent));
+	}
+	
+	list->get_buffer().copyImage(
+		src_texture->get_image(),
+		convert_texture_layout(in_src_layout),
+		dst_texture->get_image(),
+		convert_texture_layout(in_dst_layout),
+		regions);
+}
+
 }

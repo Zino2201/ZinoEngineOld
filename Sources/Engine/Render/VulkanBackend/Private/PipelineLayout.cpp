@@ -167,9 +167,11 @@ vk::DescriptorSet PipelineLayout::allocate_set_internal(PoolEntry& in_pool, cons
 			*in_pool.pool,
 			1,
 			&*set_layouts[in_set]));
-	ZE_CHECKF(result == vk::Result::eSuccess, "Failed to allocate descriptor set");
+	ZE_CHECKF(result == vk::Result::eSuccess, "Failed to allocate descriptor set: {}", vk::to_string(result));
 	if (result != vk::Result::eSuccess)
 		ze::logger::error("Failed to allocate descriptor set: {}", vk::to_string(result));
+
+	in_pool.allocations++;
 
 	return handle.front();
 }

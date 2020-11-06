@@ -31,6 +31,11 @@ public:
 		CommandPool& in_pool,
 		const vk::CommandBuffer& buffer);
 
+	CommandList(CommandList&& other) :
+		device(other.device),
+		pool(other.pool),
+		buffer(std::exchange(other.buffer, vk::CommandBuffer())) {}
+
 	static CommandList* get(const ResourceHandle& in_handle);
 
 	ZE_FORCEINLINE bool is_valid() const { return !!buffer; }

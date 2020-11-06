@@ -35,6 +35,7 @@ public:
 
 	ZE_FORCEINLINE vk::SwapchainKHR& get_swapchain() { return *swapchain; }
 	ZE_FORCEINLINE ResourceHandle get_backbuffer() { return *image_views[current_image]; }
+	ZE_FORCEINLINE ResourceHandle get_backbuffer_texture() { return *images[current_image]; }
 private:
 	vk::SurfaceFormatKHR choose_swapchain_format(const std::vector<vk::SurfaceFormatKHR>& in_formats) const;
 	vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& in_present_modes) const;

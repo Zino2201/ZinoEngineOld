@@ -125,7 +125,8 @@ DescriptorSet::DescriptorSet(Device& in_device, const DescriptorSetCreateInfo& i
 
 DescriptorSet::~DescriptorSet()
 {
-	layout->free_set(set_idx, set);
+	if(set)
+		layout->free_set(set_idx, set);
 }
 
 DescriptorSet* DescriptorSet::get(const ResourceHandle& in_handle)

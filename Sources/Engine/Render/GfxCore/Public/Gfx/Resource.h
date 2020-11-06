@@ -1,6 +1,8 @@
 #pragma once
 
+#include "EngineCore.h"
 #include <cstdint>
+#include <functional>
 
 namespace ze::gfx
 {
@@ -84,4 +86,15 @@ struct ResourceHandle
 	}
 };
 
+}
+
+namespace std
+{
+	template<> struct hash<ze::gfx::ResourceHandle>
+	{
+		ZE_FORCEINLINE uint64_t operator()(const ze::gfx::ResourceHandle& in_handle) const
+		{
+			return in_handle.handle;
+		}
+	};
 }

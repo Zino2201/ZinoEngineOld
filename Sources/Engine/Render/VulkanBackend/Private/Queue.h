@@ -14,6 +14,12 @@ public:
 	Queue(Device& in_device, const uint32_t& in_family,
 		const uint32_t& in_idx);
 
+	Queue(Queue&& other) :
+		device(other.device),
+		family(std::move(other.family)),
+		idx(std::move(other.idx)),
+		queue(std::exchange(other.queue, vk::Queue())) {}
+
 	static Queue* get(const ResourceHandle& in_handle);
 
 	ZE_FORCEINLINE const uint32_t& get_family() const { return family; }

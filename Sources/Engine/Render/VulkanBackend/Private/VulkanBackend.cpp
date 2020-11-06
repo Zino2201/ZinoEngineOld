@@ -203,7 +203,7 @@ std::pair<bool, std::string> VulkanBackend::initialize()
 	{
 		vk::DebugUtilsMessengerCreateInfoEXT create_infos(
 			vk::DebugUtilsMessengerCreateFlagsEXT(),
-			vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+			vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo |
 			vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
 			vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
 			vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |

@@ -4,6 +4,7 @@
 
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_ASSERT ZE_ASSERT
+#define VULKAN_HPP_ASSERT_ON_RESULT
 #define VMA_ASSERT(expr) ZE_ASSERT(expr)
 
 #include <vulkan/vulkan.hpp>
