@@ -197,7 +197,12 @@ void ProcessCppStruct(std::ofstream& File, const CStruct& InStruct)
 	std::string Type = GetObjectType(InStruct.GetNamespace(), InStruct.GetName());
 	std::string BuilderName = "Builder_" + InStruct.GetName();
 
-	File << "\t" << GStructBuilder << "<" << Type << "> " << BuilderName << "(";
+	File << "\t" << GStructBuilder << "<" << Type << "> " << BuilderName;
+	
+	if(InStruct.GetFlags() == EStructFlags::None)
+		File << ";";
+	else
+		File << "(";
 
 	bool bHasAddedFlag = false;
 	if(HAS_FLAG(InStruct.GetFlags(), EStructFlags::HideInEditor))
@@ -207,7 +212,8 @@ void ProcessCppStruct(std::ofstream& File, const CStruct& InStruct)
 		File << "ClassFlagBits::HideInEditor";
 	}
 	
-	File << ");\n";
+	if(InStruct.GetFlags() != EStructFlags::None)
+		File << ");\n";
 
 	ProcessCtors(File, InStruct);
 	for(const auto& Property : InStruct.GetProperties())

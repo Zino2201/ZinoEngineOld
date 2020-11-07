@@ -206,6 +206,8 @@ void VulkanBackend::cmd_bind_descriptor_sets(const ResourceHandle& in_cmd_list,
 	ZE_CHECKF(list, "Invalid command list given to cmd_bind_descriptor_sets");
 
 	PipelineLayout* layout = PipelineLayout::get(in_pipeline_layout);
+	ZE_CHECKF(layout, "Invalid pipeline layout given to cmd_bind_descriptor_sets");
+
 	std::vector<vk::DescriptorSet> sets;
 	sets.reserve(in_descriptor_sets.size());
 	for(const auto& desc_set : in_descriptor_sets)
@@ -221,6 +223,27 @@ void VulkanBackend::cmd_bind_descriptor_sets(const ResourceHandle& in_cmd_list,
 		in_first_set,
 		sets,
 		{});
+}
+
+void VulkanBackend::cmd_push_constants(const ResourceHandle& in_cmd_list,
+	const ResourceHandle& in_pipeline_layout,
+	const ShaderStageFlags in_shader_stage_flags,
+	const uint32_t in_offset,
+	const uint32_t in_size,
+	const void* in_values)
+{
+	CommandList* list = CommandList::get(in_cmd_list);
+	ZE_CHECKF(list, "Invalid command list given to cmd_push_constants");
+
+	PipelineLayout* layout = PipelineLayout::get(in_pipeline_layout);
+	ZE_CHECKF(layout, "Invalid pipeline layout given to cmd_push_constants");
+
+	list->get_buffer().pushConstants(
+		layout->get_layout(),
+		convert_shader_stage_flags(in_shader_stage_flags),
+		in_offset,
+		in_size,
+		in_values);
 }
 
 /** Transfer commands */

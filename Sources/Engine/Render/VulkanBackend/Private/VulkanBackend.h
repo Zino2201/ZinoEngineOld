@@ -126,6 +126,12 @@ public:
 		const ResourceHandle& in_pipeline_layout,
 		const uint32_t& in_first_set,
 		const std::vector<ResourceHandle>& in_descriptor_sets) override;
+	void cmd_push_constants(const ResourceHandle& in_cmd_list,
+		const ResourceHandle& in_pipeline_layout,
+		const ShaderStageFlags in_shader_stage_flags,
+		const uint32_t in_offset,
+		const uint32_t in_size,
+		const void* in_values) override;
 	/** Transfers cmd */
 	void cmd_copy_buffer_to_texture(const ResourceHandle& in_cmd_list,
 		const ResourceHandle& in_src_buffer,

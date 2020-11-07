@@ -665,6 +665,11 @@ struct PushConstantRange
 	ShaderStageFlags stage_flags;
 	uint32_t offset;
 	uint32_t size;
+
+	PushConstantRange(const ShaderStageFlags& in_stage_flags,
+		const uint32_t& in_offset,
+		const uint32_t& in_size) : stage_flags(in_stage_flags),
+		offset(in_offset), size(in_size) {}
 };
 
 struct PipelineLayoutCreateInfo
@@ -1242,6 +1247,17 @@ public:
 		const ResourceHandle& in_pipeline_layout,
 		const uint32_t& in_first_set,
 		const std::vector<ResourceHandle>& in_descriptor_sets) = 0;
+
+
+	/**
+	 * Update push constants
+	 */
+	virtual void cmd_push_constants(const ResourceHandle& in_cmd_list,
+		const ResourceHandle& in_pipeline_layout,
+		const ShaderStageFlags in_shader_stage_flags,
+		const uint32_t in_offset,
+		const uint32_t in_size,
+		const void* in_values) = 0;
 
 	/** Transfer related commands */
 	
