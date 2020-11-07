@@ -16,6 +16,7 @@ public:
 	virtual ~PropertyImplBase() = default;
 
 	virtual Any get_value(const void* instance) const { return {}; }
+	virtual void* get_value_ptr(const void* instance) const { return {}; }
 	virtual void set_value(const void* instance, const std::any& value) const {}
 protected:
 	size_t offset;
@@ -33,6 +34,11 @@ public:
 	Any get_value(const void* instance) const override
 	{
 		return Any(reinterpret_cast<T&>(*reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(instance) + offset)));
+	}
+
+	void* get_value_ptr(const void* instance) const override
+	{
+		return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(instance) + offset);
 	}
 
 	void set_value(const void* instance, const std::any& value) const override

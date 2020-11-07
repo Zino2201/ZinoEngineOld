@@ -54,7 +54,8 @@ void ProcessHeaderStructOrClass(std::ofstream& File, const CStruct& InStruct,
 	/** Generate body macro */
 	File << "#define " << GReflBodyDefMacro << CurrentFileUniqueId << "_" <<
 		InStruct.GetBodyLine() << " ";
-	File << GDeclareStructMacro << Type << ")\n";
+	if(bIsClass) File << GDeclareStructMacro << Type << ")\n";
+	else File << "ZE_REFL_DECLARE_STRUCT_BODY(" << Type << ")\n";
 	File << "\n";
 }
 
@@ -143,9 +144,25 @@ void ProcessProperty(std::ofstream& File, const std::string& InType,
 	bool bHasAddedFlag = false;
 	if(HAS_FLAG(InProperty.Flags, EPropertyFlags::Serializable))
 	{
+		if(bHasAddedFlag) File << "| ";
 		bHasAddedFlag = true;
 		File << "PropertyFlagBits::Serializable";
 	}
+
+	if(HAS_FLAG(InProperty.Flags, EPropertyFlags::Visible))
+	{
+		if(bHasAddedFlag) File << "| ";
+		File << "PropertyFlagBits::Visible";
+		bHasAddedFlag = true;
+	}
+
+	if(HAS_FLAG(InProperty.Flags, EPropertyFlags::Editable))
+	{
+		if(bHasAddedFlag) File << "| ";
+		bHasAddedFlag = true;
+		File << "PropertyFlagBits::Editable";
+	}
+
 	File << ");";
 }
 
@@ -180,15 +197,23 @@ void ProcessCppStruct(std::ofstream& File, const CStruct& InStruct)
 	std::string Type = GetObjectType(InStruct.GetNamespace(), InStruct.GetName());
 	std::string BuilderName = "Builder_" + InStruct.GetName();
 
-	File << "\t" << GStructBuilder << "<" << Type << "> " << BuilderName
-		<< ";\n";
+	File << "\t" << GStructBuilder << "<" << Type << "> " << BuilderName << "(";
+
+	bool bHasAddedFlag = false;
+	if(HAS_FLAG(InStruct.GetFlags(), EStructFlags::HideInEditor))
+	{
+		if(bHasAddedFlag) File << "| ";
+		bHasAddedFlag = true;
+		File << "ClassFlagBits::HideInEditor";
+	}
+	
+	File << ");\n";
+
 	ProcessCtors(File, InStruct);
 	for(const auto& Property : InStruct.GetProperties())
 		ProcessProperty(File, Type, InStruct, Property);
 	ProcessParents(File, InStruct);
 	File << ";\n";
-	File << "\tStaticStruct_" << InStruct.GetName() << " = "
-		<< "Builder_" << InStruct.GetName() << ".GetStruct();\n";
 }
 
 void ProcessCppClass(std::ofstream& File, const CClass& InClass)

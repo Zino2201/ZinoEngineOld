@@ -24,6 +24,11 @@ Any Property::get_value(const void* instance) const
 	return impl->get_value(instance);
 }
 
+void* Property::get_value_ptr(const void* instance) const
+{
+	return impl->get_value_ptr(instance);
+}
+
 void Property::set_value(const void* instance, const std::any& value) const
 {
 	impl->set_value(instance, value);

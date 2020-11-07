@@ -221,11 +221,37 @@ void CParser::BeginStructOrClass(const EType& InNewType,
 	 *	and + 2 "public" or "private"
 	 */
 	size_t PossibleParentWordIdx = NameWordIdx + 3;
+	const std::string& Line = InLines[ParentLine];
+	std::vector<std::string> Words = Tokenize(Line);
+	if(NameWordIdx + 1 < Words.size() && Words[NameWordIdx + 1] == "final")
+		PossibleParentWordIdx++;
 
 	std::vector<std::string> Parents;
 
+	EStructFlags Flags = EStructFlags::None;
+
 	if(!bIgnorePropertiesAndFunctions)
 	{
+		/**
+		 * Parse macro metadata
+		 */
+		std::vector<std::string> MetaWords = Tokenize(InLines[NameIdx - 1], '(');
+		if(MetaWords.size() > 1)
+		{
+			MetaWords = Tokenize(MetaWords[1], ',');
+			for(auto& Word : MetaWords)
+			{
+				/** Sanitize word */
+				Word.erase(std::remove_if(Word.begin(), Word.end(), isspace), Word.end());
+				Word.erase(std::remove(Word.begin(), Word.end(), '('), Word.end());
+				Word.erase(std::remove(Word.begin(), Word.end(), ')'), Word.end());
+				
+				auto Flag = GStructClassMap.find(Word);
+				if(Flag != GStructClassMap.end())
+					Flags |= Flag->second;
+			}
+		}
+
 		while(true)
 		{
 			const std::string& Line = InLines[ParentLine];
@@ -234,6 +260,7 @@ void CParser::BeginStructOrClass(const EType& InNewType,
 				break;
 
 			std::string Parent = Words[PossibleParentWordIdx];
+
 			Parent.erase(std::remove(Parent.begin(), Parent.end(), ','), Parent.end());
 			size_t LastNamespacePos = Parent.find_last_of("::");
 			if(LastNamespacePos != std::string::npos)
@@ -281,6 +308,7 @@ void CParser::BeginStructOrClass(const EType& InNewType,
 		if (CurrentType == EType::Struct)
 		{
 			CurrentStruct = &Header->AddStruct(CurrentObjectName, CurrentNamespace, InLine + 1);
+			CurrentStruct->GetFlags() = Flags;
 		}
 		else
 		{
@@ -365,7 +393,9 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 			/** Search for ctors */
 			if (InWords[0].find(CurrentStruct->GetName() + "(") != std::string::npos &&
 				InWords[0].find("~") == std::string::npos &&
-				InWords[0].find("()") == std::string::npos)
+				InWords[0].find("()") == std::string::npos &&
+				InLines[InLine].find("delete") == std::string::npos &&
+				InLines[InLine].find("default") == std::string::npos)
 			{
 				std::string FCtor;
 

@@ -1,6 +1,7 @@
 #include "Reflection/Registration.h"
 #include "Reflection/Builders.h"
 #include "Module/Module.h"
+#include "Maths/Vector.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, Reflection);
 
@@ -22,6 +23,9 @@ ZE_REFL_BUILDER_FUNC(Reflection_Primitives)
 	builders::TypeBuilder<int16_t>();
 	builders::TypeBuilder<int32_t>();
 	builders::TypeBuilder<int64_t>();
+
+	builders::ClassBuilder<ze::maths::Vector3f>();
+	builders::ClassBuilder<ze::maths::Vector3d>();
 }
 
 }

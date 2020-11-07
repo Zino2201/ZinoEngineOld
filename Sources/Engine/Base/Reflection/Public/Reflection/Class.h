@@ -78,9 +78,10 @@ private:
 
 enum class ClassFlagBits
 {
-	None = 0,
+	Abstract = 1 << 0,
 
-	Abstract = 1 << 0
+	/** Hide this class in editor */
+	HideInEditor = 1 << 1,
 };
 ENABLE_FLAG_ENUMS(ClassFlagBits, ClassFlags)
 

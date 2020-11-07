@@ -25,6 +25,8 @@ enum class EPropertyFlags
 	None = 0,
 
 	Serializable = 1 << 0,
+	Visible = 1 << 1,
+	Editable = 1 << 2,
 };
 DECLARE_FLAG_ENUM(EPropertyFlags);
 
@@ -53,7 +55,22 @@ struct SProperty
 
 static const robin_hood::unordered_map<std::string, EPropertyFlags> GPropFlagMap = 
 {
-	{ "Serializable", EPropertyFlags::Serializable}
+	{ "Serializable", EPropertyFlags::Serializable },
+	{ "Visible", EPropertyFlags::Visible },
+	{ "Editable", EPropertyFlags::Editable },
+};
+
+enum class EStructFlags
+{
+	None = 1 << 0,
+
+	HideInEditor = 1 << 1,
+};
+DECLARE_FLAG_ENUM(EStructFlags);
+
+static const robin_hood::unordered_map<std::string, EStructFlags> GStructClassMap = 
+{
+	{ "HideInEditor", EStructFlags::HideInEditor },
 };
 
 /**
@@ -123,12 +140,15 @@ public:
 	const std::vector<std::string>& GetCtors() const { return Ctors; }
 	const size_t& GetBodyLine() const { return BodyLine; }
 	const size_t& GetDeclLine() const { return DeclLine; }
+	EStructFlags& GetFlags() { return flags; }
+	const EStructFlags& GetFlags() const { return flags; }
 private:
 	std::string Name;
 	std::vector<SProperty> Properties;
 	std::vector<std::string> Parents;
 	std::string Namespace;
 	std::vector<std::string> Ctors;
+	EStructFlags flags = EStructFlags::None;
 	size_t BodyLine;
 	size_t DeclLine;
 };

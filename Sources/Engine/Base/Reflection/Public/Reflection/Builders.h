@@ -54,13 +54,14 @@ struct TypeBuilder
 template<typename T>
 struct ClassBuilder : public TypeBuilder<T, Class>
 {
-	ClassBuilder() : TypeBuilder<T, Class>() 
+	ClassBuilder(ClassFlags in_flags = ClassFlags()) : TypeBuilder<T, Class>() 
 	{
 		class_ = static_cast<const Class*>(type);
 
 		auto& class_flags = const_cast<ClassFlags&>(class_->get_class_flags());
 		if constexpr(std::is_abstract_v<T>)
-			class_flags |= ClassFlagBits::Abstract;
+			in_flags |= ClassFlagBits::Abstract;
+		class_flags = in_flags;
 	}
 
 	ClassBuilder& parent(const std::string& in_name)

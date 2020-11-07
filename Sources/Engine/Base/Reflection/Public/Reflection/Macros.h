@@ -17,9 +17,15 @@
 	ZE_REFL_DECLARE_TYPE(InClass) \
 	template<> static constexpr bool ze::reflection::IsReflClass<InClass> = true;
 	
-#define ZE_REFL_DECLARE_CLASS_BODY(InClass) \
+#define ZE_REFL_DECLARE_STRUCT_BODY(InStruct) \
 	friend void ze::reflection::initialize_reflection_data(); \
-	virtual const ze::reflection::Class* get_class() const { return ze::reflection::Class::get<InClass>(); }
+
+#define ZE_REFL_DECLARE_CLASS_BODY(InClass) \
+	public: \
+	friend void ze::reflection::initialize_reflection_data(); \
+	virtual const ze::reflection::Class* get_class() const { return ze::reflection::Class::get<InClass>(); } \
+	private:
+
 
 #define ZE_REFL_DECLARE_ENUM(InEnum) \
 	ZE_REFL_DECLARE_TYPE(InEnum) \
@@ -34,8 +40,12 @@
 #define ZPROPERTY(...)
 #define ZFUNCTION(...)
 
+#if __INTELLISENSE__
+#define ZE_REFL_BODY()
+#else
 /** Macro used for ZRT to generate a body */
 #define ZE_REFL_BODY() ZE_CONCAT(ZE_CONCAT(ZE_CONCAT(ZE_Refl_Body_, ZE_CURRENT_FILE_UNIQUE_ID), _), __LINE__)
+#endif
 
 ZE_REFL_DECLARE_TYPE(bool)
 ZE_REFL_DECLARE_TYPE(float)
@@ -50,6 +60,9 @@ ZE_REFL_DECLARE_TYPE(int8_t)
 ZE_REFL_DECLARE_TYPE(int16_t)
 ZE_REFL_DECLARE_TYPE(int32_t)
 ZE_REFL_DECLARE_TYPE(int64_t)
+
+ZE_REFL_DECLARE_TYPE(ze::maths::Vector3d)
+ZE_REFL_DECLARE_TYPE(ze::maths::Vector3f)
 
 template<typename T> static constexpr bool ze::reflection::IsReflType<std::vector<T>> = true;
 template<typename T> static constexpr const char* ze::reflection::type_name<std::vector<T>> = "std::vector";

@@ -17,6 +17,8 @@ enum class PropertyFlagBits
 	None = 0,
 
 	Serializable = 1 << 0,
+	Visible = 1 << 1,
+	Editable = 1 << 2,
 };
 ENABLE_FLAG_ENUMS(PropertyFlagBits, PropertyFlags)
 
@@ -34,6 +36,12 @@ public:
 	void operator=(const Property&) = delete;
 
 	Any get_value(const void* instance) const;
+
+	/**
+	 * Get a pointer to the contained value
+	 * \param instance
+	 */
+	void* get_value_ptr(const void* instance) const;
 	void set_value(const void* instance, const std::any& value) const;
 
 	ZE_FORCEINLINE const std::string& get_name() const { return name; }

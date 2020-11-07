@@ -62,13 +62,17 @@ static const std::map<std::string_view, std::string_view> GKnownUnsupportedTypes
 	{ "int", "int32_t" },
 }; 
 
-static constexpr std::array<std::string_view, 5> GAcceptedTemplatedTypes =
+static constexpr std::array<std::string_view, 9> GAcceptedTemplatedTypes =
 {
 	"std::vector",
 	"robin_hood::unordered_map",
 	"robin_hood::unordered_set",
 	"std::unordered_map",
 	"std::unordered_set",
+	"maths::Vector3d",
+	"maths::Vector3f",
+	"ze::maths::Vector3f",
+	"ze::maths::Vector3d",
 };
 
 /**
