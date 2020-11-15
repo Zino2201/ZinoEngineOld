@@ -175,20 +175,23 @@ CParser::CParser(CHeader* InHeader, const std::string_view& InPathHeader,
 			ParseLine(Lines, Words, i);
 		}
 
-		/**
-		 * Search for structs or classes
-		 */
-		if (Words[0].find("struct") != std::string::npos) 
+		if(!CurrentStruct && !CurrentEnum)
 		{
-			BeginStructOrClass(EType::Struct, Lines, Words, i);
-		}
-		else if(Words[0].find("class") != std::string::npos)
-		{
-			BeginStructOrClass(EType::Class, Lines, Words, i);
-		}
-		else if(Words[0].find("enum") != std::string::npos)
-		{
-			BeginEnum(Lines, Words, i);
+			/**
+			 * Search for structs or classes
+			 */
+			if (Words[0].find("struct") != std::string::npos) 
+			{
+				BeginStructOrClass(EType::Struct, Lines, Words, i);
+			}
+			else if(Words[0].find("class") != std::string::npos)
+			{
+				BeginStructOrClass(EType::Class, Lines, Words, i);
+			}
+			else if(Words[0].find("enum") != std::string::npos)
+			{
+				BeginEnum(Lines, Words, i);
+			}
 		}
 	}
 }
@@ -409,7 +412,7 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 					if(Args[CurrentWord] != ")")
 					{
 						// spaghetti hell
-						std::vector<std::string> CtorTypeTokenized = Tokenize(Args[CurrentWord]);
+						std::vector<std::string> CtorTypeTokenized = Tokenize(Args[CurrentWord], ' ');
 						std::vector<size_t> TokensToErase;
 						for(size_t i = 0; i < CtorTypeTokenized.size(); ++i)
 							if(CtorTypeTokenized[i].find(")") != std::string::npos)
@@ -422,10 +425,13 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 						for(const auto& Word : CtorTypeTokenized)
 							CtorType += Word + " ";
 						if(CtorType.find_last_of(':') != std::string::npos)
-							CtorType.erase(CtorType.begin() + CtorType.find_last_of(':'));
+						{
+							CtorType.erase(CtorType.begin() + CtorType.find_last_of(':'), CtorType.end());
+						}
 						if(!FCtor.empty())
 							FCtor += ",";
 						CtorType.erase(std::remove(CtorType.begin(), CtorType.end(), '='), CtorType.end());
+						std::cout << CtorType << std::endl;
 						FCtor += CtorType;
 					}
 					else break;

@@ -54,7 +54,7 @@ void tick(TickFlagBits in_flag_bit, const float in_delta_time)
 	 */
 	while(!tickable_queue.empty())
 	{
-		Tickable* tickable = tickable_queue.back();
+		Tickable* tickable = tickable_queue.front();
 		tickable_queue.pop();
 		if(!tickable->can_ever_tick())
 			continue;
