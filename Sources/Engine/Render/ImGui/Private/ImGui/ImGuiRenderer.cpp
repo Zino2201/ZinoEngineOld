@@ -27,6 +27,7 @@ gfx::UniqueShader fs;
 gfx::UniqueSampler sampler;
 void* ubo_data = nullptr;
 std::unique_ptr<ImDrawData> draw_data;
+std::unordered_map<gfx::ResourceHandle, gfx::ResourceHandle> descriptor_set_map;
 
 bool initialize(const gfx::ResourceHandle& in_cmd_list, const gfx::ResourceHandle& in_renderpass)
 {
@@ -258,10 +259,19 @@ bool initialize(const gfx::ResourceHandle& in_cmd_list, const gfx::ResourceHandl
 	return true;
 }
 
+void free_all_sets()
+{
+	for(const auto& [blc, set] : descriptor_set_map)
+		gfx::RenderBackend::get().descriptor_set_destroy(set);
+
+	descriptor_set_map.clear();
+}
+
 void destroy()	
 {
 	gfx::RenderBackend::get().buffer_unmap(*ubo);
 
+	free_all_sets();
 	descriptor_set.reset();
 	pipeline_layout.reset();
 	pipeline.reset();
@@ -374,9 +384,31 @@ void update()
 	gfx::RenderBackend::get().buffer_unmap(*index_buffer);
 }
 
+gfx::ResourceHandle get_or_create_descriptor_set(const gfx::ResourceHandle& in_texture_view)
+{
+	auto set = descriptor_set_map.find(in_texture_view);
+	if(set != descriptor_set_map.end())
+		return set->second;
+
+	auto [set_result, set_handle] = gfx::RenderBackend::get().descriptor_set_create(
+		gfx::DescriptorSetCreateInfo(
+			*pipeline_layout,
+			{	
+				gfx::Descriptor(gfx::DescriptorType::UniformBuffer, 0, gfx::DescriptorBufferInfo(*ubo)),
+				gfx::Descriptor(gfx::DescriptorType::SampledTexture, 1, gfx::DescriptorTextureInfo(in_texture_view, 
+					gfx::TextureLayout::ShaderReadOnly)),
+				gfx::Descriptor(gfx::DescriptorType::Sampler, 2, gfx::DescriptorTextureInfo(*sampler)),
+			}));
+	descriptor_set_map.insert({ in_texture_view, set_handle });
+
+	return set_handle;
+}
+
 void draw(const gfx::ResourceHandle& in_cmd_list)
 {
 	ImGuiIO& io = ImGui::GetIO();
+
+	free_all_sets();
 
 	/** Update UBO */
 	GlobalData gd;
@@ -387,12 +419,6 @@ void draw(const gfx::ResourceHandle& in_cmd_list)
 	gfx::RenderBackend::get().cmd_bind_pipeline(in_cmd_list,
 		gfx::PipelineBindPoint::Gfx,
 		*pipeline);
-
-	gfx::RenderBackend::get().cmd_bind_descriptor_sets(in_cmd_list,
-		gfx::PipelineBindPoint::Gfx,
-		*pipeline_layout,
-		0,
-		{ *descriptor_set });
 
 	uint32_t vertex_offset = 0;
 	uint32_t index_offset = 0;
@@ -411,14 +437,23 @@ void draw(const gfx::ResourceHandle& in_cmd_list)
 			for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++)
 			{
 				ImDrawCmd* cmd = &cmd_list->CmdBuffer[j];
-
-				//Math::SRect2D Scissor;
-				//Scissor.Position.x = std::max(Cmd->ClipRect.x, 0.f);
-				//Scissor.Position.y = std::max(Cmd->ClipRect.y, 0.f);
-				//Scissor.Size.x = Cmd->ClipRect.z - Cmd->ClipRect.x;
-				//Scissor.Size.y = Cmd->ClipRect.w - Cmd->ClipRect.y;
-
-				//InContext->SetScissors({ Scissor });
+				
+				if(cmd->TextureId)
+				{
+					gfx::RenderBackend::get().cmd_bind_descriptor_sets(in_cmd_list,
+						gfx::PipelineBindPoint::Gfx,
+						*pipeline_layout,
+						0,
+						{ get_or_create_descriptor_set(*reinterpret_cast<gfx::ResourceHandle*>(cmd->TextureId)) });
+				}
+				else
+				{
+					gfx::RenderBackend::get().cmd_bind_descriptor_sets(in_cmd_list,
+						gfx::PipelineBindPoint::Gfx,
+						*pipeline_layout,
+						0,
+						{ *descriptor_set });
+				}
 
 				gfx::RenderBackend::get().cmd_set_scissor(in_cmd_list,
 					0,
@@ -426,7 +461,7 @@ void draw(const gfx::ResourceHandle& in_cmd_list)
 						maths::Rect2D(
 							maths::Vector2f(std::max<int32_t>(cmd->ClipRect.x, 0),
 								std::max<int32_t>(cmd->ClipRect.y, 0)),
-							maths::Vector2f (
+							maths::Vector2f(
 								cmd->ClipRect.z - cmd->ClipRect.x,
 								cmd->ClipRect.w - cmd->ClipRect.y))
 					});
