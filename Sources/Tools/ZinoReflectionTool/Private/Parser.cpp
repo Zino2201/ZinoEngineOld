@@ -175,23 +175,20 @@ CParser::CParser(CHeader* InHeader, const std::string_view& InPathHeader,
 			ParseLine(Lines, Words, i);
 		}
 
-		if(!CurrentStruct && !CurrentEnum)
+		/**
+		 * Search for structs or classes
+		 */
+		if (Words[0].find("struct") != std::string::npos) 
 		{
-			/**
-			 * Search for structs or classes
-			 */
-			if (Words[0].find("struct") != std::string::npos) 
-			{
-				BeginStructOrClass(EType::Struct, Lines, Words, i);
-			}
-			else if(Words[0].find("class") != std::string::npos)
-			{
-				BeginStructOrClass(EType::Class, Lines, Words, i);
-			}
-			else if(Words[0].find("enum") != std::string::npos)
-			{
-				BeginEnum(Lines, Words, i);
-			}
+			BeginStructOrClass(EType::Struct, Lines, Words, i);
+		}
+		else if(Words[0].find("class") != std::string::npos)
+		{
+			BeginStructOrClass(EType::Class, Lines, Words, i);
+		}
+		else if(Words[0].find("enum") != std::string::npos)
+		{
+			BeginEnum(Lines, Words, i);
 		}
 	}
 }
@@ -200,11 +197,6 @@ void CParser::BeginStructOrClass(const EType& InNewType,
 	const std::vector<std::string>& InLines,
 	const std::vector<std::string>& InWords, const size_t& InLine)
 {
-	size_t NameIdx = InLine;
-	size_t NameWordIdx = 0;
-	CurrentObjectName = GetObjectName(InLines, InWords, InLine, NameIdx,
-		NameWordIdx);
-
 	/**
 	 * Detect if this struct/class has a ZSTRUCT or ZCLASS macro
 	 */
@@ -214,6 +206,11 @@ void CParser::BeginStructOrClass(const EType& InNewType,
 			NestedEncounters++;
 		return;
 	}
+
+	size_t NameIdx = InLine;
+	size_t NameWordIdx = 0;
+	CurrentObjectName = GetObjectName(InLines, InWords, InLine, NameIdx,
+		NameWordIdx);
 
 	/**
 	 * Parse parent structures/classes

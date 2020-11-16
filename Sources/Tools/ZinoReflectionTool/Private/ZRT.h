@@ -39,7 +39,7 @@ std::vector<std::string> Tokenize(const std::string& InString,
 /**
  * Types
  */
-static constexpr std::array<std::string_view, 10> GAcceptedTypes =
+static constexpr std::array<std::string_view, 12> GAcceptedTypes =
 {
 	"bool",
 	"long",
@@ -50,7 +50,9 @@ static constexpr std::array<std::string_view, 10> GAcceptedTypes =
 	"int8_t",
 	"int16_t",
 	"int32_t",
-	"int64_t"
+	"int64_t",
+	"float",
+	"double"
 };
 
 static const std::map<std::string_view, std::string_view> GKnownUnsupportedTypes =
