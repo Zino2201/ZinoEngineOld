@@ -9,9 +9,6 @@
 
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
-#if ZE_PLATFORM(WINDOWS)
-#include <vulkan/vulkan_win32.h>
-#endif
 
 #define ZE_ENABLE_VULKAN_DEBUG_FEATURES ZE_FEATURE(DEVELOPMENT)
 
