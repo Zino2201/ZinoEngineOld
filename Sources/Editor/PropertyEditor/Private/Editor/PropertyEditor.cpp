@@ -18,7 +18,8 @@ public:
 
 		ImGui::PushID(in_label);
 
-		if(ImGui::BeginCombo(in_label, e->get_value_name(current_value).c_str()))
+		std::string n = e->get_value_name(current_value).c_str();
+		if(ImGui::BeginCombo(in_label, n.c_str()))
 		{
 			for(const auto& [name, value] : e->get_values())
 			{

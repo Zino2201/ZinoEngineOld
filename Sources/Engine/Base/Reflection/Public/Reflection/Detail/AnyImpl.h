@@ -50,14 +50,14 @@ struct AnyPolicyBase
 		}
 		case VisitType::Equals:
 		{
-			std::pair<const Any&, const Any&>* pair = reinterpret_cast<std::pair<const Any&, const Any&>*>(&any_data);
-			const reflection::Type* left_type = pair->first.get_type();
-			const reflection::Type* right_type = pair->second.get_type();
+			std::array<const Any*, 2>* anys = reinterpret_cast<std::array<const Any*, 2>*>(&any_data);
+			const reflection::Type* left_type = anys->at(0)->get_type();
+			const reflection::Type* right_type = anys->at(1)->get_type();
 			
 			if(left_type == right_type)
 			{
-				return Policy::equals(pair->first.get_value<T>(), 
-					pair->second.get_value<T>());
+				return std::make_any<bool>(Policy::equals(anys->at(0)->get_value<T>(), 
+					anys->at(1)->get_value<T>()));
 			}
 			else
 			{
@@ -65,22 +65,22 @@ struct AnyPolicyBase
 				{
 					if(right_type->is_arithmetic())
 					{
-						return Policy::equals(*reinterpret_cast<uint64_t*>(pair->first.get_value_ptr()), 
-							*reinterpret_cast<uint64_t*>(pair->second.get_value_ptr()));
+						return std::make_any<bool>(Policy::equals(*reinterpret_cast<uint64_t*>(anys->at(0)->get_value_ptr()), 
+							*reinterpret_cast<uint64_t*>(anys->at(1)->get_value_ptr())));
 					}
 				}
 			}
 		}
 		case VisitType::NotEquals:
 		{
-			std::pair<const Any&, const Any&>* pair = reinterpret_cast<std::pair<const Any&, const Any&>*>(&any_data);
-			const reflection::Type* left_type = pair->first.get_type();
-			const reflection::Type* right_type = pair->second.get_type();
+			std::array<const Any*, 2>* anys = reinterpret_cast<std::array<const Any*, 2>*>(&any_data);
+			const reflection::Type* left_type = anys->at(0)->get_type();
+			const reflection::Type* right_type = anys->at(1)->get_type();
 			
 			if(left_type == right_type)
 			{
-				return Policy::not_equals(pair->first.get_value<T>(), 
-					pair->second.get_value<T>());
+				return std::make_any<bool>(Policy::equals(anys->at(0)->get_value<T>(), 
+					anys->at(1)->get_value<T>()));
 			}
 			else
 			{
@@ -88,8 +88,8 @@ struct AnyPolicyBase
 				{
 					if(right_type->is_arithmetic())
 					{
-						return Policy::not_equals(*reinterpret_cast<uint64_t*>(pair->first.get_value_ptr()), 
-							*reinterpret_cast<uint64_t*>(pair->second.get_value_ptr()));
+						return std::make_any<bool>(Policy::not_equals(*reinterpret_cast<uint64_t*>(anys->at(0)->get_value_ptr()), 
+							*reinterpret_cast<uint64_t*>(anys->at(1)->get_value_ptr())));
 					}
 				}
 			}

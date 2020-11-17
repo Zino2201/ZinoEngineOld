@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <cstdint>
 #include "Detail/AnyImpl.h"
+#include <array>
 
 namespace ze::reflection
 {
@@ -14,6 +15,12 @@ class Any
 {
 public:
 	Any() : visit_func(&detail::AnyPolicyEmpty::visit) {}
+
+	Any(const Any& in_other)
+		: visit_func(in_other.visit_func)
+	{
+		memcpy(&data, &in_other.data, sizeof(data));
+	}
 
 	template<typename T, typename Decayed = std::decay_t<T>>
 		requires IsReflType<Decayed>
@@ -58,15 +65,15 @@ public:
 
 	ZE_FORCEINLINE bool operator==(const Any& in_other) const
 	{
-		std::pair<const Any&, const Any&> pair = std::make_pair<const Any&, const Any&>(*this, in_other);
-		std::any val = visit_func(detail::VisitType::Equals, *reinterpret_cast<detail::AnyDataType*>(&pair));
+		std::array<const Any*, 2> anys = { this, &in_other };
+		std::any val = visit_func(detail::VisitType::Equals, *reinterpret_cast<detail::AnyDataType*>(&anys));
 		return *std::any_cast<bool>(&val);
 	}
 
 	ZE_FORCEINLINE bool operator!=(const Any& in_other) const
 	{
-		std::pair<const Any&, const Any&> pair = std::make_pair<const Any&, const Any&>(*this, in_other);
-		std::any val = visit_func(detail::VisitType::NotEquals, *reinterpret_cast<detail::AnyDataType*>(&pair));
+		std::array<const Any*, 2> anys = { this, &in_other };
+		std::any val = visit_func(detail::VisitType::NotEquals, *reinterpret_cast<detail::AnyDataType*>(&anys));
 		return *std::any_cast<bool>(&val);
 	}
 private:

@@ -25,7 +25,7 @@ struct PropertyEditorDrawParams
  * Base interface class for reflected type editors
  * This allows to have a custom edtior display for a reflected type
  */
-class PropertyEditor
+class PROPERTYEDITOR_API PropertyEditor
 {
 public:
 	virtual void draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params = PropertyEditorDrawParams()) = 0;
