@@ -17,11 +17,6 @@
 
 #include <cstdint>
 
-/** Maths */
-#include "Maths/MathCore.h"
-#include "Maths/Transform.h"
-#include "Maths/Vector.h"
-
 /** Memory */
 #include "Memory/SmartPointers.h"
 

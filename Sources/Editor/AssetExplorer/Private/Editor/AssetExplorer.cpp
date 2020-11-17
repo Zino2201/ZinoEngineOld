@@ -60,11 +60,16 @@ void CAssetExplorer::DrawRecurseHierachy(const std::filesystem::path& InPath)
 	
 	for (const auto& Subdir : Subdirs)
 	{
-		if (ImGui::TreeNodeEx(Subdir.string().c_str(), ImGuiTreeNodeFlags_DefaultOpen |
-			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth))
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen |
+			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
+		if(selected_dir == Subdir)
+			flags |= ImGuiTreeNodeFlags_Selected;
+
+		if (ImGui::TreeNodeEx(Subdir.string().c_str(), flags))
 		{
 			if (ImGui::IsItemClicked())
 			{
+				selected_dir = Subdir;
 				SelectDirectory(InPath / Subdir);
 			}
 

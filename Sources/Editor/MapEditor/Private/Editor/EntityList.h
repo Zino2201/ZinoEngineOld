@@ -1,5 +1,10 @@
 #pragma once
 
+#include "Delegates/Delegate.h"
+#include "Engine/ECS/ECS.h"
+
+namespace ze { class World; }
+
 namespace ze::editor
 {
 
@@ -11,11 +16,15 @@ class CMapEditor;
 class CEntityList
 {
 public:
-	CEntityList(CMapEditor& InMapEditor);
+	CEntityList(World& in_world, CMapEditor& InMapEditor);
 
 	void Draw();
 private:
+	World& world;
 	CMapEditor& MapEditor;
+	Entity selected_entity;
+public:
+	DelegateNoRet<Entity> on_entity_selected;
 };
 
 }

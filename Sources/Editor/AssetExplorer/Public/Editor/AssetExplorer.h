@@ -22,6 +22,7 @@ private:
 private:
 	float MaxHierarchyWidth;
 	std::filesystem::path CurrentDirectory;
+	std::filesystem::path selected_dir;
 };
 
 }

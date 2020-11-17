@@ -4,7 +4,9 @@ ze_create_module(Engine Private/Engine/Assets/Texture.cpp
     Private/Engine/UI/Console.cpp
     Private/Engine/Engine.cpp Private/Engine/EngineGame.cpp Private/Engine/InputSystem.cpp
     Private/Engine/TickSystem.cpp Private/Engine/Viewport.cpp
-    Private/Engine/NativeWindow.cpp)
+    Private/Engine/NativeWindow.cpp Private/Engine/ECS/ComponentManager.cpp Private/Engine/ECS/EntityManager.cpp
+    Private/Engine/ECS/SystemManager.cpp Private/Engine/Components/SinusMovementSystem.cpp
+    Private/Engine/World.cpp)
 
 ze_add_public_modules(Engine Core ZEFS ShaderCore ShaderCompiler Reflection ImGui Asset AssetDatabase GfxCore)
 

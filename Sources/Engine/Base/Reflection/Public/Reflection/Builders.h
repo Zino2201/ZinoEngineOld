@@ -62,6 +62,13 @@ struct ClassBuilder : public TypeBuilder<T, Class>
 		if constexpr(std::is_abstract_v<T>)
 			in_flags |= ClassFlagBits::Abstract;
 		class_flags = in_flags;
+
+		/** Destructor */
+		auto& dtor = const_cast<std::function<void(void*)>&>(class_->get_dtor());
+		dtor = [](void* in_ptr)
+		{
+			reinterpret_cast<T*>(in_ptr)->~T();
+		};
 	}
 
 	ClassBuilder& parent(const std::string& in_name)

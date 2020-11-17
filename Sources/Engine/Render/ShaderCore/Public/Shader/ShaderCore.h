@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "Maths/MathCore.h"
 #include "Module/Module.h"
 #include <robin_hood.h>
 

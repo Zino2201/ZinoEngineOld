@@ -7,7 +7,7 @@ ze_create_module(ZEEditor
 	Private/Editor/ZEEditor.cpp Private/Editor/Widgets/ConvarViewer.cpp)
 
 ze_add_private_modules(ZEEditor
-	Core ShaderCore Engine Reflection ImGui MapEditor AssetExplorer AssetDatabase AssetUtils)
+	Core ShaderCore Engine Reflection ImGui MapEditor AssetExplorer AssetDatabase AssetUtils PropertyEditor)
 	
 target_include_directories(ZEEditor
     PUBLIC 

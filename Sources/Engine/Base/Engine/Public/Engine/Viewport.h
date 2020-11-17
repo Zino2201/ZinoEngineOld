@@ -2,28 +2,32 @@
 
 #include "EngineCore.h"
 #include "Gfx/Resource.h"
+#include "Gfx/Backend.h"
 
 namespace ze
 {
 
 /**
- * A viewport on a window, draws to an render target
+ * A viewport on a window, draws to an color attachment
  */
 class ENGINE_API Viewport
 {
 public:
-    Viewport(void* in_parent_window,
-        uint32_t in_width,
-        uint32_t in_height,
-        gfx::ResourceHandle in_render_target = gfx::ResourceHandle());
+    Viewport(float in_x,
+        float in_y,
+        float in_width,
+        float in_height,
+        const gfx::SharedTextureView& in_color_attachment_view = gfx::SharedTextureView());
 
-    void begin();
-    void end();
+    void resize(const float in_width, const float in_height);
+
+    ZE_FORCEINLINE const gfx::ResourceHandle& get_texture() const { return *color_attachment; }
+    ZE_FORCEINLINE const gfx::ResourceHandle& get_color_attachment_view() const { return *color_attachment_view; }
+    ZE_FORCEINLINE gfx::Viewport get_viewport() const { return viewport; }
 private:
-    void* parent_window;
-    uint32_t width;
-    uint32_t height;
-    gfx::ResourceHandle render_target;
+    gfx::UniqueTexture color_attachment;
+    gfx::SharedTextureView color_attachment_view;
+    gfx::Viewport viewport;
 };
 
 } /* namespace ZE */

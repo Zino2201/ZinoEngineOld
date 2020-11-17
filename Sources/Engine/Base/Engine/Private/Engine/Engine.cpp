@@ -14,8 +14,8 @@ namespace ze
 
 static ConVarRef<int32_t> cvar_maxfps("r_maxfps", 144,
 	"Max FPS.",
-	1,
-	2048);
+	0,
+	300);
 
 static ConVarRef<int32_t> cvar_unfocus_fps("r_unfocusfps", 15,
 	"Max FPS when unfocused",
@@ -44,15 +44,14 @@ ze::module::Module* LoadRequiredModule(const std::string_view& InName)
 	return Ptr;
 }
 
-EngineApp::EngineApp() : should_run(false), focused(true), err_code(0), frame_count(0),
-	previous(std::chrono::high_resolution_clock::now())
+EngineApp::EngineApp() : should_run(false), focused(true), err_code(0), frame_count(0)
 {
 	/** Load asset related modules */
 	LoadRequiredModule("Asset");
 	LoadRequiredModule("AssetDatabase");
 }
 
-void EngineApp::process_event(const SDL_Event& in_event)
+void EngineApp::process_event(const SDL_Event& in_event, const float in_delta_time)
 {
 	if (in_event.type == SDL_QUIT)
 		exit(0);
@@ -61,7 +60,9 @@ void EngineApp::process_event(const SDL_Event& in_event)
 		ze::input::on_key_pressed(in_event);
 	if (in_event.type == SDL_KEYUP)
 		ze::input::on_key_released(in_event);
-	
+	if (in_event.type == SDL_MOUSEMOTION)
+		ze::input::set_mouse_delta(maths::Vector2f(in_event.motion.xrel, in_event.motion.yrel));
+
 	if (in_event.type == SDL_WINDOWEVENT)
 	{
 		switch(in_event.window.event)
@@ -94,20 +95,24 @@ void EngineApp::exit(int in_err_code)
 	err_code = in_err_code;
 }
 
+double engine_elapsed_time = 0.0;
+
 void EngineApp::loop()
 {
 	auto current = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double, std::milli> delta_time = current - previous;
 	previous = current;
 
-	float delta_time_as_secs = static_cast<float>(delta_time.count() * 0.001f);
+	float delta_time_as_secs = static_cast<float>(delta_time.count()) * 0.001f;
+
+	engine_elapsed_time += delta_time_as_secs;
 
 	/** Process events */
 	{
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
-			process_event(event);
+			process_event(event, delta_time_as_secs);
 		}
 	}
 
@@ -116,6 +121,8 @@ void EngineApp::loop()
 	post_tick(delta_time_as_secs);
 
 	/** Fps limiter */
+	if(focused && cvar_maxfps.get() != 0 ||
+		!focused)
 	{
 		using namespace std::chrono_literals;
 
@@ -126,6 +133,11 @@ void EngineApp::loop()
 	}
 
 	frame_count++;
+}
+
+double EngineApp::get_elapsed_time()
+{
+	return engine_elapsed_time;
 }
 
 } /* namespace ze */

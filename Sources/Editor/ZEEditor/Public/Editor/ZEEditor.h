@@ -4,13 +4,16 @@
 #include <filesystem>
 #include "Engine/NativeWindow.h"
 #include "Gfx/Backend.h"
+#include "Engine/Viewport.h"
 
-namespace ze { class Viewport; }
+namespace ze { class Viewport; class World; }
 
 struct ImFont;
 
 namespace ze::editor
 {
+
+class CMapTabWidget;
 
 class ZEEDITOR_API EditorApp final : public EngineApp
 {
@@ -18,10 +21,11 @@ public:
 	EditorApp();
 	~EditorApp();
 
-	void process_event(const SDL_Event& in_event) override;
+	void process_event(const SDL_Event& in_event, const float in_delta_time) override;
 	void post_tick(const float in_delta_time) override;
 private:
 	void draw_main_tab();
+	void test_renderer(const gfx::ResourceHandle& in_cmd_list);
 	void on_asset_imported(const std::filesystem::path& InPath,
 		const std::filesystem::path& InTarget);
 private:
@@ -31,7 +35,14 @@ private:
 	gfx::ResourceHandle cmd_list;
 	gfx::UniqueFence cmd_list_fence;
 	gfx::UniqueRenderPass render_pass;
+	gfx::UniqueRenderPass vp_render_pass;
+	gfx::UniquePipelineLayout vp_pipeline_layout;
+	gfx::UniquePipeline vp_pipeline;
+	gfx::UniqueShader vs;
+	gfx::UniqueShader fs;
 	ImFont* font;
+	std::unique_ptr<World> world;
+	std::unique_ptr<CMapTabWidget> map_tab_widget;
 };
 
 }

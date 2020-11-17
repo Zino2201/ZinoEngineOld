@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Engine/ECS/ECS.h"
+
 namespace ze::editor
 {
 
@@ -14,8 +16,10 @@ public:
 	CEntityProperties(CMapEditor& InMapEditor);
 
 	void Draw();
+	void set_entity(Entity in_selected_entity) { selected_entity = in_selected_entity; }
 private:
 	CMapEditor& MapEditor;
+	Entity selected_entity;
 };
 
 }

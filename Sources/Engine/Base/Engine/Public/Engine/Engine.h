@@ -20,8 +20,14 @@ public:
 
     int run();
     void exit(int err_code);
+
+    /**
+     * Get elasped time since start of the engine
+     * \return elapsed time since start in seconds
+     */
+    static double get_elapsed_time();
 protected:
-    virtual void process_event(const SDL_Event& in_event);
+    virtual void process_event(const SDL_Event& in_event, const float in_delta_time);
 
     /**
      * Called after all ticks

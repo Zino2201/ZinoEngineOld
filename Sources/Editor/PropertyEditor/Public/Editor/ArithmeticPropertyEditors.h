@@ -15,4 +15,10 @@ public:
 	void draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params) override;
 };
 
+class PROPERTYEDITOR_API FloatPropertyEditor final : public PropertyEditor
+{
+public:
+	void draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params) override;
+};
+
 }

@@ -8,6 +8,8 @@
 
 #include "Traits.h"
 #include "Class.h"
+#include "Maths/MathCore.h"
+#include "Maths/Vector.h"
 
 #define ZE_REFL_DECLARE_TYPE(Type) \
 	template<> static constexpr bool ze::reflection::IsReflType<Type> = true; \

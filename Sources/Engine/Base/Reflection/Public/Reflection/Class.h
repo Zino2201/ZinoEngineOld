@@ -119,6 +119,11 @@ public:
 		return false;
 	}
 
+	ZE_FORCEINLINE void destructor(void* in_ptr) const
+	{
+		dtor(in_ptr);
+	}
+
 	bool is_derived_from(const Class* in_other) const;
 	bool is_base_of(const Class* in_other) const;
 
@@ -140,12 +145,14 @@ public:
 	const Property* get_property(const std::string& in_name) const;
 	ZE_FORCEINLINE const std::vector<Property>& get_propreties() const { return properties; }
 	ZE_FORCEINLINE const std::vector<Constructor>& get_constructors() const { return constructors; }
+	ZE_FORCEINLINE const std::function<void(void*)>& get_dtor() const { return dtor; }
 	ZE_FORCEINLINE const Class* get_parent() const { return parent.get_as_class(); }
 	ZE_FORCEINLINE const LazyTypePtr& get_parent_lazy_ptr() const { return parent; }
 	ZE_FORCEINLINE const ClassFlags& get_class_flags() const { return class_flags; }
 private:
 	std::vector<Constructor> constructors;
 	std::vector<Property> properties;
+	std::function<void(void*)> dtor;
 	LazyTypePtr parent;
 	ClassFlags class_flags;
 };

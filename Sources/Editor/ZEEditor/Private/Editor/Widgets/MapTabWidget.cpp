@@ -5,6 +5,11 @@
 namespace ze::editor
 {
 
+CMapTabWidget::CMapTabWidget(World& in_world)
+	: world(in_world), MapEditor(in_world)
+{
+}
+
 void CMapTabWidget::Draw()
 {
 	{
@@ -32,8 +37,8 @@ void CMapTabWidget::Draw()
 	Console.Draw();
 	MapEditor.Draw(DockspaceID);
 	AssetExplorer.Draw();
-	static ConvarViewer viewer;
-	viewer.draw();
+	//static ConvarViewer viewer;
+	//viewer.draw();
 
 	ImGui::EndChild();
 }
