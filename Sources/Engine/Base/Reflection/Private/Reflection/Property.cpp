@@ -17,6 +17,16 @@ Property::Property(Property&& other) :
 	flags(std::move(other.flags)),
 	impl(std::move(other.impl)) {}
 
+
+void Property::operator=(Property&& other) 
+{
+	name = std::move(other.name);
+	type = std::move(other.type);
+	offset = std::move(other.offset);
+	flags = std::move(other.flags);
+	impl = std::move(other.impl);
+}
+
 Property::~Property() = default;
 
 Any Property::get_value(const void* instance) const

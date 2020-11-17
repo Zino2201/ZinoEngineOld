@@ -12,4 +12,15 @@ const Enum* get_by_name(const std::string in_name)
 	return nullptr;
 }
 
+std::string Enum::get_value_name(const Any& in_value) const
+{
+	for(const auto& [name, value] : values)
+	{
+		if(value == in_value)
+			return name;
+	}
+
+	return std::string();
+}
+
 }

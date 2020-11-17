@@ -8,18 +8,20 @@
 namespace ze::reflection::detail
 {
 
-using AnyDataType = std::aligned_storage_t<sizeof(intmax_t), alignof(intmax_t)>;
+using AnyDataType = std::aligned_storage_t<sizeof(uintptr_t), alignof(uintptr_t)>;
 
 template<typename T>
-static constexpr bool FitInAny = sizeof(T) <= sizeof(intmax_t) &&
-	alignof(T) <= alignof(intmax_t);
+static constexpr bool FitInAny = sizeof(T) <= sizeof(uintptr_t) &&
+	alignof(T) <= alignof(uintptr_t);
 
 enum class VisitType
 {
 	Destroy,
 	GetType,
 	GetValue,
-	IsValid
+	IsValid,
+	Equals,
+	NotEquals
 };
 
 using VisitFunc = std::any(*)(const VisitType&, AnyDataType&);
@@ -42,8 +44,56 @@ struct AnyPolicyBase
 		case VisitType::IsValid:
 			return true;
 		case VisitType::GetValue:
+		{
 			const T* ptr = &Policy::get_value(any_data);
 			return std::make_any<const T*>(ptr);
+		}
+		case VisitType::Equals:
+		{
+			std::pair<const Any&, const Any&>* pair = reinterpret_cast<std::pair<const Any&, const Any&>*>(&any_data);
+			const reflection::Type* left_type = pair->first.get_type();
+			const reflection::Type* right_type = pair->second.get_type();
+			
+			if(left_type == right_type)
+			{
+				return Policy::equals(pair->first.get_value<T>(), 
+					pair->second.get_value<T>());
+			}
+			else
+			{
+				if constexpr(std::is_arithmetic_v<T>)
+				{
+					if(right_type->is_arithmetic())
+					{
+						return Policy::equals(*reinterpret_cast<uint64_t*>(pair->first.get_value_ptr()), 
+							*reinterpret_cast<uint64_t*>(pair->second.get_value_ptr()));
+					}
+				}
+			}
+		}
+		case VisitType::NotEquals:
+		{
+			std::pair<const Any&, const Any&>* pair = reinterpret_cast<std::pair<const Any&, const Any&>*>(&any_data);
+			const reflection::Type* left_type = pair->first.get_type();
+			const reflection::Type* right_type = pair->second.get_type();
+			
+			if(left_type == right_type)
+			{
+				return Policy::not_equals(pair->first.get_value<T>(), 
+					pair->second.get_value<T>());
+			}
+			else
+			{
+				if constexpr(std::is_arithmetic_v<T>)
+				{
+					if(right_type->is_arithmetic())
+					{
+						return Policy::not_equals(*reinterpret_cast<uint64_t*>(pair->first.get_value_ptr()), 
+							*reinterpret_cast<uint64_t*>(pair->second.get_value_ptr()));
+					}
+				}
+			}
+		}
 		}
 
 		return nullptr;
@@ -72,6 +122,10 @@ struct AnyPolicyEmpty
 			return nullptr;
 		case VisitType::IsValid:
 			return false;
+		case VisitType::Equals:
+			return true;
+		case VisitType::NotEquals:
+			return false;
 		}
 
 		return nullptr;
@@ -99,6 +153,16 @@ struct AnyPolicySmall : public AnyPolicyBase<T, AnyPolicySmall<T>>
 	{
 		value.~T();
 	}
+
+	ZE_FORCEINLINE static bool equals(const T& left, const T& right)
+	{
+		return left == right;
+	}
+
+	ZE_FORCEINLINE static bool not_equals(const T& left, const T& right)
+	{
+		return left != right;
+	}
 };
 
 /**
@@ -122,6 +186,16 @@ struct AnyPolicyLarge : public AnyPolicyBase<T, AnyPolicyLarge<T>>
 	{
 		delete &value;
 	}
+
+	ZE_FORCEINLINE static bool equals(const T& left, const T& right)
+	{
+		return left == right;
+	}
+
+	ZE_FORCEINLINE static bool not_equals(const T& left, const T& right)
+	{
+		return left != right;
+	}
 };
 
 /**
@@ -143,6 +217,16 @@ struct AnyPolicyArithmetic : public AnyPolicyBase<T, AnyPolicyArithmetic<T>>
 	}
 
 	ZE_FORCEINLINE static void destroy(T& value) {}
+
+	ZE_FORCEINLINE static bool equals(const T& left, const T& right)
+	{
+		return left == right;
+	}
+
+	ZE_FORCEINLINE static bool not_equals(const T& left, const T& right)
+	{
+		return left != right;
+	}
 };
 
 /**

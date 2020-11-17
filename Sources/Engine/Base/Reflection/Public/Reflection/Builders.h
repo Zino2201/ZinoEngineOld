@@ -83,7 +83,7 @@ struct ClassBuilder : public TypeBuilder<T, Class>
 		const PropertyFlags& in_flags = PropertyFlagBits::None)
 	{
 		std::vector<ze::reflection::Property>& properties = 
-			const_cast<std::vector<ze::reflection::Property>&>(class_->get_propreties());
+			const_cast<std::vector<ze::reflection::Property>&>(class_->get_properties());
 		properties.emplace_back(in_name, type_name<PropType>, 
 			(char*)&((T*)nullptr->*in_ptr) - (char*)nullptr, in_flags);
 

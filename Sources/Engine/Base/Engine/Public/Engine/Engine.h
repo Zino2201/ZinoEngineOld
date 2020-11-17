@@ -26,6 +26,7 @@ public:
      * \return elapsed time since start in seconds
      */
     static double get_elapsed_time();
+    static double get_delta_time();
 protected:
     virtual void process_event(const SDL_Event& in_event, const float in_delta_time);
 

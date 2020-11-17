@@ -24,6 +24,9 @@ struct Entity
 
 	ZE_FORCEINLINE bool operator==(std::nullptr_t) const { return id == null; }
 	ZE_FORCEINLINE bool operator!=(std::nullptr_t) const { return id != null; }
+	
+	ZE_FORCEINLINE bool operator>(const Entity& other) const { return id > other.id;}
+	ZE_FORCEINLINE bool operator<(const Entity& other) const { return id < other.id;}
 };
 
 }

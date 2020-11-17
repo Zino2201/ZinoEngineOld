@@ -18,7 +18,19 @@ void SinusMovementSystem::variable_tick(const float in_delta_time)
 		[](Entity in_entity, TransformComponent& in_transform, 
 			SinusMovementDataComponent& in_data)
 		{
-			in_transform.position.y = in_data.amplitude * std::sin(EngineApp::get_elapsed_time() * in_data.speed);
+			float v = in_data.amplitude * std::sin(EngineApp::get_elapsed_time() * in_data.speed);
+			switch(in_data.axis)
+			{
+			case MovementAxis::X:
+				in_transform.position.x = v;
+				break;
+			case MovementAxis::Y:
+				in_transform.position.y = v;
+				break;
+			case MovementAxis::Z:
+				in_transform.position.z = v;
+				break;
+			}
 		});
 }
 

@@ -38,6 +38,11 @@ public:
 		return **std::any_cast<const T*>(&val);
 	}
 
+	void* get_value_ptr() const
+	{
+		return &data;
+	}
+
 	ZE_FORCEINLINE const Type* get_type() const
 	{
 		std::any val = visit_func(detail::VisitType::GetType, data);
@@ -48,6 +53,20 @@ public:
 	{ 
 		std::any val = visit_func(detail::VisitType::IsValid, 
 			const_cast<detail::AnyDataType&>(data));
+		return *std::any_cast<bool>(&val);
+	}
+
+	ZE_FORCEINLINE bool operator==(const Any& in_other) const
+	{
+		std::pair<const Any&, const Any&> pair = std::make_pair<const Any&, const Any&>(*this, in_other);
+		std::any val = visit_func(detail::VisitType::Equals, *reinterpret_cast<detail::AnyDataType*>(&pair));
+		return *std::any_cast<bool>(&val);
+	}
+
+	ZE_FORCEINLINE bool operator!=(const Any& in_other) const
+	{
+		std::pair<const Any&, const Any&> pair = std::make_pair<const Any&, const Any&>(*this, in_other);
+		std::any val = visit_func(detail::VisitType::NotEquals, *reinterpret_cast<detail::AnyDataType*>(&pair));
 		return *std::any_cast<bool>(&val);
 	}
 private:

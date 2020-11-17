@@ -96,6 +96,7 @@ void EngineApp::exit(int in_err_code)
 }
 
 double engine_elapsed_time = 0.0;
+double engine_delta_time = 0.0;
 
 void EngineApp::loop()
 {
@@ -103,7 +104,8 @@ void EngineApp::loop()
 	std::chrono::duration<double, std::milli> delta_time = current - previous;
 	previous = current;
 
-	float delta_time_as_secs = static_cast<float>(delta_time.count()) * 0.001f;
+	engine_delta_time = delta_time.count();
+	float delta_time_as_secs = static_cast<float>(engine_delta_time) * 0.001f;
 
 	engine_elapsed_time += delta_time_as_secs;
 
@@ -138,6 +140,11 @@ void EngineApp::loop()
 double EngineApp::get_elapsed_time()
 {
 	return engine_elapsed_time;
+}
+
+double EngineApp::get_delta_time()
+{
+	return engine_delta_time;
 }
 
 } /* namespace ze */

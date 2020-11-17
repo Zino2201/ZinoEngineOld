@@ -64,8 +64,19 @@ void CEntityProperties::Draw()
 				ImGui::PopID();
 				ImGui::Columns(2);
 				ImGui::SetColumnWidth(0, 80.f);
-				for(const auto& property : type->get_propreties())
+
+				std::vector<const ze::reflection::Property*> properties;
+				properties.reserve(type->get_properties().size());
+				for(const auto& property : type->get_properties())
+					properties.emplace_back(&property);
+				std::sort(properties.begin(), properties.end(), [](const auto& left, const auto&right) {
+					return *left < *right;
+				});
+
+				for(const auto& property_ptr : properties)
 				{
+					auto& property = *property_ptr;
+
 					if(property.get_flags() & reflection::PropertyFlagBits::Visible ||
 						property.get_flags() & reflection::PropertyFlagBits::Editable)
 					{

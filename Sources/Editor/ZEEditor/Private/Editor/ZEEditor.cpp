@@ -152,7 +152,7 @@ EditorApp::EditorApp() : EngineApp(),
 
 		Entity ent = world->spawn_entity();
 		TransformComponent& data = world->add_component<TransformComponent>(ent);
-		data.position.x = x;
+		data.position.x = x - 0.5;
 		data.position.y = y;
 	}
 

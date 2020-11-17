@@ -21,6 +21,8 @@ public:
 		return get_by_name(type_name<T>);
 	}
 
+	REFLECTION_API std::string get_value_name(const Any& in_value) const;
+
 	const LazyTypePtr& get_underlying_type_lazy_ptr() const { return underlying_type; }
 	const auto& get_values() const { return values; }
 private:

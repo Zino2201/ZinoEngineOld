@@ -46,7 +46,14 @@ void CEntityList::Draw()
 		ImGui::EndPopup();
 	}
 	
+
+	std::vector<Entity> entities;
+	entities.reserve(world.get_entity_mgr().get_entities().size());
 	for (Entity entity : world.get_entity_mgr().get_entities())
+		entities.emplace_back(entity);
+	std::sort(entities.begin(), entities.end());
+
+	for (Entity entity : entities)
 	{
 		std::string label = "Entity ID " + std::to_string(entity.id);
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |

@@ -32,6 +32,8 @@ public:
 	~Property();
 
 	Property(Property&& other);
+	void operator=(Property&& other);
+
 	Property(const Property&) = delete;
 	void operator=(const Property&) = delete;
 
@@ -49,6 +51,9 @@ public:
 	ZE_FORCEINLINE const size_t& get_offset() const { return offset; }
 	ZE_FORCEINLINE const PropertyFlags& get_flags() const { return flags; }
 	ZE_FORCEINLINE const std::unique_ptr<detail::PropertyImplBase>& get_impl() const { return impl; }
+
+	ZE_FORCEINLINE bool operator<(const Property& other) const { return name < other.name; }
+	ZE_FORCEINLINE bool operator>(const Property& other) const { return name > other.name; }
 private:
 	std::string name;
 	LazyTypePtr type;

@@ -5,6 +5,7 @@
 #include <SDL2/SDL.h>
 #include "Engine/InputSystem.h"
 #include "Editor/EntityProfiler.h"
+#include "Engine/Engine.h"
 
 namespace ze::editor
 {
@@ -33,8 +34,8 @@ void CMapEditor::process_event(const SDL_Event& in_event, const float in_delta_t
 
 	if(in_event.type == SDL_MOUSEMOTION)
 	{
-		cam_yaw += input::get_mouse_delta().x;
-		cam_pitch -= input::get_mouse_delta().y;
+		cam_yaw += input::get_mouse_delta().x * 0.25f;
+		cam_pitch -= input::get_mouse_delta().y * 0.25f;
 		
 		if (cam_pitch > 89.0f)
 			cam_pitch = 89.0f;
@@ -106,22 +107,24 @@ void CMapEditor::Draw(const ImGuiID& InDockspaceID)
 		{
 			if(input::is_key_held(SDL_SCANCODE_W))
 			{
-				cam_pos += cam_fwd;
+				cam_pos += cam_fwd * 0.25f * static_cast<float>(EngineApp::get_delta_time());
 			}
 
 			if(input::is_key_held(SDL_SCANCODE_S))
 			{
-				cam_pos -= cam_fwd;
+				cam_pos -= cam_fwd * 0.25f * static_cast<float>(EngineApp::get_delta_time());
 			}
 
 			if(input::is_key_held(SDL_SCANCODE_A))
 			{
-				cam_pos += maths::normalize(maths::cross(cam_fwd, maths::Vector3f::get_up()));
+				cam_pos += maths::normalize(maths::cross(cam_fwd, maths::Vector3f::get_up())) *
+					0.25f * static_cast<float>(EngineApp::get_delta_time());
 			}
 
 			if(input::is_key_held(SDL_SCANCODE_D))
 			{
-				cam_pos -= maths::normalize(maths::cross(cam_fwd, maths::Vector3f::get_up()));
+				cam_pos -= maths::normalize(maths::cross(cam_fwd, maths::Vector3f::get_up())) * 
+					0.25f * static_cast<float>(EngineApp::get_delta_time());
 			}
 		}
 	}
