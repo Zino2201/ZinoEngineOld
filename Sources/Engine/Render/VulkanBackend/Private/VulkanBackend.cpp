@@ -131,7 +131,7 @@ std::pair<bool, std::string> VulkanBackend::initialize()
 			0, 
 			nullptr, 
 			0, 
-			VK_API_VERSION_1_1);
+			VK_API_VERSION_1_2);
 
 		if(enable_validation_layers)
 			ze::logger::warn("Vulkan validation layers are enabled, performances will be degraded !");
@@ -234,7 +234,7 @@ std::pair<bool, std::string> VulkanBackend::initialize()
 		}
 
 		if (!phys_device_to_use)
-			return { false, "No Vulkan compatible GPU found" };
+			return { false, "No Vulkan 1.2 compatible GPU found" };
 
 		device = std::make_unique<Device>(phys_device_to_use);
 		if(!device->is_valid())
