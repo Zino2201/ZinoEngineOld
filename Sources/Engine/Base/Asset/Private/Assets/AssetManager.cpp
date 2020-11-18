@@ -8,7 +8,6 @@
 #include "ZEFS/FileStream.h"
 #include "AssetDatabase/AssetDatabase.h"
 #include <utility>
-#include "Reflection/ArchivesFwd.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, Asset);
 

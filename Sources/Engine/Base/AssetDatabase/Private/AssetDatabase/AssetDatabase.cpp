@@ -58,6 +58,11 @@ void register_asset(const std::filesystem::path& path)
 
 	data.engine_ver = header.engine_ver;
 	data.asset_class = ze::reflection::Class::get_by_name(header.class_name);
+	if(!data.asset_class)
+	{
+		ze::logger::error("Invalid asset {} (bad class {})", path.string(), header.class_name);
+		return;
+	}
 
 	path_tree.add(path);
 	data_map.insert({ path , data });

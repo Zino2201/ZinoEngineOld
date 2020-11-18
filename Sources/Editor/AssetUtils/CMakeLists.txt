@@ -1,6 +1,6 @@
 ze_create_module(AssetUtils Private/Editor/AssetUtils/AssetUtils.cpp)
 
-ze_add_private_modules(AssetUtils Core Asset AssetDatabase)
+ze_add_private_modules(AssetUtils Core Asset AssetDatabase Reflection)
 
 target_include_directories(AssetUtils
     PUBLIC 

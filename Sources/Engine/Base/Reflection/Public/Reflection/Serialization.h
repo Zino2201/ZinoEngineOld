@@ -15,7 +15,7 @@ static constexpr bool IsSerializableWithReflection = false;
 /**
  * Get the binding map for the specified archive
  */
-REFLECTION_API robin_hood::unordered_map<std::string, std::function<void(void*, void*)>>& get_archive_map(const char* InArchive);
+REFLECTION_API robin_hood::unordered_map<std::string, std::function<void(void*, void*)>>& get_archive_map(const char* in_archive);
 
 /**
  * Structure that register an archive binding
@@ -25,11 +25,11 @@ struct ArchiveBindingCreator
 {
 	ArchiveBindingCreator()
 	{
-		auto& Map = get_archive_map(archive_name<Archive>);
+		auto& Map = get_archive_map(ArchiveName<Archive>);
 
 		Map.insert({ type_name<T>, [](void* archive, void* object)
 		{
-			ZE::Serialization::Serialize(
+			ze::serialization::serialize(
 				reinterpret_cast<Archive&>(*archive),
 				reinterpret_cast<T&>(*object));
 		}});
@@ -41,7 +41,7 @@ struct ArchiveCreateBindings
 {
 	static const ArchiveBindingCreator<T, Archive>& create_bindings()
 	{
-		return Singleton<ArchiveBindingCreator<T, Archive>>::Get();
+		return Singleton<ArchiveBindingCreator<T, Archive>>::get();
 	}
 };
 
@@ -112,10 +112,9 @@ void register_archive(T*, int) {}
  */
 template<typename ArchiveType, typename T>
 void serialize(ArchiveType& archive, T& object)
-	requires IsSerializableWithReflection<T>
 {
-	auto& map = get_archive_map(ze::reflection::ArchiveName<ArchiveType>);
-	auto serializer = Map.find(object.get_class()->get_name());
+	auto& map = get_archive_map(ze::reflection::serialization::ArchiveName<ArchiveType>);
+	auto serializer = map.find(object.get_class()->get_name());
 
 	ZE_CHECK(serializer != map.end());
 

@@ -181,7 +181,7 @@ void CAssetExplorer::DrawAssetList()
 		{
 			ImGui::BeginTooltip();
 			ImGui::Text("Type: %s\nFull path: %s\nSize: %f Mb",
-				"===class===",
+				Asset.asset_class->get_name().c_str(),
 				Asset.path.string().c_str(),
 				static_cast<float>(Asset.size / 1024.f / 1024.f));
 			ImGui::Separator();

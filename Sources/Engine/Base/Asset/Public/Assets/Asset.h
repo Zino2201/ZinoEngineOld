@@ -4,6 +4,7 @@
 #include <array>
 #include <filesystem>
 #include "Reflection/Serialization.h"
+#include "Reflection/BinaryArchiveRefl.h"
 #include "Asset.gen.h"
 
 namespace ze
@@ -15,24 +16,24 @@ namespace ze
  * To implement a custom serialization system, override Serialize
  */
 ZCLASS()
-class ASSET_API CAsset
+class ASSET_API Asset
 {
     ZE_REFL_BODY()
 
 public:
-    virtual ~CAsset() = default;
+    virtual ~Asset() = default;
 
     template<typename ArchiveType>
-    void Serialize(ArchiveType& InArchive)
+    void serialize(ArchiveType& in_archive)
     {
-        Refl::SerializeProperties(InArchive, *this);
+        //Refl::SerializeProperties(in_archive, *this);
     }
 
-    void SetPath(const std::filesystem::path& InPath) { Path = InPath; }
+    void set_path(const std::filesystem::path& in_path) { path = in_path; }
 
-    ZE_FORCEINLINE std::filesystem::path GetPath() const { return Path; }
+    ZE_FORCEINLINE std::filesystem::path get_path() const { return path; }
 protected:
-    std::filesystem::path Path;
+    std::filesystem::path path;
 };
 
 

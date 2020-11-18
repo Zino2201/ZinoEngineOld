@@ -414,6 +414,8 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 						for(size_t i = 0; i < CtorTypeTokenized.size(); ++i)
 							if(CtorTypeTokenized[i].find(")") != std::string::npos)
 								TokensToErase.push_back(i);
+						std::sort(TokensToErase.begin(), TokensToErase.end(),
+							[](const auto& left, const auto& right) { return left > right; });
 						for(const auto& TokenToErase : TokensToErase)
 							CtorTypeTokenized.erase(CtorTypeTokenized.begin() + TokenToErase);
 						if(TokensToErase.empty())
@@ -421,10 +423,11 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 						std::string CtorType;
 						for(const auto& Word : CtorTypeTokenized)
 							CtorType += Word + " ";
-						if(CtorType.find_last_of(':') != std::string::npos)
+						/*if(CtorType.find_last_of(':') != std::string::npos && 
+							CtorType.find_last_of(':') - 1 != ':')
 						{
 							CtorType.erase(CtorType.begin() + CtorType.find_last_of(':'), CtorType.end());
-						}
+						}*/
 						if(!FCtor.empty())
 							FCtor += ",";
 						CtorType.erase(std::remove(CtorType.begin(), CtorType.end(), '='), CtorType.end());

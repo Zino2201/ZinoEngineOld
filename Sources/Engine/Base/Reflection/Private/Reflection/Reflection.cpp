@@ -2,6 +2,7 @@
 #include "Reflection/Builders.h"
 #include "Module/Module.h"
 #include "Maths/Vector.h"
+#include "Reflection/Serialization.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, Reflection);
 
@@ -26,6 +27,18 @@ ZE_REFL_BUILDER_FUNC(Reflection_Primitives)
 
 	builders::ClassBuilder<ze::maths::Vector3f>();
 	builders::ClassBuilder<ze::maths::Vector3d>();
+}
+
+namespace serialization
+{
+
+robin_hood::unordered_map<std::string, robin_hood::unordered_map<std::string, std::function<void(void*, void*)>>> archive_map;
+
+robin_hood::unordered_map<std::string, std::function<void(void*, void*)>>& get_archive_map(const char* in_archive)
+{
+	return archive_map[in_archive];
+}
+
 }
 
 }

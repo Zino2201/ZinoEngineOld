@@ -9,7 +9,6 @@
 #include "ZEFS/Paths.h"
 #include "Serialization/BinaryArchive.h"
 #include "AssetDatabase/AssetHeader.h"
-#include "Reflection/ArchivesFwd.h"
 #include "Assets/Asset.h"
 
 namespace ze::editor::assetutils
@@ -60,11 +59,9 @@ void save_asset(ze::Asset& in_asset, const std::filesystem::path& in_path,
 	if (!stream)
 		return;
 
-	ZE_CHECK(false);
-
-	//Serialization::COBinaryArchive Archive(Stream);
-	//Archive <=> MakeAssetHeader(InAsset.GetClass()->GetName());
-	//ze::reflection::serialization::serialize(Archive, InAsset);
+	serialization::BinaryOutputArchive archive(stream);
+	archive <=> make_asset_header(in_asset.get_class()->get_name());
+	reflection::serialization::serialize(archive, in_asset);
 }
 
 OnAssetImported& get_on_asset_imported() { return on_asset_imported; }

@@ -82,13 +82,13 @@ public:
 		if constexpr(HasSerializeFunctionWithVersion<T, ArchiveType> ||
 			HasSerializeMethodWithVersion<T, ArchiveType>)
 		{
-			uint32_t version = TTypeVersion<T>::version;
+			uint32_t version = TypeVersion<T>::version;
 			this_ <=> version;
-			serialize(this_, const_cast<T&>(data), versiin);
+			serialize(this_, const_cast<T&>(data), version);
 		}
 		else
 		{
-			serialize(this_, const_cast<T&>(InData));
+			serialize(this_, const_cast<T&>(data));
 		}
 
 		return this_;

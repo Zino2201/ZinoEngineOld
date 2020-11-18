@@ -35,15 +35,14 @@ OwnerPtr<Asset> StbTextureFactory::create_from_stream(std::istream& in_stream)
 	}
 
 	/** Instantiate the texture */
-	OwnerPtr<CTexture> texture = new CTexture;
-	texture->SetTextureType(ETextureType::Tex2D);
-	texture->SetFormat(ETextureFormat::R8G8B8A8);
-	texture->SetCompression(ETextureCompressionMode::Normal);
-	texture->SetFilter(ETextureFilter::Linear);
-	texture->SetData(std::vector<uint8_t>(reinterpret_cast<uint8_t*>(data.get()),
+	OwnerPtr<Texture> texture = new Texture(
+		TextureType::Tex2D,
+		TextureFilter::Linear,
+		TextureCompressionMode::Normal,
+		TextureFormat::R8G8B8A8, 
+		std::vector<uint8_t>(reinterpret_cast<uint8_t*>(data.get()),
 		data.get() + (width * height * channels)));
-	ZE_ASSERT(false);
-	return nullptr;
+	return texture;
 }
 
 }

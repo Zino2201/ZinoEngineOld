@@ -12,7 +12,7 @@ namespace ze
  * The type of the texture
  */
 ZENUM()
-enum class ETextureType
+enum class TextureType
 {
 	Tex1D,
 	Tex2D,
@@ -21,7 +21,7 @@ enum class ETextureType
 };
 
 ZENUM()
-enum class ETextureFilter
+enum class TextureFilter
 {
 	Linear,
 	Nearest
@@ -31,7 +31,7 @@ enum class ETextureFilter
  * Determines the final texture format used and parameters used
  */
 ZENUM()
-enum class ETextureCompressionMode
+enum class TextureCompressionMode
 {
 	/** Normal, on PC this will use DXT1/5 */
 	Normal,
@@ -44,7 +44,7 @@ enum class ETextureCompressionMode
  * Format the texture is stored in
  */
 ZENUM()
-enum class ETextureFormat
+enum class TextureFormat
 {
 	DXT1,
 	DXT5,
@@ -58,38 +58,41 @@ enum class ETextureFormat
  * On non-editor builds, the format is platform-specific, on PCs it is commonly DXT1/5 for non-UI textures
  */
 ZCLASS()
-class ENGINE_API CTexture : public CAsset
+class ENGINE_API Texture : public Asset
 {
 	ZE_REFL_BODY() 
 
 public:
+	Texture() = default;
+	
+	Texture(const TextureType in_type,
+		const TextureFilter in_filter,
+		const TextureCompressionMode in_compression_mode,
+		const TextureFormat in_format,
+		const std::vector<uint8_t>& in_data) 
+		: type(in_type), filter(in_filter), compression_mode(in_compression_mode), format(in_format), data(in_data) {}
+	
 	template<typename ArchiveType>
-	void Serialize(ArchiveType& InArchive)
+	void serialize(ArchiveType& in_archive)
 	{
-		CAsset::Serialize(InArchive);
-
-		InArchive <=> Data;
+		Asset::serialize(in_archive);
+		in_archive <=> data;
+		ZE_DEBUGBREAK();
 	}
-
-	void SetTextureType(const ETextureType& InType) { Type = InType; }
-	void SetFilter(const ETextureFilter& InFilter) { Filter = InFilter; }
-	void SetCompression(const ETextureCompressionMode& InCompressionMode) { CompressionMode = InCompressionMode; }
-	void SetFormat(const ETextureFormat& InFormat) { Format = InFormat; }
-	void SetData(const std::vector<uint8_t>& InData) { Data = InData; }
 private:
 	ZPROPERTY(Serializable)
-	ETextureType Type;
+	TextureType type;
 
 	ZPROPERTY(Serializable)
-	ETextureFilter Filter;
+	TextureFilter filter;
 		
 	ZPROPERTY(Serializable)
-	ETextureCompressionMode CompressionMode;
+	TextureCompressionMode compression_mode;
 	
 	ZPROPERTY(Serializable)
-	ETextureFormat Format;
+	TextureFormat format;
 	
 	ZPROPERTY()
-	std::vector<uint8_t> Data;
+	std::vector<uint8_t> data;
 };
 }
