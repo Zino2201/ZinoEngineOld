@@ -19,9 +19,12 @@ enum class VisitType
 	Destroy,
 	GetType,
 	GetValue,
+	GetValuePtr,
 	IsValid,
 	Equals,
-	NotEquals
+	NotEquals,
+	Serialize,
+	ToString
 };
 
 using VisitFunc = std::any(*)(const VisitType&, AnyDataType&);
@@ -37,8 +40,10 @@ struct AnyPolicyBase
 		switch(type)
 		{
 		case VisitType::Destroy:
-			Policy::destroy(reinterpret_cast<T&>(any_data));
+		{
+			Policy::destroy(*reinterpret_cast<T* const &>(any_data));
 			break;
+		}
 		case VisitType::GetType:
 			return std::make_any<const Type*>(get_type());
 		case VisitType::IsValid:
@@ -47,6 +52,11 @@ struct AnyPolicyBase
 		{
 			const T* ptr = &Policy::get_value(any_data);
 			return std::make_any<const T*>(ptr);
+		}
+		case VisitType::GetValuePtr:
+		{
+			const T* ptr = &Policy::get_value(any_data);
+			return std::make_any<void*>(reinterpret_cast<void*>(const_cast<T*>(ptr)));
 		}
 		case VisitType::Equals:
 		{
@@ -93,6 +103,22 @@ struct AnyPolicyBase
 					}
 				}
 			}
+		}
+		case VisitType::Serialize:
+		{
+			std::tuple<const char*, void*, detail::AnyDataType&>* tuple = 
+				reinterpret_cast<std::tuple<const char*, void*, detail::AnyDataType&>*>(&any_data);
+			const T* ptr = &Policy::get_value(std::get<2>(*tuple));
+			auto& map = serialization::get_archive_map(std::get<0>(*tuple));
+			auto serializer = map.find(reflection::Type::get<T>()->get_name());
+			ZE_CHECK(serializer != map.end());
+			serializer->second(std::get<1>(*tuple), const_cast<T*>(ptr));
+			break;
+		}
+		case VisitType::ToString:
+		{
+			ZE_CHECKF(false, "unimplemented");
+			break;
 		}
 		}
 
@@ -184,6 +210,7 @@ struct AnyPolicyLarge : public AnyPolicyBase<T, AnyPolicyLarge<T>>
 
 	ZE_FORCEINLINE static void destroy(T& value)
 	{
+		volatile T test = value;
 		delete &value;
 	}
 

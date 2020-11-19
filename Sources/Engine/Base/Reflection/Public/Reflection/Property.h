@@ -45,6 +45,18 @@ public:
 	 */
 	void* get_value_ptr(const void* instance) const;
 	void set_value(const void* instance, const std::any& value) const;
+	
+	template<typename ArchiveType>
+	void serialize_value(ArchiveType& in_archive, void* instance) const
+	{
+		reflection::Any value = get_value(instance);
+		value.serialize(in_archive);
+		if constexpr(ze::serialization::IsInputArchive<ArchiveType>)
+		{
+			memmove(get_value_ptr(instance), 
+				value.get_value_ptr(), type.get()->get_size());
+		}
+	}
 
 	ZE_FORCEINLINE const std::string& get_name() const { return name; }
 	ZE_FORCEINLINE const Type* get_type() const { return type.get(); }

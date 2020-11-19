@@ -180,10 +180,10 @@ void CAssetExplorer::DrawAssetList()
 		if (ImGui::IsItemHovered())
 		{
 			ImGui::BeginTooltip();
-			ImGui::Text("Type: %s\nFull path: %s\nSize: %f Mb",
+			ImGui::Text("Type: %s\nFull path: %s\nSize: %f Mib",
 				Asset.asset_class->get_name().c_str(),
 				Asset.path.string().c_str(),
-				static_cast<float>(Asset.size / 1024.f / 1024.f));
+				static_cast<float>(Asset.size / 2048.f));
 			ImGui::Separator();
 			ImGui::Text("Last modified on ");
 			ImGui::Separator();

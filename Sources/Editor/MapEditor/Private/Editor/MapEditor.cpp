@@ -105,26 +105,28 @@ void CMapEditor::Draw(const ImGuiID& InDockspaceID)
 		}
 		else
 		{
+			const float camera_speed = 0.025f;
+
 			if(input::is_key_held(SDL_SCANCODE_W))
 			{
-				cam_pos += cam_fwd * 0.25f * static_cast<float>(EngineApp::get_delta_time());
+				cam_pos += cam_fwd * camera_speed * static_cast<float>(EngineApp::get_delta_time());
 			}
 
 			if(input::is_key_held(SDL_SCANCODE_S))
 			{
-				cam_pos -= cam_fwd * 0.25f * static_cast<float>(EngineApp::get_delta_time());
+				cam_pos -= cam_fwd * camera_speed * static_cast<float>(EngineApp::get_delta_time());
 			}
 
 			if(input::is_key_held(SDL_SCANCODE_A))
 			{
 				cam_pos += maths::normalize(maths::cross(cam_fwd, maths::Vector3f::get_up())) *
-					0.25f * static_cast<float>(EngineApp::get_delta_time());
+					camera_speed * static_cast<float>(EngineApp::get_delta_time());
 			}
 
 			if(input::is_key_held(SDL_SCANCODE_D))
 			{
 				cam_pos -= maths::normalize(maths::cross(cam_fwd, maths::Vector3f::get_up())) * 
-					0.25f * static_cast<float>(EngineApp::get_delta_time());
+					camera_speed * static_cast<float>(EngineApp::get_delta_time());
 			}
 		}
 	}

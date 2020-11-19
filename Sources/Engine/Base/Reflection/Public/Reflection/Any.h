@@ -4,6 +4,7 @@
 #include <cstdint>
 #include "Detail/AnyImpl.h"
 #include <array>
+#include "Serialization.h"
 
 namespace ze::reflection
 {
@@ -35,6 +36,18 @@ public:
 	~Any() { visit_func(detail::VisitType::Destroy, data); }
 
 	/**
+	 * Serialize the value contained inside Any
+	 * \warning The archive must be registered with ZE_REFL_SERL_REGISTER_ARCHIVE and the type registered with ZE_REFL_SERL_REGISTER_TYPE !
+	 */
+	template<typename ArchiveType>
+	ZE_FORCEINLINE void serialize(ArchiveType& in_archive)
+	{
+		std::tuple<const char*, void*, detail::AnyDataType&> tuple = { serialization::ArchiveName<ArchiveType>, &in_archive, data };
+		visit_func(detail::VisitType::Serialize, 
+			*reinterpret_cast<detail::AnyDataType*>(&tuple));
+	}
+	
+	/**
 	 * Get the stored value
 	 * WARNING: Not type-safe
 	 */
@@ -45,9 +58,11 @@ public:
 		return **std::any_cast<const T*>(&val);
 	}
 
-	void* get_value_ptr() const
+	
+	ZE_FORCEINLINE void* get_value_ptr() const
 	{
-		return &data;
+		std::any val = visit_func(detail::VisitType::GetValuePtr, data);
+		return *std::any_cast<void*>(&val);
 	}
 
 	ZE_FORCEINLINE const Type* get_type() const
@@ -61,6 +76,13 @@ public:
 		std::any val = visit_func(detail::VisitType::IsValid, 
 			const_cast<detail::AnyDataType&>(data));
 		return *std::any_cast<bool>(&val);
+	}
+
+	ZE_FORCEINLINE std::string to_string() const
+	{
+		std::any val = visit_func(detail::VisitType::ToString, 
+			const_cast<detail::AnyDataType&>(data));
+		return *std::any_cast<std::string>(&val);
 	}
 
 	ZE_FORCEINLINE bool operator==(const Any& in_other) const

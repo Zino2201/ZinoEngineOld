@@ -69,29 +69,47 @@ public:
 		const TextureFilter in_filter,
 		const TextureCompressionMode in_compression_mode,
 		const TextureFormat in_format,
+		const uint32_t in_width,
+		const uint32_t in_height,
+		const uint32_t in_depth,
 		const std::vector<uint8_t>& in_data) 
-		: type(in_type), filter(in_filter), compression_mode(in_compression_mode), format(in_format), data(in_data) {}
+		: type(in_type), filter(in_filter), compression_mode(in_compression_mode), format(in_format), 
+		width(in_width), height(in_height), depth(in_depth), data(in_data) {}
 	
 	template<typename ArchiveType>
 	void serialize(ArchiveType& in_archive)
 	{
-		Asset::serialize(in_archive);
+		in_archive <=> type;
+		in_archive <=> filter;
+		in_archive <=> compression_mode;
+		in_archive <=> format;
+		in_archive <=> width;
+		in_archive <=> height;
+		in_archive <=> depth;
 		in_archive <=> data;
-		ZE_DEBUGBREAK();
 	}
 private:
-	ZPROPERTY(Serializable)
+	ZPROPERTY(Visible, Serializable)
 	TextureType type;
 
-	ZPROPERTY(Serializable)
+	ZPROPERTY(Visible, Serializable)
 	TextureFilter filter;
 		
-	ZPROPERTY(Serializable)
+	ZPROPERTY(Visible, Serializable)
 	TextureCompressionMode compression_mode;
 	
-	ZPROPERTY(Serializable)
+	ZPROPERTY(Visible, Serializable)
 	TextureFormat format;
+
+	ZPROPERTY(Visible)
+	uint32_t width;
 	
+	ZPROPERTY(Visible)
+	uint32_t height;
+	
+	ZPROPERTY(Visible)
+	uint32_t depth;
+
 	ZPROPERTY()
 	std::vector<uint8_t> data;
 };

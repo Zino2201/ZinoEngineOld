@@ -19,7 +19,8 @@ class ENGINE_API ComponentSystem : public ticksystem::Tickable
 	ZE_REFL_BODY()
 
 public:
-	ComponentSystem(World& in_world) : world(in_world) 
+	ComponentSystem(World& in_world) 
+		: world(in_world) 
 	{
 		can_tick = false;
 		tick_flags = ticksystem::TickFlagBits::Variable;

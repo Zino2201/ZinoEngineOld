@@ -12,6 +12,8 @@ namespace ze::reflection::detail
 class REFLECTION_API PropertyImplBase
 {
 public:
+	using SerializeFunc = void(void*, void*);
+
 	PropertyImplBase(const size_t& in_offset) : offset(in_offset) {}
 	virtual ~PropertyImplBase() = default;
 

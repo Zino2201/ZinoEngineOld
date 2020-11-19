@@ -95,7 +95,7 @@ struct RegisterTypeToArchive
 {
 	RegisterTypeToArchive()
 	{ 
-		static_assert(IsReflClass<T>,
+		static_assert(IsReflType<T>,
 			"ZE_REFL_SERL_REGISTER_TYPE only works with reflected types");
 		ze::reflection::serialization::register_archive(static_cast<T*>(nullptr), 0);
 	}

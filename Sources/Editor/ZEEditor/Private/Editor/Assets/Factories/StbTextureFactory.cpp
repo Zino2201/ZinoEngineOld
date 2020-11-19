@@ -39,7 +39,10 @@ OwnerPtr<Asset> StbTextureFactory::create_from_stream(std::istream& in_stream)
 		TextureType::Tex2D,
 		TextureFilter::Linear,
 		TextureCompressionMode::Normal,
-		TextureFormat::R8G8B8A8, 
+		TextureFormat::R8G8B8A8,
+		width,
+		height,
+		1,
 		std::vector<uint8_t>(reinterpret_cast<uint8_t*>(data.get()),
 		data.get() + (width * height * channels)));
 	return texture;

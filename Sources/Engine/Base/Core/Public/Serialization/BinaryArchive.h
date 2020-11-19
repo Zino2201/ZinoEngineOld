@@ -36,16 +36,16 @@ private:
 
 /** Serialize functions for binary archives */
 
-/** Arithmetic types */
+/** Arithmetic & enum types */
 template<typename T>
-	requires std::is_arithmetic_v<T>
+	requires std::is_arithmetic_v<T> || std::is_enum_v<T>
 ZE_FORCEINLINE void serialize(BinaryInputArchive& archive, T& data)
 {
 	archive.load_bytes(&data, sizeof(T));
 }
 
 template<typename T>
-	requires std::is_arithmetic_v<T>
+	requires std::is_arithmetic_v<T> || std::is_enum_v<T>
 ZE_FORCEINLINE void serialize(BinaryOutputArchive& archive, const T& data)
 {
 	archive.save_bytes(&data, sizeof(T));
