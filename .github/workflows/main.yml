@@ -34,7 +34,7 @@ jobs:
       run: |
         cd ${{ github.workspace }}
         curl https://dl.dropboxusercontent.com/s/vn0js0up6hujz8m/Build.zip?dl=1 --output Build.zip
-        curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.2.148.1/windows/VulkanSDK-1.2.148.1-Installer.exe
+        curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe
         VulkanSDK.exe /S
         vcpkg install sdl2[*]:x64-windows
       shell: cmd
