@@ -344,6 +344,7 @@ Binaries/
 Build/
 Releases/
 Logs/
+AssetCache/
 imgui.ini
 .vscode/
 CMakeSettings.json

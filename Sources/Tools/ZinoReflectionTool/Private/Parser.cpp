@@ -330,7 +330,11 @@ void CParser::BeginEnum(const std::vector<std::string>& InLines,
 {
 	/** Check if C++ enum */
 	if(InLines[InLine].find("enum class") == std::string::npos)
+	{
+		if(CurrentType != EType::None)
+			NestedEncounters++;
 		return;
+	}
 
 	size_t NameIdx = InLine;
 	size_t NameWordIdx = 0;
@@ -393,9 +397,8 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 			/** Search for ctors */
 			if (InWords[0].find(CurrentStruct->GetName() + "(") != std::string::npos &&
 				InWords[0].find("~") == std::string::npos &&
-				InWords[0].find("()") == std::string::npos &&
-				InLines[InLine].find("delete") == std::string::npos &&
-				InLines[InLine].find("default") == std::string::npos)
+				//InWords[0].find("()") == std::string::npos &&
+				InLines[InLine].find("delete") == std::string::npos)
 			{
 				std::string FCtor;
 
@@ -404,7 +407,10 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 				std::vector<std::string> Ctor = Tokenize(Line, '(');
 				std::vector<std::string> Args = Tokenize(Ctor[1], ',');
 				size_t CurrentWord = 0;
-				while(true)
+
+				if(Line.find("()") == std::string::npos)
+				{
+					while(true)
 				{
 					if(Args[CurrentWord] != ")")
 					{
@@ -450,6 +456,11 @@ void CParser::ParseLine(const std::vector<std::string>& InLines,
 							Args = Tokenize(Line, ',');
 						}
 					}
+				}
+				}
+				else
+				{
+					FCtor += "";
 				}
 
 				CurrentStruct->AddCtor(FCtor);

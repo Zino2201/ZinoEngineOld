@@ -2,6 +2,7 @@
 
 #include "ZRT.h"
 #include <robin_hood.h>
+#include <unordered_set>
 
 /**
  * Flags about this property
@@ -112,7 +113,7 @@ public:
 private:
 	CTypeDatabase() = default;
 private:
-	robin_hood::unordered_set<std::string> Types;
+	std::unordered_set<std::string> Types;
 };
 
 /**

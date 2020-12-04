@@ -27,7 +27,7 @@ public:
 	const std::string& GetFilename() const { return Filename; }
 	const std::string& GetModule() const { return Module; }
 	const std::filesystem::path& GetPath() const { return Path; }
-	bool HasReflData() const { return !Structs.empty() || !Classes.empty(); }
+	bool HasReflData() const { return !Structs.empty() || !Classes.empty() || !Enums.empty(); }
 private:
 	std::string Module;
 	std::string Filename;
