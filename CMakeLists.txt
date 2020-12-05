@@ -11,7 +11,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 	message(FATAL_ERROR "32-bits is not supported")
 endif()
 
-# Include the right .cmake file based on the targe compiler
+# Include the right .cmake file based on the target compiler
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	include(CMake/Clang.cmake)
 else()
@@ -116,6 +116,7 @@ function(_ze_base_module_def TARGET)
 
 	# Generate reflection data
 	set(TARGET_REFL_DIR "${ZE_REFL_DIR}/${TARGET}")
+	set(HAS_REFL_DATA FALSE)
 
 	# Parse each header to generate a ZRT file
 	file(GLOB_RECURSE HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/**.h)
@@ -156,18 +157,21 @@ function(_ze_base_module_def TARGET)
 
 			# Add .gen.cpp to sources
 			target_sources(${TARGET} PRIVATE ${TARGET_REFL_DIR}/${GENFILENAME}.gen.cpp)
+			SET(HAS_REFL_DATA TRUE)
 		endif()
 	endforeach()
 
-	# Add reflection headers
-	target_include_directories(${TARGET} PUBLIC ${TARGET_REFL_DIR})
+	if(HAS_REFL_DATA)
+		# Add reflection headers
+		target_include_directories(${TARGET} PUBLIC ${TARGET_REFL_DIR})
 
-	# Most generators doesn't support PRE_BUILD commands
-	# So we need to use a custom target with the command and add a dependency to it
-	add_custom_target(${TARGET}_WORKAROUND_PREBUILD ALL
-				COMMAND "${ZE_BINS_DIR}/ZinoReflectionTool.exe" -Module="${TARGET}" -SrcDir="${CMAKE_CURRENT_SOURCE_DIR}" -OutDir="${TARGET_REFL_DIR}/" ${ZRT_FILE})
-	add_dependencies(${TARGET}_WORKAROUND_PREBUILD ZinoReflectionTool)
-	add_dependencies(${TARGET} ${TARGET}_WORKAROUND_PREBUILD)
+		# Most generators doesn't support PRE_BUILD commands
+		# So we need to use a custom target with the command and add a dependency to it
+		add_custom_target(${TARGET}_REFLECTION_DATA ALL
+					COMMAND "${ZE_BINS_DIR}/ZinoReflectionTool.exe" -Module="${TARGET}" -SrcDir="${CMAKE_CURRENT_SOURCE_DIR}" -OutDir="${TARGET_REFL_DIR}/" ${ZRT_FILE})
+		add_dependencies(${TARGET}_REFLECTION_DATA ZinoReflectionTool)
+		add_dependencies(${TARGET} ${TARGET}_REFLECTION_DATA)
+	endif()
 endfunction()
 
 # Helper function to add modules publicly

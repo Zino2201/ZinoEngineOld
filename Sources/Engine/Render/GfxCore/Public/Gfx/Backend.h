@@ -186,16 +186,16 @@ struct TextureCreateInfo
 	TextureUsageFlags usage_flags;
 	TextureLayout initial_layout;
 
-	TextureCreateInfo(TextureType in_type,
-		MemoryUsage in_mem_usage,
-		Format in_format,
-		uint32_t in_width,
-		uint32_t in_height,
-		uint32_t in_depth,
-		uint32_t in_mip_levels,
-		uint32_t in_array_layers,
-		SampleCountFlagBits in_sample_count,
-		TextureUsageFlags in_usage_flags,
+	TextureCreateInfo(TextureType in_type = TextureType::Tex2D,
+		MemoryUsage in_mem_usage = MemoryUsage::GpuOnly,
+		Format in_format = Format::R8G8B8A8Unorm,
+		uint32_t in_width = 0,
+		uint32_t in_height = 0,
+		uint32_t in_depth = 0,
+		uint32_t in_mip_levels = 0,
+		uint32_t in_array_layers = 0,
+		SampleCountFlagBits in_sample_count = SampleCountFlagBits::Count1,
+		TextureUsageFlags in_usage_flags = TextureUsageFlags(),
 		TextureLayout in_initial_layout = TextureLayout::Undefined) : type(in_type), mem_usage(in_mem_usage),
 		format(in_format), width(in_width), height(in_height), depth(in_depth),
 		mip_levels(in_mip_levels), array_layers(in_array_layers), sample_count(in_sample_count),
@@ -911,6 +911,19 @@ struct Viewport
 };
 
 /** Transfers structure */
+struct BufferCopyRegion
+{
+    uint64_t src_offset;
+    uint64_t dst_offset;
+    uint64_t size;
+    
+    BufferCopyRegion(const uint64_t& in_src_offset,
+		const uint64_t& in_dst_offset,
+		const uint64_t& in_size) : src_offset(in_src_offset),
+		dst_offset(in_dst_offset),
+		size(in_size) {}
+};
+
 struct BufferTextureCopyRegion
 {
 	/** Offset to where to start copying */
@@ -1260,7 +1273,14 @@ public:
 		const void* in_values) = 0;
 
 	/** Transfer related commands */
-	
+
+	/**
+	 * Copy a buffer to another buffer
+	 */
+	virtual void cmd_copy_buffer(const ResourceHandle& in_cmd_list,
+        const ResourceHandle& in_src_buffer,
+        const ResourceHandle& in_dst_buffer,
+        const std::vector<BufferCopyRegion>& in_regions) = 0;
 	/**
 	 * Copy a buffer to a texture
 	 */
@@ -1379,6 +1399,13 @@ public:
 	{
 		ZE_CHECKF(handle, "Tried to get an invalid handle");
 		return handle;
+	}
+
+	ResourceHandle free()
+	{
+		ResourceHandle freed_handle = handle;
+		handle = gfx::ResourceHandle();
+		return freed_handle;
 	}
 
 	void reset(const ResourceHandle& in_new_handle = ResourceHandle())

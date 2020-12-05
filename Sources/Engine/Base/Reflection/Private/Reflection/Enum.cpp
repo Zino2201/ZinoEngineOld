@@ -3,7 +3,7 @@
 namespace ze::reflection
 {
 
-const Enum* get_by_name(const std::string in_name)
+const Enum* get_by_name(const std::string& in_name)
 {
 	const Type* type = Type::get_by_name(in_name);
 	if(type && type->is_enum())

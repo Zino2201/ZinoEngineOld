@@ -22,7 +22,7 @@
 
 /** Macros */
 #define SDL_MAIN_HANDLED
-#define UNUSED_VARIABLE(Var) (void)(Var)
+#define ZE_UNUSED_VARIABLE(Var) (void)(Var)
 
 /** Platform specific thing */
 #if ZE_PLATFORM(WINDOWS)
@@ -32,9 +32,20 @@
 #include "Logger/Logger.h"
 #include "Assertions.h"
 
-#define ZE_CONCAT_(x, y) x ## y
-#define ZE_CONCAT(x, y) ZE_CONCAT_(x, y)
+#define ZE_CONCAT_IMPL(x, y) x ## y
+#define ZE_CONCAT(x, y) ZE_CONCAT_IMPL(x, y)
 
 /** Flags */
 #include <type_traits>
 #include "Flags/Flags.h"
+
+namespace std
+{
+
+ZE_FORCEINLINE std::string to_string(bool value)
+{
+	return value ? "true" : "false";
+}
+
+
+}

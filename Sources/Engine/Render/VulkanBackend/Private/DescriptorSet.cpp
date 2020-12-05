@@ -66,7 +66,7 @@ DescriptorSet::DescriptorSet(Device& in_device, const DescriptorSetCreateInfo& i
 		{
 			DescriptorTextureInfo image = std::get<DescriptorTextureInfo>(desc.info);
 			Sampler* sampler = Sampler::get(image.handle);
-			ZE_CHECKF(sampler, "Invalid sampler given to descriptor_set_create"); 
+			ZE_CHECKF(sampler, "Invalid sampler given to descriptor_set_create");
 			image_info.setSampler(sampler->get_sampler());
 			write_sets.emplace_back(
 				set,
@@ -83,7 +83,7 @@ DescriptorSet::DescriptorSet(Device& in_device, const DescriptorSetCreateInfo& i
 		{
 			DescriptorTextureInfo image = std::get<DescriptorTextureInfo>(desc.info);
 			TextureView* view = TextureView::get(image.handle);
-			ZE_CHECKF(view, "Invalid texture view given to descriptor_set_create"); 
+			ZE_CHECKF(view, "Invalid texture view given to descriptor_set_create");
 			image_info.setImageView(view->get_image_view());
 			image_info.setImageLayout(convert_texture_layout(image.layout));
 			write_sets.emplace_back(

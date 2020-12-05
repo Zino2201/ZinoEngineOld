@@ -133,6 +133,10 @@ public:
 		const uint32_t in_size,
 		const void* in_values) override;
 	/** Transfers cmd */
+	void cmd_copy_buffer(const ResourceHandle& in_cmd_list,
+        const ResourceHandle& in_src_buffer,
+        const ResourceHandle& in_dst_buffer,
+        const std::vector<BufferCopyRegion>& in_regions) override;
 	void cmd_copy_buffer_to_texture(const ResourceHandle& in_cmd_list,
 		const ResourceHandle& in_src_buffer,
 		const ResourceHandle& in_dst_texture,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Singleton.h"
+#include "Serialization/Archive.h"
 #include <robin_hood.h>
 
 namespace ze::reflection::serialization
@@ -25,14 +26,16 @@ struct ArchiveBindingCreator
 {
 	ArchiveBindingCreator()
 	{
-		auto& Map = get_archive_map(ArchiveName<Archive>);
-
-		Map.insert({ type_name<T>, [](void* archive, void* object)
+		if constexpr (ze::serialization::IsSerializable<T, Archive>)
 		{
-			ze::serialization::serialize(
-				reinterpret_cast<Archive&>(*archive),
-				reinterpret_cast<T&>(*object));
-		}});
+			auto& Map = get_archive_map(ArchiveName<Archive>);
+
+			Map.insert({ type_name<T>, [](void* archive, void* object)
+			{
+				Archive& archive_ref = reinterpret_cast<Archive&>(*reinterpret_cast<Archive*>(archive));
+				archive_ref <=> reinterpret_cast<T&>(*reinterpret_cast<T*>(object));
+			}});
+		}
 	}
 };
 

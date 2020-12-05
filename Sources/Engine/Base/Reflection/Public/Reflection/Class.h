@@ -104,6 +104,7 @@ public:
 				return reinterpret_cast<T*>(data);
 		}
 
+		ZE_CHECK(false);
 		return nullptr;
 	}
 
@@ -138,6 +139,9 @@ public:
 		return get_by_name(type_name<T>);
 	}
 
+	/*
+	 * Get all classes derived from the specified class
+	 */
 	static std::vector<const Class*> get_derived_classes_from(const Class* in_class);
 	
 	ZE_FORCEINLINE bool is_abstract() const { return static_cast<bool>(class_flags & ClassFlagBits::Abstract); }

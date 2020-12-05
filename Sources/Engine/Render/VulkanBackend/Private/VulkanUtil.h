@@ -23,6 +23,8 @@ ZE_FORCEINLINE vk::Format convert_format(Format in_format)
 		return vk::Format::eB8G8R8A8Unorm;
 	case Format::R8G8B8A8Unorm:
 		return vk::Format::eR8G8B8A8Unorm;
+	case Format::R8G8B8A8Srgb:
+		return vk::Format::eR8G8B8A8Srgb;
 	case Format::R32Uint:
 		return vk::Format::eR32Uint;
 	case Format::R64Uint:
@@ -35,6 +37,14 @@ ZE_FORCEINLINE vk::Format convert_format(Format in_format)
 		return vk::Format::eR32G32B32A32Sfloat;
 	case Format::R32G32B32A32Uint:
 		return vk::Format::eR32G32B32A32Uint;
+	case Format::Bc1RgbUnormBlock:
+		return vk::Format::eBc1RgbUnormBlock;
+	case Format::Bc1RgbaUnormBlock:
+		return vk::Format::eBc1RgbaUnormBlock;
+	case Format::Bc3UnormBlock:
+		return vk::Format::eBc3UnormBlock;
+	case Format::Bc7UnormBlock:
+		return vk::Format::eBc7UnormBlock;
 	}
 }
 
@@ -55,6 +65,8 @@ ZE_FORCEINLINE Format to_format(vk::Format in_format)
 		return Format::B8G8R8A8Unorm;
 	case vk::Format::eR8G8B8A8Unorm:
 		return Format::R8G8B8A8Unorm;
+	case vk::Format::eR8G8B8A8Srgb:
+		return Format::R8G8B8A8Srgb;
 	case vk::Format::eR32Uint:
 		return Format::R32Uint;
 	case vk::Format::eR64Uint:
@@ -67,6 +79,14 @@ ZE_FORCEINLINE Format to_format(vk::Format in_format)
 		return Format::R32G32B32A32Sfloat;
 	case vk::Format::eR32G32B32A32Uint:
 		return Format::R32G32B32A32Uint;
+	case vk::Format::eBc1RgbUnormBlock:
+		return Format::Bc1RgbUnormBlock;
+	case vk::Format::eBc1RgbaUnormBlock:
+		return Format::Bc1RgbaUnormBlock;
+	case vk::Format::eBc3UnormBlock:
+		return Format::Bc3UnormBlock;
+	case vk::Format::eBc7UnormBlock:
+		return Format::Bc7UnormBlock;
 	}
 }
 

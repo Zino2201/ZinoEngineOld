@@ -20,6 +20,9 @@ enum class Format
 
 	/** RGB 8-bit (unsigned short) */
 	R8G8B8A8Unorm,
+	
+	/** RGB 8-bit (srgb nonlinear) */
+	R8G8B8A8Srgb,
 
 	/** BGR 8-bit (unsigned short) */
     B8G8R8A8Unorm,
@@ -41,6 +44,16 @@ enum class Format
 	
 	/** R 64-bit (unsigned int) */
 	R64Uint,
+
+	/** BC1/DXT1 */
+	Bc1RgbUnormBlock,
+	Bc1RgbaUnormBlock,
+	
+	/** BC3/DXT5 */
+	Bc3UnormBlock,
+	
+	/** BC7 */
+	Bc7UnormBlock,
 };
 
 /** Utils structures */
@@ -65,5 +78,52 @@ struct Extent3D
 		const uint32_t in_y,
 		const uint32_t in_z) : x(in_x), y(in_y), z(in_z) {}
 };
+
+}
+
+namespace std
+{
+
+ZE_FORCEINLINE std::string to_string(const ze::gfx::Format& in_format)
+{
+	switch(in_format)
+	{
+	default:
+	case ze::gfx::Format::Undefined:
+		return "Undefined";
+	case ze::gfx::Format::D24UnormS8Uint:
+		return "D24UnormS8Uint";
+	case ze::gfx::Format::D32Sfloat:
+		return "D32Sfloat";
+	case ze::gfx::Format::D32SfloatS8Uint:
+		return "D32SfloatS8Uint";
+	case ze::gfx::Format::B8G8R8A8Unorm:
+		return "B8G8R8A8Unorm";
+	case ze::gfx::Format::R8G8B8A8Unorm:
+		return "R8G8B8A8Unorm";
+	case ze::gfx::Format::R8G8B8A8Srgb:
+		return "R8G8B8A8Srgb";
+	case ze::gfx::Format::R32Uint:
+		return "R32Uint";
+	case ze::gfx::Format::R64Uint:
+		return "R64Uint";
+	case ze::gfx::Format::R32G32Sfloat:
+		return "R32G32Sfloat";
+	case ze::gfx::Format::R32G32B32Sfloat:
+		return "R32G32B32Sfloat";
+	case ze::gfx::Format::R32G32B32A32Sfloat:
+		return "R32G32B32A32Sfloat";
+	case ze::gfx::Format::R32G32B32A32Uint:
+		return "R32G32B32A32Uint";
+	case ze::gfx::Format::Bc1RgbUnormBlock:
+		return "Bc1RgbUnormBlock";
+	case ze::gfx::Format::Bc1RgbaUnormBlock:
+		return "Bc1RgbaUnormBlock";
+	case ze::gfx::Format::Bc3UnormBlock:
+		return "Bc3UnormBlock";
+	case ze::gfx::Format::Bc7UnormBlock:
+		return "Bc7UnormBlock";
+	}
+}
 
 }

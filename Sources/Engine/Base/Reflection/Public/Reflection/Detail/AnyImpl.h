@@ -74,12 +74,24 @@ struct AnyPolicyBase
 				if constexpr(std::is_arithmetic_v<T>)
 				{
 					if(right_type->is_arithmetic())
-					{
 						return std::make_any<bool>(Policy::equals(*reinterpret_cast<uint64_t*>(anys->at(0)->get_value_ptr()), 
 							*reinterpret_cast<uint64_t*>(anys->at(1)->get_value_ptr())));
-					}
+					else if(right_type->is_enum())
+						return std::make_any<bool>(Policy::equals(*reinterpret_cast<T*>(anys->at(0)->get_value_ptr()), 
+							*reinterpret_cast<T*>(anys->at(1)->get_value_ptr())));
+				}
+				else if constexpr(std::is_enum_v<T>)
+				{
+					if(right_type->is_enum() || right_type->is_arithmetic())
+						return std::make_any<bool>(Policy::equals(*reinterpret_cast<T*>(anys->at(0)->get_value_ptr()), 
+							*reinterpret_cast<T*>(anys->at(1)->get_value_ptr())));
+				}
+				else
+				{
+					ZE_CHECK(false);
 				}
 			}
+			break;
 		}
 		case VisitType::NotEquals:
 		{
@@ -117,8 +129,17 @@ struct AnyPolicyBase
 		}
 		case VisitType::ToString:
 		{
-			ZE_CHECKF(false, "unimplemented");
-			break;
+			constexpr bool has_to_string = requires(T& data) { std::to_string(data); };
+
+			if constexpr(has_to_string)
+			{
+				const T* ptr = &Policy::get_value(any_data);
+				return std::make_any<std::string>(std::to_string(*ptr));
+			}
+			else
+			{
+				return std::make_any<std::string>("");
+			}
 		}
 		}
 
@@ -140,6 +161,7 @@ struct AnyPolicyEmpty
 	{
 		switch(type)
 		{
+		default:
 		case VisitType::Destroy:
 			break;
 		case VisitType::GetType:
