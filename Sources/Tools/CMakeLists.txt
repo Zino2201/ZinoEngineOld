@@ -1,1 +1,1 @@
-add_subdirectory(ZinoReflectionTool)
+add_subdirectory(ZERT)

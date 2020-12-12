@@ -47,7 +47,7 @@ set(ZE_BUILD_DIR ${CMAKE_BINARY_DIR})
 set(ZE_REFL_DIR ${ZE_BUILD_DIR}/Reflection)
 set(ZE_LIBS_DIR ${ZE_ROOT_DIR}/Sources/Libs)
 
-set(ZE_ZRT_SKIP "ZRT:SKIP")
+set(ZE_ZRT_SKIP "#zert skip")
 
 # Used for monolithic builds
 add_library(AllModules INTERFACE)
@@ -71,7 +71,7 @@ endfunction()
 function(ze_create_exec_module TARGET)
 	add_executable(${TARGET} ${ARGN})
 
-	_ze_base_module_def(${TARGET})
+	_ze_base_module_def(${TARGET} ${ARGN})
 endfunction()
 
 # Basic module definition
@@ -152,7 +152,7 @@ function(_ze_base_module_def TARGET)
 			get_filename_component(GENFILENAME ${HEADER_FILENAME} NAME_WLE)
 			set(GENFILEPATH "${TARGET_REFL_DIR}/${GENFILENAME}.gen.cpp")
 			if(NOT EXISTS ${GENFILEPATH})
-				file(WRITE ${GENFILEPATH} "/** Placeholder for ZinoReflectionTool. Do not modify as this file is automaticly generated. */")
+				file(WRITE ${GENFILEPATH} "/** Placeholder for ZERT. Do not modify as this file is automaticly generated. */")
 			endif()
 
 			# Add .gen.cpp to sources
@@ -168,8 +168,8 @@ function(_ze_base_module_def TARGET)
 		# Most generators doesn't support PRE_BUILD commands
 		# So we need to use a custom target with the command and add a dependency to it
 		add_custom_target(${TARGET}_REFLECTION_DATA ALL
-					COMMAND "${ZE_BINS_DIR}/ZinoReflectionTool.exe" -Module="${TARGET}" -SrcDir="${CMAKE_CURRENT_SOURCE_DIR}" -OutDir="${TARGET_REFL_DIR}/" ${ZRT_FILE})
-		add_dependencies(${TARGET}_REFLECTION_DATA ZinoReflectionTool)
+					COMMAND "${ZE_BINS_DIR}/ZERT.exe" -Module="${TARGET}" -SrcDir="${CMAKE_CURRENT_SOURCE_DIR}" -OutDir="${TARGET_REFL_DIR}/" ${ZRT_FILE})
+		add_dependencies(${TARGET}_REFLECTION_DATA ZERT)
 		add_dependencies(${TARGET} ${TARGET}_REFLECTION_DATA)
 	endif()
 endfunction()
