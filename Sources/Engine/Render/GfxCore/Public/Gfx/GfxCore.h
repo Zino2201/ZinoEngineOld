@@ -18,6 +18,8 @@ enum class Format
 	/** Depth 24-bit (signed float) & stencil 8-bit (unsigned int) */
 	D24UnormS8Uint,
 
+	R8G8B8Unorm,
+
 	/** RGB 8-bit (unsigned short) */
 	R8G8B8A8Unorm,
 	
@@ -52,6 +54,14 @@ enum class Format
 	/** BC3/DXT5 */
 	Bc3UnormBlock,
 	
+	/** BC5 */
+	Bc5UnormBlock,
+	Bc5SnormBlock,
+
+	/** BC6H */
+	Bc6HUfloatBlock,
+	Bc6HSfloatBlock,
+
 	/** BC7 */
 	Bc7UnormBlock,
 };
@@ -99,6 +109,8 @@ ZE_FORCEINLINE std::string to_string(const ze::gfx::Format& in_format)
 		return "D32SfloatS8Uint";
 	case ze::gfx::Format::B8G8R8A8Unorm:
 		return "B8G8R8A8Unorm";
+	case ze::gfx::Format::R8G8B8Unorm:
+		return "R8G8B8Unorm";
 	case ze::gfx::Format::R8G8B8A8Unorm:
 		return "R8G8B8A8Unorm";
 	case ze::gfx::Format::R8G8B8A8Srgb:
@@ -123,6 +135,14 @@ ZE_FORCEINLINE std::string to_string(const ze::gfx::Format& in_format)
 		return "Bc3UnormBlock";
 	case ze::gfx::Format::Bc7UnormBlock:
 		return "Bc7UnormBlock";
+	case ze::gfx::Format::Bc5UnormBlock:
+		return "Bc5UnormBlock";
+	case ze::gfx::Format::Bc5SnormBlock:
+		return "Bc5SnormBlock";
+	case ze::gfx::Format::Bc6HUfloatBlock:
+		return "Bc6HUfloatBlock";
+	case ze::gfx::Format::Bc6HSfloatBlock:
+		return "Bc6HSfloatBlock";
 	}
 }
 
