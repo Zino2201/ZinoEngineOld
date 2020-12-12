@@ -1,4 +1,4 @@
-/** ZRT:SKIP */
+/** #zert skip */
 
 #pragma once
 

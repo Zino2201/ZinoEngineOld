@@ -13,13 +13,13 @@ struct TransformComponent : public Component
 {
 	ZE_REFL_BODY()
 
-	ZPROPERTY(Serializable, Editable)
+	ZPROPERTY(Serializable, Visible, Editable)
 	maths::Vector3d position;
 	
-	ZPROPERTY(Serializable, Editable)
+	ZPROPERTY(Serializable, Visible, Editable)
 	maths::Vector3f rotation;
 	
-	ZPROPERTY(Serializable, Editable)
+	ZPROPERTY(Serializable, Visible, Editable)
 	maths::Vector3f scale;
 
 	TransformComponent() : scale(maths::Vector3f(1.f)) { }

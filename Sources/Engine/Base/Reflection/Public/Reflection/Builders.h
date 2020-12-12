@@ -78,14 +78,29 @@ struct ClassBuilder : public TypeBuilder<T, Class>
 		return *this;
 	}
 
+	template<typename Parent>
+	ClassBuilder& parent()
+	{
+		/**
+		 * ZERT can check if the parent is a reflected type, but for now it's too much boring work lol
+		 */
+		if constexpr(IsReflType<Parent>)
+		{
+			LazyTypePtr& parent = const_cast<LazyTypePtr&>(class_->get_parent_lazy_ptr());
+			parent = LazyTypePtr(type_name<Parent>);
+		}
+
+		return *this;
+	}
+
 	template<typename PropType, typename PropPtr>
 	ClassBuilder& property(const std::string& in_name, PropPtr&& in_ptr, 
-		const PropertyFlags& in_flags = PropertyFlagBits::None)
+		const robin_hood::unordered_map<std::string, std::string>& in_metadatas = {})
 	{
 		std::vector<ze::reflection::Property>& properties = 
 			const_cast<std::vector<ze::reflection::Property>&>(class_->get_properties());
 		properties.emplace_back(in_name, type_name<PropType>, 
-			(char*)&((T*)nullptr->*in_ptr) - (char*)nullptr, in_flags);
+			(char*)&((T*)nullptr->*in_ptr) - (char*)nullptr, in_metadatas);
 
 		auto& property_impl = const_cast<std::unique_ptr<detail::PropertyImplBase>&>(properties.back().get_impl());
 		property_impl = std::make_unique<detail::PropertyImplMember<PropType>>(properties.back().get_offset());

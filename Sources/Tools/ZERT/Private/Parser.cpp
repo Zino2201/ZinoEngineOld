@@ -346,7 +346,7 @@ void Parser::parse_class(const bool in_struct)
             {
                 std::string sanitized_arg = arg;
                 sanitized_arg.erase(std::remove_if(sanitized_arg.begin(), sanitized_arg.end(), isspace), sanitized_arg.end());
-                prop.metadatas.insert({ arg, "" });
+                prop.metadatas.insert({ arg, "true" });
             }
         }
     }

@@ -87,7 +87,7 @@ void Writer::write_cpp()
 		file << "ZE_REFL_SERL_REGISTER_TYPE(" << cl.znamespace << "::" << cl.name << ", " << cl.name << ");\n\n";
 	
 	file << "namespace ze::reflection\n{\n";
-	file << "ZE_REFL_BUILDER_FUNC(" << unique_id << ")\n{\n"; 
+	file << "ZE_REFL_BUILDER_FUNC(" << unique_id << "_" << header.path.stem().string() << ")\n{\n"; 
 	file << "using namespace ze;\n";
 
 	for(const auto& cl : header.classes)
@@ -113,7 +113,15 @@ void Writer::write_cpp()
 				+ property.name + "\", &" << cl.znamespace << "::" << cl.name << "::" << property.name << ", ";
 			file << "{\n";
 			for(const auto& [key, value] : property.metadatas)
-				file << "{ \"" << key << "\", \"" << value << "\" },";
+			{   
+				std::string keyv = key;
+				std::string valuev = value;
+
+				keyv.erase(std::remove_if(keyv.begin(), keyv.end(), isspace), keyv.end());
+				valuev.erase(std::remove_if(valuev.begin(), valuev.end(), isspace), valuev.end());
+
+				file << "{ \"" << keyv << "\", \"" << valuev << "\" },";
+			}
 			file << "}";
 			file << ");\n";
 		}

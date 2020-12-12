@@ -14,12 +14,9 @@ namespace detail { class PropertyImplBase; }
 
 enum class PropertyFlagBits
 {
-	None = 0,
-
-	Serializable = 1 << 0,
-	Visible = 1 << 1,
-	Editable = 1 << 2,
+	
 };
+
 ENABLE_FLAG_ENUMS(PropertyFlagBits, PropertyFlags)
 
 class REFLECTION_API Property
@@ -28,7 +25,7 @@ public:
 	Property(const std::string& in_name,
 		const std::string& in_type_name,
 		const size_t& in_offset,
-		const PropertyFlags& in_flags);
+		const robin_hood::unordered_map<std::string, std::string>& in_metadatas);
 	~Property();
 
 	Property(Property&& other);
@@ -63,6 +60,7 @@ public:
 	ZE_FORCEINLINE const size_t& get_offset() const { return offset; }
 	ZE_FORCEINLINE const PropertyFlags& get_flags() const { return flags; }
 	ZE_FORCEINLINE const std::unique_ptr<detail::PropertyImplBase>& get_impl() const { return impl; }
+	ZE_FORCEINLINE bool has_metadata(const std::string& in_key) const { return metadata.contains(in_key); }
 
 	ZE_FORCEINLINE bool operator<(const Property& other) const { return name < other.name; }
 	ZE_FORCEINLINE bool operator>(const Property& other) const { return name > other.name; }
@@ -72,6 +70,7 @@ private:
 	size_t offset;
 	PropertyFlags flags;
 	std::unique_ptr<detail::PropertyImplBase> impl;
+	robin_hood::unordered_map<std::string, std::string> metadata;
 };
 
 }
