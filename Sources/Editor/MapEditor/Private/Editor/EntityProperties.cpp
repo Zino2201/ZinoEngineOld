@@ -77,12 +77,11 @@ void CEntityProperties::Draw()
 				{
 					auto& property = *property_ptr;
 
-					if(property.get_flags() & reflection::PropertyFlagBits::Visible ||
-						property.get_flags() & reflection::PropertyFlagBits::Editable)
+					if(property.has_metadata("Visible") || property.has_metadata("Editable"))
 					{
 						if(PropertyEditor* ed = get_property_edtior(property.get_type()))
 						{
-							if(property.get_flags() & reflection::PropertyFlagBits::Visible)
+							if(!property.has_metadata("Editable"))
 							{
 								ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 								ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
@@ -95,7 +94,7 @@ void CEntityProperties::Draw()
 							std::string unique_label = "##" + std::to_string(selected_entity.id) + property.get_name();
 							ed->draw(unique_label.c_str(), property.get_value_ptr(component));
 							ImGui::NextColumn();
-							if(property.get_flags() & reflection::PropertyFlagBits::Visible)
+							if(!property.has_metadata("Editable"))
 							{
 								ImGui::PopItemFlag();
 								ImGui::PopStyleVar();
