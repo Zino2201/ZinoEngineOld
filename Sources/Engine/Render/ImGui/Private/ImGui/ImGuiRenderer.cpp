@@ -240,7 +240,19 @@ bool initialize(const gfx::ResourceHandle& in_cmd_list, const gfx::ResourceHandl
 	pipeline = pipeline_handle;
 
 	auto [sampler_result, sampler_handle] = gfx::RenderBackend::get().sampler_create(
-		gfx::SamplerCreateInfo());
+		gfx::SamplerCreateInfo(gfx::Filter::Linear,
+			gfx::Filter::Linear,
+			gfx::Filter::Linear,
+			gfx::SamplerAddressMode::Repeat,
+			gfx::SamplerAddressMode::Repeat,
+			gfx::SamplerAddressMode::Repeat,
+			0.f,
+			false,
+			gfx::CompareOp::Never,
+			false,
+			0.f,
+			-std::numeric_limits<float>::max(),
+			std::numeric_limits<float>::max()));
 
 	sampler = sampler_handle;
 

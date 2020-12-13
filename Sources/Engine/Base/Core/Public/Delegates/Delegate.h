@@ -28,6 +28,11 @@ public:
 		function = in_func;
 	}
 
+	void bind(std::function<Signature>&& in_func)
+	{
+		function = in_func;
+	}
+
 	/**
 	 * Call all functions
 	 */
@@ -45,6 +50,11 @@ public:
 			if constexpr(!std::is_void_v<Ret>)
 				return {};
 		}
+	}
+
+	void clear()
+	{
+		function = nullptr;
 	}
 
 	operator bool() const

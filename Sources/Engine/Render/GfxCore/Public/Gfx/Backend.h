@@ -8,6 +8,7 @@
 #include "Maths/MathCore.h"
 #include "Maths/Rect.h"
 #include <variant>
+#include <array>
 
 namespace ze::gfx
 {
@@ -957,6 +958,21 @@ struct TextureCopyRegion
 		dst_offset(in_dst_offset), extent(in_extent) {}
 };
 
+struct TextureBlitRegion
+{
+	TextureSubresourceLayers src_subresource;
+	std::array<Offset3D, 2> src_offsets;
+	TextureSubresourceLayers dst_subresource;
+	std::array<Offset3D, 2> dst_offsets;
+
+	TextureBlitRegion(const TextureSubresourceLayers& in_src_subresource,
+		const std::array<gfx::Offset3D, 2>& in_src_offsets,
+		const TextureSubresourceLayers& in_dst_subresource,
+		const std::array<gfx::Offset3D, 2>& in_dst_offsets) : src_subresource(in_src_subresource),
+		src_offsets(in_src_offsets), dst_subresource(in_dst_subresource),
+		dst_offsets(in_dst_offsets) {}
+};
+
 /** Sampler structures */
 enum class Filter
 {
@@ -1299,6 +1315,26 @@ public:
 		const ResourceHandle& in_dst_texture,
 		const TextureLayout in_dst_layout,
 		const std::vector<TextureCopyRegion>& in_regions) = 0;
+
+	/**
+	 * Copy texture to buffer
+	 */
+	virtual void cmd_copy_texture_to_buffer(const ResourceHandle& in_cmd_list,
+		const ResourceHandle& in_src_texture,
+		const TextureLayout in_src_layout,
+		const ResourceHandle& in_dst_buffer,
+		const std::vector<BufferTextureCopyRegion>& in_regions) = 0;
+
+	/**
+	 * Blit a texture
+	 */
+	virtual void cmd_blit_texture(const ResourceHandle& in_cmd_list,
+		const ResourceHandle& in_src_texture,
+		const TextureLayout in_src_layout,
+		const ResourceHandle& in_dst_texture,
+		const TextureLayout in_dst_layout,
+		const std::vector<TextureBlitRegion>& in_regions,
+		const Filter& in_filter) = 0;
 
 	/** QUEUES RELATED FUNCTIONS */
 
@@ -1658,9 +1694,25 @@ using SharedSampler = SharedResourceHandle<ResourceType::Sampler, detail::Sample
 
 }
 
-/** hash functions */
 namespace std
 {
+	inline std::string to_string(const ze::gfx::Result& in_result)
+	{
+		switch(in_result)
+		{
+		case ze::gfx::Result::Success:
+			return "Success";
+		case ze::gfx::Result::ErrorUnknown:
+			return "Unknown error";
+		case ze::gfx::Result::ErrorInitializationFailed:
+			return "Object initialization failed";
+		case ze::gfx::Result::ErrorOutOfDeviceMemory:
+			return "Out of video memory";
+		case ze::gfx::Result::ErrorOutOfHostMemory:
+			return "Out of memory";
+		}
+	}
+
 	template<> struct hash<ze::gfx::BufferCreateInfo>
 	{
 		ZE_FORCEINLINE uint64_t operator()(const ze::gfx::BufferCreateInfo& in_create_info) const

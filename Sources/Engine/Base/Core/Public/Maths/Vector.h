@@ -20,6 +20,13 @@ struct Vector2
 	Vector2(const T& in_val) : x(in_val), y(in_val) {}
 	Vector2(const T& in_x, const T& in_y) : x(in_x), y(in_y) {}
 
+	template<typename ArchiveType>
+    void serialize(ArchiveType& in_archive)
+    {
+		in_archive <=> x;
+		in_archive <=> y;
+	}
+
 	bool operator==(const Vector2& other) const
 	{
 		return x == other.x 
@@ -67,6 +74,14 @@ struct Vector3
 	constexpr Vector3(const T& in_val) : x(in_val), y(in_val), z(in_val) {}
 	constexpr Vector3(const T& in_x, const T& in_y, const T& in_z) : x(in_x), y(in_y), z(in_z) {}
 	constexpr Vector3(const Vector2<T>& in_vec2, const T& in_z) : x(in_vec2.x), y(in_vec2.y), z(in_z) {}
+	
+	template<typename ArchiveType>
+    void serialize(ArchiveType& in_archive)
+    {
+		in_archive <=> x;
+		in_archive <=> y;
+		in_archive <=> z;
+	}
 
 	ZE_FORCEINLINE T& operator[](const size_t& in_col)
 	{

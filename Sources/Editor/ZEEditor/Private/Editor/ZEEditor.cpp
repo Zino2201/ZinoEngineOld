@@ -28,6 +28,13 @@
 #include "Editor/Widgets/MapTabWidget.h"
 #include "Maths/Matrix.h"
 #include "Maths/Matrix/Transformations.h"
+#include "Editor/Assets/AssetActions.h"
+#include "Editor/Widgets/Tab.h"
+#include "Gfx/CommandSystem.h"
+#include "Editor/NotificationSystem.h"
+#include <sstream>
+#include "Gfx/GpuVector.h"
+#include "ZEFS/ZEFS.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);
 
@@ -46,11 +53,20 @@ int event_filter(void* pthis, const SDL_Event *event)
     return 1;
 }
 
+EditorApp* app = nullptr;
+
+EditorApp& EditorApp::get()
+{
+	return *app;
+}
+
 EditorApp::EditorApp() : EngineApp(),
 	main_window("ZinoEngine Editor", 1280, 720, 
 		0, 0, 
 		NativeWindowFlagBits::Centered | NativeWindowFlagBits::Resizable | NativeWindowFlagBits::Maximized)
 {
+	app = this;
+
 	swapchain = gfx::RenderBackend::get().swapchain_create(
 		ze::gfx::SwapChainCreateInfo(
 			main_window.get_handle(),
@@ -106,7 +122,8 @@ EditorApp::EditorApp() : EngineApp(),
 	SDL_SetEventFilter((SDL_EventFilter) &event_filter, this);
 
 	initialize_asset_factory_mgr();
-
+	initialize_asset_actions_mgr();
+	
 	assetutils::get_on_asset_imported().bind(std::bind(&EditorApp::on_asset_imported,
 		this, std::placeholders::_1, std::placeholders::_2));
 
@@ -159,6 +176,7 @@ EditorApp::EditorApp() : EngineApp(),
 	map_tab_widget = std::make_unique<CMapTabWidget>(*world.get());
 
 	/*** type editors */
+	register_property_editor(reflection::Type::get<bool>(), new BoolPropertyEditor);
 	register_property_editor(reflection::Type::get<uint32_t>(), new Uint32PropertyEditor);
 	register_property_editor(reflection::Type::get<float>(), new FloatPropertyEditor);
 	register_property_editor(reflection::Type::get<maths::Vector3f>(), new Vector3fPropertyEditor);
@@ -222,12 +240,22 @@ EditorApp::EditorApp() : EngineApp(),
 			*vp_pipeline_layout,
 			*vp_render_pass));
 	vp_pipeline = pipeline_handle;
+
+	gfx::hlcs::initialize();
 }
 
 EditorApp::~EditorApp()
 {
+	gfx::hlcs::destroy();
+	assetmanager::unload_all();
+	destroy_asset_actions_mgr();
 	destroy_asset_factory_mgr();
 	ze::ui::imgui::destroy();
+}
+
+void EditorApp::add_tab(OwnerPtr<Tab> in_tab)
+{
+	tabs.emplace_back(std::unique_ptr<Tab>(in_tab));
 }
 
 void EditorApp::process_event(const SDL_Event& in_event, const float in_delta_time)
@@ -254,6 +282,8 @@ void EditorApp::process_event(const SDL_Event& in_event, const float in_delta_ti
 
 void EditorApp::post_tick(const float in_delta_time)
 {
+    notifications_update(in_delta_time);
+
 	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(main_window.get_handle()));
 	ImGui::NewFrame();
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -268,8 +298,31 @@ void EditorApp::post_tick(const float in_delta_time)
 	{
 		ImGui::PopStyleVar(3);
 		ImGui::ShowDemoWindow();
+
+		/** Notifications */
+        const float width = 340;
+        const float height = 80;
+        const float offset_x = 50;
+        const float offset_y = 15;
+        float win_offset_y = height + offset_y;
+        for(const auto& notification : notifications_get())
+        {
+            ImGuiIO& io = ImGui::GetIO();
+
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5.0f, 0.0f));
+            ImGui::SetNextWindowSize(ImVec2(width, height));
+            ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - (width + offset_x), io.DisplaySize.y - win_offset_y));
+            ImGui::Begin(notification.message.c_str(), nullptr, ImGuiWindowFlags_NoDecoration |
+                ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::SetCursorPosY((height / 2) - (ImGui::CalcTextSize(notification.message.c_str(), nullptr, false, width).y) / 2);
+            ImGui::TextWrapped("%s", notification.message.c_str());
+            win_offset_y += ImGui::GetWindowSize().y + offset_y;
+            ImGui::End();
+            ImGui::PopStyleVar(1);
+        }
+
 		if (ImGui::BeginTabBar("MainTabBar", ImGuiTabBarFlags_TabListPopupButton
-			| ImGuiTabBarFlags_Reorderable))
+			| ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_AutoSelectNewTabs))
 		{
 			ImGui::SameLine(ImGui::GetColumnWidth() - 500);
 			ImGui::Text("ZinoEngine v%d.%d.%d | FPS: %d | MS: %.2f | %s",
@@ -280,6 +333,29 @@ void EditorApp::post_tick(const float in_delta_time)
 				in_delta_time * 1000.0,
 				ZE_CONFIGURATION_NAME);
 			draw_main_tab();
+
+			size_t tab_to_remove = -1;
+
+			size_t i = 0;
+			for(const auto& tab : tabs)
+			{
+				bool open = true;
+				bool draw = ImGui::BeginTabItem(tab->get_name().c_str(), &open);
+				if(!open)
+					tab_to_remove = i;
+				i++;
+				if(draw)
+				{
+					tab->draw();
+					ImGui::EndTabItem();
+				}
+			}
+
+			if(tab_to_remove != -1)
+			{
+				tabs.erase(tabs.begin() + tab_to_remove);
+			}
+
 			ImGui::EndTabBar();
 		}
 	}
@@ -289,6 +365,7 @@ void EditorApp::post_tick(const float in_delta_time)
 	using namespace gfx;
 
 	RenderBackend::get().new_frame();
+	gfx::hlcs::begin_new_frame();
 
 	int w = 0, h = 0;
 	SDL_GetWindowSize(reinterpret_cast<SDL_Window*>(main_window.get_handle()), &w, &h);
@@ -398,17 +475,28 @@ void EditorApp::post_tick(const float in_delta_time)
 			RenderBackend::get().cmd_end_render_pass(cmd_list);
 		}
 		RenderBackend::get().command_list_end(cmd_list);
-		RenderBackend::get().queue_execute(
-			RenderBackend::get().get_gfx_queue(),
-			{ cmd_list },
-			*cmd_list_fence);
-		RenderBackend::get().swapchain_present(*swapchain);
-
-		// TODO: MOVE UP start signaled
-		RenderBackend::get().fence_wait_for({ *cmd_list_fence });
-		RenderBackend::get().fence_reset({ *cmd_list_fence });
-
 	}
+
+	gfx::hlcs::submit_all_lists();
+
+	RenderBackend::get().queue_execute(
+		RenderBackend::get().get_gfx_queue(),
+		{ cmd_list },
+		*cmd_list_fence);
+	RenderBackend::get().swapchain_present(*swapchain);
+
+	// TODO: MOVE UP start signaled
+	RenderBackend::get().fence_wait_for({ *cmd_list_fence });
+	RenderBackend::get().fence_reset({ *cmd_list_fence });
+}
+
+bool EditorApp::has_tab(std::string in_name)
+{
+	for(const auto& tab : tabs)
+		if(tab->get_name() == in_name)
+			return true;
+
+	return false;
 }
 
 void EditorApp::test_renderer(const gfx::ResourceHandle& in_cmd_list)
@@ -489,12 +577,22 @@ void EditorApp::on_asset_imported(const std::filesystem::path& in_path,
 
 	/** Serialize the asset and then unload it */
 	Asset* asset = factory->create_from_stream(stream);
-	assetutils::save_asset(*asset, in_target_path,
-		"NewAssetTest");
+	const ze::reflection::Class* asset_class = asset->get_class();
+	std::string name = "NewAsset";
+	while(filesystem::exists(in_target_path / (name + ".zasset")))
+		name += "(1)";
+
+	assetutils::save_asset(*asset, in_target_path, name);
 	delete asset;
 
 	/** Notify the database */
 	assetdatabase::scan(in_target_path);
+
+	if(AssetActions* actions = get_actions_for(asset_class))
+	{
+		auto request = assetmanager::load_asset_sync(in_target_path / (name + ".zasset"));
+		actions->open_editor(request.first, request.second);
+	}
 }
 
 }

@@ -4,6 +4,7 @@ ze_create_module(Core
     Public/Maths/Matrix/Transformations.h
     Private/EngineCore.cpp Private/App.cpp Private/StringUtil.cpp
     Private/Console/Console.cpp
+    Private/Logger/Sinks/StdSink.cpp
     Private/Logger/Sinks/WinDbgSink.cpp
     Private/Logger/Logger.cpp Private/Logger/Sink.cpp
     Private/Memory/SmartPointers.cpp

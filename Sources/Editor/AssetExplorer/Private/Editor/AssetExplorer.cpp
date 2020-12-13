@@ -8,6 +8,9 @@
 #include "StringUtil.h"
 #include "Editor/AssetUtils/AssetUtils.h"
 #include "ZEFS/Paths.h"
+#include "Editor/Assets/AssetActions.h"
+#include "Assets/AssetManager.h"
+#include "Editor/NotificationSystem.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, AssetExplorer);
 
@@ -179,11 +182,25 @@ void CAssetExplorer::DrawAssetList()
 		ImGui::Selectable(ID.c_str(), false, ImGuiSelectableFlags_None, ImVec2(75, 100));
 		if (ImGui::IsItemHovered())
 		{
+			if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+			{
+				if(AssetActions* actions = get_actions_for(Asset.asset_class))
+				{
+					auto request = assetmanager::load_asset_sync(Asset.path);
+					actions->open_editor(request.first, request.second);
+				}
+				else
+                {
+				    notification_add(NotificationType::Error, fmt::format("Failed to open asset {}: No asset actions found for this asset type",
+                        Asset.path.string()));
+                }
+			}
+
 			ImGui::BeginTooltip();
-			ImGui::Text("Type: %s\nFull path: %s\nSize: %f Mib",
+			ImGui::Text("Type: %s\nFull path: %s\nSize: %f Mb",
 				Asset.asset_class->get_name().c_str(),
 				Asset.path.string().c_str(),
-				static_cast<float>(Asset.size / 2048.f));
+				static_cast<float>(Asset.size / 1048576.f));
 			ImGui::Separator();
 			ImGui::Text("Last modified on ");
 			ImGui::Separator();

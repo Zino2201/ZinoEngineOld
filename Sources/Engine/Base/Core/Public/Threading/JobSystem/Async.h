@@ -10,7 +10,7 @@ namespace ze::jobsystem
  * std::async version using ZE jobsystem
  */
 template<typename Lambda>
-void async(Lambda lambda)
+const jobsystem::Job& async(Lambda lambda)
 {
 	const auto& job = create_job(
 		JobType::Normal, 
@@ -19,6 +19,7 @@ void async(Lambda lambda)
 			lambda(in_job);
 		});
 	schedule(job);
+	return job;
 }
 
 template<typename Ret, typename Lambda>

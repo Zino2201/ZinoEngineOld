@@ -28,7 +28,7 @@ struct PropertyEditorDrawParams
 class PROPERTYEDITOR_API PropertyEditor
 {
 public:
-	virtual void draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params = PropertyEditorDrawParams()) = 0;
+	virtual bool draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params = PropertyEditorDrawParams()) = 0;
 };
 
 PROPERTYEDITOR_API void register_property_editor(const reflection::Type* in_type, OwnerPtr<PropertyEditor> in_editor);

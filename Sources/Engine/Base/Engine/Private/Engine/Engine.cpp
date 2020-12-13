@@ -49,6 +49,7 @@ EngineApp::EngineApp() : should_run(false), focused(true), err_code(0), frame_co
 	/** Load asset related modules */
 	LoadRequiredModule("Asset");
 	LoadRequiredModule("AssetDatabase");
+	previous = std::chrono::high_resolution_clock::now();
 }
 
 void EngineApp::process_event(const SDL_Event& in_event, const float in_delta_time)
@@ -108,6 +109,8 @@ void EngineApp::loop()
 	float delta_time_as_secs = static_cast<float>(engine_delta_time) * 0.001f;
 
 	engine_elapsed_time += delta_time_as_secs;
+
+	ze::input::clear();
 
 	/** Process events */
 	{

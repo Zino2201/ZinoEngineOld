@@ -14,6 +14,7 @@ namespace ze::editor
 {
 
 class CMapTabWidget;
+class Tab;
 
 class ZEEDITOR_API EditorApp final : public EngineApp
 {
@@ -21,8 +22,15 @@ public:
 	EditorApp();
 	~EditorApp();
 
+	EditorApp(const EditorApp&) = delete;
+	void operator=(const EditorApp&) = delete;
+
+	static EditorApp& get();
+
 	void process_event(const SDL_Event& in_event, const float in_delta_time) override;
 	void post_tick(const float in_delta_time) override;
+	void add_tab(OwnerPtr<Tab> in_tab);
+	bool has_tab(std::string in_name);
 private:
 	void draw_main_tab();
 	void test_renderer(const gfx::ResourceHandle& in_cmd_list);
@@ -43,6 +51,7 @@ private:
 	ImFont* font;
 	std::unique_ptr<World> world;
 	std::unique_ptr<CMapTabWidget> map_tab_widget;
+	std::vector<std::unique_ptr<Tab>> tabs;
 };
 
 }

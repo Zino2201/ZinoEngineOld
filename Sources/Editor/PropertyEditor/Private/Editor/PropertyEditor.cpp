@@ -11,12 +11,14 @@ namespace ze::editor
 class EnumPropertyEditor final : public PropertyEditor
 {
 public:
-	void draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params) override
+	bool draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params) override
 	{
 		ZE_CHECK(e);
 		uint64_t& current_value = *reinterpret_cast<uint64_t*>(in_value);
 
 		ImGui::PushID(in_label);
+
+		bool changed = false;
 
 		std::string n = e->get_value_name(current_value).c_str();
 		if(ImGui::BeginCombo(in_label, n.c_str()))
@@ -27,12 +29,16 @@ public:
 				{
 					memcpy(in_value, reinterpret_cast<uint64_t*>(value.get_value_ptr()), 
 						e->get_size());
+
+					changed = true;
 				}
 			}
 			ImGui::EndCombo();
 		}
 
 		ImGui::PopID();
+
+		return changed;
 	}
 
 	const reflection::Enum* e;

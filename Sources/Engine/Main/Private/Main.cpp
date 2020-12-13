@@ -1,6 +1,7 @@
 #include "Module/ModuleManager.h"
 #include "EngineCore.h"
 #include "Logger/Logger.h"
+#include "Logger/Sinks/StdSink.h"
 #include <SDL.h>
 #include "Engine/Engine.h"
 #include "Shader/ShaderCompiler.h"
@@ -115,9 +116,12 @@ void PreInit()
 		FS::set_write_fs(Root);
 
 		/** Setup default sinks */
-#if ZE_PLATFORM(WINDOWS) && defined ZE_DEBUG
+#if ZE_FEATURE(DEVELOPMENT)
+        ze::logger::add_sink(std::make_unique<ze::logger::StdSink>("Std"));
+    #if ZE_PLATFORM(WINDOWS)
 		ze::logger::add_sink(std::make_unique<ze::logger::WinDbgSink>("WinDbg"));
-#endif
+    #endif /** ZE_PLATFORM(WINDOWS) */
+#endif /** ZE_DEBUG */
 
 		/** Log file sink */
 		{

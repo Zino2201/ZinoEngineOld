@@ -5,14 +5,19 @@
 namespace ze::editor
 {
 
-void Uint32PropertyEditor::draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params)
+bool BoolPropertyEditor::draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params)
 {
-	ImGui::DragInt(in_label, reinterpret_cast<int*>(in_value));
+	return ImGui::Checkbox(in_label, reinterpret_cast<bool*>(in_value));
 }
 
-void FloatPropertyEditor::draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params)
+bool Uint32PropertyEditor::draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params)
 {
-	ImGui::DragFloat(in_label, reinterpret_cast<float*>(in_value));
+	return ImGui::DragInt(in_label, reinterpret_cast<int*>(in_value));
+}
+
+bool FloatPropertyEditor::draw(const char* in_label, void* in_value, PropertyEditorDrawParams in_params)
+{
+	return ImGui::DragFloat(in_label, reinterpret_cast<float*>(in_value));
 }
 
 }

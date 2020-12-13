@@ -22,6 +22,7 @@ void ComponentManager::unregister_entity(Entity in_entity)
 void* ComponentManager::add_component(Entity in_entity, const reflection::Class* in_class, bool in_instantiate)
 {
 	ZE_CHECKF(entity_data_map.contains(in_entity), "Entity not registered");
+	ZE_CHECK(in_class);
 
 	EntityData& entity_data = entity_data_map[in_entity];
 	EntityArchetype* old_archetype = nullptr;

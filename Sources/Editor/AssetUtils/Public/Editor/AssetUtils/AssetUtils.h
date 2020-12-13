@@ -21,6 +21,8 @@ using OnAssetImported = ze::DelegateNoRet<const std::filesystem::path&, const st
 ASSETUTILS_API void import_assets_dialog(const std::filesystem::path& in_path,
 	const std::filesystem::path& in_target);
 
+ASSETUTILS_API void save_asset(ze::Asset& in_asset);
+
 /**
  * Save the specified asset to disk
  */

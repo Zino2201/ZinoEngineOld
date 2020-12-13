@@ -2,6 +2,9 @@
 
 #include "EngineCore.h"
 #include <filesystem>
+#include "robin_hood.h"
+
+namespace ze::assetmanager { class AssetRequestHandle; }
 
 namespace ze::editor
 {
@@ -21,8 +24,9 @@ private:
 	void DrawRecurseHierachy(const std::filesystem::path& InPath);
 private:
 	float MaxHierarchyWidth;
-	std::filesystem::path CurrentDirectory;
+	std::filesystem::path CurrentDirectory = "Assets/";
 	std::filesystem::path selected_dir;
+	std::vector<std::shared_ptr<assetmanager::AssetRequestHandle>> pending_requests;
 };
 
 }
