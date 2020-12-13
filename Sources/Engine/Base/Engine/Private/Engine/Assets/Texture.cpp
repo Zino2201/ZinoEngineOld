@@ -362,7 +362,7 @@ void Texture::update_resource()
 
 #if !ZE_WITH_EDITOR
 	if(!keep_in_ram)
-		data.clear();
+		mipmaps.clear();
 #endif
 }
 
