@@ -8,7 +8,7 @@ namespace ze::editor
 
 robin_hood::unordered_set<const ze::reflection::Class*> added_actions;
 std::vector<std::unique_ptr<AssetActions>> actions;
-DelegateHandle module_loaded_delegate;
+DelegateHandle asset_actions_module_loaded_delegate;
 
 void scan_for_asset_actions()
 {
@@ -24,20 +24,20 @@ void scan_for_asset_actions()
 	}
 }
 
-void on_module_loaded(const std::string_view& InName)
+void on_asset_actions_module_loaded(const std::string_view& InName)
 {
 	scan_for_asset_actions();
 }
 
 void initialize_asset_actions_mgr()
 {
-	module_loaded_delegate = ze::module::get_on_module_loaded_delegate().bind(&on_module_loaded);
+	asset_actions_module_loaded_delegate = ze::module::get_on_module_loaded_delegate().bind(&on_asset_actions_module_loaded);
 	scan_for_asset_actions();
 }
 
 void destroy_asset_actions_mgr()
 {
-	ze::module::get_on_module_loaded_delegate().remove(module_loaded_delegate);
+	ze::module::get_on_module_loaded_delegate().remove(asset_actions_module_loaded_delegate);
 }
 
 AssetActions* get_actions_for(const reflection::Class* in_class)
