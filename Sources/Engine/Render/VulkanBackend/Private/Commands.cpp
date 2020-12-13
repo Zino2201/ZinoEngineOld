@@ -349,4 +349,82 @@ void VulkanBackend::cmd_copy_texture(const ResourceHandle& in_cmd_list,
 		regions);
 }
 
+void VulkanBackend::cmd_copy_texture_to_buffer(const ResourceHandle& in_cmd_list,
+	const ResourceHandle& in_src_texture,
+	const TextureLayout in_src_layout,
+	const ResourceHandle& in_dst_buffer,
+	const std::vector<BufferTextureCopyRegion>& in_regions)
+{
+	CommandList* list = CommandList::get(in_cmd_list);
+	ZE_CHECKF(list, "Invalid command list given to cmd_copy_texture_to_buffer");
+
+	Texture* src_texture = Texture::get(in_src_texture);
+	ZE_CHECKF(src_texture, "Invalid source texture given to cmd_copy_texture_to_buffer");
+
+	Buffer* dst_buffer = Buffer::get(in_dst_buffer);
+	ZE_CHECKF(dst_buffer, "Invalid destination buffer given to cmd_copy_texture_to_buffer");
+
+	std::vector<vk::BufferImageCopy> regions;
+	regions.reserve(in_regions.size());
+	for(const auto& region : in_regions)
+	{
+		regions.emplace_back(
+			region.buffer_offset,
+			0,
+			0,
+			convert_texture_subresource_layers(region.texture_subresource),
+			convert_offset3D(region.texture_offset),
+			convert_extent3D(region.texture_extent));
+	}
+	
+	list->get_buffer().copyImageToBuffer(
+		src_texture->get_image(),
+		convert_texture_layout(in_src_layout),
+		dst_buffer->get_buffer(),
+		regions);
+}
+
+void VulkanBackend::cmd_blit_texture(const ResourceHandle& in_cmd_list,
+	const ResourceHandle& in_src_texture,
+	const TextureLayout in_src_layout,
+	const ResourceHandle& in_dst_texture,
+	const TextureLayout in_dst_layout,
+	const std::vector<TextureBlitRegion>& in_regions,
+	const Filter& in_filter)
+{
+	CommandList* list = CommandList::get(in_cmd_list);
+	ZE_CHECKF(list, "Invalid command list given to cmd_blit_texture");
+
+	Texture* src_texture = Texture::get(in_src_texture);
+	ZE_CHECKF(src_texture, "Invalid source texture given to cmd_blit_texture");
+	
+	Texture* dst_texture = Texture::get(in_dst_texture);
+	ZE_CHECKF(dst_texture, "Invalid destination texture given to cmd_blit_texture");
+
+	std::vector<vk::ImageBlit> regions;
+	regions.reserve(in_regions.size());
+	for(const auto& region : in_regions)
+	{
+		regions.emplace_back(
+			convert_texture_subresource_layers(region.src_subresource),
+			std::array<vk::Offset3D, 2>{
+				convert_offset3D(region.src_offsets[0]),
+				convert_offset3D(region.src_offsets[1])
+			},
+			convert_texture_subresource_layers(region.dst_subresource),
+			std::array<vk::Offset3D, 2>{
+				convert_offset3D(region.dst_offsets[0]),
+				convert_offset3D(region.dst_offsets[1])
+			});
+	}
+
+	list->get_buffer().blitImage(
+		src_texture->get_image(),
+		convert_texture_layout(in_src_layout),
+		dst_texture->get_image(),
+		convert_texture_layout(in_dst_layout),
+		regions,
+		convert_filter(in_filter));
+}
+
 }

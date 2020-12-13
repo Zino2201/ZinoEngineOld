@@ -148,6 +148,18 @@ public:
 		const ResourceHandle& in_dst_texture,
 		const TextureLayout in_dst_layout,
 		const std::vector<TextureCopyRegion>& in_regions) override;
+	void cmd_copy_texture_to_buffer(const ResourceHandle& in_cmd_list,
+		const ResourceHandle& in_src_texture,
+		const TextureLayout in_src_layout,
+		const ResourceHandle& in_dst_buffer,
+		const std::vector<BufferTextureCopyRegion>& in_regions) override;
+	void cmd_blit_texture(const ResourceHandle& in_cmd_list,
+		const ResourceHandle& in_src_texture,
+		const TextureLayout in_src_layout,
+		const ResourceHandle& in_dst_texture,
+		const TextureLayout in_dst_layout,
+		const std::vector<TextureBlitRegion>& in_regions,
+		const Filter& in_filter) override;
 
 	ZE_FORCEINLINE bool is_valid() const override { return !!instance; }
 	ZE_FORCEINLINE vk::Instance& get_instance() { return *instance; }
