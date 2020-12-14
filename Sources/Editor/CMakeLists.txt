@@ -1,5 +1,4 @@
 add_subdirectory(AssetDataCache)
-add_subdirectory(AssetExplorer)
 add_subdirectory(AssetActions)
 add_subdirectory(MapEditor)
 add_subdirectory(AssetUtils)

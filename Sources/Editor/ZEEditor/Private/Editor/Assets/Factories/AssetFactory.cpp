@@ -6,6 +6,8 @@
 namespace ze::editor
 {
 
+AssetFactory::AssetFactory() : asset_class(nullptr), can_be_instantiated(false) {}
+
 robin_hood::unordered_set<const ze::reflection::Class*> added_factories;
 std::vector<std::unique_ptr<AssetFactory>> factories;
 DelegateHandle module_loaded_delegate;
@@ -58,6 +60,11 @@ AssetFactory* get_factory_for_format(const std::string& in_supported_format)
 	}
 
 	return nullptr;
+}
+
+const std::vector<std::unique_ptr<AssetFactory>>& get_factories()
+{
+	return factories;
 }
 
 }

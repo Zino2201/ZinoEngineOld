@@ -11,6 +11,22 @@ namespace ze::editor
 StbTextureFactory::StbTextureFactory()
 {
 	supported_formats = { "png", "jpg" };
+	asset_class = reflection::Class::get<Texture>();
+}
+
+OwnerPtr<Asset> StbTextureFactory::instantiate()
+{
+	return new Texture(
+		TextureType::Tex2D,
+		TextureFilter::Linear,
+		TextureCompressionMode::Default,
+		TextureFormat::RGB32,
+		1,
+		1,
+		1,
+		true,
+		{},
+		false);
 }
 
 OwnerPtr<Asset> StbTextureFactory::create_from_stream(std::istream& in_stream)

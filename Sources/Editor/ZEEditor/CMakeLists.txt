@@ -10,10 +10,11 @@ ze_create_module(ZEEditor
     Private/Editor/Widgets/TextureEditorTab.cpp
     Private/Editor/Widgets/ModelEditorTab.cpp
 	Private/Editor/ZEEditor.cpp
+	Private/Editor/AssetExplorer.cpp
 	Private/Editor/Widgets/ConvarViewer.cpp)
 
 ze_add_private_modules(ZEEditor
-	Core ShaderCore Engine Reflection ImGui MapEditor AssetExplorer AssetDatabase AssetUtils PropertyEditor AssetActions NotificationSystem)
+	Core ShaderCore Engine Reflection ImGui MapEditor AssetDatabase AssetUtils PropertyEditor AssetActions NotificationSystem)
 	
 target_include_directories(ZEEditor
     PUBLIC 

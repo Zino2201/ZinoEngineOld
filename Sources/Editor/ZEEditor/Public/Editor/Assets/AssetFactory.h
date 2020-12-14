@@ -19,21 +19,29 @@ class ZEEDITOR_API AssetFactory
 	ZE_REFL_BODY()
 
 public:
+	AssetFactory();
 	virtual ~AssetFactory() = default;
+	
+	virtual OwnerPtr<Asset> instantiate() { return nullptr; }
 
 	/**
 	 * Create a new asset from a stream
 	 * @param InStream The imported asset stream
 	 */
-	virtual OwnerPtr<Asset> create_from_stream(std::istream& in_stream) = 0;
+	virtual OwnerPtr<Asset> create_from_stream(std::istream& in_stream) { return nullptr; }
 
 	const std::vector<std::string>& get_supported_formats() const { return supported_formats;  }
+	const ze::reflection::Class* get_supported_class() const { return asset_class;  }
+	const bool can_instantiated() const { return can_be_instantiated;  }
 protected:
 	/** The class that the factory represents */
 	const ze::reflection::Class* asset_class;
 
 	/** Supported assets formats */
 	std::vector<std::string> supported_formats;
+
+	/** Can be instantiated from right clicking the asset explorer ? */
+	bool can_be_instantiated;
 };
 
 void initialize_asset_factory_mgr();
@@ -44,5 +52,6 @@ void destroy_asset_factory_mgr();
  * May be nullptr if no asset factory support this format
  */
 ZEEDITOR_API AssetFactory* get_factory_for_format(const std::string& InSupportedFormat);
+ZEEDITOR_API const std::vector<std::unique_ptr<AssetFactory>>& get_factories();
 
 }

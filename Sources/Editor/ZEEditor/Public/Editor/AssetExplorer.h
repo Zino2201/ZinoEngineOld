@@ -9,7 +9,7 @@ namespace ze::assetmanager { class AssetRequestHandle; }
 namespace ze::editor
 {
 
-class ASSETEXPLORER_API CAssetExplorer
+class ZEEDITOR_API CAssetExplorer
 {
 public:
 	CAssetExplorer();

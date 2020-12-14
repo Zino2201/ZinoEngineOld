@@ -17,6 +17,7 @@ class StbTextureFactory : public AssetFactory
 public:
 	StbTextureFactory();
 
+	OwnerPtr<Asset> instantiate() override;
 	OwnerPtr<Asset> create_from_stream(std::istream& in_stream) override;
 };
 

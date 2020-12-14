@@ -52,6 +52,9 @@ std::vector<uint8_t> Texture::load_data_cache(const uint32_t in_mip_level)
 
 void Texture::generate_mipmaps(const std::vector<uint8_t>& in_data)
 {
+	if(in_data.empty())
+		return;
+
 	uint32_t miplevels = 1;
 	if(use_mipmaps)
 		miplevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;

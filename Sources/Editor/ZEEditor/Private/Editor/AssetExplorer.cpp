@@ -11,8 +11,7 @@
 #include "Editor/Assets/AssetActions.h"
 #include "Assets/AssetManager.h"
 #include "Editor/NotificationSystem.h"
-
-ZE_DEFINE_MODULE(ze::module::DefaultModule, AssetExplorer);
+#include "Editor/Assets/AssetFactory.h"
 
 namespace ze::editor
 {
@@ -140,6 +139,38 @@ void CAssetExplorer::DrawAssetList()
 	ImGui::Dummy(ImVec2(0, 5));
 
 	ImGui::BeginChild("ASL_ScrollArea", ImGui::GetContentRegionAvail());
+
+	if (ImGui::BeginPopupContextWindow())
+	{
+		if(ImGui::BeginCombo("##AssetCreateNew", "Create new"))
+		{
+			const auto& factories = get_factories();
+			bool nc = true;
+			for(const auto& factory : factories)
+			{
+				if(!factory->can_instantiated() || !factory->get_supported_class())
+					continue;
+
+				nc = false;
+
+				if(ImGui::Selectable(factory->get_supported_class()->get_name().c_str()))
+				{
+					OwnerPtr<Asset> asset = factory->instantiate();
+					assetutils::save_asset(*asset, ze::filesystem::get_current_working_dir() / CurrentDirectory, "NewAssetInst");
+					delete asset;
+					assetdatabase::scan("", assetdatabase::AssetScanMode::Sync);
+				}
+			}
+
+			if(nc)
+				ImGui::Selectable("Nothing to create :(");
+
+			ImGui::EndCombo();
+		}
+
+		ImGui::EndPopup();
+	}
+
 
 	/** Display subdirectories */
 	for (const auto& Subdir : ze::assetdatabase::get_subdirectories(CurrentDirectory))
