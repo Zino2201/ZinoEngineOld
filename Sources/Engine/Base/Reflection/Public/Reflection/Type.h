@@ -59,10 +59,16 @@ public:
 	ZE_FORCEINLINE bool is_enum() const { return static_cast<bool>(flags & TypeFlagBits::Enum); }
 	ZE_FORCEINLINE bool is_sequential_container() const { return static_cast<bool>(flags & TypeFlagBits::SequentialContainer); }
 	ZE_FORCEINLINE bool is_associative_container() const { return static_cast<bool>(flags & TypeFlagBits::AssociativeContainer); }
+#if ZE_WITH_EDITOR
+	ZE_FORCEINLINE const std::string& get_documentation() const { return documentation; }
+#endif
 private:
 	std::string name;
 	size_t size;
 	TypeFlags flags;
+#if ZE_WITH_EDITOR
+	std::string documentation;
+#endif
 };
 
 /**
