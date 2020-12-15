@@ -2,6 +2,7 @@ find_package(SDL2 CONFIG REQUIRED)
 
 ze_create_module(ZEEditor 
     Private/Editor/Assets/Factories/AssetFactory.cpp
+    Private/Editor/Assets/Factories/ShaderFactory.cpp
     Private/Editor/Assets/Actions/TextureActions.cpp
     Private/Editor/Assets/Actions/ModelActions.cpp
     Private/Editor/Assets/Factories/StbTextureFactory.cpp
@@ -14,7 +15,7 @@ ze_create_module(ZEEditor
 	Private/Editor/Widgets/ConvarViewer.cpp)
 
 ze_add_private_modules(ZEEditor
-	Core ShaderCore Engine Reflection ImGui MapEditor AssetDatabase AssetUtils PropertyEditor AssetActions NotificationSystem)
+    Core ShaderCore Engine Reflection ImGui MapEditor AssetDatabase AssetUtils PropertyEditor AssetActions NotificationSystem Renderer)
 	
 target_include_directories(ZEEditor
     PUBLIC 
