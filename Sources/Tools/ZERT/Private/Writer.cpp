@@ -126,6 +126,10 @@ void Writer::write_cpp()
 			file << ");\n";
 		}
 
+		file << "#if ZE_WITH_EDITOR\n";
+		file << builder_var << ".documentation(\"" << cl.documentation << "\");\n";
+		file << "#endif\n";
+
 		file << "}\n";
 	}
 

@@ -71,6 +71,13 @@ struct ClassBuilder : public TypeBuilder<T, Class>
 		};
 	}
 
+	ClassBuilder& documentation(const std::string& in_doc)
+	{
+		std::string& doc = const_cast<std::string&>(class_->get_documentation());
+		doc = in_doc;
+		return *this;
+	}
+
 	ClassBuilder& parent(const std::string& in_name)
 	{
 		LazyTypePtr& parent = const_cast<LazyTypePtr&>(class_->get_parent_lazy_ptr());

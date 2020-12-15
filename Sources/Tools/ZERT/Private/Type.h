@@ -16,6 +16,7 @@ struct Type
 	std::string znamespace;
 	std::string name;
 	ReflType refl_type;
+	std::string documentation;
 };
 
 void typedb_register(Type&& in_type);

@@ -160,6 +160,9 @@ void CAssetExplorer::DrawAssetList()
 					delete asset;
 					assetdatabase::scan("", assetdatabase::AssetScanMode::Sync);
 				}
+
+				if(ImGui::IsItemHovered())
+					ImGui::SetTooltip(factory->get_supported_class()->get_documentation().c_str());
 			}
 
 			if(nc)

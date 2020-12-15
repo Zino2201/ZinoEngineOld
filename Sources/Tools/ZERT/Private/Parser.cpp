@@ -205,6 +205,17 @@ Parser::Parser(Header& in_header, const std::string& in_file,
     }
 }
 
+/** https://stackoverflow.com/questions/3418231/replace-part-of-a-string-with-another-string */
+void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+    if(from.empty())
+        return;
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+    }
+}
+
 void Parser::parse_class(const bool in_struct)
 {
     /** Jump to the class declaration */
@@ -275,6 +286,40 @@ void Parser::parse_class(const bool in_struct)
     size_t line_count = std::count(body_refl_substr.begin(), body_refl_substr.end(), '\n');
   
     Class& cl = this->header.classes.emplace_back(in_struct, line_count, sanitize_name(name), current_namespace);
+
+    /** Check if we find any documentation */
+    if(size_t doc_end = file.substr(cursor - 15, 15).find("*/") != std::string::npos)
+    {
+        doc_end = (cursor - 15) + doc_end;
+
+        size_t old_cursor_pos = cursor;
+
+        size_t doc_begin = -1;
+        while(true)
+        {
+            cursor--;
+
+            if(cursor == 0)
+                break;
+
+            if(size_t possible_begin = file.substr(cursor - 2, 2).find("/*") != std::string::npos)
+            {
+                doc_begin = (cursor - 2) + possible_begin;
+                break;
+            }
+        }
+
+        if(doc_begin != -1)
+        {
+            //doc_begin += 0;
+            doc_end += 2;
+            cl.documentation = file.substr(doc_begin, doc_end - doc_begin);
+            //cl.documentation.erase(std::remove(cl.documentation.begin(), cl.documentation.end(), '\n'), cl.documentation.end());
+            replaceAll(cl.documentation, "\n", "\\n");
+        }
+
+        cursor = old_cursor_pos;
+    }
 
     /** Parse parent classes */
     if(has_parents)
