@@ -34,6 +34,11 @@ struct SImGuiAutoStyleVar
 		ImGui::PushStyleVar(InIdx, InVal);
 	}
 
+	SImGuiAutoStyleVar(ImGuiStyleVar InIdx, const float& InVal)
+	{
+		ImGui::PushStyleVar(InIdx, InVal);
+	}
+
 	~SImGuiAutoStyleVar()
 	{
 		ImGui::PopStyleVar();

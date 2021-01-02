@@ -32,11 +32,12 @@ cd Sources/Libs/nvidia-texture-tools/project/vc2017
 echo Building nvidia-texture-tools
 "%MSBUILD%" nvtt.sln /p:Configuration="Debug" /p:Platform="x64" /p:PlatformToolset=v142
 "%MSBUILD%" nvtt.sln /p:Configuration="Release" /p:Platform="x64" /p:PlatformToolset=v142
-cd ../../../../../
+cd ../../../../../  
 
 cd Sources/Libs/ShaderConductor/
 echo Building Shader Conductor
 py BuildAll.py vs2019 vc142 x64 Debug
 py BuildAll.py vs2019 vc142 x64 Release
+
 pause
 exit
