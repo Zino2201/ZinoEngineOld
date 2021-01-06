@@ -6,8 +6,11 @@ namespace ze::ui
 
 void Text::construct()
 {
-	ImVec2 im_size = ImGui::CalcTextSize(text_.c_str());
-	size = maths::Vector2f(im_size.x, im_size.y);
+	if(size.x == 0 && size.y == 0)
+	{
+		ImVec2 im_size = ImGui::CalcTextSize(text_.c_str());
+		size = maths::Vector2f(im_size.x, im_size.y);
+	}
 }
 
 void Text::paint()
