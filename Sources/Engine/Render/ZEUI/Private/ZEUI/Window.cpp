@@ -2,6 +2,7 @@
 #include <SDL2/SDL.h>
 #include "ImGui/ImGui.h"
 #include "imgui_internal.h"
+#include "ZEUI/Render/Renderer.h"
 
 namespace ze::ui
 {
@@ -47,24 +48,9 @@ Window::~Window()
 	SDL_DestroyWindow(handle);
 }
 
-void Window::paint()
+void Window::paint_window(Renderer& renderer)
 {
-	ImGui::PushID(title.c_str(), title.c_str() + title.size());
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(width, height));
-	{
-		SImGuiAutoStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-		SImGuiAutoStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f);
-		SImGuiAutoStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-		ImGui::Begin("Window", nullptr,
-			ImGuiWindowFlags_NoDocking
-			| ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove
-			| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoResize);
-	}
-	
-	CompositeWidget::paint();
-	ImGui::End();
-	ImGui::PopID();
+	CompositeWidget::paint(renderer, renderer.create_context());
 }
 
 }

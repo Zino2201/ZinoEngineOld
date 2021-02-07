@@ -167,8 +167,10 @@ void PreInit()
 		/** Load render modules */
 		LoadRequiredModule("ShaderCore");
 		LoadRequiredModule("GfxCore");
-		LoadRequiredModule("ImGui");
 		LoadRequiredModule("ShaderCompiler");
+		LoadRequiredModule("EffectSystem");
+		LoadRequiredModule("ImGui");
+		LoadRequiredModule("ZEUI");
 	}
 
 	/** INITIALIZE RENDER SYSTEM **/
@@ -212,6 +214,8 @@ void Exit()
 
 	/** Delete engine */
 	engine_app.reset();
+
+	ze::module::unload_module("EffectSystem");
 
 	/** Delete render system */
 	RenderBackend.reset();

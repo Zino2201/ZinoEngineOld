@@ -1,11 +1,14 @@
 #pragma once
 
 #include "CompositeWidget.h"
+#include "Gfx/Backend.h"
 
 struct SDL_Window;
 
 namespace ze::ui
 {
+
+class DrawContext;
 
 enum class WindowFlagBits
 {
@@ -39,7 +42,7 @@ public:
 	ZE_FORCEINLINE const std::string& get_title() const { return title; }
 	ZE_FORCEINLINE SDL_Window* get_handle() const { return handle; }
 
-	void paint() override;
+	void paint_window(Renderer& renderer);
 private:
 	uint32_t width;
 	uint32_t height;

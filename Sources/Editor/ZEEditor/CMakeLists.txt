@@ -9,10 +9,15 @@ ze_create_module(ZEEditor
     Private/Editor/Widgets/MapTabWidget.cpp
     Private/Editor/Widgets/TextureEditorTab.cpp
     Private/Editor/Widgets/ModelEditorTab.cpp
+    Private/Editor/Widgets/MapEditorTab.cpp
+    Private/Editor/Widgets/AssetExplorer.cpp
+    Private/Editor/Widgets/MapEditor/EntityList.cpp
+    Private/Editor/Widgets/MapEditor/EntityProperties.cpp
 	Private/Editor/ZEEditor.cpp
 	Private/Editor/AssetExplorer.cpp
 	Private/Editor/Widgets/ConvarViewer.cpp)
 
+ze_add_public_modules(ZEEditor ZEUI)
 ze_add_private_modules(ZEEditor
 	Core ShaderCore Engine Reflection ImGui MapEditor AssetDatabase AssetUtils PropertyEditor AssetActions NotificationSystem)
 	

@@ -40,8 +40,6 @@ public:
 	using Item = CanvasItem;
 
 	Canvas() {}
-
-	void paint() override;
 };
 	
 }

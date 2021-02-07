@@ -18,7 +18,9 @@ public:
 
 	ZE_FORCEINLINE SimpleItem& content() { return content_; }
 
-	void paint() override;
+	void compute_desired_size(const maths::Vector2f& in_available_size) override;
+	void arrange_children() override;
+	void paint(Renderer& renderer, DrawContext& context) override;
 private:
 	SimpleItem content_;
 };

@@ -50,11 +50,19 @@ SHADERCOMPILER_API ShaderCompiler* register_shader_compiler(ShaderCompilerTarget
 SHADERCOMPILER_API void unregister_shader_compiler(ShaderCompiler* compiler);
 
 /*
- * Compile a shader (async operation)
+ * Compile a shader
  * \return Future shader compiler output
  */
-SHADERCOMPILER_API std::future<ShaderCompilerOutput> compile_shader(const ShaderStage& stage,
-    const std::string_view& shader_filename,
+SHADERCOMPILER_API ShaderCompilerOutput compile_shader(const ShaderStage& stage,
+    const std::string& shader_name, 
+    const std::string_view& shader_source,
+    const std::string_view& entry_point,
+    const ShaderCompilerTarget& target,
+    const bool& should_optimize);
+
+SHADERCOMPILER_API std::future<ShaderCompilerOutput> compile_shader_async(const ShaderStage& stage,
+    const std::string& shader_name,
+    const std::string_view& shader_source,
     const std::string_view& entry_point,
     const ShaderCompilerTarget& target,
     const bool& should_optimize);
@@ -72,7 +80,8 @@ public:
 
 	virtual ShaderCompilerOutput compile_shader(
 		const ShaderStage& stage,
-		const std::string_view& shader_filename,
+		const std::string_view& shader_name,
+		const std::string_view& shader_source,
 		const std::string_view& entry_point,
 		const ShaderCompilerTarget& target_format,
 		const bool& optimize) = 0;

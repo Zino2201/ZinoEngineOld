@@ -3,6 +3,7 @@
 #include "Gfx/Backend.h"
 #include "Module/ModuleManager.h"
 #include "Shader/ShaderCompiler.h"
+#include "ZEFS/Utils.h"
 
 namespace ze::ui::imgui
 {
@@ -35,17 +36,19 @@ bool initialize(const gfx::ResourceHandle& in_cmd_list, const gfx::ResourceHandl
 		/** Compile shaders */
 		gfx::shaders::ShaderCompilerOutput vs_ = gfx::shaders::compile_shader(
 			gfx::shaders::ShaderStage::Vertex,
-			"UI/ImGuiVS.hlsl",
+			"ImGuiVS",
+			filesystem::read_file_to_string("Shaders/UI/ImGuiVS.hlsl"),
 			"Main",
 			gfx::shaders::ShaderCompilerTarget::VulkanSpirV,
-			true).get();
+			true);
 
 		gfx::shaders::ShaderCompilerOutput fs_ = gfx::shaders::compile_shader(
 			gfx::shaders::ShaderStage::Fragment,
-			"UI/ImGuiFS.hlsl",
+			"ImGuiFS",
+			filesystem::read_file_to_string("Shaders/UI/ImGuiFS.hlsl"),
 			"Main",
 			gfx::shaders::ShaderCompilerTarget::VulkanSpirV,
-			true).get();
+			true);
 
 		vs = gfx::RenderBackend::get().shader_create(gfx::ShaderCreateInfo(
 			vs_.bytecode)).second;

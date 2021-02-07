@@ -25,22 +25,13 @@ public:
 
 	ShaderCompilerOutput compile_shader(
 		const ShaderStage& stage,
-		const std::string_view& shader_filename,
+		const std::string_view& shader_name,
+		const std::string_view& shader_source,
 		const std::string_view& entry_point,
 		const ShaderCompilerTarget& target,
 		const bool& optimize) override
 	{
 		ShaderCompilerOutput output;
-
-		/**
-		 * Read shader data
-		 */
-		std::string shader_data = ze::filesystem::read_file_to_string(shader_filename);
-		if(shader_data.empty())
-		{
-			output.err_msg = "Can't open shader file";
-			return output;
-		}
 
 		ShaderConductor::ShaderStage scstage = ShaderConductor::ShaderStage::VertexShader;
 		switch(stage)
@@ -53,8 +44,8 @@ public:
 		};
 
 		ShaderConductor::Compiler::SourceDesc source_desc;
-		source_desc.source = shader_data.c_str();
-		source_desc.fileName = shader_filename.data();
+		source_desc.source = shader_source.data();
+		source_desc.fileName = shader_name.data();
 		source_desc.entryPoint = entry_point.data();
 		source_desc.stage = scstage;
 		source_desc.numDefines = 0;
@@ -73,7 +64,7 @@ public:
 					{
 						path = include_dir;
 						path += "/";
-						path += filename;
+						path += include_name;
 						
 						if(ze::filesystem::exists(path))
 						{
@@ -108,7 +99,7 @@ public:
 			{ { ShaderConductor::ShadingLanguage::SpirV, "1_0", false } }
 		};
 
-		ShaderConductor::Compiler::ResultDesc result;
+		ShaderConductor::Compiler::ResultDesc result = {};
 		ShaderConductor::Compiler::Compile(source_desc, options, 
 			targets.data(), static_cast<uint32_t>(targets.size()), 
 			&result);
@@ -120,7 +111,7 @@ public:
 				result.errorWarningMsg->Size());
 			output.err_msg = err_msg;
 			ze::logger::error("Failed to compile shader {}: {}",
-				shader_filename.data(), output.err_msg.c_str());
+				shader_name.data(), output.err_msg.c_str());
 			return output;
 		}
 

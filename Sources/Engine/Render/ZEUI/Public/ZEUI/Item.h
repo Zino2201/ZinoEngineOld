@@ -37,9 +37,10 @@ public:
 	ItemType& content() { return this_; }
 
 	void set_owner(Widget* in_owner) { owner = in_owner; }
-protected:
+public:
 	Widget* owner;
 	std::unique_ptr<Widget> widget;
+protected:
 	ItemType& this_;
 };
 
@@ -62,6 +63,13 @@ template<typename T, typename... Args>
 ZE_FORCEINLINE OwnerPtr<T> make_widget(Args&&... in_args)
 {
 	return new T(std::forward<Args>(in_args)...);
+}
+
+template<typename T, typename... Args>
+ZE_FORCEINLINE OwnerPtr<T> make_widget(T*& in_ptr_to_assign, Args&&... in_args)
+{
+	in_ptr_to_assign = new T(std::forward<Args>(in_args)...);
+	return in_ptr_to_assign;
 }
 
 template<typename T, typename... Args>

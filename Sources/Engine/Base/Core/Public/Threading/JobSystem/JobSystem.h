@@ -76,7 +76,7 @@ template<typename Lambda>
 }
 
 template<typename Lambda>
-[[nodiscard]] const Job& create_child_job(JobType type, Job& parent, Lambda in_lambda)
+[[nodiscard]] const Job& create_child_job(JobType type, const Job& parent, Lambda in_lambda)
 {
 	const Job& job = create_child_job_with_userdata<Lambda>(type,
 		[](const Job& job)

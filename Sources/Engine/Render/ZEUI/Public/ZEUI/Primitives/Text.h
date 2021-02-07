@@ -18,7 +18,9 @@ public:
 	Text* text(const std::string& in_text) { text_ = in_text; return this; }
 
 	void construct() override;
-	void paint() override;
+	void paint(Renderer& renderer, DrawContext& context) override;
+
+	void compute_desired_size(const maths::Vector2f& available_size) override;
 private:
 	std::string text_;
 };

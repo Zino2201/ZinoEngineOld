@@ -2,9 +2,10 @@
 
 #include "Engine/Engine.h"
 #include <filesystem>
-#include "Engine/NativeWindow.h"
 #include "Gfx/Backend.h"
 #include "Engine/Viewport.h"
+#include "ZEUI/Window.h"
+#include "ZEUI/Render/Renderer.h"
 
 namespace ze { class Viewport; class World; }
 
@@ -15,6 +16,7 @@ namespace ze::editor
 
 class CMapTabWidget;
 class Tab;
+class MapEditorTab;
 
 class ZEEDITOR_API EditorApp final : public EngineApp
 {
@@ -37,7 +39,6 @@ private:
 	void on_asset_imported(const std::filesystem::path& InPath,
 		const std::filesystem::path& InTarget);
 private:
-	NativeWindow main_window;
 	gfx::UniqueSwapchain swapchain;
 	gfx::UniqueCommandPool cmd_pool;
 	gfx::ResourceHandle cmd_list;
@@ -52,6 +53,9 @@ private:
 	std::unique_ptr<World> world;
 	std::unique_ptr<CMapTabWidget> map_tab_widget;
 	std::vector<std::unique_ptr<Tab>> tabs;
+	std::unique_ptr<ui::Window> window;
+	std::unique_ptr<MapEditorTab> map_editor_tab;
+	std::unique_ptr<ui::Renderer> ui_renderer;
 };
 
 }
