@@ -43,6 +43,11 @@ set(ZE_CONFIG_NAME_DBGREL "$<$<CONFIG:Debug>:Debug>$<$<CONFIG:RelWithDebInfo>:Re
 
 set(ZE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(ZE_BINS_DIR ${ZE_ROOT_DIR}/Binaries/${ZE_CONFIG_NAME})
+if(ZE_WITH_EDITOR)
+	set(ZE_BINS_PREFIX "ZEd-")
+else()
+	set(ZE_BINS_PREFIX "ZE-")
+endif()
 set(ZE_BUILD_DIR ${CMAKE_BINARY_DIR})
 set(ZE_REFL_DIR ${ZE_BUILD_DIR}/Reflection)
 set(ZE_LIBS_DIR ${ZE_ROOT_DIR}/Sources/Libs)
@@ -72,6 +77,8 @@ function(ze_create_exec_module TARGET)
 	add_executable(${TARGET} ${ARGN})
 
 	_ze_base_module_def(${TARGET} ${ARGN})
+	
+	set_target_properties(${TARGET} PROPERTIES PREFIX "")
 endfunction()
 
 # Basic module definition
@@ -83,7 +90,8 @@ function(_ze_base_module_def TARGET)
 		ARCHIVE_OUTPUT_DIRECTORY "${ZE_BINS_DIR}"
 		LIBRARY_OUTPUT_DIRECTORY "${ZE_BINS_DIR}"
 		RUNTIME_OUTPUT_DIRECTORY "${ZE_BINS_DIR}"
-		VS_DEBUGGER_WORKING_DIRECTORY "${ZE_ROOT_DIR}")
+		VS_DEBUGGER_WORKING_DIRECTORY "${ZE_ROOT_DIR}"
+		PREFIX "${ZE_BINS_PREFIX}")
 
 	target_link_directories(${TARGET} PRIVATE "${ZE_BINS_DIR}")
 

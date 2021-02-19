@@ -9,7 +9,9 @@
 namespace ze::gfx
 {
 
+#if ZE_WITH_EDITOR
 std::mutex permutation_lock;
+#endif
 
 Effect::Effect(const std::string& in_name,
 	const EffectShaderSources& in_sources,

@@ -61,10 +61,13 @@ Module* load_module(const std::string_view& name)
 	Module* module = nullptr;
 
 #if ZE_PLATFORM(WINDOWS)
-	std::string path = std::string(name);
+#if ZE_WITH_EDITOR
+	std::string path = "ZEd-" + std::string(name);
+#else
+	std::string path = "ZE-" + std::string(name);
+#endif
 	path += ".";
 	path += get_shared_lib_extension();
-
 	void* handle = load_module_handle(path.c_str());
 	if(!handle)
 	{
