@@ -28,6 +28,8 @@ ZinoEngine can be build on Windows and Linux using clang(-cl) and CMake.
 *If you use vcpkg, please read https://github.com/Microsoft/vcpkg#using-vcpkg-with-cmake to configure CMake*
 
 - Install SDL2 (vcpkg: `vcpkg install sdl2[*]:x64-windows`)
+- Install FreeType (vcpkg: `vcpkg install freetype[*]:x64-windows`)
+- Install HarfBuzz (vcpkg: `vcpkg install harfbuzz[*]:x64-windows`)
 
 #### Build
 
