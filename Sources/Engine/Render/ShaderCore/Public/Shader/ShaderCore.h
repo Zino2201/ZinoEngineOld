@@ -3,6 +3,9 @@
 #include "EngineCore.h"
 #include "Maths/MathCore.h"
 #include "Module/Module.h"
+#include "Serialization/Types/Map.h"
+#include "Serialization/Types/Vector.h"
+#include "Serialization/Types/String.h"
 #include <robin_hood.h>
 
 namespace ze::gfx::shaders
@@ -38,6 +41,18 @@ struct ShaderParameterMember
  */
 struct SHADERCORE_API ShaderParameter
 {
+	template<typename ArchiveType>
+    void serialize(ArchiveType& archive)
+    {
+        archive <=> name;
+        archive <=> type;
+        archive <=> set;
+        archive <=> binding;
+        archive <=> size;
+        archive <=> count;
+        //archive <=> members;
+    }
+
     std::string name;
     ShaderParameterType type;
     uint32_t set;
@@ -90,6 +105,12 @@ struct ShaderParameterHash
 class ShaderParameterMap
 {
 public:
+	template<typename ArchiveType>
+    void serialize(ArchiveType& archive)
+    {
+        archive <=> parameters;
+    }
+
 	void add_parameter(const char* name, const ShaderParameter& parameter)
 	{
 		parameters.insert({ name, parameter});

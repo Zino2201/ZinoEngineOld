@@ -13,7 +13,7 @@ void effect_register(const std::string& in_name,
 {
 	ze::logger::verbose("Registered effect {}", in_name);
 
-	effects.insert({ in_name, Effect(in_name, in_sources, in_options) });
+	effects.try_emplace(in_name, in_name, in_sources, in_options);
 }
 
 void effect_register_file(const std::string& in_name,

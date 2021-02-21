@@ -63,10 +63,8 @@ bool bRun = true;
  * ZinoEngine main
  */
 #if ZE_PLATFORM(WINDOWS) 
-int CALLBACK WinMain(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR lpCmdLine,
-	int nCmdShow)
+
+int main(int argc, char** argv)
 {
 	char Buffer[MAX_PATH];
 	::GetCurrentDirectoryA(MAX_PATH, Buffer);
@@ -75,10 +73,20 @@ int CALLBACK WinMain(HINSTANCE hInstance,
 	Path += ZE_CONFIGURATION_NAME;
 	SetDllDirectoryA(Path.c_str());
 
+
 	int Err = Init();
 	Exit();
-	return Err;
+	return Err;	
 }
+
+int CALLBACK WinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPSTR lpCmdLine,
+	int nCmdShow)
+{
+	return main(0, nullptr);
+}
+
 #else
 int main(int argc, char** argv)
 {
@@ -195,6 +203,7 @@ int Init()
 
 	/** INITIALIZE ENGINE CLASS */
 #if ZE_WITH_EDITOR
+	LoadRequiredModule("SDFFontGen");
 	LoadRequiredModule("ZEEditor");
 	engine_app = std::make_unique<ze::editor::EditorApp>();
 #else

@@ -24,6 +24,12 @@ enum class ShaderCompilerTargetFormat
 struct ShaderCompilerReflectionDataOutput
 {
     ShaderParameterMap parameter_map;
+
+    template<typename ArchiveType>
+    void serialize(ArchiveType& archive)
+    {
+        archive <=> parameter_map;
+    }
 };
 
 /**

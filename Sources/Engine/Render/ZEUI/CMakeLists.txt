@@ -1,6 +1,8 @@
 find_package(SDL2 CONFIG REQUIRED)
+find_package(harfbuzz CONFIG REQUIRED)
 
 ze_create_module(ZEUI 
+	Public/ZEUI/ZEUI.h
 	Public/ZEUI/Container.h
 	Public/ZEUI/Item.h
 	Public/ZEUI/Widget.h
@@ -16,6 +18,8 @@ ze_create_module(ZEUI
 	Public/ZEUI/Containers/ScrollableContainer.h
 	Public/ZEUI/Render/DrawCommand.h
 	Public/ZEUI/Render/DrawCommandRect.h
+	Public/ZEUI/Render/DrawCommandText.h
+	Public/ZEUI/Render/Font.h
 	Public/ZEUI/Render/Renderer.h
 	Private/ZEUI/Primitives/Text.cpp
 	Private/ZEUI/Primitives/Canvas.cpp
@@ -27,7 +31,9 @@ ze_create_module(ZEUI
 	Private/ZEUI/Containers/ScrollableContainer.cpp
 	Private/ZEUI/Render/DrawCommand.cpp
 	Private/ZEUI/Render/DrawCommandRect.cpp
+	Private/ZEUI/Render/DrawCommandText.cpp
 	Private/ZEUI/Render/Renderer.cpp
+	Private/ZEUI/Render/Font.cpp
 	Private/ZEUI/Container.cpp
 	Private/ZEUI/CompositeWidget.cpp
 	Private/ZEUI/Window.cpp
@@ -41,4 +47,4 @@ target_include_directories(ZEUI
         ${CMAKE_CURRENT_SOURCE_DIR}/Public
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Private)
-target_link_libraries(ZEUI PRIVATE SDL2::SDL2)
+target_link_libraries(ZEUI PRIVATE harfbuzz::harfbuzz SDL2::SDL2)
