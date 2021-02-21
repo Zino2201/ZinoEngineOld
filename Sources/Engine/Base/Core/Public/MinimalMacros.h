@@ -34,6 +34,9 @@ namespace ze
 /** Enable development-only code */
 #define ZE_FEATURE_PRIVATE_DEFINITION_DEVELOPMENT() ZE_DEBUG || ZE_RELWITHDEBINFO
 
+/** Enable Backend handle validation */
+#define ZE_FEATURE_PRIVATE_DEFINITION_BACKEND_HANDLE_VALIDATION() ZE_FEATURE_PRIVATE_DEFINITION_DEVELOPMENT()
+
 /** Return 1 if feature is enabled */
 #define ZE_FEATURE(X) ZE_FEATURE_PRIVATE_DEFINITION_##X()
 

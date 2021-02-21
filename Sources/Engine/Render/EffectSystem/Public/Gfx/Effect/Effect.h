@@ -4,6 +4,9 @@
 #include "Gfx/Backend.h"
 #include <robin_hood.h>
 #include <bitset>
+#if ZE_WITH_EDITOR
+#include "Shader/ShaderCompiler.h"
+#endif
 
 namespace ze::gfx
 {
@@ -54,38 +57,80 @@ class EFFECTSYSTEM_API Effect
 	static constexpr size_t max_permutation_bits = 32;
 
 public:
+	/**
+	 * A single permutation
+	 */
+	struct Permutation
+	{
+		EffectShaderMap shader_map;
+		UniquePipelineLayout pipeline_layout;
+	};
+
 	Effect(const std::string& in_name,
 		const EffectShaderSources& in_sources,
 		const std::vector<EffectOption>& in_options);
 	~Effect();
 
+	Effect(const Effect&) = delete;
+	void operator=(const Effect&) = delete;
+
 #if ZE_WITH_EDITOR
 	/**
 	 * Compile the specified stage of the specified permutation
 	 */
-	void compile_permutation_stage(EffectPermutationId id, ShaderStageFlagBits stage);
+	shaders::ShaderCompilerOutput compile_permutation_stage(EffectPermutationId id, ShaderStageFlagBits stage);
 #endif
 	/**
 	 * Get the shader map of the specific permutation
 	 * If the permutation is not build, it will be built
 	 */
-	const EffectShaderMap get_permutation(EffectPermutationId id);
+	Permutation* get_permutation(EffectPermutationId id);
 	EffectPermutationId get_permutation_id(const std::vector<std::pair<std::string, uint32_t>>& in_enabled_options) const;
 	std::vector<std::pair<std::string, std::string>> get_options_from_id(EffectPermutationId id) const;
 	bool is_available(EffectPermutationId id) const;
 	std::string get_stage_prefix(ShaderStageFlagBits stage) const;
 private:
 	void destroy_permutation(EffectPermutationId id);
+
+#if ZE_WITH_EDITOR
+	void build_pipeline_layout(EffectPermutationId id);
+#endif
 private:
 	std::string name;
 	EffectShaderSources sources;
 	robin_hood::unordered_map<std::string, size_t> name_to_option_idx;
 	std::vector<EffectOption> options;
 	size_t permutation_count;
-	robin_hood::unordered_map<EffectPermutationId, EffectShaderMap> permutations;
+	robin_hood::unordered_map<EffectPermutationId, Permutation> permutations;
 #if ZE_WITH_EDITOR
 	robin_hood::unordered_set<EffectPermutationId> pending_compilation;
 #endif
+};
+
+/**
+ * Pointer to a specific permutation in a effect
+ */
+struct EffectPermPtr
+{
+	Effect* effect;
+	EffectPermutationId permutation;
+
+	EffectPermPtr(std::nullptr_t) : effect(nullptr) {}
+
+	bool operator==(const EffectPermPtr& other) const
+	{
+		return effect == other.effect && permutation == other.permutation;
+	}
+
+	bool operator!=(const EffectPermPtr& other) const
+	{
+		return effect != other.effect || permutation != other.permutation;
+	}
+
+	operator bool() const
+	{
+		return effect;
+	}
 };
 
 }

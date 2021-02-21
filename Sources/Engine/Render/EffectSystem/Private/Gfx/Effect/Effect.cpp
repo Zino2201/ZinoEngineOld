@@ -3,6 +3,9 @@
 #include "AssetDataCache/AssetDataCache.h"
 #include "Shader/ShaderCompiler.h"
 #include "Threading/JobSystem/Async.h"
+#include "Serialization/BinaryArchive.h"
+#include "ZEFS/FileStream.h"
+#include <istream>
 #endif
 #include <bit>
 
@@ -52,7 +55,7 @@ Effect::~Effect()
 
 #if ZE_WITH_EDITOR
 
-void Effect::compile_permutation_stage(EffectPermutationId id, ShaderStageFlagBits stage)
+shaders::ShaderCompilerOutput Effect::compile_permutation_stage(EffectPermutationId id, ShaderStageFlagBits stage)
 {
 	using namespace shaders;
 
@@ -86,40 +89,57 @@ void Effect::compile_permutation_stage(EffectPermutationId id, ShaderStageFlagBi
 			id.to_string(),
 			cl_name,
 			output.err_msg);
-		permutations[id][stage] = {};
-		return;
+		permutations[id].shader_map[stage] = {};
+		return {};
 	}
 
-	std::lock_guard<std::mutex> lock(permutation_lock);
-	permutations[id][stage] = RenderBackend::get().shader_create(ShaderCreateInfo(output.bytecode)).second;
-		
-	std::string key = name + "_" + get_stage_prefix(stage);
-	assetdatacache::cache("Effect permutation stage compilation", key, 
-		std::vector<uint8_t>(
-			reinterpret_cast<uint8_t*>(output.bytecode.data()), 
-			reinterpret_cast<uint8_t*>(output.bytecode.data() + (output.bytecode.size() * sizeof(uint32_t)))));
+	{
+		std::lock_guard<std::mutex> lock(permutation_lock);
+		permutations[id].shader_map[stage] = RenderBackend::get().shader_create(ShaderCreateInfo(output.bytecode)).second;
+	}
+
+	{
+		std::string key = name + "_" + get_stage_prefix(stage);
+		assetdatacache::cache("Effect permutation stage compilation", key, 
+			std::vector<uint8_t>(
+				reinterpret_cast<uint8_t*>(output.bytecode.data()), 
+				reinterpret_cast<uint8_t*>(output.bytecode.data() + (output.bytecode.size() * sizeof(uint32_t)))));
+	}
+
+	{
+		std::string key = name + "_" + get_stage_prefix(stage) + "_Refl";
+
+		filesystem::FileOStream stream(assetdatacache::get_cache_dir() / key,
+			filesystem::FileWriteFlagBits::Binary | filesystem::FileWriteFlagBits::ReplaceExisting);
+		serialization::BinaryOutputArchive ar(stream);
+		ar <=> output.reflection_data;
+	}
+
+	return output;
 }
 
 #endif
 
 void Effect::destroy_permutation(EffectPermutationId id)
 {
-	for(const auto& [stage, shader] : permutations[id])
+	for(const auto& [stage, shader] : permutations[id].shader_map)
 	{
 		if(shader)
 			RenderBackend::get().shader_destroy(shader);
 	}
 }
 
-const EffectShaderMap Effect::get_permutation(EffectPermutationId id)
+Effect::Permutation* Effect::get_permutation(EffectPermutationId id)
 {
 	auto it = permutations.find(id);
 	if(it != permutations.end())
-		return it->second;
+		return &it->second;
 
 #if ZE_WITH_EDITOR
 	/** Before doing anything, checks if the permutation exists in the cache */
 	std::vector<ShaderStageFlagBits> stage_to_compile;
+	std::vector<shaders::ShaderCompilerReflectionDataOutput> reflection_datas;
+	reflection_datas.reserve(sources.size());
 	for(const auto& [stage, source] : sources)
 	{
 		std::string key = name + "_" + get_stage_prefix(stage);
@@ -128,7 +148,7 @@ const EffectShaderMap Effect::get_permutation(EffectPermutationId id)
 		{
 			std::vector<uint8_t> bytecode = assetdatacache::get_sync(key);
 			std::lock_guard<std::mutex> lock(permutation_lock);
-			permutations[id][stage] = RenderBackend::get().shader_create(gfx::ShaderCreateInfo(
+			permutations[id].shader_map[stage] = RenderBackend::get().shader_create(gfx::ShaderCreateInfo(
 				std::span<uint32_t>(
 					reinterpret_cast<uint32_t*>(bytecode.data()), 
 					reinterpret_cast<uint32_t*>(bytecode.data() + (bytecode.size() / sizeof(uint32_t)))))).second;
@@ -145,14 +165,14 @@ const EffectShaderMap Effect::get_permutation(EffectPermutationId id)
 	{
 		pending_compilation.insert(id);
 		const auto& main_job = create_job(JobType::Normal,
-			[this, id, stage_to_compile](const Job& in_job) 
+			[this, id, stage_to_compile, &reflection_datas](const Job& in_job) 
 			{
 				const auto& root_job = create_job(JobType::Normal, [](const Job& in_job){});
 
 				for(const auto& stage : stage_to_compile)
 				{
 					const auto& child = create_child_job(JobType::Normal, root_job,
-						[this, id, stage](const Job& in_job)
+						[this, id, stage, &reflection_datas](const Job& in_job)
 						{
 							compile_permutation_stage(id, stage);
 						});
@@ -163,10 +183,16 @@ const EffectShaderMap Effect::get_permutation(EffectPermutationId id)
 				schedule(root_job);
 				wait(root_job);
 
+				build_pipeline_layout(id);
+
 				pending_compilation.erase(id);
 			});
 
 		schedule(main_job);
+	}
+	else
+	{
+		build_pipeline_layout(id);
 	}
 #else
 	ze::logger::error("No effect {} permutation {} found !",
@@ -174,7 +200,56 @@ const EffectShaderMap Effect::get_permutation(EffectPermutationId id)
 		id.to_string());
 #endif
 
-	return {};
+	return nullptr;
+}
+
+void Effect::build_pipeline_layout(EffectPermutationId id)
+{
+	robin_hood::unordered_map<uint32_t, std::vector<gfx::DescriptorSetLayoutBinding>> sets;
+	for(const auto& [stage, shader] : permutations[id].shader_map)
+	{
+		std::string key = name + "_" + get_stage_prefix(stage) + "_Refl";
+
+		filesystem::FileIStream stream(assetdatacache::get_cache_dir() / key,
+			filesystem::FileReadFlagBits::Binary);
+		serialization::BinaryInputArchive ar(stream);
+		shaders::ShaderCompilerReflectionDataOutput reflection_data;
+		ar <=> reflection_data;
+
+		for(const auto&  parameter : reflection_data.parameter_map.get_parameters())
+		{
+			DescriptorType desc_type = DescriptorType::UniformBuffer;
+			switch(parameter.type) 
+			{
+			case shaders::ShaderParameterType::Texture:
+				desc_type = DescriptorType::SampledTexture;
+				break;
+			case shaders::ShaderParameterType::StorageBuffer:
+				desc_type = DescriptorType::StorageBuffer;
+				break;
+			case shaders::ShaderParameterType::Sampler:
+				desc_type = DescriptorType::Sampler;
+				break;
+			}
+
+			sets[parameter.set].emplace_back(parameter.binding,
+				desc_type,
+				parameter.count,
+				stage);
+		}
+	}
+					
+	std::vector<gfx::DescriptorSetLayoutCreateInfo> set_create_infos; 
+	set_create_infos.reserve(sets.size());
+	for(const auto& [set, bindings] : sets)
+	{
+		set_create_infos.emplace_back(bindings);
+	}
+
+	auto [result, handle] = gfx::RenderBackend::get().pipeline_layout_create(
+		gfx::PipelineLayoutCreateInfo(set_create_infos));
+	ZE_CHECK(result == Result::Success);
+	permutations[id].pipeline_layout = handle;
 }
 
 std::vector<std::pair<std::string, std::string>> Effect::get_options_from_id(EffectPermutationId id) const
