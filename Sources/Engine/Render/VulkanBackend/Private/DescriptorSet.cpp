@@ -11,27 +11,29 @@
 namespace ze::gfx::vulkan
 {
 
-robin_hood::unordered_map<ResourceHandle, DescriptorSet> sets;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> sets;
+#endif
+
 vk::Result last_set_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::descriptor_set_create(const DescriptorSetCreateInfo& in_create_info)
 {
-	ResourceHandle handle;
-
-	DescriptorSet set(*device, in_create_info);
-	if(set.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::DescriptorSet,
-			static_cast<VkDescriptorSet>(set.get_set()), in_create_info);
-		sets.insert({ handle, std::move(set) });
-	}
-	
+	ResourceHandle handle = create_resource<DescriptorSet>(ResourceType::DescriptorSet,
+		*device, in_create_info);
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	sets.insert(handle);
+#endif
 	return { convert_vk_result(last_set_result), handle };
 }
 
 void VulkanBackend::descriptor_set_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<DescriptorSet>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	sets.erase(in_handle);
+#endif
 }
 
 DescriptorSet::DescriptorSet(Device& in_device, const DescriptorSetCreateInfo& in_create_info)
@@ -131,12 +133,11 @@ DescriptorSet::~DescriptorSet()
 
 DescriptorSet* DescriptorSet::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto set = sets.find(in_handle);
-
-	if(set != sets.end())
-		return &set->second;
-
-	return nullptr;
+	ZE_CHECKF(set != sets.end(), "Invalid descriptor set");
+#endif
+	return get_resource<DescriptorSet>(in_handle);
 }
 
 }

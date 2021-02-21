@@ -7,27 +7,31 @@
 namespace ze::gfx::vulkan
 {
 
-robin_hood::unordered_map<ResourceHandle, Sampler> samplers;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> samplers;
+#endif
+
 vk::Result last_sampler_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::sampler_create(const SamplerCreateInfo& in_create_info)
 {
-	ResourceHandle handle;
+	ResourceHandle handle = create_resource<Sampler>(ResourceType::Sampler,
+		*device, in_create_info);
 
-	Sampler sampler(*device, in_create_info);
-	if (sampler.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::Sampler,
-			static_cast<VkSampler>(sampler.get_sampler()), in_create_info);
-		samplers.insert({ handle, std::move(sampler) });
-	}
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	samplers.insert(handle);
+#endif
 
 	return { convert_vk_result(last_sampler_result), handle };
 }
 
 void VulkanBackend::sampler_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<Sampler>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	samplers.erase(in_handle);
+#endif
 }
 
 Sampler::Sampler(Device& in_device, const SamplerCreateInfo& in_create_info)
@@ -57,12 +61,12 @@ Sampler::Sampler(Device& in_device, const SamplerCreateInfo& in_create_info)
 
 Sampler* Sampler::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto sampler = samplers.find(in_handle);
+	ZE_CHECKF(sampler != samplers.end(), "Invalid sampler");
+#endif
 
-	if(sampler != samplers.end())
-		return &sampler->second;
-
-	return nullptr;
+	return get_resource<Sampler>(in_handle);;
 }
 
 }

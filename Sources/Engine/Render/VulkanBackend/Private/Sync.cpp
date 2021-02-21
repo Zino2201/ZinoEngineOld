@@ -6,28 +6,30 @@
 namespace ze::gfx::vulkan
 {
 
-robin_hood::unordered_map<ResourceHandle, Fence> fences;
-robin_hood::unordered_map<ResourceHandle, Semaphore> semaphores;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> fences;
+robin_hood::unordered_set<ResourceHandle> semaphores;
+#endif
 
 ResourceHandle VulkanBackend::fence_create(const bool in_is_signaled)
 {
-	ResourceHandle handle;
+	ResourceHandle handle = create_resource<Fence>(ResourceType::Fence,
+		*device, in_is_signaled);
 
-	Fence fence(*device,
-		in_is_signaled);
-	if(fence.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::Fence, 
-			static_cast<VkFence>(fence.get_fence()), in_is_signaled);
-		fences.insert({ handle, std::move(fence)});
-	}
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	fences.insert(handle);
+#endif
 
 	return handle;
 }
 
 void VulkanBackend::fence_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<Fence>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	fences.erase(in_handle);
+#endif
 }
 
 void VulkanBackend::fence_wait_for(const std::vector<ResourceHandle>& in_fences,
@@ -74,32 +76,33 @@ Fence::Fence(Device& in_device, const bool in_is_signaled) :
 
 Fence* Fence::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto fence = fences.find(in_handle);
+	ZE_CHECKF(fence != fences.end(), "Invalid fence");
+#endif
 
-	if(fence != fences.end())
-		return &fence->second;
-	
-	return nullptr;
+	return get_resource<Fence>(in_handle);
 }
 
 ResourceHandle VulkanBackend::semaphore_create()
 {
-	ResourceHandle handle;
+	ResourceHandle handle = create_resource<Semaphore>(ResourceType::Semaphore,
+		*device);
 
-	Semaphore semaphore(*device);
-	if(semaphore.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::Fence, 
-			static_cast<VkSemaphore>(semaphore.get_semaphore()), 0);
-		semaphores.insert({ handle, std::move(semaphore)});
-	}
-
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	semaphores.insert(handle);
+#endif
+	
 	return handle;
 }
 
 void VulkanBackend::semaphore_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<Semaphore>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	semaphores.erase(in_handle);
+#endif
 }
 
 Semaphore::Semaphore(Device& in_device) :
@@ -114,12 +117,12 @@ Semaphore::Semaphore(Device& in_device) :
 
 Semaphore* Semaphore::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto semaphore = semaphores.find(in_handle);
+	ZE_CHECKF(semaphore != semaphores.end(), "Invalid semaphore");
+#endif
 
-	if(semaphore != semaphores.end())
-		return &semaphore->second;
-	
-	return nullptr;
+	return get_resource<Semaphore>(in_handle);
 }
 
 }

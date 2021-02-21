@@ -10,27 +10,30 @@ namespace ze::gfx::vulkan
 static constexpr uint32_t max_descriptor_sets_per_pool = 32;
 static constexpr uint32_t default_descriptor_count_per_type = 32;
 
-robin_hood::unordered_map<ResourceHandle, PipelineLayout> pipeline_layouts;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> pipeline_layouts;
+#endif
 vk::Result last_pipeline_layout_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::pipeline_layout_create(const PipelineLayoutCreateInfo& in_create_info)
 {
-	ResourceHandle handle;
+	ResourceHandle handle = create_resource<PipelineLayout>(ResourceType::PipelineLayout,
+		*device, in_create_info);
 
-	PipelineLayout layout(*device, in_create_info);
-	if(layout.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::PipelineLayout, 
-			static_cast<VkPipelineLayout>(layout.get_layout()), in_create_info);
-		pipeline_layouts.insert({ handle, std::move(layout) });
-	}
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	pipeline_layouts.insert(handle);
+#endif
 
 	return { convert_vk_result(last_pipeline_layout_result), handle };
 }
 
 void VulkanBackend::pipeline_layout_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<PipelineLayout>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	pipeline_layouts.erase(in_handle);
+#endif
 }
 
 PipelineLayout::PipelineLayout(Device& in_device, 
@@ -109,12 +112,11 @@ PipelineLayout::PipelineLayout(Device& in_device,
 
 PipelineLayout* PipelineLayout::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto layout = pipeline_layouts.find(in_handle);
-
-	if(layout != pipeline_layouts.end())
-		return &layout->second;
-
-	return nullptr;
+	ZE_CHECKF(layout != pipeline_layouts.end(), "Invalid pipeline layout");
+#endif
+	return get_resource<PipelineLayout>(in_handle);
 }
 
 void PipelineLayout::allocate_pool()

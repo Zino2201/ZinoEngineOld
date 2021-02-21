@@ -63,4 +63,9 @@ bool has_key(const std::string& in_key)
 	return filesystem::exists(cache_dir / in_key);
 }
 
+std::filesystem::path get_cache_dir()
+{
+	return cache_dir;
+}
+
 }

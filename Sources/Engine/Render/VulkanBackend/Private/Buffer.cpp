@@ -7,7 +7,9 @@
 namespace ze::gfx::vulkan
 {
 
-robin_hood::unordered_map<ResourceHandle, Buffer> buffers;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> buffers;
+#endif
 
 std::pair<Result, void*> VulkanBackend::buffer_map(const ResourceHandle& in_buffer)
 {
@@ -32,16 +34,9 @@ void VulkanBackend::buffer_unmap(const ResourceHandle& in_buffer)
 
 ResourceHandle VulkanBackend::buffer_create(const BufferCreateInfo& in_create_info) 
 {
-	ResourceHandle handle;
-
-	Buffer buffer(*device, in_create_info);
-	if(buffer.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::Buffer, 
-			static_cast<VkBuffer>(buffer.get_buffer()), in_create_info);
-		buffers.insert({ handle, std::move(buffer) });
-	}
-
+	ResourceHandle handle = create_resource<Buffer>(ResourceType::Buffer, 
+		*device, in_create_info);
+	buffers.insert(handle);
 	return handle;
 }
 
@@ -97,17 +92,21 @@ Buffer::~Buffer()
 
 Buffer* Buffer::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto buffer = buffers.find(in_handle);
-
-	if(buffer != buffers.end())
-		return &buffer->second;
+	ZE_CHECKF(buffer != buffers.end(), "Invalid buffer");
+#endif
 	
-	return nullptr;
+	return reinterpret_cast<Buffer*>(reinterpret_cast<uintptr_t>(in_handle.handle));
 }
 
 void VulkanBackend::buffer_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<Buffer>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	buffers.erase(in_handle);
+#endif
 }
 
 }

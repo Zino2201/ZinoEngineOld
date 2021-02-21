@@ -19,21 +19,21 @@ struct FramebufferEntry
 	FramebufferEntry(vk::UniqueFramebuffer&& in_fb) : lifetime(0), framebuffer(std::move(in_fb)) {}
 };
 
-robin_hood::unordered_map<ResourceHandle, RenderPass> render_passes;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> render_passes;
+#endif
 robin_hood::unordered_map<Framebuffer, FramebufferEntry> framebuffers;
 vk::Result last_render_pass_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::render_pass_create(const RenderPassCreateInfo& in_create_info)
 {
-	ResourceHandle handle;
+	ResourceHandle handle = create_resource<RenderPass>(ResourceType::RenderPass,
+		*device, in_create_info);
 
 	RenderPass render_pass(*device, in_create_info);
-	if(render_pass.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::RenderPass, 
-			static_cast<VkRenderPass>(render_pass.get_render_pass()), in_create_info);
-		render_passes.insert({ handle, std::move(render_pass)});
-	}
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	render_passes.insert(handle);
+#endif
 
 	return { convert_vk_result(last_render_pass_result), handle };
 }
@@ -84,7 +84,11 @@ vk::Framebuffer get_or_create_framebuffer(Device& in_device, const Framebuffer& 
 
 void VulkanBackend::render_pass_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<RenderPass>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	render_passes.erase(in_handle);
+#endif
 }
 
 /** Holds attachments */
@@ -168,12 +172,12 @@ RenderPass::RenderPass(Device& in_device, const RenderPassCreateInfo& in_create_
 
 RenderPass* RenderPass::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto render_pass = render_passes.find(in_handle);
+	ZE_CHECKF(render_pass != render_passes.end(), "Invalid render pass");
+#endif
 
-	if(render_pass != render_passes.end())
-		return &render_pass->second;
-
-	return nullptr;
+	return get_resource<RenderPass>(in_handle);
 }
 
 void destroy_framebuffers()

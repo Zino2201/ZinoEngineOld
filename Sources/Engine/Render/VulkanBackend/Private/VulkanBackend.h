@@ -172,17 +172,35 @@ private:
 };
 
 /**
- * Create a resource handle by using Vulkan handle + hashing create info
+ * Create a resource
  */
-template<typename T, typename U>
-ResourceHandle create_resource_handle(ResourceType in_type, const T& in_c_handle, 
-	const U& in_create_info)
+template<typename T, typename... Args>
+ResourceHandle create_resource(ResourceType type, Args&&... args)
 {
-	static_assert(!std::is_class_v<T>, "Please cast to the C handle");
+	T* ptr = new T(std::forward<Args>(args)...);
+	if(ptr->is_valid())
+	{
+		return { type, reinterpret_cast<uint64_t>(ptr) };
+	}
+	
+	delete ptr;
+	return {};
+}
 
-	uint64_t seed = static_cast<std::underlying_type_t<ResourceType>>(in_type) + reinterpret_cast<uint64_t>(in_c_handle);
-	hash_combine(seed, in_create_info);
-	return { in_type, seed };
+template<typename T>
+void delete_resource(const ResourceHandle& handle)
+{
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	/** Call the ::get() function to validate the handle */
+	T::get(handle);
+#endif
+	delete reinterpret_cast<T*>(handle.handle);
+}
+
+template<typename T>
+ZE_FORCEINLINE T* get_resource(const ResourceHandle& handle)
+{
+	return reinterpret_cast<T*>(handle.handle);
 }
 
 VulkanBackend& get_backend();

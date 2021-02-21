@@ -11,33 +11,33 @@
 namespace ze::gfx::vulkan
 {
 
-robin_hood::unordered_map<ResourceHandle, SwapChain> swapchains;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> swapchains;
+#endif
 
 ResourceHandle VulkanBackend::swapchain_create(const SwapChainCreateInfo& in_create_info)
 {
-	ResourceHandle handle;
-
 	vk::SurfaceKHR surface = get_or_create(in_create_info.window_handle);
 	if(!surface)
-		return handle;
+		return {};
 
-	SwapChain swapchain(*device,
-		surface,
-		in_create_info.width,
-		in_create_info.height);
-	if(swapchain.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::SwapChain, 
-			static_cast<VkSwapchainKHR>(swapchain.get_swapchain()), in_create_info);
-		swapchains.insert({ handle, std::move(swapchain)});
-	}
+	ResourceHandle handle = create_resource<SwapChain>(ResourceType::SwapChain,
+		*device, surface, in_create_info.width, in_create_info.height);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	swapchains.insert(handle);
+#endif
 
 	return handle;
 }
 
 void VulkanBackend::swapchain_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<SwapChain>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	swapchains.erase(in_handle);
+#endif
 }
 
 bool VulkanBackend::swapchain_acquire_image(const ResourceHandle& in_swapchain)
@@ -77,22 +77,19 @@ ResourceHandle VulkanBackend::swapchain_get_backbuffer(const ResourceHandle& in_
 void VulkanBackend::swapchain_present(const ResourceHandle& in_swapchain,
 	const std::vector<ResourceHandle>& in_wait_semaphores)
 {
-	auto swapchain = swapchains.find(in_swapchain);
-	if(swapchain != swapchains.end())
+	auto swapchain = SwapChain::get(in_swapchain);
+	std::vector<vk::Semaphore> wait_semaphores;
+	wait_semaphores.reserve(in_wait_semaphores.size());
+	for(const auto& handle : in_wait_semaphores)
 	{
-		std::vector<vk::Semaphore> wait_semaphores;
-		wait_semaphores.reserve(in_wait_semaphores.size());
-		for(const auto& handle : in_wait_semaphores)
-		{
-			Semaphore* semaphore = Semaphore::get(handle);
-			ZE_CHECKF(semaphore, "Invalid wait semaphore passed to swapchain_present");
-			if(semaphore)
-				wait_semaphores.emplace_back(semaphore->get_semaphore());
-		}
+		Semaphore* semaphore = Semaphore::get(handle);
+		ZE_CHECKF(semaphore, "Invalid wait semaphore passed to swapchain_present");
+		if(semaphore)
+			wait_semaphores.emplace_back(semaphore->get_semaphore());
+	}	
 
-		swapchain->second.present(*Queue::get(VulkanBackend::get().get_gfx_queue()),
-			wait_semaphores);
-	}
+	swapchain->present(*Queue::get(VulkanBackend::get().get_gfx_queue()),
+		wait_semaphores);
 }
 
 SwapChain::SwapChain(Device& in_device, const vk::SurfaceKHR& in_surface,
@@ -268,12 +265,12 @@ vk::PresentModeKHR SwapChain::choose_present_mode(const std::vector<vk::PresentM
 
 SwapChain* SwapChain::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto swapchain = swapchains.find(in_handle);
+	ZE_CHECKF(swapchain != swapchains.end(), "Invalid swap chain");
+#endif
 
-	if(swapchain != swapchains.end())
-		return &swapchain->second;
-
-	return nullptr;
+	return get_resource<SwapChain>(in_handle);
 }
 
 vk::Extent2D SwapChain::choose_extent(const vk::SurfaceCapabilitiesKHR& in_capabilities,

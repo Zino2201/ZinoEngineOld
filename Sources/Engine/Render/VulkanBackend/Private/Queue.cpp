@@ -9,30 +9,27 @@
 namespace ze::gfx::vulkan
 {
 
-robin_hood::unordered_map<ResourceHandle, Queue> queues;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> queues;
+#endif
 
 Queue* Queue::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto queue = queues.find(in_handle);
+	ZE_CHECKF(queue != queues.end(), "Invalid queue");
+#endif
 
-	if(queue != queues.end())
-		return &queue->second;
-	
-	return nullptr;
+	return get_resource<Queue>(in_handle);
 }
 
 ResourceHandle VulkanBackend::queue_create(const uint32_t& in_family, const uint32_t& in_idx)
 {
-	ResourceHandle handle;
-
-	Queue queue(*device, in_family, in_idx);
-	if(queue.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::Queue,
-			static_cast<VkQueue>(queue.get_queue()), in_family);
-		queues.insert({ handle, std::move(queue) });
-	}
-
+	ResourceHandle handle = create_resource<Queue>(ResourceType::Queue, *device,
+		in_family, in_idx);
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	queues.insert(handle);
+#endif
 	return handle;	
 }
 
