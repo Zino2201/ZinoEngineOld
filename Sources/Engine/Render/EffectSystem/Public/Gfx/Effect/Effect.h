@@ -64,6 +64,7 @@ public:
 	{
 		EffectShaderMap shader_map;
 		UniquePipelineLayout pipeline_layout;
+		std::vector<UniqueDescriptorSet> descriptor_sets;
 	};
 
 	Effect(const std::string& in_name,
@@ -89,6 +90,7 @@ public:
 	std::vector<std::pair<std::string, std::string>> get_options_from_id(EffectPermutationId id) const;
 	bool is_available(EffectPermutationId id) const;
 	std::string get_stage_prefix(ShaderStageFlagBits stage) const;
+	ZE_FORCEINLINE const PipelineRasterizationStateCreateInfo& get_rasterizer_state() const { return rasterizer_state; }
 private:
 	void destroy_permutation(EffectPermutationId id);
 
@@ -103,8 +105,9 @@ private:
 	size_t permutation_count;
 	robin_hood::unordered_map<EffectPermutationId, Permutation> permutations;
 #if ZE_WITH_EDITOR
-	robin_hood::unordered_set<EffectPermutationId> pending_compilation;
+	robin_hood::unordered_map<EffectPermutationId, const ze::jobsystem::Job*> pending_compilation;
 #endif
+	PipelineRasterizationStateCreateInfo rasterizer_state;
 };
 
 /**
@@ -116,6 +119,8 @@ struct EffectPermPtr
 	EffectPermutationId permutation;
 
 	EffectPermPtr(std::nullptr_t) : effect(nullptr) {}
+	EffectPermPtr(Effect* in_effect, const EffectPermutationId& in_perm) : effect(in_effect),
+		permutation(in_perm) {}
 
 	bool operator==(const EffectPermPtr& other) const
 	{

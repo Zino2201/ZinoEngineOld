@@ -26,6 +26,7 @@ Effect::Effect(const std::string& in_name,
 #endif
 	size_t idx = 0;
 	size_t id_idx = 0;
+
 	/** Calculate permutation count */
 	for(auto& option : options)
 	{
@@ -54,6 +55,11 @@ Effect::~Effect()
 }
 
 #if ZE_WITH_EDITOR
+
+void Effect::wait_for_permutation(const EffectPermutationId& id) 
+{ 
+	ze::jobsystem::wait(pending_compilation[id]);
+}
 
 shaders::ShaderCompilerOutput Effect::compile_permutation_stage(EffectPermutationId id, ShaderStageFlagBits stage)
 {
@@ -163,7 +169,6 @@ Effect::Permutation* Effect::get_permutation(EffectPermutationId id)
 
 	if(!stage_to_compile.empty())
 	{
-		pending_compilation.insert(id);
 		const auto& main_job = create_job(JobType::Normal,
 			[this, id, stage_to_compile, &reflection_datas](const Job& in_job) 
 			{
@@ -188,6 +193,7 @@ Effect::Permutation* Effect::get_permutation(EffectPermutationId id)
 				pending_compilation.erase(id);
 			});
 
+		pending_compilation.insert(id);
 		schedule(main_job);
 	}
 	else

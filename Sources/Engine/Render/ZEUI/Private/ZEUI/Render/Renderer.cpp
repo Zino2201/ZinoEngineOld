@@ -23,6 +23,7 @@ Renderer::Renderer(const gfx::ResourceHandle& render_pass) :
 		using namespace std::chrono_literals;
 		std::this_thread::sleep_for(50ms);
 	}
+
 	permutation = base_effect->get_permutation({});
 
 	/** Create render resources */
@@ -63,9 +64,9 @@ Renderer::Renderer(const gfx::ResourceHandle& render_pass) :
 				gfx::GfxPipelineCreateInfo(
 					{
 						gfx::GfxPipelineShaderStage(gfx::ShaderStageFlagBits::Vertex, 
-							permutation[gfx::ShaderStageFlagBits::Vertex], "vertex"),
+							permutation->shader_map[gfx::ShaderStageFlagBits::Vertex], "vertex"),
 						gfx::GfxPipelineShaderStage(gfx::ShaderStageFlagBits::Fragment,
-							permutation[gfx::ShaderStageFlagBits::Fragment], "fragment"),
+							permutation->shader_map[gfx::ShaderStageFlagBits::Fragment], "fragment"),
 					},
 					gfx::PipelineVertexInputStateCreateInfo(
 						Vertex::get_input_binding_desc(),
@@ -106,6 +107,8 @@ void Renderer::update_buffers()
 		current_index_count <= last_index_count)
 		return;
 
+	/** Build the vertex/index buffers */
+
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 	vertices.reserve(current_vertex_count);
@@ -129,29 +132,40 @@ void Renderer::update_buffers()
 	size_t current_vertex_offset = 0;
 	size_t current_first_index = 0;
 
-	for(const auto& context : contexts)
+	for(auto& context : contexts)
 	{
-		size_t current_vertex_idx = 0;
-		for(auto& cmd : context->get_commands())
-		{
-			auto geometry = cmd.primitive->get_geometry(cmd);
-			memcpy(vertex_data, geometry.first.data(), geometry.first.size() * sizeof(Vertex));
-			memcpy(index_data, geometry.second.data(), geometry.second.size() * sizeof(uint32_t));
-			vertex_data += geometry.first.size() * sizeof(Vertex);
+		/** Sort and batch the context commands first */
+		context->sort();
+		context->batch();
 
-			for(const auto& index : geometry.second)
+		size_t current_vertex_idx = 0;
+
+		for(auto& batch : context->get_batches())
+		{
+			for(const auto& cmd : batch.commands)
 			{
-				size_t idx = current_vertex_idx + index;
-				memcpy(index_data, &idx, sizeof(uint32_t));
-				index_data += sizeof(uint32_t);
+				auto geometry = cmd->primitive->get_geometry(*cmd);
+				memcpy(vertex_data, geometry.first.data(), geometry.first.size() * sizeof(Vertex));
+				memcpy(index_data, geometry.second.data(), geometry.second.size() * sizeof(uint32_t));
+				vertex_data += geometry.first.size() * sizeof(Vertex);
+
+				for(const auto& index : geometry.second)
+				{
+					size_t idx = current_vertex_idx + index;
+					memcpy(index_data, &idx, sizeof(uint32_t));
+					index_data += sizeof(uint32_t);
+				}
+
+				current_vertex_idx += geometry.first.size();
 			}
 
-			current_vertex_idx += geometry.first.size();
-		}
+			batch.vertex_offset = current_vertex_offset;
+			batch.first_index = current_first_index;
+			current_vertex_offset += batch.vertex_count;
+			current_first_index += batch.index_count;
 
-		context->set_drawcall_data(current_vertex_offset, current_first_index);
-		current_vertex_offset += context->get_vertex_count();
-		current_first_index += context->get_index_count();
+			batches.emplace_back(batch);
+		}
 	}
 
 	gfx::RenderBackend::get().buffer_unmap(*vertex_buffer);
@@ -188,18 +202,24 @@ void Renderer::render(Window& in_root_window, const gfx::ResourceHandle& cmd_lis
 	gfx::RenderBackend::get().cmd_bind_descriptor_sets(cmd_list,
 		gfx::PipelineBindPoint::Gfx,
 		*main_pipeline_layout,
-			0,
+		0,
 		{ *descriptor_set });
 
 	/** Draw the data */
 	for(const auto& context : contexts)
 	{
-		gfx::RenderBackend::get().cmd_draw_indexed(cmd_list,
-			context->get_index_count(),
-			1,
-			context->get_first_index(),
-			context->get_vertex_offset(),
-			0);
+		for(const auto& batch : batches)
+		{
+			/** Bind desc set and shaders */
+			
+
+			gfx::RenderBackend::get().cmd_draw_indexed(cmd_list,
+				batch.index_count,
+				1,
+				batch.first_index,
+				batch.vertex_offset,
+				0);
+		}
 	}
 }
 

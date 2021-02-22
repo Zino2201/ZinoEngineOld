@@ -19,5 +19,6 @@ VSOutput vertex(VSInput Input)
     VSOutput Output;
     Output.Position = float4(Input.Position * Scale + Translate, 0.0f, 1.0f);
     Output.Color = Input.Color;
+    Output.TexCoord = Input.TexCoord;
     return Output;
 }
