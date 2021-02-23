@@ -105,7 +105,7 @@ private:
 	size_t permutation_count;
 	robin_hood::unordered_map<EffectPermutationId, Permutation> permutations;
 #if ZE_WITH_EDITOR
-	robin_hood::unordered_map<EffectPermutationId, const ze::jobsystem::Job*> pending_compilation;
+	robin_hood::unordered_set<EffectPermutationId> pending_compilation;
 #endif
 	PipelineRasterizationStateCreateInfo rasterizer_state;
 };

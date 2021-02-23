@@ -2,11 +2,12 @@
 
 #include "EngineCore.h"
 #include "Rendering.h"
+#include "Gfx/Effect/Effect.h"
 
 namespace ze::ui
 {
 
-class DrawCommand;
+struct DrawCommand;
 
 /**
  * Base class for draw commands primitives
@@ -14,7 +15,11 @@ class DrawCommand;
  */
 struct DrawCommandPrimitive
 {
+	virtual ~DrawCommandPrimitive() = default;
+
 	virtual std::pair<std::vector<Vertex>, std::vector<uint32_t>> get_geometry(const DrawCommand& commmand) = 0;
+	virtual gfx::EffectPermPtr get_effect() const { return nullptr; }
+	virtual std::vector<gfx::ResourceHandle> get_descriptor_sets() const { return {}; }
 };
 
 /**
@@ -31,6 +36,11 @@ struct DrawCommand
 		const maths::Vector2f in_position,
 		const maths::Vector2f& in_size) 
 		: primitive(in_primitive), position(in_position), size(in_size) {}
+
+	bool operator==(const DrawCommand& other) const
+	{
+		return primitive == other.primitive;
+	}
 };
 
 }

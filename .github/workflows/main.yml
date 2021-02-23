@@ -37,6 +37,8 @@ jobs:
         curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe?Human=true
         VulkanSDK.exe /S
         vcpkg install sdl2[*]:x64-windows
+        vcpkg install harfbuzz[*]:x64-windows
+        vcpkg install freetype[*]:x64-windows
       shell: cmd
 
     - run: | 
@@ -73,6 +75,8 @@ jobs:
         curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe?Human=true
         VulkanSDK.exe /S
         vcpkg install sdl2[*]:x64-windows
+        vcpkg install harfbuzz[*]:x64-windows
+        vcpkg install freetype[*]:x64-windows
       shell: cmd
 
     - run: | 
@@ -108,6 +112,8 @@ jobs:
         curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe?Human=true
         VulkanSDK.exe /S
         vcpkg install sdl2[*]:x64-windows
+        vcpkg install harfbuzz[*]:x64-windows
+        vcpkg install freetype[*]:x64-windows
       shell: cmd
 
     - run: |
@@ -166,6 +172,8 @@ jobs:
         curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe?Human=true
         VulkanSDK.exe /S
         vcpkg install sdl2[*]:x64-windows
+        vcpkg install harfbuzz[*]:x64-windows
+        vcpkg install freetype[*]:x64-windows
       shell: cmd
 
     - run: |

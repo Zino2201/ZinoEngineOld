@@ -56,11 +56,6 @@ Effect::~Effect()
 
 #if ZE_WITH_EDITOR
 
-void Effect::wait_for_permutation(const EffectPermutationId& id) 
-{ 
-	ze::jobsystem::wait(pending_compilation[id]);
-}
-
 shaders::ShaderCompilerOutput Effect::compile_permutation_stage(EffectPermutationId id, ShaderStageFlagBits stage)
 {
 	using namespace shaders;
