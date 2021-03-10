@@ -6,216 +6,266 @@
 
 namespace ze
 {
-  
-template<typename ElementType>
-struct TCoherentArrayIterator
-{
-    using iterator_category = std::random_access_iterator_tag;
-    using value_type = ElementType;
-    using difference_type = std::ptrdiff_t;
-    using pointer = ElementType*;
-    using reference = ElementType&;
-  
-    TCoherentArrayIterator(std::vector<ElementType>& InElements,
-        boost::dynamic_bitset<uint8_t>& InBitset, const size_t& InCurrentIdx) :
-        CurrentIdx(InCurrentIdx), 
-        Elements(InElements), Bitset(InBitset) {}
-  
-    ElementType& operator*()
-    {
-        return Elements[CurrentIdx];
-    }
-  
-    TCoherentArrayIterator& operator++()
-    {
-        while (CurrentIdx != Bitset.size())
-        {
-            if(Bitset[++CurrentIdx])
-                return *this;
-        }
 
-        return *this;
-    }
-
-	TCoherentArrayIterator& operator=(const TCoherentArrayIterator& InOther)
-	{
-		CurrentIdx = InOther.CurrentIdx;
-		Elements = InOther.Elements;
-		Bitset = InOther.Bitset;
-		return *this;
-	}
-  
-	TCoherentArrayIterator& operator-(difference_type InDiff)
-	{
-		CurrentIdx -= InDiff;
-		ZE_CHECK(CurrentIdx > 0 && CurrentIdx <= Elements.size() - 1);
-	}
-
-	friend difference_type operator-(const TCoherentArrayIterator& InLeft, const TCoherentArrayIterator& InRight)
-	{
-		return std::distance(InLeft.Elements[InLeft.CurrentIdx],
-			InRight.Elements[InRight.CurrentIdx]);
-	}
-
-	friend bool operator==(const TCoherentArrayIterator& Left, const TCoherentArrayIterator& Right)
-	{
-		return Left.CurrentIdx == Right.CurrentIdx;
-	}
-
-    friend bool operator!=(const TCoherentArrayIterator& Left, const TCoherentArrayIterator& Right)
-    {
-        return Left.CurrentIdx != Right.CurrentIdx;
-    }
-private:
-    size_t CurrentIdx;
-    std::vector<ElementType>& Elements;
-    boost::dynamic_bitset<uint8_t>& Bitset;
-};
-  
 template<typename T>
-class TCoherentArray
+class CoherentArray
 {
 public:
-    using ElementType = T;
-    using Iterator = TCoherentArrayIterator<T>;
-    using ConstIterator = const TCoherentArrayIterator<const T>;
-  
-    TCoherentArray() = default;
-    ~TCoherentArray() = default;
-  
-    TCoherentArray(const TCoherentArray& InOther) :
-        Elements(InOther.Elements), 
-        AllocatedBitset(InOther.AllocatedBitset) {}
-  
-    TCoherentArray(TCoherentArray&& InOther) :
-        Elements(std::move(InOther.Elements)), 
-        AllocatedBitset(std::move(InOther.AllocatedBitset)) {}
-  
-    size_t Add(const T& InElement)
+    template<typename U>
+    class CoherentArrayIterator
     {
-        size_t Idx = GetFreeIndexOrGrow();
+    public:
+        using iterator_category = std::random_access_iterator_tag;
+        using value_type = U;
+        using difference_type = std::ptrdiff_t;
+        using pointer = U*;
+        using reference = U&;
+
+        CoherentArrayIterator(CoherentArray<T>& in_array,
+            const size_t& in_current_idx) :
+            current_idx(in_current_idx), 
+            array(in_array) {}
   
-        Elements.insert(Elements.begin(), InElement);
-        AllocatedBitset.set(Idx, true);
+        U& operator*()
+        {
+            return array[current_idx];
+        }
   
-        return Idx;
+        CoherentArrayIterator& operator++()
+        {
+            while (current_idx != array.get_capacity())
+            {
+                if(array.bitset[++current_idx])
+                    return *this;
+            }
+
+            return *this;
+        }
+
+        CoherentArrayIterator& operator=(const CoherentArrayIterator& other)
+	    {
+		    array = other.array;
+            current_idx = other.current_idx;
+		    return *this;
+	    }
+  
+	    CoherentArrayIterator& operator-(difference_type in_diff)
+	    {
+		    current_idx -= in_diff;
+		    ZE_CHECK(current_idx > 0 && current_idx <= array.get_size() - 1);
+	    }
+
+	    friend difference_type operator-(const CoherentArrayIterator& left, const CoherentArrayIterator& right)
+	    {
+		    return right - left;
+	    }
+
+	    friend bool operator==(const CoherentArrayIterator& left, const CoherentArrayIterator& right)
+	    {
+		    return left.current_idx == right.current_idx;
+	    }
+
+        friend bool operator!=(const CoherentArrayIterator& left, const CoherentArrayIterator& right)
+        {
+            return left.current_idx != right.current_idx;
+        }
+    private:
+        size_t current_idx;
+        CoherentArray<T>& array;
+    };
+
+    struct ElementsDeleter
+    {
+        void operator()(T* ptr) const
+        {
+            free(ptr);
+        }
+    };
+
+    using ElementType = T;
+    using Iterator = CoherentArrayIterator<T>;
+    using ConstIterator = const CoherentArrayIterator<const T>;
+  
+    CoherentArray() : size(0), capacity(0) {}
+    ~CoherentArray() = default;
+  
+    CoherentArray(const CoherentArray& in_other)
+    {
+        elements = std::unique_ptr<T, ElementsDeleter>(reinterpret_cast<T*>(malloc(in_other.capacity * sizeof(T))));
+        size = in_other.size;
+        capacity = in_other.capacity;
+        bitset = in_other.bitset;
+        
+        memcpy(elements, in_other.elements, in_other.capacity * sizeof(T));
     }
   
-    size_t Add(T&& InElement)
+    CoherentArray(CoherentArray&& in_other)
+        : elements(std::move(in_other.elements)), size(std::move(in_other.size)),
+        capacity(std::move(in_other.capacity)), bitset(std::move(in_other.bitset)) {}
+
+    size_t add(const T& in_element)
     {
-        size_t Idx = GetFreeIndexOrGrow();
+        size_t idx = get_free_index_or_grow();
+        ZE_ASSERTF(!bitset[Idx], "Index {} already contains a element!", idx); 
   
-        Elements.insert(Elements.begin(), std::move(InElement));
-        AllocatedBitset.set(Idx, true);
+        new (elements.get() + idx) T(in_element);
+        bitset.set(idx, true);
   
-        return Idx;
+        size++;
+        
+        return idx;
+    }
+  
+    size_t add(T&& in_element)
+    {
+        size_t idx = get_free_index_or_grow();
+        ZE_ASSERTF(!bitset[idx], "Index {} already contains a element!", idx); 
+  
+        new (elements.get() + idx) T(std::move(in_element));
+        bitset.set(idx, true);
+  
+        size++;
+
+        return idx;
     }
   
     template<typename... Args>
-    size_t Emplace(Args&&... InArgs)
+    size_t emplace(Args... in_args)
     {
-        size_t Idx = GetFreeIndexOrGrow();
+        size_t idx = get_free_index_or_grow();
+        ZE_ASSERTF(!bitset[idx], "Index {} already contains a element!", idx); 
   
-        Elements.emplace(Elements.begin() + Idx, std::forward<Args>(InArgs)...);
-        AllocatedBitset.set(Idx, true);
+        new (elements.get() + idx) T(std::forward<Args>(in_args)...);
+        bitset.set(idx, true);
+
+        size++;
   
-        return Idx;
+        return idx;
     }
   
-    void Remove(const size_t& InIndex)
+    void remove(const size_t& in_index)
     {
-        ZE_ASSERT(InIndex < Elements.size());
+        ZE_ASSERT(is_valid(in_index));
   
-        AllocatedBitset.set(InIndex, false);
+        at(in_index).~T();
+        bitset.set(in_index, false);
     }
   
-    void Reserve(const size_t& InNewCapacity)
+    void reserve(const size_t& in_new_capacity)
     {
-        Elements.reserve(InNewCapacity);
-        AllocatedBitset.reserve(InNewCapacity);
+        if(in_new_capacity > capacity)
+            realloc(in_new_capacity);
     }
   
-    T& At(const size_t& InIndex)
+    ZE_FORCEINLINE T& at(const size_t& in_index)
     {
-        return operator[](InIndex);
+        ZE_ASSERT(is_valid(in_index));
+        return *(elements.get() + in_index);
+    }
+
+    ZE_FORCEINLINE const T& at(const size_t& in_index) const
+    {
+        ZE_ASSERT(is_valid(in_index));
+        return *(elements.get() + in_index);
     }
   
-    size_t GetSize() const
+    ZE_FORCEINLINE size_t get_size() const
     {
-        return Elements.size();
+        return size;
     }
   
-    size_t GetCapacity() const
+    ZE_FORCEINLINE size_t get_capacity() const
     {
-        return Elements.capacity();
+        return capacity;
+    }
+
+    ZE_FORCEINLINE bool is_valid(const size_t& in_index) const
+    {
+        return in_index < bitset.capacity() && bitset[in_index];
     }
   
-    bool IsEmpty() const
+    ZE_FORCEINLINE bool is_empty() const
     {
-        return Elements.empty();
+        return bitset.none();
     }
   
     Iterator begin()
     {
-        return Iterator(Elements, AllocatedBitset, 0);
+        return Iterator(*this, 0);
     }
   
     ConstIterator cbegin() const
     {
-        return ConstIterator(Elements, AllocatedBitset, 0);
+        return ConstIterator(*this, 0);
     }
   
     Iterator end()
     {
-        return Iterator(Elements, AllocatedBitset, 
-            Elements.size() == 0 ? 0 : Elements.size());
+        return Iterator(*this, size);
     }
   
     ConstIterator cend() const
     {
-        return ConstIterator(Elements, AllocatedBitset, 
-            Elements.size() == 0 ? 0 : Elements.size());
+        return ConstIterator(*this, size);
     }
   
-    ElementType& operator[](const size_t& InIndex)
+    ElementType& operator[](const size_t& in_index)
     {
-        ZE_CHECK(InIndex < Elements.size());
-        ZE_CHECK(AllocatedBitset[InIndex]);
-  
-        return Elements[InIndex];
+        return at(in_index);
     }
   
-    const ElementType& operator[](const size_t& InIndex) const
+    const ElementType& operator[](const size_t& in_index) const
     {
-        ZE_CHECK(InIndex < Elements.size());
-        ZE_CHECK(AllocatedBitset[InIndex]);
-  
-        return Elements[InIndex];
+         return at(in_index);
     }
   
-    TCoherentArray& operator=(const TCoherentArray& InOther)
+    CoherentArray& operator=(const CoherentArray& in_other)
     {
-        Elements = InOther.Elements;
-        AllocatedBitset = InOther.AllocatedBitset;
+        elements = std::unique_ptr<T, ElementsDeleter>(reinterpret_cast<T*>(malloc(in_other.capacity * sizeof(T)));
+        size = in_other.size;
+        capacity = in_other.capacity;
+        bitset = in_other.bitset;
+        
+        memcpy(elements, in_other.elements, in_other.capacity * sizeof(T));
+        
         return *this;
     }
 private:
-    size_t GetFreeIndexOrGrow()
+    void realloc(const size_t& in_new_capacity)
     {
-        for(size_t i = 0; i < AllocatedBitset.size(); ++i)
+        if(size > 0)
         {
-            if(!AllocatedBitset[i])
+            auto old_elements = std::move(elements);
+            elements = std::unique_ptr<T, ElementsDeleter>(reinterpret_cast<T*>(malloc(in_new_capacity * sizeof(T))));
+            memmove(elements.get(), old_elements.get(), capacity * sizeof(T));
+        }
+        else
+        {
+            elements = std::unique_ptr<T, ElementsDeleter>(reinterpret_cast<T*>(malloc(in_new_capacity * sizeof(T))));
+        }
+
+        bitset.resize(in_new_capacity);
+        capacity = in_new_capacity;
+    }
+
+    size_t get_free_index_or_grow()
+    {
+        for(size_t i = 0; i < bitset.size(); ++i)
+        {
+            if(!bitset[i])
                 return i;
         }
+
+        /** At this point, we need to grow the elements array */
+        realloc(++capacity);
   
-        Elements.reserve(Elements.capacity() + 1);
-        AllocatedBitset.push_back(false);
-  
-        return Elements.size();
+        return capacity - 1;
     }
 private:
-    std::vector<ElementType> Elements; 
-    boost::dynamic_bitset<uint8_t> AllocatedBitset;
+    std::unique_ptr<T, ElementsDeleter> elements;
+    size_t size;
+    size_t capacity;
+    boost::dynamic_bitset<uint8_t> bitset;
 };
   
 };
