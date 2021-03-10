@@ -244,7 +244,7 @@ private:
 /**
  * A hashmap that delete elements that are not accessed
  */
-template<typename Key, typename Value>
+template<typename Key, typename Value, typename Deleter>
 struct LifetimeHashMap
 {
 	struct ValueEntry
@@ -286,6 +286,7 @@ public:
 		{
 			if(value.frames++ >= max_lifetime)
 			{
+				Deleter()(value.value);
 				map.erase(key);
 			}
 		}
@@ -618,6 +619,8 @@ public:
 		handle = std::exchange(in_other.handle, {});
 	}
 
+	void create_texture_handles();
+
 	DeviceResourceHandle get_current_texture() const;
 	DeviceResourceHandle get_current_texture_view() const;
 
@@ -749,6 +752,14 @@ class Device
 			gfx_command_pool.trim();
 		}
 	};
+
+	struct RenderPassDeleter
+	{
+		void operator()(const ResourceHandle& in_handle)
+		{
+			Backend::get().render_pass_destroy(in_handle);
+		}
+	};
 public:
 	static constexpr size_t max_frames_in_flight = 2;
 
@@ -840,7 +851,7 @@ private:
 	Shader* get_shader(const DeviceResourceHandle& in_handle);
 	Frame& get_current_frame() { return frames[current_frame]; }
 private:
-	LifetimeHashMap<RenderPassCreateInfo, ResourceHandle> render_passes;
+	LifetimeHashMap<RenderPassCreateInfo, ResourceHandle, RenderPassDeleter> render_passes;
 	robin_hood::unordered_map<GfxPipelineCreateInfo, ResourceHandle> gfx_pipelines;
 	CoherentArray<Buffer> buffers;
 	CoherentArray<Texture> textures;

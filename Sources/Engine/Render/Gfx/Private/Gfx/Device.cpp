@@ -18,6 +18,31 @@ TextureViewInfo TextureViewInfo::make_2d_view(const DeviceResourceHandle& in_tex
 Swapchain::Swapchain(const SwapChainCreateInfo& in_info, const ResourceHandle& in_handle)
 	: info(in_info), handle(in_handle) 
 {
+	create_texture_handles();
+}
+
+Swapchain::~Swapchain()
+{
+	for(const auto& texture : textures)
+		Device::get().textures.remove(texture.get_index());
+	
+	for(const auto& texture_view : texture_views)
+		Device::get().texture_views.remove(texture_view.get_index());
+
+	Backend::get().swapchain_destroy(handle);
+}
+
+void Swapchain::create_texture_handles()
+{
+	for(const auto& texture : textures)
+		Device::get().textures.remove(texture.get_index());
+	
+	for(const auto& texture_view : texture_views)
+		Device::get().texture_views.remove(texture_view.get_index());
+
+	textures.clear();
+	texture_views.clear();
+
 	for(const auto& texture : Backend::get().swapchain_get_backbuffer_textures(handle))
 	{
 		DeviceResourceHandle device_handle = DeviceResourceHandle::make(Device::get().textures.add(Texture({}, texture)),
@@ -31,17 +56,6 @@ Swapchain::Swapchain(const SwapChainCreateInfo& in_info, const ResourceHandle& i
 			DeviceResourceType::TextureView);
 		texture_views.emplace_back(device_handle);
 	}
-}
-
-Swapchain::~Swapchain()
-{
-	for(const auto& texture : textures)
-		Device::get().textures.remove(texture.get_index());
-	
-	for(const auto& texture_view : texture_views)
-		Device::get().texture_views.remove(texture_view.get_index());
-
-	Backend::get().swapchain_destroy(handle);
 }
 
 DeviceResourceHandle Swapchain::get_current_texture() const
@@ -219,7 +233,9 @@ void Device::wait_gpu_idle()
 	Backend::get().device_wait_idle();
 	for(auto& frame : frames)
 	{
-		/** No fences to wait from because we are sure that the GPU does nothing */
+		/** No fences to wait from because we are sure that the GPU does nothing, reset them */
+		if(!frame.wait_fences.empty())
+			Backend::get().fence_reset(frame.wait_fences);
 		frame.wait_fences.clear();
 		frame.trim_pools();
 	}
@@ -444,6 +460,7 @@ void Device::resize_swapchain(const DeviceResourceHandle& in_swapchain, const ui
 {
 	Swapchain* swapchain = get_swapchain(in_swapchain);
 	Backend::get().swapchain_resize(swapchain->get_handle(), in_width, in_height);
+	swapchain->create_texture_handles();
 }
 
 DeviceResourceHandle Device::get_swapchain_backbuffer_texture(const DeviceResourceHandle& in_swapchain)
@@ -479,7 +496,7 @@ ResourceHandle Device::create_or_find_render_pass(const RenderPassCreateInfo& in
 		return ResourceHandle(render_pass->handle);
 
 	auto [result, handle] = Backend::get().render_pass_create(in_create_info);
-	render_passes.insert(in_create_info, handle);
+	render_passes.insert(in_create_info, { handle });
 	return handle;
 }
 
