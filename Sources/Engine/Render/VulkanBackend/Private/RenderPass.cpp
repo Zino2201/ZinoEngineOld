@@ -27,8 +27,7 @@ vk::Result last_render_pass_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::render_pass_create(const RenderPassCreateInfo& in_create_info)
 {
-	ResourceHandle handle = create_resource<RenderPass>(ResourceType::RenderPass,
-		*device, in_create_info);
+	ResourceHandle handle = create_resource<RenderPass>(*device, in_create_info);
 
 	RenderPass render_pass(*device, in_create_info);
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)

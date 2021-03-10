@@ -25,8 +25,7 @@ Queue* Queue::get(const ResourceHandle& in_handle)
 
 ResourceHandle VulkanBackend::queue_create(const uint32_t& in_family, const uint32_t& in_idx)
 {
-	ResourceHandle handle = create_resource<Queue>(ResourceType::Queue, *device,
-		in_family, in_idx);
+	ResourceHandle handle = create_resource<Queue>(*device, in_family, in_idx);
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	queues.insert(handle);
 #endif

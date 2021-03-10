@@ -96,7 +96,7 @@ shaders::ShaderCompilerOutput Effect::compile_permutation_stage(EffectPermutatio
 
 	{
 		std::lock_guard<std::mutex> lock(permutation_lock);
-		permutations[id].shader_map[stage] = RenderBackend::get().shader_create(ShaderCreateInfo(output.bytecode)).second;
+		permutations[id].shader_map[stage] = Device::get().create_shader(ShaderCreateInfo(output.bytecode)).second;
 	}
 
 	{
@@ -126,7 +126,7 @@ void Effect::destroy_permutation(EffectPermutationId id)
 	for(const auto& [stage, shader] : permutations[id].shader_map)
 	{
 		if(shader)
-			RenderBackend::get().shader_destroy(shader);
+			Device::get().destroy_shader(shader);
 	}
 }
 
@@ -149,7 +149,7 @@ Effect::Permutation* Effect::get_permutation(EffectPermutationId id)
 		{
 			std::vector<uint8_t> bytecode = assetdatacache::get_sync(key);
 			std::lock_guard<std::mutex> lock(permutation_lock);
-			permutations[id].shader_map[stage] = RenderBackend::get().shader_create(gfx::ShaderCreateInfo(
+			permutations[id].shader_map[stage] = Device::get().create_shader(gfx::ShaderCreateInfo(
 				std::span<uint32_t>(
 					reinterpret_cast<uint32_t*>(bytecode.data()), 
 					reinterpret_cast<uint32_t*>(bytecode.data() + (bytecode.size() / sizeof(uint32_t)))))).second;
@@ -247,7 +247,7 @@ void Effect::build_pipeline_layout(EffectPermutationId id)
 		set_create_infos.emplace_back(bindings);
 	}
 
-	auto [result, handle] = gfx::RenderBackend::get().pipeline_layout_create(
+	auto [result, handle] = gfx::Device::get().create_pipeline_layout(
 		gfx::PipelineLayoutCreateInfo(set_create_infos));
 	ZE_CHECK(result == Result::Success);
 	permutations[id].pipeline_layout = handle;

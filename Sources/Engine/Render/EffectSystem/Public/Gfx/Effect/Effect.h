@@ -1,7 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
-#include "Gfx/Backend.h"
+#include "Gfx/Gfx.h"
 #include <robin_hood.h>
 #include <bitset>
 #if ZE_WITH_EDITOR
@@ -44,7 +44,7 @@ struct EffectOption
 };
 
 using EffectShaderSources = robin_hood::unordered_map<ShaderStageFlagBits, std::string>;
-using EffectShaderMap = robin_hood::unordered_map<ShaderStageFlagBits, ResourceHandle>;
+using EffectShaderMap = robin_hood::unordered_map<ShaderStageFlagBits, DeviceResourceHandle>;
 using EffectPermutationId = std::bitset<32>;
 
 /*
@@ -64,7 +64,6 @@ public:
 	{
 		EffectShaderMap shader_map;
 		UniquePipelineLayout pipeline_layout;
-		std::vector<UniqueDescriptorSet> descriptor_sets;
 	};
 
 	Effect(const std::string& in_name,

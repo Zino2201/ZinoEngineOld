@@ -18,9 +18,10 @@ enum class Format
 	/** Depth 24-bit (signed float) & stencil 8-bit (unsigned int) */
 	D24UnormS8Uint,
 
+	/** RGB 8-bit (unsigned short) */
 	R8G8B8Unorm,
 
-	/** RGB 8-bit (unsigned short) */
+	/** RGBA 8-bit (unsigned short) */
 	R8G8B8A8Unorm,
 	
 	/** RGB 8-bit (srgb nonlinear) */

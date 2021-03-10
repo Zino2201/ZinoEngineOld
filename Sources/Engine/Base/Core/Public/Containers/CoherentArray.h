@@ -149,6 +149,8 @@ public:
   
         at(in_index).~T();
         bitset.set(in_index, false);
+
+        size--;
     }
   
     void reserve(const size_t& in_new_capacity)

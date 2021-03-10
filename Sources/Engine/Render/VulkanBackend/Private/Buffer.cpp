@@ -10,6 +10,7 @@ namespace ze::gfx::vulkan
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 robin_hood::unordered_set<ResourceHandle> buffers;
 #endif
+vk::Result last_buffer_result;
 
 std::pair<Result, void*> VulkanBackend::buffer_map(const ResourceHandle& in_buffer)
 {
@@ -32,12 +33,14 @@ void VulkanBackend::buffer_unmap(const ResourceHandle& in_buffer)
 	vmaUnmapMemory(device->get_allocator(), buffer->get_allocation());
 }
 
-ResourceHandle VulkanBackend::buffer_create(const BufferCreateInfo& in_create_info) 
+std::pair<Result, ResourceHandle> VulkanBackend::buffer_create(const BufferCreateInfo& in_create_info) 
 {
-	ResourceHandle handle = create_resource<Buffer>(ResourceType::Buffer, 
-		*device, in_create_info);
+	ResourceHandle handle = create_resource<Buffer>(*device, in_create_info);
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	buffers.insert(handle);
-	return handle;
+#endif
+
+	return { convert_vk_result(last_buffer_result), handle };
 }
 
 Buffer::Buffer(Device& in_device, const BufferCreateInfo& in_create_info)
@@ -69,6 +72,8 @@ Buffer::Buffer(Device& in_device, const BufferCreateInfo& in_create_info)
 		usage_flags,
 		vk::SharingMode::eExclusive);
 
+	vk_info_elem = buffer_create_info;
+
 	VmaAllocationCreateInfo alloc_create_info = {};
 	alloc_create_info.flags = 0;
 	alloc_create_info.usage = convert_memory_usage(in_create_info.mem_usage);
@@ -79,6 +84,7 @@ Buffer::Buffer(Device& in_device, const BufferCreateInfo& in_create_info)
 		reinterpret_cast<VkBuffer*>(&buffer),
 		&allocation,
 		&allocation_info));
+	last_buffer_result = result;
 	if (result != vk::Result::eSuccess)
 		ze::logger::error("Failed to create Vulkan buffer: {}",
 			vk::to_string(result).c_str());

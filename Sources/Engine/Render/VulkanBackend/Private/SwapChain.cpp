@@ -14,21 +14,21 @@ namespace ze::gfx::vulkan
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 robin_hood::unordered_set<ResourceHandle> swapchains;
 #endif
+vk::Result last_sw_result;
 
-ResourceHandle VulkanBackend::swapchain_create(const SwapChainCreateInfo& in_create_info)
+std::pair<Result, ResourceHandle> VulkanBackend::swapchain_create(const SwapChainCreateInfo& in_create_info)
 {
 	vk::SurfaceKHR surface = get_or_create(in_create_info.window_handle);
 	if(!surface)
 		return {};
 
-	ResourceHandle handle = create_resource<SwapChain>(ResourceType::SwapChain,
-		*device, surface, in_create_info.width, in_create_info.height);
+	ResourceHandle handle = create_resource<SwapChain>(*device, surface, in_create_info.width, in_create_info.height);
 
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	swapchains.insert(handle);
 #endif
 
-	return handle;
+	return { convert_vk_result(last_sw_result), handle };
 }
 
 void VulkanBackend::swapchain_destroy(const ResourceHandle& in_handle)
@@ -72,6 +72,27 @@ ResourceHandle VulkanBackend::swapchain_get_backbuffer(const ResourceHandle& in_
 	SwapChain* swapchain = SwapChain::get(in_swapchain);
 	ZE_CHECKF(swapchain, "Invalid swapchain given to swapchain_get_backbuffer")
 	return swapchain->get_backbuffer();
+}
+
+uint32_t VulkanBackend::swapchain_get_backbuffer_index(const ResourceHandle& in_swapchain)
+{
+	SwapChain* swapchain = SwapChain::get(in_swapchain);
+	ZE_CHECKF(swapchain, "Invalid swapchain given to swapchain_get_backbuffer_index")
+	return swapchain->get_image_idx();
+}
+
+std::vector<ResourceHandle> VulkanBackend::swapchain_get_backbuffer_textures(const ResourceHandle& in_swapchain)
+{
+	SwapChain* swapchain = SwapChain::get(in_swapchain);
+	ZE_CHECKF(swapchain, "Invalid swapchain given to swapchain_get_backbuffer_textures")
+	return swapchain->get_images();
+}
+
+std::vector<ResourceHandle> VulkanBackend::swapchain_get_backbuffer_texture_views(const ResourceHandle& in_swapchain)
+{
+	SwapChain* swapchain = SwapChain::get(in_swapchain);
+	ZE_CHECKF(swapchain, "Invalid swapchain given to swapchain_get_backbuffer_texture_views")
+	return swapchain->get_images_views();
 }
 
 void VulkanBackend::swapchain_present(const ResourceHandle& in_swapchain,
@@ -147,6 +168,7 @@ vk::Result SwapChain::create(const uint32_t in_width,
 		VK_TRUE,
 		old_swapchain);
 	auto [result, handle] = device.get_device().createSwapchainKHRUnique(swapchain_create_info);
+	last_sw_result = result;
 	if (!handle)
 	{
 		ze::logger::error("Failed to create swap chain: {}", vk::to_string(result));
@@ -190,7 +212,7 @@ vk::Result SwapChain::create(const uint32_t in_width,
 					0,
 					1,
 					0,
-					1)));
+					1))).second;
 		if(!view)
 		{
 			ze::logger::error("Failed to create image view for swap chain image {} ({})",

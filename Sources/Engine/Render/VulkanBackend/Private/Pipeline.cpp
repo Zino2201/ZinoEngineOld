@@ -21,8 +21,7 @@ vk::Result last_pipeline_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::gfx_pipeline_create(const GfxPipelineCreateInfo& in_create_info)
 {
-	ResourceHandle handle = create_resource<Pipeline>(ResourceType::Pipeline,
-		*device, in_create_info);
+	ResourceHandle handle = create_resource<Pipeline>(*device, in_create_info);
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	pipelines.insert(handle);
 #endif

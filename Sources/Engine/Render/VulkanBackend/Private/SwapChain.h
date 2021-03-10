@@ -34,8 +34,11 @@ public:
 	}
 
 	ZE_FORCEINLINE vk::SwapchainKHR& get_swapchain() { return *swapchain; }
-	ZE_FORCEINLINE ResourceHandle get_backbuffer() { return *image_views[current_image]; }
-	ZE_FORCEINLINE ResourceHandle get_backbuffer_texture() { return *images[current_image]; }
+	ZE_FORCEINLINE ResourceHandle get_backbuffer() { return image_views[current_image]; }
+	ZE_FORCEINLINE ResourceHandle get_backbuffer_texture() { return images[current_image]; }
+	ZE_FORCEINLINE const std::vector<ResourceHandle>& get_images() { return images; }
+	ZE_FORCEINLINE const std::vector<ResourceHandle>& get_images_views() { return image_views; }
+	ZE_FORCEINLINE uint32_t get_image_idx() { return current_image; }
 private:
 	vk::SurfaceFormatKHR choose_swapchain_format(const std::vector<vk::SurfaceFormatKHR>& in_formats) const;
 	vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& in_present_modes) const;
@@ -51,8 +54,8 @@ private:
     uint32_t current_image;
     uint32_t current_frame;
 	vk::SurfaceFormatKHR format;
-	std::vector<UniqueTexture> images;
-	std::vector<UniqueTextureView> image_views;
+	std::vector<ResourceHandle> images;
+	std::vector<ResourceHandle> image_views;
 	vk::UniqueSemaphore image_ready;
 };
 

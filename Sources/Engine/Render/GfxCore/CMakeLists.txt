@@ -1,7 +1,5 @@
-ze_create_module(GfxCore 
-    Private/GfxCore.cpp
-    Private/GpuVector.cpp
-    Private/CommandSystem.cpp)
+ze_create_module(GfxCore
+    Private/GfxCore.cpp)
 
 ze_add_public_modules(GfxCore Core Reflection)
 

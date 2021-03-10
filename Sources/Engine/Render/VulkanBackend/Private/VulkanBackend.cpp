@@ -9,6 +9,7 @@
 #include "Buffer.h"
 #include "Surface.h"
 #include "RenderPass.h"
+#include "PipelineLayout.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, VulkanBackend);
 
@@ -17,7 +18,7 @@ namespace ze::gfx::vulkan
 
 VulkanBackend* backend = nullptr;
 
-OwnerPtr<RenderBackend> create_vulkan_backend()
+OwnerPtr<Backend> create_vulkan_backend()
 {
 	return new VulkanBackend;
 }
@@ -133,7 +134,23 @@ std::pair<bool, std::string> VulkanBackend::initialize()
 			0, 
 			VK_API_VERSION_1_2);
 
-		if(enable_validation_layers)
+		std::vector<vk::LayerProperties> available_layers = vk::enumerateInstanceLayerProperties();
+		bool support_layers = false;
+		for (const char* layer_name : validation_layers) 
+		{
+			bool layer_found = false;
+
+			for (const auto& layer_properties : available_layers) 
+			{
+				if (strcmp(layer_name, layer_properties.layerName) == 0) 
+				{
+					support_layers = true;
+					break;
+				}
+			}
+		}
+
+		if(enable_validation_layers && support_layers)
 			ze::logger::warn("Vulkan validation layers are enabled, performances will be degraded !");
 
 		/**
@@ -182,8 +199,8 @@ std::pair<bool, std::string> VulkanBackend::initialize()
 		vk::InstanceCreateInfo create_infos(
 				vk::InstanceCreateFlags(),
 				&app_infos,
-				enable_validation_layers ? static_cast<uint32_t>(validation_layers.size()) : 0,
-				enable_validation_layers ? validation_layers.data() : 0,
+				enable_validation_layers && support_layers ? static_cast<uint32_t>(validation_layers.size()) : 0,
+				enable_validation_layers && support_layers ? validation_layers.data() : nullptr,
 				static_cast<uint32_t>(required_extensions.size()),
 				required_extensions.data());
 
@@ -255,6 +272,7 @@ void VulkanBackend::device_wait_idle()
 
 void VulkanBackend::new_frame()
 {
+	PipelineLayout::update_layouts();
 	update_framebuffers();
 }
 

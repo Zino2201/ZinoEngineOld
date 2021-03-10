@@ -13,8 +13,7 @@ robin_hood::unordered_set<ResourceHandle> semaphores;
 
 ResourceHandle VulkanBackend::fence_create(const bool in_is_signaled)
 {
-	ResourceHandle handle = create_resource<Fence>(ResourceType::Fence,
-		*device, in_is_signaled);
+	ResourceHandle handle = create_resource<Fence>(*device, in_is_signaled);
 
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	fences.insert(handle);
@@ -86,8 +85,7 @@ Fence* Fence::get(const ResourceHandle& in_handle)
 
 ResourceHandle VulkanBackend::semaphore_create()
 {
-	ResourceHandle handle = create_resource<Semaphore>(ResourceType::Semaphore,
-		*device);
+	ResourceHandle handle = create_resource<Semaphore>(*device);
 
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	semaphores.insert(handle);

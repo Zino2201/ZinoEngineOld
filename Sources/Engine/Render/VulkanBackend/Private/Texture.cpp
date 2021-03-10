@@ -15,8 +15,7 @@ vk::Result last_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::texture_create(const TextureCreateInfo& in_create_info)
 {
-	ResourceHandle handle = create_resource<Texture>(ResourceType::Texture,
-		*device, in_create_info);
+	ResourceHandle handle = create_resource<Texture>(*device, in_create_info);
 
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	textures.insert(handle);
@@ -28,8 +27,7 @@ std::pair<Result, ResourceHandle> VulkanBackend::texture_create(const TextureCre
 std::pair<Result, ResourceHandle> VulkanBackend::texture_create(const vk::Image& in_image,
 	const TextureCreateInfo& in_create_info)
 {
-	ResourceHandle handle = create_resource<Texture>(ResourceType::Texture,
-		*device, in_image, in_create_info);
+	ResourceHandle handle = create_resource<Texture>(*device, in_image, in_create_info);
 
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	textures.insert(handle);
@@ -110,29 +108,27 @@ Texture* Texture::get(const ResourceHandle& in_handle)
 	return get_resource<Texture>(in_handle);
 }
 
-ResourceHandle VulkanBackend::texture_view_create(const TextureViewCreateInfo& in_create_info)
+std::pair<Result, ResourceHandle> VulkanBackend::texture_view_create(const TextureViewCreateInfo& in_create_info)
 {
-	ResourceHandle handle = create_resource<TextureView>(ResourceType::TextureView,
-		*device, in_create_info);
+	ResourceHandle handle = create_resource<TextureView>(*device, in_create_info);
 
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	texture_views.insert(handle);
 #endif
 
-	return handle;
+	return { convert_vk_result(last_result), handle };
 }
 
-ResourceHandle VulkanBackend::texture_view_create(const vk::Image& in_image,
+std::pair<Result, ResourceHandle> VulkanBackend::texture_view_create(const vk::Image& in_image,
 	const TextureViewCreateInfo& in_create_info)
 {
-	ResourceHandle handle = create_resource<TextureView>(ResourceType::TextureView,
-		*device, in_image, in_create_info);
+	ResourceHandle handle = create_resource<TextureView>(*device, in_image, in_create_info);
 
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	texture_views.insert(handle);
 #endif
 
-	return handle;
+	return { convert_vk_result(last_result), handle };
 }
 
 void VulkanBackend::texture_view_destroy(const ResourceHandle& in_handle)
@@ -158,6 +154,7 @@ TextureView::TextureView(Device& in_device, const TextureViewCreateInfo& in_crea
 			convert_format(in_create_info.format),
 			vk::ComponentMapping(),
 			convert_texture_subresource_range(in_create_info.subresource_range)));
+	last_result = result;
 	if(!handle)
 	{
 		ze::logger::error("Failed to create texture view: {}", vk::to_string(result));

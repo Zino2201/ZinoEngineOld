@@ -15,6 +15,7 @@
 #include "Engine/TickSystem.h"
 #include "Engine/InputSystem.h"
 #include "Gfx/Vulkan/Backend.h"
+#include "Gfx/Gfx.h"
 
 #if ZE_WITH_EDITOR
 #include "Editor/ZEEditor.h"
@@ -45,7 +46,8 @@ void Exit();
 /** Global variables */
 
 /** Render system ptr */
-static std::unique_ptr<ze::gfx::RenderBackend> RenderBackend;
+static std::unique_ptr<ze::gfx::Backend> RenderBackend;
+static std::unique_ptr<ze::gfx::Device> Device;
 
 /** Current app */
 
@@ -175,6 +177,8 @@ void PreInit()
 		/** Load render modules */
 		LoadRequiredModule("ShaderCore");
 		LoadRequiredModule("GfxCore");
+		LoadRequiredModule("GfxBackend");
+		LoadRequiredModule("Gfx");
 		LoadRequiredModule("ShaderCompiler");
 		LoadRequiredModule("EffectSystem");
 		LoadRequiredModule("ImGui");
@@ -186,12 +190,13 @@ void PreInit()
 		ze::logger::info("Initializing render system");
 		LoadRequiredModule("VulkanBackend");
 		LoadRequiredModule("VulkanShaderCompiler");
-		OwnerPtr<ze::gfx::RenderBackend> backend = ze::gfx::vulkan::create_vulkan_backend();
+		OwnerPtr<ze::gfx::Backend> backend = ze::gfx::vulkan::create_vulkan_backend();
 		auto [result, msg] = backend->initialize();
 		if(!result)
 			ze::logger::fatal("Failed to initialize backend:\n{}.\n\nCheck logs for additional informations.", msg);
 		
-		RenderBackend = std::unique_ptr<ze::gfx::RenderBackend>(backend);
+		RenderBackend = std::unique_ptr<ze::gfx::Backend>(backend);
+		Device = std::make_unique<ze::gfx::Device>();
 	}
 }
 
@@ -226,6 +231,7 @@ void Exit()
 
 	ze::module::unload_module("EffectSystem");
 
+	ze::gfx::Device::get().destroy();
 	/** Delete render system */
 	RenderBackend.reset();
 

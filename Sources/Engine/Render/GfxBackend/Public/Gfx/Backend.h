@@ -1,25 +1,15 @@
 #pragma once
 
 #include "EngineCore.h"
-#include "GfxCore.h"
 #include "Resource.h"
-#include <span>
-#include <array>
-#include "Maths/MathCore.h"
+#include "Gfx/GfxCore.h"
 #include "Maths/Rect.h"
-#include <variant>
 #include <array>
+#include <span>
+#include <variant>
 
 namespace ze::gfx
 {
-
-/**
- * Flags about memory usage
- */
-enum class MemoryFlagBits
-{
-};
-ENABLE_FLAG_ENUMS(MemoryFlagBits, MemoryFlags);
 
 /**
  * Preferred memory usage
@@ -49,13 +39,12 @@ struct BufferCreateInfo
 	uint64_t size;
 	BufferUsageFlags usage;
 	MemoryUsage mem_usage; 
-	MemoryFlags mem_flags;
 
 	BufferCreateInfo() : size(0), mem_usage(MemoryUsage::CpuOnly) {}
 	
 	BufferCreateInfo(const uint64_t& in_size, const BufferUsageFlags& in_usage,
-		const MemoryUsage& in_mem_usage, const MemoryFlags& in_mem_flags = MemoryFlags()) :
-		size(in_size), usage(in_usage), mem_usage(in_mem_usage), mem_flags(in_mem_flags) {}
+		const MemoryUsage& in_mem_usage) :
+		size(in_size), usage(in_usage), mem_usage(in_mem_usage) {}
 };
 
 /** SwapChain create infos */
@@ -227,7 +216,6 @@ enum class CommandPoolType
 	Transfer
 };
 
-
 /** Barrier related structures */
 enum class AccessFlagBits
 {
@@ -313,6 +301,13 @@ struct VertexInputBindingDescription
 	VertexInputBindingDescription(const uint32_t in_binding,
 		const uint32_t in_stride, const VertexInputRate in_input_rate) 
 		: binding(in_binding), stride(in_stride), input_rate(in_input_rate) {}
+
+	bool operator==(const VertexInputBindingDescription& in_other) const
+	{
+		return binding == in_other.binding &&
+			stride == in_other.stride &&
+			input_rate == in_other.input_rate;
+	}
 };
 
 /**
@@ -329,6 +324,14 @@ struct VertexInputAttributeDescription
 		const uint32_t in_binding, const Format in_format,
 		const uint32_t in_offset) : location(in_location),
 		binding(in_binding), format(in_format), offset(in_offset) {}
+
+	bool operator==(const VertexInputAttributeDescription& in_other) const
+	{
+		return location == in_other.location &&
+			binding == in_other.binding &&
+			format == in_other.format &&
+			offset == in_other.offset;
+	}
 };
 
 struct PipelineVertexInputStateCreateInfo
@@ -339,6 +342,12 @@ struct PipelineVertexInputStateCreateInfo
 	PipelineVertexInputStateCreateInfo(const std::vector<VertexInputBindingDescription>& in_input_binding_descriptions = {},
 		std::vector<VertexInputAttributeDescription> in_input_attribute_descriptions = {})
 		: input_binding_descriptions(in_input_binding_descriptions), input_attribute_descriptions(in_input_attribute_descriptions) {}
+
+	bool operator==(const PipelineVertexInputStateCreateInfo& in_other) const
+	{
+		return input_binding_descriptions == in_other.input_binding_descriptions &&
+			input_attribute_descriptions == in_other.input_attribute_descriptions;
+	}
 };
 
 enum class PolygonMode
@@ -387,6 +396,18 @@ struct PipelineRasterizationStateCreateInfo
 		cull_mode(in_cull_mode), front_face(in_front_face), enable_depth_clamp(in_enable_depth_clamp),
 		enable_depth_bias(in_enable_depth_bias), depth_bias_constant_factor(in_depth_bias_constant_factor),
 		depth_bias_clamp(in_depth_bias_clamp), depth_bias_slope_factor(in_depth_bias_slope_factor) {}
+
+	bool operator==(const PipelineRasterizationStateCreateInfo& in_other) const
+	{
+		return polygon_mode == in_other.polygon_mode &&
+			cull_mode == in_other.cull_mode &&
+			front_face == in_other.front_face &&
+			enable_depth_clamp == in_other.enable_depth_clamp &&
+			enable_depth_bias == in_other.enable_depth_bias &&
+			depth_bias_constant_factor == in_other.depth_bias_constant_factor &&
+			depth_bias_clamp == in_other.depth_bias_clamp &&
+			depth_bias_slope_factor == in_other.depth_bias_slope_factor;
+	}
 };
 
 struct PipelineMultisamplingStateCreateInfo
@@ -395,6 +416,11 @@ struct PipelineMultisamplingStateCreateInfo
 
 	PipelineMultisamplingStateCreateInfo(const SampleCountFlagBits& in_samples = SampleCountFlagBits::Count1)
 		: samples(in_samples) {}
+
+	bool operator==(const PipelineMultisamplingStateCreateInfo& in_other) const
+	{
+		return samples == in_other.samples;
+	}
 };
 
 enum class CompareOp
@@ -430,6 +456,17 @@ struct StencilOpState
 	uint32_t compare_mask;
 	uint32_t write_mask;
 	uint32_t reference;
+
+	bool operator==(const StencilOpState& in_other) const
+	{
+		return fail_op == in_other.fail_op &&
+			pass_op == in_other.pass_op &&
+			depth_fail_op == in_other.depth_fail_op &&
+			compare_op == in_other.compare_op &&
+			compare_mask == in_other.compare_mask &&
+			write_mask == in_other.write_mask &&
+			reference == in_other.reference;
+	}
 };
 
 struct PipelineDepthStencilStateCreateInfo
@@ -441,6 +478,17 @@ struct PipelineDepthStencilStateCreateInfo
 	bool enable_stencil_test;
 	StencilOpState front_face;
 	StencilOpState back_face;
+
+	bool operator==(const PipelineDepthStencilStateCreateInfo& in_other) const
+	{
+		return enable_depth_test == in_other.enable_depth_test &&
+			enable_depth_write == in_other.enable_depth_write &&
+			depth_compare_op == in_other.depth_compare_op &&
+			enable_depth_bounds_test == in_other.enable_depth_bounds_test &&
+			enable_stencil_test == in_other.enable_stencil_test &&
+			front_face == in_other.front_face &&
+			back_face == in_other.back_face;
+	}
 };
 
 static constexpr size_t max_attachments_per_framebuffer = 8;
@@ -509,6 +557,18 @@ struct PipelineColorBlendAttachmentState
 		dst_color_blend_factor(in_dst_color_blend_factor), color_blend_op(in_color_blend_op),
 		src_alpha_blend_factor(in_src_alpha_blend_factor), dst_alpha_blend_factor(in_dst_alpha_blend_factor),
 		alpha_blend_op(in_alpha_blend_op), color_write_flags(in_color_write_flags) {}
+
+	bool operator==(const PipelineColorBlendAttachmentState& in_other) const
+	{
+		return enable_blend == in_other.enable_blend &&
+			src_color_blend_factor == in_other.src_color_blend_factor &&
+			dst_color_blend_factor == in_other.dst_color_blend_factor &&
+			color_blend_op == in_other.color_blend_op &&
+			src_alpha_blend_factor == in_other.src_alpha_blend_factor &&
+			dst_alpha_blend_factor == in_other.dst_alpha_blend_factor &&
+			alpha_blend_op == in_other.alpha_blend_op &&
+			color_write_flags == in_other.color_write_flags;
+	}
 };
 
 enum class LogicOp
@@ -542,6 +602,13 @@ struct PipelineColorBlendStateCreationInfo
 		const std::array<PipelineColorBlendAttachmentState, max_attachments_per_framebuffer>& in_attachment_states = {})
 		: enable_logic_op(in_enable_logic_op), logic_op(in_logic_op),
 		attachment_states(in_attachment_states) {}
+
+	bool operator==(const PipelineColorBlendStateCreationInfo& in_other) const
+	{
+		return enable_logic_op == in_other.enable_logic_op &&
+			logic_op == in_other.logic_op &&
+			attachment_states == in_other.attachment_states;
+	}
 };
 
 enum class ShaderStageFlagBits
@@ -570,6 +637,13 @@ struct GfxPipelineShaderStage
 		const ResourceHandle& in_shader,
 		const char* in_entry_point) : shader_stage(in_shader_stage),
 		shader(in_shader), entry_point(in_entry_point) {}
+
+	bool operator==(const GfxPipelineShaderStage& in_other) const
+	{
+		return shader_stage == in_other.shader_stage &&
+			shader == in_other.shader &&
+			entry_point == in_other.entry_point;
+	}
 };
 
 enum class PrimitiveTopology
@@ -589,6 +663,11 @@ struct PipelineInputAssemblyStateCreateInfo
 
 	PipelineInputAssemblyStateCreateInfo(const PrimitiveTopology in_topology = PrimitiveTopology::TriangleList)
 		: primitive_topology(in_topology) {}
+
+	bool operator==(const PipelineInputAssemblyStateCreateInfo& in_other) const
+	{
+		return primitive_topology == in_other.primitive_topology;
+	}
 };
 
 struct GfxPipelineCreateInfo
@@ -620,6 +699,20 @@ struct GfxPipelineCreateInfo
 		input_assembly_state(in_input_assembly_state), rasterization_state(in_rasterization_state),
 		multisampling_state(in_multisampling_state), depth_stencil_state(in_depth_stencil_state),
 		color_blend_state(in_color_blend_state), pipeline_layout(in_pipeline_layout), render_pass(in_render_pass), subpass(in_subpass) {}
+
+	bool operator==(const GfxPipelineCreateInfo& in_create_info) const
+	{
+		return shader_stages == in_create_info.shader_stages &&
+			vertex_input_state == in_create_info.vertex_input_state &&
+			input_assembly_state == in_create_info.input_assembly_state &&
+			rasterization_state == in_create_info.rasterization_state &&
+			multisampling_state == in_create_info.multisampling_state &&
+			depth_stencil_state == in_create_info.depth_stencil_state &&
+			color_blend_state == in_create_info.color_blend_state &&
+			pipeline_layout == in_create_info.pipeline_layout &&
+			render_pass == in_create_info.render_pass &&
+			subpass == in_create_info.subpass;
+	}
 };
 
 /** Pipeline layout */
@@ -726,6 +819,18 @@ struct AttachmentDescription
 		samples(in_samples), load_op(in_load_op), store_op(in_store_op),
 		stencil_load_op(in_stencil_load_op), stencil_store_op(in_stencil_store_op),
 		initial_layout(in_initial_layout), final_layout(in_final_layout) {}
+
+	bool operator==(const AttachmentDescription& in_desc) const
+	{
+		return format == in_desc.format &&
+			samples == in_desc.samples &&
+			load_op == in_desc.load_op &&
+			store_op == in_desc.store_op &&
+			stencil_load_op == in_desc.stencil_load_op &&
+			stencil_store_op == in_desc.stencil_store_op &&
+			initial_layout == in_desc.initial_layout &&
+			final_layout == in_desc.final_layout;
+	}
 };
 
 /**
@@ -745,6 +850,12 @@ struct AttachmentReference
 
 	AttachmentReference(const uint32_t in_attachment,
 		const TextureLayout in_layout) : attachment(in_attachment), layout(in_layout) {}
+
+	bool operator==(const AttachmentReference& in_ref) const
+	{
+		return attachment == in_ref.attachment &&
+			layout == in_ref.layout;
+	}
 };
 
 struct SubpassDescription
@@ -763,6 +874,15 @@ struct SubpassDescription
 		input_attachments(in_input_attachments), color_attachments(in_color_attachments),
 		resolve_attachments(in_resolve_attachments), depth_stencil_attachment(in_depth_stencil_attachment),
 		preserve_attachments(in_preserve_attachments) {}
+
+	bool operator==(const SubpassDescription& in_desc) const
+	{
+		return input_attachments == in_desc.input_attachments &&
+			color_attachments == in_desc.color_attachments &&
+			resolve_attachments == in_desc.resolve_attachments &&
+			depth_stencil_attachment == in_desc.depth_stencil_attachment &&
+			preserve_attachments == in_desc.preserve_attachments;
+	}
 };
 
 struct RenderPassCreateInfo
@@ -773,6 +893,12 @@ struct RenderPassCreateInfo
 	RenderPassCreateInfo(const std::vector<AttachmentDescription>& in_attachments,
 		const std::vector<SubpassDescription>& in_subpasses) : attachments(in_attachments),
 		subpasses(in_subpasses) {}
+
+	bool operator==(const RenderPassCreateInfo& in_info) const
+	{
+		return attachments == in_info.attachments &&
+			subpasses == in_info.subpasses;
+	}
 };
 
 union ClearColorValue
@@ -841,19 +967,34 @@ struct DescriptorBufferInfo
 	uint64_t offset;
 	uint64_t range;
 
+	DescriptorBufferInfo() : offset(0), range(0) {}
 	DescriptorBufferInfo(const ResourceHandle& in_buffer,
 		const uint64_t in_offset = 0,
 		const uint64_t in_range = whole_range) : buffer(in_buffer), offset(in_offset),
 		range(in_range) {}
+
+	bool operator==(const DescriptorBufferInfo& in_other) const
+	{
+		return buffer == in_other.buffer &&
+			offset == in_other.offset &&
+			range == in_other.range;
+	}
 };
 
 struct DescriptorTextureInfo
 {
 	ResourceHandle handle;
 	TextureLayout layout;
-
+	
+	DescriptorTextureInfo() {}
 	DescriptorTextureInfo(const ResourceHandle& in_handle,
 		const TextureLayout in_layout = gfx::TextureLayout::Undefined) : handle(in_handle), layout(in_layout) {}
+
+	bool operator==(const DescriptorTextureInfo& in_other) const
+	{
+		return handle == in_other.handle &&
+			layout == in_other.layout;
+	}
 };
 
 /** 
@@ -864,6 +1005,9 @@ struct Descriptor
 	DescriptorType type;
 	uint32_t dst_binding;
 	std::variant<DescriptorBufferInfo, DescriptorTextureInfo> info;
+	
+	Descriptor() : type(DescriptorType::UniformBuffer),
+		dst_binding(-1), info(DescriptorBufferInfo()) {}
 
 	Descriptor(const DescriptorType in_type,
 		const uint32_t in_dst_binding,
@@ -874,6 +1018,13 @@ struct Descriptor
 		const uint32_t in_dst_binding,
 		const DescriptorTextureInfo& in_texture) : type(in_type),
 		dst_binding(in_dst_binding), info(in_texture) {}
+
+	bool operator==(const Descriptor& in_other) const
+	{
+		return type == in_other.type &&
+			dst_binding == in_other.dst_binding &&
+			info == in_other.info;
+	}
 };
 
 /** Descriptor set */
@@ -1026,6 +1177,15 @@ struct SamplerCreateInfo
 		min_lod(in_min_lod), max_lod(in_max_lod) {}
 };
 
+enum class BackendFeatureFlagBits
+{
+	/**
+	 * Command pool trimming allows the pool to reclaim memory from allocated command lists that are no longer in use
+	 */
+	CommandPoolTrimming = 1 << 0,
+};
+ENABLE_FLAG_ENUMS(BackendFeatureFlagBits, BackendFeatureFlags)
+
 enum class Result
 {
 	Success = 0,
@@ -1037,15 +1197,16 @@ enum class Result
 };
 
 /**
- * Interface for render backends 
+ * A backend
+ * Abstract away graphics API details to provide a consistant API to use for higher-level APIs
  */
-class GFXCORE_API RenderBackend
+class Backend
 {
 public:
-	RenderBackend();
-	virtual ~RenderBackend();
+	Backend();
+	virtual ~Backend();
 
-	static RenderBackend& get();
+	static Backend& get();
 
 	/** 
 	 * Initialize the backend
@@ -1053,21 +1214,37 @@ public:
 	 */
 	virtual std::pair<bool, std::string> initialize() = 0;
 	
+	/**
+	 * Inform the backend that a new frame has starteds
+	 */
 	virtual void new_frame() = 0;
 
-	/** Wait for device */
+	/** 
+	 * Wait for device 
+	 * (not recommended)
+	 */
 	virtual void device_wait_idle() = 0;
+
+	/**
+	 * Get supported features by this backend
+	 */
+	virtual BackendFeatureFlags get_features() const = 0;
+	
+	ZE_FORCEINLINE bool support_feature(BackendFeatureFlagBits feature) const
+	{
+		return (get_features() & feature) == feature;
+	}
 
 	/**
 	 * Create a new buffer
 	 * \return Handle to the newly created buffer
 	 */
-	virtual ResourceHandle buffer_create(const BufferCreateInfo& in_create_info) = 0;
+	virtual std::pair<Result, ResourceHandle> buffer_create(const BufferCreateInfo& in_create_info) = 0;
 
 	/**
 	 * Create a new swap chain
 	 */
-	virtual ResourceHandle swapchain_create(const SwapChainCreateInfo& in_create_info) = 0;
+	virtual std::pair<Result, ResourceHandle> swapchain_create(const SwapChainCreateInfo& in_create_info) = 0;
 
 	/*
 	 * Create a texture
@@ -1077,7 +1254,7 @@ public:
 	/**
 	 * Create a new texture view
 	 */
-	virtual ResourceHandle texture_view_create(const TextureViewCreateInfo& in_create_info) = 0;
+	virtual std::pair<Result, ResourceHandle> texture_view_create(const TextureViewCreateInfo& in_create_info) = 0;
 
 	/**
 	 * Create a render pass
@@ -1099,17 +1276,17 @@ public:
 	 */
 	virtual std::pair<Result, ResourceHandle> pipeline_layout_create(const PipelineLayoutCreateInfo& in_create_info) = 0;
 
-	/**
-	 * Create a descriptor set
-	 */
-	virtual std::pair<Result, ResourceHandle> descriptor_set_create(const DescriptorSetCreateInfo& in_create_info) = 0;
-
 	/** 
 	 * Create a sampler
 	 */
 	virtual std::pair<Result, ResourceHandle> sampler_create(const SamplerCreateInfo& in_create_info) = 0;
 
-	/** DESTROY FUNCS */
+	/**
+	 * Create a fence
+	 */
+	virtual ResourceHandle fence_create(const bool in_is_signaled = false) = 0;
+
+	/** Destroy functions */
 	virtual void buffer_destroy(const ResourceHandle& in_handle) = 0;
 	virtual void texture_destroy(const ResourceHandle& in_handle) = 0;
 	virtual void texture_view_destroy(const ResourceHandle& in_handle) = 0;
@@ -1121,14 +1298,22 @@ public:
 	virtual void render_pass_destroy(const ResourceHandle& in_handle) = 0;
 	virtual void pipeline_destroy(const ResourceHandle& in_handle) = 0;
 	virtual void pipeline_layout_destroy(const ResourceHandle& in_handle) = 0;
-	virtual void descriptor_set_destroy(const ResourceHandle& in_handle) = 0;
 	virtual void sampler_destroy(const ResourceHandle& in_handle) = 0;
+
+	/** PIPELINE LAYOUT RELATED FUNCTIONS */
+
+	/**
+	 * Allocate a descriptor set from a pipeline layout
+	 * \remark Backend may use recycled descriptor sets or may use pools and therefore not perform any heap allocation.
+	 * \return Allocated descriptor set
+	 */
+	virtual ResourceHandle pipeline_layout_allocate_descriptor_set(const ResourceHandle& in_pipeline_layout,
+		const uint32_t in_set,
+		const std::vector<Descriptor>& descriptors) = 0;
 
 	/** BUFFER RELATED FUNCTIONS */
 	virtual std::pair<Result, void*> buffer_map(const ResourceHandle& in_buffer) = 0;
 	virtual void buffer_unmap(const ResourceHandle& in_buffer) = 0;
-
-	/** TEXTURE RELATED FUNCTIONS */
 
 	/** SWAP CHAIN RELATED FUNCTIONS */
 
@@ -1151,9 +1336,13 @@ public:
 	virtual ResourceHandle swapchain_get_backbuffer(const ResourceHandle& in_swapchain) = 0;
 
 	/**
-	 * Get the backbuffer texture of the specified swapchain
+	 * Get the current backbuffer texture of the specified swapchain
 	 */
 	virtual ResourceHandle swapchain_get_backbuffer_texture(const ResourceHandle& in_swapchain) = 0;
+
+	virtual uint32_t swapchain_get_backbuffer_index(const ResourceHandle& in_swapchain) = 0;
+	virtual std::vector<ResourceHandle> swapchain_get_backbuffer_textures(const ResourceHandle& in_swapchain) = 0;
+	virtual std::vector<ResourceHandle> swapchain_get_backbuffer_texture_views(const ResourceHandle& in_swapchain) = 0;
 
 	/**
 	 * Present a swapchain
@@ -1166,7 +1355,7 @@ public:
 	/**
 	 * Create a command pool
 	 */
-	virtual ResourceHandle command_pool_create(CommandPoolType in_type) = 0;
+	virtual ResourceHandle command_pool_create() = 0;
 	
 	/**
 	 * Reset a command pool
@@ -1177,6 +1366,17 @@ public:
 	 * Allocate a set of command lists from a command pool
 	 */
 	virtual std::vector<ResourceHandle> command_pool_allocate(const ResourceHandle& in_pool, const size_t in_count) = 0;
+	
+	/**
+	 * Trim a command pool, allowing the pool to reclaim some unused memory
+	 * \remark Needs CommandPoolTrimming backend feature !
+	 */
+	virtual void command_pool_trim(const ResourceHandle& in_pool) = 0;
+
+	/**
+	 * Free a set of command lists's memory back to the pool
+	 */
+	virtual void command_pool_free(const ResourceHandle& in_pool, const std::vector<ResourceHandle>& in_lists) = 0;
 
 	/** 
 	 * Begin a command list
@@ -1356,12 +1556,6 @@ public:
 		const std::vector<ResourceHandle>& in_signal_semaphores = {}) = 0;
 
 	/** SYNC PRIMITIVES */
-
-	/**
-	 * Create a fence
-	 */
-	virtual ResourceHandle fence_create(const bool in_is_signaled = false) = 0;
-
 	/**
 	 * Wait for multiple fences
 	 */
@@ -1386,312 +1580,7 @@ public:
 	 * \return Gfx queue
 	 */
 	virtual ResourceHandle get_gfx_queue() const = 0;
-
-	/** 
-	 * \return True if the backend initialization has succeeded
-	 */
-	virtual bool is_valid() const = 0;
 };
-
-/**
- * Unique resource handle
- * Provides type-safety
- */
-template<ResourceType type, typename Deleter>
-class UniqueResourceHandle
-{
-public:
-	UniqueResourceHandle() {}
-	explicit UniqueResourceHandle(const ResourceHandle& in_handle)
-	{
-		reset(in_handle);
-	}
-
-	~UniqueResourceHandle()
-	{
-		destroy();
-	}
-
-	UniqueResourceHandle(const UniqueResourceHandle& other) = delete;
-	void operator=(const UniqueResourceHandle& other) = delete;
-
-	/** Move ctor/op= */
-	UniqueResourceHandle(UniqueResourceHandle&& other)
-	{
-		reset(std::move(other.handle));
-	}
-
-	void operator=(UniqueResourceHandle&& other)
-	{
-		reset(std::move(other.handle));
-	}
-
-	void operator=(const ResourceHandle& in_handle)
-	{
-		reset(in_handle);
-	}
-
-	ResourceHandle get()
-	{
-		ZE_CHECKF(handle, "Tried to get an invalid handle");
-		return handle;
-	}
-
-	ResourceHandle free()
-	{
-		ResourceHandle freed_handle = handle;
-		handle = gfx::ResourceHandle();
-		return freed_handle;
-	}
-
-	void reset(const ResourceHandle& in_new_handle = ResourceHandle())
-	{
-		if(in_new_handle)
-			ZE_CHECKF(in_new_handle.type == type, "Bad type provided to UniqueResourceHandle");
-		destroy();
-		handle = in_new_handle;
-	}
-
-	ZE_FORCEINLINE const ResourceHandle& operator*() const
-	{
-		ZE_CHECKF(handle, "Tried to dereference an invalid handle");
-		return handle;
-	}
-
-	ZE_FORCEINLINE operator bool() const
-	{
-		return handle;
-	}
-private:
-	void destroy()
-	{
-		if (!handle)
-			return;
-
-		Deleter()(handle);
-		handle = ResourceHandle();
-	}
-private:
-	ResourceHandle handle;
-};
-
-/**
- * Ref counted resource handle
- */
-template<ResourceType type, typename Deleter = void>
-class SharedResourceHandle
-{
-public:
-	SharedResourceHandle() {}
-	SharedResourceHandle(const ResourceHandle& in_handle)
-	{
-		reset(in_handle);
-	}
-
-	SharedResourceHandle(const SharedResourceHandle& other)
-		: handle(other.handle), ref_count(other.ref_count)
-	{
-		if(handle)
-			++*ref_count;
-	}
-
-	~SharedResourceHandle()
-	{
-		free();
-	}
-
-	void operator=(const SharedResourceHandle& other)
-	{
-		handle = other.handle;
-		ref_count = other.ref_count;
-		if(handle)
-			++*ref_count;
-	}
-
-	void operator=(const ResourceHandle& in_handle)
-	{
-		reset(in_handle);
-	}
-
-	void reset(const ResourceHandle& in_new_handle = ResourceHandle())
-	{
-		if(in_new_handle)
-			ZE_CHECKF(in_new_handle.type == type, "Bad type provided to UniqueResourceHandle");
-		free();
-		handle = in_new_handle;
-		ref_count = std::make_shared<uint32_t>(1);
-	}
-
-	ResourceHandle get()
-	{
-		return handle;
-	}
-
-	ZE_FORCEINLINE const ResourceHandle& operator*() const
-	{
-		ZE_CHECKF(handle, "Tried to dereference an invalid handle");
-		return handle;
-	}
-
-	ZE_FORCEINLINE operator bool() const
-	{
-		return handle;
-	}
-private:
-	void free()
-	{
-		if(handle && --*ref_count == 0)
-		{
-			if constexpr(!std::is_same_v<Deleter, void>)
-				Deleter()(handle);
-		}
-
-		handle = ResourceHandle();
-	}
-public:
-	ResourceHandle handle;
-	std::shared_ptr<uint32_t> ref_count;
-};
-
-/** Deleters */
-namespace detail
-{
-
-struct BufferDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().buffer_destroy(in_handle);
-	}
-};
-
-struct TextureDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().texture_destroy(in_handle);
-	}
-};
-
-struct TextureViewDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().texture_view_destroy(in_handle);
-	}
-};
-
-struct SwapchainDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().swapchain_destroy(in_handle);
-	}
-};
-
-struct SemaphoreDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().semaphore_destroy(in_handle);
-	}
-};
-
-struct FenceDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().fence_destroy(in_handle);
-	}
-};
-
-struct CommandPoolDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().command_pool_destroy(in_handle);
-	}
-};
-
-struct ShaderDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().shader_destroy(in_handle);
-	}
-};
-
-struct RenderPassDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().render_pass_destroy(in_handle);
-	}
-};
-
-struct PipelineDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().pipeline_destroy(in_handle);
-	}
-};
-
-struct PipelineLayoutDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().pipeline_layout_destroy(in_handle);
-	}
-};
-
-struct DescriptorSetDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().descriptor_set_destroy(in_handle);
-	}
-};
-
-struct SamplerDeleter
-{
-	void operator()(const ResourceHandle& in_handle)
-	{
-		RenderBackend::get().sampler_destroy(in_handle);
-	}
-};
-
-}
-
-/** Specializations */
-using UniqueBuffer = UniqueResourceHandle<ResourceType::Buffer, detail::BufferDeleter>;
-using UniqueTexture = UniqueResourceHandle<ResourceType::Texture, detail::TextureDeleter>;
-using UniqueTextureView = UniqueResourceHandle<ResourceType::TextureView, detail::TextureViewDeleter>;
-using UniqueSwapchain = UniqueResourceHandle<ResourceType::SwapChain, detail::SwapchainDeleter>;
-using UniqueSemaphore = UniqueResourceHandle<ResourceType::Semaphore, detail::SemaphoreDeleter>;
-using UniqueFence = UniqueResourceHandle<ResourceType::Fence, detail::FenceDeleter>;
-using UniqueCommandPool = UniqueResourceHandle<ResourceType::CommandPool, detail::CommandPoolDeleter>;
-using UniqueShader = UniqueResourceHandle<ResourceType::Shader, detail::ShaderDeleter>;
-using UniqueRenderPass = UniqueResourceHandle<ResourceType::RenderPass, detail::RenderPassDeleter>;
-using UniquePipeline = UniqueResourceHandle<ResourceType::Pipeline, detail::PipelineDeleter>;
-using UniquePipelineLayout = UniqueResourceHandle<ResourceType::PipelineLayout, detail::PipelineLayoutDeleter>;
-using UniqueDescriptorSet = UniqueResourceHandle<ResourceType::DescriptorSet, detail::DescriptorSetDeleter>;
-using UniqueSampler = UniqueResourceHandle<ResourceType::Sampler, detail::SamplerDeleter>;
-
-using SharedBuffer = SharedResourceHandle<ResourceType::Buffer, detail::BufferDeleter>;
-using SharedTexture = SharedResourceHandle<ResourceType::Texture, detail::TextureDeleter>;
-using SharedTextureView = SharedResourceHandle<ResourceType::TextureView, detail::TextureViewDeleter>;
-using SharedSwapchain = SharedResourceHandle<ResourceType::SwapChain, detail::SwapchainDeleter>;
-using SharedSemaphore = SharedResourceHandle<ResourceType::Semaphore, detail::SemaphoreDeleter>;
-using SharedFence = SharedResourceHandle<ResourceType::Fence, detail::FenceDeleter>;
-using SharedCommandPool = SharedResourceHandle<ResourceType::CommandPool, detail::CommandPoolDeleter>;
-using SharedShader = SharedResourceHandle<ResourceType::Shader, detail::ShaderDeleter>;
-using SharedRenderPass = SharedResourceHandle<ResourceType::RenderPass, detail::RenderPassDeleter>;
-using SharedPipeline = SharedResourceHandle<ResourceType::Pipeline, detail::PipelineDeleter>;
-using SharedPipelineLayout = SharedResourceHandle<ResourceType::PipelineLayout, detail::PipelineLayoutDeleter>;
-using SharedDescriptorSet = SharedResourceHandle<ResourceType::DescriptorSet, detail::DescriptorSetDeleter>;
-using SharedSampler = SharedResourceHandle<ResourceType::Sampler, detail::SamplerDeleter>;
-
 }
 
 namespace std
@@ -1713,6 +1602,14 @@ namespace std
 		}
 	}
 
+	template<> struct hash<ze::gfx::ResourceHandle>
+	{
+		ZE_FORCEINLINE uint64_t operator()(const ze::gfx::ResourceHandle& in_handle) const
+		{
+			return in_handle.handle;
+		}
+	};
+
 	template<> struct hash<ze::gfx::BufferCreateInfo>
 	{
 		ZE_FORCEINLINE uint64_t operator()(const ze::gfx::BufferCreateInfo& in_create_info) const
@@ -1721,7 +1618,6 @@ namespace std
 			ze::hash_combine(hash, in_create_info.size);
 			ze::hash_combine(hash, in_create_info.usage);
 			ze::hash_combine(hash, in_create_info.mem_usage);
-			ze::hash_combine(hash, in_create_info.mem_flags);
 			return hash;
 		}
 	};
@@ -2032,6 +1928,47 @@ namespace std
 			ze::hash_combine(hash, in_create_info.pipeline_layout);
 			ze::hash_combine(hash, in_create_info.render_pass);
 			ze::hash_combine(hash, in_create_info.subpass);
+
+			return hash;
+		}
+	};
+
+	template<> struct hash<ze::gfx::DescriptorBufferInfo>
+	{
+		ZE_FORCEINLINE uint64_t operator()(const ze::gfx::DescriptorBufferInfo& in_info) const
+		{
+			uint64_t hash = 0;
+
+			ze::hash_combine(hash, in_info.buffer);
+			ze::hash_combine(hash, in_info.offset);
+			ze::hash_combine(hash, in_info.range);
+
+			return hash;
+		}
+	};
+
+	template<> struct hash<ze::gfx::DescriptorTextureInfo>
+	{
+		ZE_FORCEINLINE uint64_t operator()(const ze::gfx::DescriptorTextureInfo& in_info) const
+		{
+			uint64_t hash = 0;
+
+			ze::hash_combine(hash, in_info.handle);
+			ze::hash_combine(hash, in_info.layout);
+
+			return hash;
+		}
+	};
+
+	template<> struct hash<ze::gfx::Descriptor>
+	{
+		ZE_FORCEINLINE uint64_t operator()(const ze::gfx::Descriptor& in_descriptor) const
+		{
+			uint64_t hash = 0;
+
+			ze::hash_combine(hash, in_descriptor.type);
+			ze::hash_combine(hash, in_descriptor.dst_binding);
+			ze::hash_combine(hash, in_descriptor.info);
 
 			return hash;
 		}

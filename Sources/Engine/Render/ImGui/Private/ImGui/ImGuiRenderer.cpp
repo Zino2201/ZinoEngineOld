@@ -1,6 +1,6 @@
 #include "ImGui/ImGuiRenderer.h"
 #include "ImGui/ImGui.h"
-#include "Gfx/Backend.h"
+#include "Gfx/Gfx.h"
 #include "Module/ModuleManager.h"
 #include "Shader/ShaderCompiler.h"
 #include "ZEFS/Utils.h"
@@ -16,19 +16,17 @@ struct GlobalData
 
 /** variables */
 gfx::UniquePipelineLayout pipeline_layout;
-gfx::UniquePipeline pipeline;
 gfx::UniqueBuffer vertex_buffer;
 gfx::UniqueBuffer index_buffer;
 gfx::UniqueBuffer ubo;
 gfx::UniqueTexture font;
 gfx::UniqueTextureView font_view;
-gfx::UniqueDescriptorSet descriptor_set;
 gfx::UniqueShader vs;
 gfx::UniqueShader fs;
-gfx::UniqueSampler sampler;
 void* ubo_data = nullptr;
 std::unique_ptr<ImDrawData> draw_data;
-std::unordered_map<gfx::ResourceHandle, gfx::ResourceHandle> descriptor_set_map;
+gfx::GfxPipelineRenderPassState render_pass_state;
+gfx::GfxPipelineInstanceState instance_state;
 
 bool initialize(const gfx::ResourceHandle& in_cmd_list, const gfx::ResourceHandle& in_renderpass)
 {
@@ -50,10 +48,10 @@ bool initialize(const gfx::ResourceHandle& in_cmd_list, const gfx::ResourceHandl
 			gfx::shaders::ShaderCompilerTarget::VulkanSpirV,
 			true);
 
-		vs = gfx::RenderBackend::get().shader_create(gfx::ShaderCreateInfo(
+		vs = gfx::Device::get().create_shader(gfx::ShaderCreateInfo(
 			vs_.bytecode)).second;
 
-		fs = gfx::RenderBackend::get().shader_create(gfx::ShaderCreateInfo(
+		fs = gfx::Device::get().create_shader(gfx::ShaderCreateInfo(
 			fs_.bytecode)).second;
 	}
 
@@ -67,18 +65,17 @@ bool initialize(const gfx::ResourceHandle& in_cmd_list, const gfx::ResourceHandl
 	uint32_t height = 0;
 	io.Fonts->GetTexDataAsRGBA32(&data, reinterpret_cast<int*>(&width), 
 		reinterpret_cast<int*>(&height));
-	auto [result, handle] = gfx::RenderBackend::get().texture_create(
-		gfx::TextureCreateInfo(
-			gfx::TextureType::Tex2D,
-			gfx::MemoryUsage::GpuOnly,
+	auto [result, handle] = gfx::Device::get().create_texture(
+		gfx::TextureInfo::make_2d_texture(
+			width, 
+			height, 
 			gfx::Format::R8G8B8A8Unorm,
-			width,
-			height,
 			1,
-			1,
-			1,
-			gfx::SampleCountFlagBits::Count1,
-			gfx::TextureUsageFlagBits::TransferDst | gfx::TextureUsageFlagBits::Sampled));
+			gfx::TextureUsageFlagBits::Sampled),
+		gfx::TextureInfo::InitialData(std::span<uint8_t>(data, width * height * 4),
+			gfx::PipelineStageFlagBits::FragmentShader,
+			gfx::TextureLayout::ShaderReadOnly,
+			gfx::AccessFlagBits::ShaderRead));
 	if(result != gfx::Result::Success)
 	{
 		ze::logger::error("Failed to create ImGui font texture");
@@ -87,93 +84,22 @@ bool initialize(const gfx::ResourceHandle& in_cmd_list, const gfx::ResourceHandl
 
 	font = handle;
 
-	/** Copy to texture */
-	{
-		gfx::ResourceHandle staging_buf = gfx::RenderBackend::get().buffer_create(
-			gfx::BufferCreateInfo(
-				width * height * 4,
-				gfx::BufferUsageFlagBits::TransferSrc,
-				gfx::MemoryUsage::CpuOnly));
-		auto [map_result, buf_data] = gfx::RenderBackend::get().buffer_map(staging_buf);
-		memcpy(buf_data, data, width * height * 4);
-		gfx::RenderBackend::get().buffer_unmap(staging_buf);
-		
-		gfx::RenderBackend::get().command_list_begin(in_cmd_list);
-		gfx::RenderBackend::get().cmd_pipeline_barrier(in_cmd_list,
-			gfx::PipelineStageFlagBits::TopOfPipe,
-			gfx::PipelineStageFlagBits::Transfer,
-			{
-				gfx::TextureMemoryBarrier(*font,
-					gfx::AccessFlags(),
-					gfx::AccessFlagBits::TransferWrite,
-					gfx::TextureLayout::Undefined,
-					gfx::TextureLayout::TransferDst,
-					gfx::TextureSubresourceRange(
-						gfx::TextureAspectFlagBits::Color,
-						0,
-						1,
-						0,
-						1))
-			});
-		gfx::RenderBackend::get().cmd_copy_buffer_to_texture(in_cmd_list,
-			staging_buf,
+	font_view = gfx::Device::get().create_texture_view(
+		gfx::TextureViewInfo::make_2d_view(
 			*font,
-			gfx::TextureLayout::TransferDst,
-			{
-				gfx::BufferTextureCopyRegion(0,
-					gfx::TextureSubresourceLayers(gfx::TextureAspectFlagBits::Color,
-						0,
-						0,
-						1),
-					gfx::Offset3D(),
-					gfx::Extent3D(width, height, 1))
-			});
-		gfx::RenderBackend::get().cmd_pipeline_barrier(in_cmd_list,
-			gfx::PipelineStageFlagBits::Transfer,
-			gfx::PipelineStageFlagBits::FragmentShader,
-			{
-				gfx::TextureMemoryBarrier(*font,
-					gfx::AccessFlagBits::TransferWrite,
-					gfx::AccessFlagBits::ShaderRead,
-					gfx::TextureLayout::TransferDst,
-					gfx::TextureLayout::ShaderReadOnly,
-					gfx::TextureSubresourceRange(
-						gfx::TextureAspectFlagBits::Color,
-						0,
-						1,
-						0,
-						1))
-			});
-		gfx::RenderBackend::get().command_list_end(in_cmd_list);
-		gfx::RenderBackend::get().queue_execute(
-			gfx::RenderBackend::get().get_gfx_queue(),
-			{ in_cmd_list });
-		// TODO: Change
-		gfx::RenderBackend::get().device_wait_idle();
-		gfx::RenderBackend::get().buffer_destroy(staging_buf);
-	}
-
-	font_view = gfx::RenderBackend::get().texture_view_create(
-		gfx::TextureViewCreateInfo(
-			*font,
-			gfx::TextureViewType::Tex2D,
 			gfx::Format::R8G8B8A8Unorm,
 			gfx::TextureSubresourceRange(gfx::TextureAspectFlagBits::Color,
 				0,
 				1,
 				0,
-				1)));
+				1))).second;
 
 	/** UBO, desc ... */
-	ubo = gfx::RenderBackend::get().buffer_create(
-		gfx::BufferCreateInfo(
-			sizeof(GlobalData),
-			gfx::BufferUsageFlagBits::UniformBuffer,
-			gfx::MemoryUsage::CpuToGpu));
-	auto [ubo_map_result, out_ubo_data] = gfx::RenderBackend::get().buffer_map(*ubo);
+	ubo = gfx::Device::get().create_buffer(gfx::BufferInfo::make_ubo(sizeof(GlobalData))).second;
+	auto [ubo_map_result, out_ubo_data] = gfx::Device::get().map_buffer(*ubo);
 	ubo_data = out_ubo_data;
 
-	auto [layout_result, pipeline_layout_handle] = gfx::RenderBackend::get().pipeline_layout_create(
+	auto [layout_result, pipeline_layout_handle] = gfx::Device::get().create_pipeline_layout(
 		gfx::PipelineLayoutCreateInfo(
 			{
 				gfx::DescriptorSetLayoutCreateInfo(
@@ -185,117 +111,70 @@ bool initialize(const gfx::ResourceHandle& in_cmd_list, const gfx::ResourceHandl
 							gfx::ShaderStageFlagBits::Vertex),
 						gfx::DescriptorSetLayoutBinding(
 							1,
-							gfx::DescriptorType::SampledTexture,
+							gfx::DescriptorType::Sampler,
 							1,
 							gfx::ShaderStageFlagBits::Fragment),
 						gfx::DescriptorSetLayoutBinding(
 							2,
-							gfx::DescriptorType::Sampler,
+							gfx::DescriptorType::SampledTexture,
 							1,
 							gfx::ShaderStageFlagBits::Fragment)
 					})
 			}));
 	pipeline_layout = pipeline_layout_handle;
 
-	auto [pipeline_result, pipeline_handle] = gfx::RenderBackend::get().gfx_pipeline_create(
-		gfx::GfxPipelineCreateInfo(
-			{
-				gfx::GfxPipelineShaderStage(
-					gfx::ShaderStageFlagBits::Vertex,
-					*vs,
-					"Main"),
-				gfx::GfxPipelineShaderStage(
-					gfx::ShaderStageFlagBits::Fragment,
-					*fs,
-					"Main"),
-			},
-			gfx::PipelineVertexInputStateCreateInfo(
-				{
-					gfx::VertexInputBindingDescription(0, 
-						sizeof(ImDrawVert),
-						gfx::VertexInputRate::Vertex)
-				},
-				{
-					gfx::VertexInputAttributeDescription(0, 0, 
-						gfx::Format::R32G32Sfloat, offsetof(ImDrawVert, pos)),
-					gfx::VertexInputAttributeDescription(1, 0, 
-						gfx::Format::R32G32Sfloat, offsetof(ImDrawVert, uv)),
-					gfx::VertexInputAttributeDescription(2, 0,
-						gfx::Format::R8G8B8A8Unorm, offsetof(ImDrawVert, col)),
-				}),
-			gfx::PipelineInputAssemblyStateCreateInfo(),
-			gfx::PipelineRasterizationStateCreateInfo(),
-			gfx::PipelineMultisamplingStateCreateInfo(),
-			gfx::PipelineDepthStencilStateCreateInfo(),
-			gfx::PipelineColorBlendStateCreationInfo(
-				false, gfx::LogicOp::NoOp,
-				{
-					gfx::PipelineColorBlendAttachmentState(true,
-						gfx::BlendFactor::SrcAlpha,
-						gfx::BlendFactor::OneMinusSrcAlpha,
-						gfx::BlendOp::Add,
-						gfx::BlendFactor::OneMinusSrcAlpha,
-						gfx::BlendFactor::Zero,
-						gfx::BlendOp::Add)
-				}),
-			*pipeline_layout,
-			in_renderpass));
-	pipeline = pipeline_handle;
+	render_pass_state.color_blend = gfx::PipelineColorBlendStateCreationInfo(
+		false, gfx::LogicOp::NoOp,
+		{
+			gfx::PipelineColorBlendAttachmentState(true,
+				gfx::BlendFactor::SrcAlpha,
+				gfx::BlendFactor::OneMinusSrcAlpha,
+				gfx::BlendOp::Add,
+				gfx::BlendFactor::OneMinusSrcAlpha,
+				gfx::BlendFactor::Zero,
+				gfx::BlendOp::Add)
+		});
 
-	auto [sampler_result, sampler_handle] = gfx::RenderBackend::get().sampler_create(
-		gfx::SamplerCreateInfo(gfx::Filter::Linear,
-			gfx::Filter::Linear,
-			gfx::Filter::Linear,
-			gfx::SamplerAddressMode::Repeat,
-			gfx::SamplerAddressMode::Repeat,
-			gfx::SamplerAddressMode::Repeat,
-			0.f,
-			false,
-			gfx::CompareOp::Never,
-			false,
-			0.f,
-			-std::numeric_limits<float>::max(),
-			std::numeric_limits<float>::max()));
-
-	sampler = sampler_handle;
-
-	auto [set_result, set_handle] = gfx::RenderBackend::get().descriptor_set_create(
-		gfx::DescriptorSetCreateInfo(
-			*pipeline_layout,
-			{
-				gfx::Descriptor(gfx::DescriptorType::UniformBuffer, 0, gfx::DescriptorBufferInfo(*ubo)),
-				gfx::Descriptor(gfx::DescriptorType::SampledTexture, 1, gfx::DescriptorTextureInfo(*font_view, gfx::TextureLayout::ShaderReadOnly)),
-				gfx::Descriptor(gfx::DescriptorType::Sampler, 2, gfx::DescriptorTextureInfo(*sampler)),
-			}));
-	descriptor_set = set_handle;
+	instance_state.shaders = {
+		gfx::GfxPipelineShaderStageInfo(
+			gfx::ShaderStageFlagBits::Vertex,
+			*vs,
+			"Main"),
+		gfx::GfxPipelineShaderStageInfo(
+			gfx::ShaderStageFlagBits::Fragment,
+			*fs,
+			"Main"),
+	};
+	instance_state.vertex_input = gfx::PipelineVertexInputStateCreateInfo(
+		{
+			gfx::VertexInputBindingDescription(0, 
+				sizeof(ImDrawVert),
+				gfx::VertexInputRate::Vertex)
+		},
+		{
+			gfx::VertexInputAttributeDescription(0, 0, 
+				gfx::Format::R32G32Sfloat, offsetof(ImDrawVert, pos)),
+			gfx::VertexInputAttributeDescription(1, 0, 
+				gfx::Format::R32G32Sfloat, offsetof(ImDrawVert, uv)),
+			gfx::VertexInputAttributeDescription(2, 0,
+				gfx::Format::R8G8B8A8Unorm, offsetof(ImDrawVert, col)),
+		});
 
 	draw_data = std::make_unique<ImDrawData>();
 
 	return true;
 }
 
-void free_all_sets()
-{
-	for(const auto& [blc, set] : descriptor_set_map)
-		gfx::RenderBackend::get().descriptor_set_destroy(set);
-
-	descriptor_set_map.clear();
-}
-
 void destroy()	
 {
-	gfx::RenderBackend::get().buffer_unmap(*ubo);
+	gfx::Device::get().unmap_buffer(*ubo);
 
-	free_all_sets();
-	descriptor_set.reset();
 	pipeline_layout.reset();
-	pipeline.reset();
 	vertex_buffer.reset();
 	index_buffer.reset();
 	ubo.reset();
 	font.reset();
 	font_view.reset();
-	sampler.reset();
 	vs.reset();
 	fs.reset();
 }
@@ -309,7 +188,7 @@ void update()
 {
 	ZE_CHECK(draw_data);
 
-	/** Copy draw data*/
+	/** Copy draw data */
 	{
 		ImDrawData* original_draw_data = ImGui::GetDrawData();
 		if (!original_draw_data)
@@ -347,11 +226,9 @@ void update()
 	/** Recreate buffers if modified and needed */
 	if (!vertex_buffer || last_vertex_size < vertex_size)
 	{
-		vertex_buffer = gfx::RenderBackend::get().buffer_create(
-			gfx::BufferCreateInfo(
-				vertex_size,
-				gfx::BufferUsageFlagBits::VertexBuffer,
-				gfx::MemoryUsage::CpuToGpu));
+		vertex_buffer = gfx::Device::get().create_buffer(
+			gfx::BufferInfo::make_vertex_buffer_cpu_visible(
+				vertex_size)).second;
 		if (!vertex_buffer)
 		{
 			ze::logger::error("Failed to create ImGui vertex buffer");
@@ -364,11 +241,9 @@ void update()
 
 	if (!index_buffer || last_index_size < index_size)
 	{
-		index_buffer = gfx::RenderBackend::get().buffer_create(
-			gfx::BufferCreateInfo(
-				index_size,
-				gfx::BufferUsageFlagBits::IndexBuffer,
-				gfx::MemoryUsage::CpuToGpu));
+		index_buffer = gfx::Device::get().create_buffer(
+			gfx::BufferInfo::make_index_buffer_cpu_visible(
+				index_size)).second;
 		if (!index_buffer)
 		{
 			ze::logger::error("Failed to create ImGui index buffer");
@@ -380,8 +255,8 @@ void update()
 	}
 
 	/** Write data to both buffers */
-	auto vertex_map = gfx::RenderBackend::get().buffer_map(*vertex_buffer);
-	auto index_map = gfx::RenderBackend::get().buffer_map(*index_buffer);
+	auto vertex_map = gfx::Device::get().map_buffer(*vertex_buffer);
+	auto index_map = gfx::Device::get().map_buffer(*index_buffer);
 	
 	ImDrawVert* vertex_data = reinterpret_cast<ImDrawVert*>(vertex_map.second);
 	ImDrawIdx* index_data = reinterpret_cast<ImDrawIdx*>(index_map.second);
@@ -395,35 +270,13 @@ void update()
 		index_data += cmd_list->IdxBuffer.Size;
 	}
 
-	gfx::RenderBackend::get().buffer_unmap(*vertex_buffer);
-	gfx::RenderBackend::get().buffer_unmap(*index_buffer);
+	gfx::Device::get().unmap_buffer(*vertex_buffer);
+	gfx::Device::get().unmap_buffer(*index_buffer);
 }
 
-gfx::ResourceHandle get_or_create_descriptor_set(const gfx::ResourceHandle& in_texture_view)
-{
-	auto set = descriptor_set_map.find(in_texture_view);
-	if(set != descriptor_set_map.end())
-		return set->second;
-
-	auto [set_result, set_handle] = gfx::RenderBackend::get().descriptor_set_create(
-		gfx::DescriptorSetCreateInfo(
-			*pipeline_layout,
-			{	
-				gfx::Descriptor(gfx::DescriptorType::UniformBuffer, 0, gfx::DescriptorBufferInfo(*ubo)),
-				gfx::Descriptor(gfx::DescriptorType::SampledTexture, 1, gfx::DescriptorTextureInfo(in_texture_view, 
-					gfx::TextureLayout::ShaderReadOnly)),
-				gfx::Descriptor(gfx::DescriptorType::Sampler, 2, gfx::DescriptorTextureInfo(*sampler)),
-			}));
-	descriptor_set_map.insert({ in_texture_view, set_handle });
-
-	return set_handle;
-}
-
-void draw(const gfx::ResourceHandle& in_cmd_list)
+void draw(gfx::CommandList* in_list)
 {
 	ImGuiIO& io = ImGui::GetIO();
-
-	free_all_sets();
 
 	/** Update UBO */
 	GlobalData gd;
@@ -431,58 +284,49 @@ void draw(const gfx::ResourceHandle& in_cmd_list)
 	gd.translate = maths::Vector2f(-1.0f);
 	memcpy(ubo_data, &gd, sizeof(gd));
 
-	gfx::RenderBackend::get().cmd_bind_pipeline(in_cmd_list,
-		gfx::PipelineBindPoint::Gfx,
-		*pipeline);
+	in_list->bind_pipeline_layout(*pipeline_layout);
+	in_list->set_pipeline_render_pass_state(render_pass_state);
+	in_list->set_pipeline_instance_state(instance_state);
 
 	uint32_t vertex_offset = 0;
 	uint32_t index_offset = 0;
 	uint64_t vertex_size = draw_data->TotalVtxCount * sizeof(ImDrawVert);
 	uint64_t index_size = draw_data->TotalIdxCount * sizeof(ImDrawIdx);
 
+	in_list->bind_ubo(0, 0, *ubo);
+	in_list->bind_sampler(0, 1, gfx::LinearSampler::get());
+
 	if (draw_data->CmdListsCount > 0 &&
 		last_vertex_size >= vertex_size &&
 		last_index_size >= index_size)
 	{
-		gfx::RenderBackend::get().cmd_bind_vertex_buffers(in_cmd_list, 0, { *vertex_buffer }, { 0 });
-		gfx::RenderBackend::get().cmd_bind_index_buffer(in_cmd_list, *index_buffer, 0, gfx::IndexType::Uint16);
+		in_list->bind_vertex_buffer(*vertex_buffer, 0);
+		in_list->bind_index_buffer(*index_buffer, 0, gfx::IndexType::Uint16);
+
 		for (int32_t i = 0; i < draw_data->CmdListsCount; i++)
 		{
 			ImDrawList* cmd_list = draw_data->CmdLists[i];
 			for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++)
 			{
 				ImDrawCmd* cmd = &cmd_list->CmdBuffer[j];
-				
+
 				if(cmd->TextureId)
 				{
-					gfx::RenderBackend::get().cmd_bind_descriptor_sets(in_cmd_list,
-						gfx::PipelineBindPoint::Gfx,
-						*pipeline_layout,
-						0,
-						{ get_or_create_descriptor_set(*reinterpret_cast<gfx::ResourceHandle*>(cmd->TextureId)) });
+					in_list->bind_texture(0, 2, *reinterpret_cast<gfx::DeviceResourceHandle*>(cmd->TextureId));
 				}
 				else
 				{
-					gfx::RenderBackend::get().cmd_bind_descriptor_sets(in_cmd_list,
-						gfx::PipelineBindPoint::Gfx,
-						*pipeline_layout,
-						0,
-						{ *descriptor_set });
+					in_list->bind_texture(0, 2, *font_view);
 				}
 
-				gfx::RenderBackend::get().cmd_set_scissor(in_cmd_list,
-					0,
-					{
-						maths::Rect2D(
-							maths::Vector2f(std::max<int32_t>(cmd->ClipRect.x, 0),
-								std::max<int32_t>(cmd->ClipRect.y, 0)),
-							maths::Vector2f(
-								cmd->ClipRect.z - cmd->ClipRect.x,
-								cmd->ClipRect.w - cmd->ClipRect.y))
-					});
+				in_list->set_scissor(maths::Rect2D(
+					maths::Vector2f(std::max<int32_t>(cmd->ClipRect.x, 0),
+						std::max<int32_t>(cmd->ClipRect.y, 0)),
+					maths::Vector2f(
+						cmd->ClipRect.z - cmd->ClipRect.x,
+						cmd->ClipRect.w - cmd->ClipRect.y)));
 
-				gfx::RenderBackend::get().cmd_draw_indexed(in_cmd_list,
-					cmd->ElemCount,
+				in_list->draw_indexed(cmd->ElemCount,
 					1,
 					cmd->IdxOffset + index_offset,
 					cmd->VtxOffset + vertex_offset,

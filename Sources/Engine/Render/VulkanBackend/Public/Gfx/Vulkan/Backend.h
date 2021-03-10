@@ -5,6 +5,6 @@
 namespace ze::gfx::vulkan
 {
 
-VULKANBACKEND_API OwnerPtr<RenderBackend> create_vulkan_backend();
+VULKANBACKEND_API OwnerPtr<Backend> create_vulkan_backend();
 
 }

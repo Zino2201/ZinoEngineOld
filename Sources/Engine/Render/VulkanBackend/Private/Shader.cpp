@@ -15,8 +15,7 @@ vk::Result shader_last_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::shader_create(const ShaderCreateInfo& in_create_info)
 {
-	ResourceHandle handle = create_resource<Shader>(ResourceType::Shader,
-		*device, in_create_info);
+	ResourceHandle handle = create_resource<Shader>(*device, in_create_info);
 
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	shaders.insert(handle);

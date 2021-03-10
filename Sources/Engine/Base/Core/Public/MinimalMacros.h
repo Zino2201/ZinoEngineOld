@@ -59,7 +59,7 @@ namespace ze
 #define ZE_RESTRICT __restrict
 #define ZE_USED __attribute__((used))
 #else
-#define ZE_FORCEINLINE
+#define ZE_FORCEINLINE inline
 #define ZE_RESTRICT
 #define ZE_USED
 #endif /** ZE_COMPILER(MSVC) */

@@ -32,6 +32,7 @@ private:
 	VmaAllocation allocation;
 	VmaAllocationInfo allocation_info;
 	BufferCreateInfo create_info;
+	vk::BufferCreateInfo vk_info_elem;
 };
 
 }

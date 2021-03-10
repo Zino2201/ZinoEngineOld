@@ -2,6 +2,7 @@
 #include "VulkanBackend.h"
 #include "VulkanUtil.h"
 #include "Device.h"
+#include "DescriptorSet.h"
 #include <robin_hood.h>
 
 namespace ze::gfx::vulkan
@@ -10,19 +11,23 @@ namespace ze::gfx::vulkan
 static constexpr uint32_t max_descriptor_sets_per_pool = 32;
 static constexpr uint32_t default_descriptor_count_per_type = 32;
 
-#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 robin_hood::unordered_set<ResourceHandle> pipeline_layouts;
-#endif
 vk::Result last_pipeline_layout_result;
+
+void PipelineLayout::update_layouts()
+{
+	for(auto& handle : pipeline_layouts)
+	{
+		PipelineLayout* layout = PipelineLayout::get(handle);
+		layout->new_frame();
+	}
+}
 
 std::pair<Result, ResourceHandle> VulkanBackend::pipeline_layout_create(const PipelineLayoutCreateInfo& in_create_info)
 {
-	ResourceHandle handle = create_resource<PipelineLayout>(ResourceType::PipelineLayout,
-		*device, in_create_info);
+	ResourceHandle handle = create_resource<PipelineLayout>(*device, in_create_info);
 
-#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	pipeline_layouts.insert(handle);
-#endif
 
 	return { convert_vk_result(last_pipeline_layout_result), handle };
 }
@@ -31,9 +36,17 @@ void VulkanBackend::pipeline_layout_destroy(const ResourceHandle& in_handle)
 {
 	delete_resource<PipelineLayout>(in_handle);
 
-#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	pipeline_layouts.erase(in_handle);
-#endif
+}
+
+ResourceHandle VulkanBackend::pipeline_layout_allocate_descriptor_set(const ResourceHandle& in_pipeline_layout,
+	const uint32_t in_set,
+	const std::vector<Descriptor>& descriptors)
+{
+	PipelineLayout* layout = PipelineLayout::get(in_pipeline_layout);
+	ZE_CHECKF(layout, "Invalid pipeline layout given to pipeline_layout_allocate_descriptor_set");
+
+	return layout->allocate_set(in_set, descriptors);
 }
 
 PipelineLayout::PipelineLayout(Device& in_device, 
@@ -45,20 +58,15 @@ PipelineLayout::PipelineLayout(Device& in_device,
 	/** Create set layouts */
 	for(const auto& layout : in_create_info.set_layouts)
 	{
-		uint64_t hash_desc_types = 0;
-
 		std::vector<vk::DescriptorSetLayoutBinding> bindings;
 		bindings.reserve(layout.bindings.size());
 		for(const auto& binding : layout.bindings)
 		{
-			ze::hash_combine(hash_desc_types, binding.descriptor_type);
 			bindings.emplace_back(binding.binding,
 				convert_descriptor_type(binding.descriptor_type),
 				binding.count,
 				convert_shader_stage_flags(binding.stage_flags));
 		}
-
-		descriptor_hashes.emplace_back(hash_desc_types);
 
 		auto [result, handle] = device.get_device().createDescriptorSetLayoutUnique(
 			vk::DescriptorSetLayoutCreateInfo(
@@ -119,6 +127,27 @@ PipelineLayout* PipelineLayout::get(const ResourceHandle& in_handle)
 	return get_resource<PipelineLayout>(in_handle);
 }
 
+void PipelineLayout::new_frame()
+{
+	std::vector<std::pair<uint32_t, uint64_t>> sets_to_recycle;
+	sets_to_recycle.reserve(16);
+
+	for(auto& [set, sets] : descriptor_sets)
+	{
+		for(auto& [hash, entry] : sets)
+		{
+			entry.lifetime++;
+			if(entry.lifetime >= SetEntry::max_set_lifetime)
+				sets_to_recycle.emplace_back(set, hash);
+		}
+	}
+
+	for(const auto& [set, hash] : sets_to_recycle)
+	{
+		descriptor_sets[set].erase(hash);
+	}
+}
+
 void PipelineLayout::allocate_pool()
 {
 	auto [result, handle] = device.get_device().createDescriptorPoolUnique(
@@ -133,36 +162,57 @@ void PipelineLayout::allocate_pool()
 	descriptor_pools.emplace_back(std::move(handle));
 }
 
-vk::DescriptorSet PipelineLayout::allocate_set(const uint32_t in_set)
+ResourceHandle PipelineLayout::allocate_set(const uint32_t in_set, const std::vector<Descriptor>& in_descriptors)
 {
+	ResourceHandle handle;
+
+	uint64_t hash = 0;
+	for(const auto& desc : in_descriptors)
+		hash_combine(hash, desc);
+
+	auto it = descriptor_sets[in_set].find(hash);
+	if(it != descriptor_sets[in_set].end())
+		return it->second.get_set();
+
 	/** Search for set to recycle */
 	auto& queue = free_descriptor_sets[in_set];
 	if(!queue.empty())
 	{
-		vk::DescriptorSet set = queue.front();
+		handle = queue.front();
 		queue.pop();
-		return set;
-	}
-
-	/** Allocate a new set */
-	auto& pool = descriptor_pools.back();
-	if(pool.allocations < max_descriptor_sets_per_pool)
-	{
-		return allocate_set_internal(pool, in_set);
 	}
 	else
 	{
-		allocate_pool();
-		return allocate_set_internal(descriptor_pools.back(), in_set);
+		/** Allocate a new set */
+		auto& pool = descriptor_pools.back();
+		if(pool.allocations < max_descriptor_sets_per_pool)
+		{
+			handle = allocate_set_internal(pool, in_set);
+		}
+		else
+		{
+			allocate_pool();
+			handle = allocate_set_internal(descriptor_pools.back(), in_set);
+		}
 	}
+
+	DescriptorSet* set = DescriptorSet::get(handle);
+	ZE_CHECK(set);
+
+	set->update(hash, in_descriptors);
+	descriptor_sets[in_set].insert_or_assign(hash, SetEntry(handle));
+	return handle;
 }
 
-void PipelineLayout::free_set(const uint32_t in_set_idx, const vk::DescriptorSet& in_set)
+void PipelineLayout::free_set(const uint32_t in_set_idx, const ResourceHandle& in_set)
 {
+	DescriptorSet* set = DescriptorSet::get(in_set);
+	ZE_CHECK(set);
+	descriptor_sets[in_set_idx].erase(set->get_hash());
 	free_descriptor_sets[in_set_idx].push(in_set);
 }
 
-vk::DescriptorSet PipelineLayout::allocate_set_internal(PoolEntry& in_pool, const uint32_t in_set)
+ResourceHandle PipelineLayout::allocate_set_internal(PoolEntry& in_pool, const uint32_t in_set)
 {
 	auto [result, handle] = device.get_device().allocateDescriptorSets(
 		vk::DescriptorSetAllocateInfo(
@@ -175,18 +225,7 @@ vk::DescriptorSet PipelineLayout::allocate_set_internal(PoolEntry& in_pool, cons
 
 	in_pool.allocations++;
 
-	return handle.front();
-}
-
-uint32_t PipelineLayout::get_set_from_descriptors_hash(const uint64_t in_hash)
-{
-	for(size_t i = 0; i < descriptor_hashes.size(); ++i)
-	{
-		if(descriptor_hashes[i] == in_hash)
-			return i;
-	}
-
-	return -1;
+	return get_backend().descriptor_set_create(handle.front()).second;
 }
 
 }

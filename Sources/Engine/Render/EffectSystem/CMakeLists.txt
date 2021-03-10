@@ -4,7 +4,7 @@ ze_create_module(EffectSystem
     Private/Gfx/Effect/Effect.cpp
     Private/Gfx/Effect/EffectDatabase.cpp
     Private/Gfx/Effect/EffectSystem.cpp)
-ze_add_public_modules(EffectSystem Core ShaderCore ShaderCompiler GfxCore AssetDataCache)
+ze_add_public_modules(EffectSystem Core ShaderCore ShaderCompiler GfxCore Gfx AssetDataCache)
 ze_add_private_modules(EffectSystem ZEFS)
 
 target_include_directories(EffectSystem

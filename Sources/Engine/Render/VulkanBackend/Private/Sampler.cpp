@@ -15,8 +15,7 @@ vk::Result last_sampler_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::sampler_create(const SamplerCreateInfo& in_create_info)
 {
-	ResourceHandle handle = create_resource<Sampler>(ResourceType::Sampler,
-		*device, in_create_info);
+	ResourceHandle handle = create_resource<Sampler>(*device, in_create_info);
 
 #if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	samplers.insert(handle);
