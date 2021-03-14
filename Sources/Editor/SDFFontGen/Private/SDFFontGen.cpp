@@ -5,20 +5,25 @@
 #include FT_GLYPH_H
 #include "Module/Module.h"
 #include "Maths/Vector.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
+#include "msdfgen.h"
+#include "msdfgen-ext.h"
+#include "msdf-atlas-gen.h"
+#include "AtlasGenerator.h"
+#include "TightAtlasPacker.h"
 
 namespace ze::editor
 {
 
 FT_Library library;
 
+using namespace msdfgen;
+
 class SDFFontGenModule : public module::Module
 {
 public:
 	SDFFontGenModule()
 	{
-		FT_Error a = FT_Init_FreeType(&library);
+		FT_Init_FreeType(&library);
 	}
 
 	~SDFFontGenModule()
@@ -28,93 +33,14 @@ public:
 };
 
 ZE_DEFINE_MODULE(SDFFontGenModule, SDFFontGen);
-	
-struct Point
+
+
+using namespace msdf_atlas;
+
+MSDFFontData generate_msdf_texture_from_font(const std::vector<uint8_t>& in_font_data,
+	const uint32_t in_base_font_size)
 {
-	int dx;
-	int dy;
-
-	int dist_sqrt() const { return dx * dx + dy * dy; }
-};
-
-void compare_point(uint32_t tex_width, uint32_t tex_height, 
-	std::vector<Point>& points, size_t x, size_t y, Point& point, int32_t offset_x, int32_t offset_y)
-{
-	if (x + offset_x < 0 || y + offset_y < 0 
-		|| x + offset_x >= tex_width || y + offset_y >= tex_height)
-	{
-		Point other = { 9999, 9999 };
-		other.dx += offset_x;
-		other.dy += offset_y;
-
-		if (other.dist_sqrt() < point.dist_sqrt())
-			point = other;
-	}
-	else
-	{
-		Point other = points[(y + offset_y) * tex_width + (x + offset_x)];
-		other.dx += offset_x;
-		other.dy += offset_y;
-
-		if (other.dist_sqrt() < point.dist_sqrt())
-			point = other;
-	}
-}
-
-void generate_sdf_data(uint32_t tex_width, uint32_t tex_height, std::vector<Point>& points)
-{
-	/** Pass 1 */
-	for(size_t y = 0; y < tex_height; ++y)
-	{
-		for(size_t x = 0; x < tex_width; ++x)
-		{
-			Point& point = points[y * tex_width + x];
-			compare_point(tex_width, tex_height, points, x, y, point, -1, 0);
-			compare_point(tex_width, tex_height, points, x, y, point, 0, -1);
-			compare_point(tex_width, tex_height, points, x, y, point, -1, -1);
-			compare_point(tex_width, tex_height, points, x, y, point, 1, -1);
-		}
-
-		for(size_t x = tex_width - 1; x != -1; --x)
-		{
-			Point& point = points[y * tex_width + x];
-			compare_point(tex_width, tex_height, points, x, y, point, 1, 0);
-		}
-	}
-
-	/** Pass 2 */
-	for(size_t y = tex_height - 1; y != 0; --y)
-	{
-		for(size_t x = tex_width - 1; x != 0; --x)
-		{
-			Point& point = points[y * tex_width + x];
-			compare_point(tex_width, tex_height, points, x, y, point, 1, 0);
-			compare_point(tex_width, tex_height, points, x, y, point, 0, 1);
-			compare_point(tex_width, tex_height, points, x, y, point, -1, 1);
-			compare_point(tex_width, tex_height, points, x, y, point, 1, 1);
-		}
-
-		for(size_t x = 0; x < tex_width; ++x)
-		{
-			Point& point = points[y * tex_width + x];
-			compare_point(tex_width, tex_height, points, x, y, point, -1, 0);
-		}
-	}
-}
-
-std::vector<uint8_t> generate_sdf_texture_from_font(const std::vector<uint8_t>& in_font_data,
-	const uint32_t in_base_font_size,
-	const uint32_t spread)
-{
-	/**
-	 * Generate signed distance field data from a font
-	 * First we render a bitmap texutre atlas using FreeType
-	 * then we use the 8-points Signed Sequential Euclidean Distance Transform algorithm to transform the bitmap
-	 * into a signed distance field texture
-	 * http://www.codersnotes.com/notes/signed-distance-fields/
-	 */
-
-	/** Render glyphs to a bitmap */
+	MSDFFontData ret;
 
 	FT_Face face;
 	FT_Error error = FT_New_Memory_Face(library, 
@@ -127,100 +53,83 @@ std::vector<uint8_t> generate_sdf_texture_from_font(const std::vector<uint8_t>& 
 		ze::logger::error("Failed to generate SDF font data: can't create font face ({})", error);
 		return {};
 	}
+	
+	FontHandle* font = adoptFreetypeFont(face);
 
-	FT_Set_Char_Size(face, 0, 16 * in_base_font_size, 0, 0);
-
+	/** Enumerate glyphs we want to generate a distance field */
 	size_t num_glyphs = 127 - 33;
-	size_t tex_width = 256;
-	size_t tex_height = 256;
-	std::vector<uint8_t> bitmap_data;
-	bitmap_data.resize(tex_width * tex_height);
-	uint32_t cur_x = spread;
-	uint32_t cur_y = spread;
+	std::vector<GlyphGeometry> glyphs;
+	glyphs.reserve(num_glyphs);
 
+	/** ASCII codepoint */
 	for(char ch = 33; ch < 127; ++ch)
 	{
-		/** Load the current char glyph and render it */
-		FT_Load_Char(face, ch, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_NORMAL);
-
-		if(cur_x + face->glyph->bitmap.width + spread >= tex_width)
-		{
-			cur_x = spread;
-			cur_y += (face->size->metrics.height >> 6) + 1 + spread;
-		}
-
-		/** Copy it to bitmap_data */
-		uint8_t* src = face->glyph->bitmap.buffer;
-		for(size_t y = 0; y < face->glyph->bitmap.rows; ++y)
-		{
-			for(size_t x = 0; x < face->glyph->bitmap.width; ++x)
-			{
-				uint32_t abs_x = cur_x + x;
-				uint32_t abs_y = cur_y + y;
-				bitmap_data[abs_y * tex_width + abs_x] = face->glyph->bitmap.buffer[y * face->glyph->bitmap.pitch + x];
-			}
-
-			src += face->glyph->bitmap.pitch;
-		}
-
-		cur_x += (face->glyph->bitmap.width + 1) + spread;
+		glyphs.emplace_back();
+		ZE_CHECK(glyphs.back().load(font, ch));
+		glyphs.back().edgeColoring(3.0, 2201);
 	}
 
+	/** Pack the glyphs into a atlas */
+	FontMetrics font_metrics;
+	getFontMetrics(font_metrics, font);
+	ret.em_size = font_metrics.emSize;
+
+	TightAtlasPacker packer;
+	packer.setScale(font_metrics.emSize / in_base_font_size);
+	packer.setPixelRange(2);
+	packer.setMiterLimit(1);
+	packer.setPadding(2);
+	packer.setDimensionsConstraint(TightAtlasPacker::DimensionsConstraint::POWER_OF_TWO_SQUARE);
+	packer.pack(glyphs.data(), glyphs.size());
+
+	/** Determine the width/height of the texture */
+	int tex_width = 0, tex_height = 0;
+	packer.getDimensions(tex_width, tex_height);
+	ret.width = tex_width;
+	ret.height = tex_height;
+
+	ze::logger::info("Generating {}x{} multi-channel signed distance field font texture", tex_width, tex_height);
+
+	ImmediateAtlasGenerator<float, 4, mtsdfGenerator, BitmapAtlasStorage<float, 4>> gen(tex_width, tex_height);
+	gen.generate(glyphs.data(), glyphs.size());
+	BitmapConstRef<float, 4> bitmap = (msdfgen::BitmapConstRef<float, 4>) gen.atlasStorage();
+	ret.raw_data.resize(bitmap.width * bitmap.height * 4);
+
+	std::vector<uint8_t>::iterator it = ret.raw_data.begin();
+	for(int y = 0; y < bitmap.height; ++y)
+	{
+		for(int x = 0; x < bitmap.width; ++x)
+		{
+			*it++ = static_cast<uint8_t>(std::clamp(256.f * bitmap(x, y)[0], 0.f, 255.f));
+			*it++ = static_cast<uint8_t>(std::clamp(256.f * bitmap(x, y)[1], 0.f, 255.f));
+			*it++ = static_cast<uint8_t>(std::clamp(256.f * bitmap(x, y)[2], 0.f, 255.f));
+			*it++ = static_cast<uint8_t>(std::clamp(256.f * bitmap(x, y)[3], 0.f, 255.f));
+		}
+	}
+
+	getFontWhitespaceWidth(ret.space_advance, ret.tab_advance, font);
+	destroyFont(font);
+		
 	/** Free the FreeType face as we no longer need it */
 	FT_Done_Face(face);
 
-	/** Now generate a signed distance field texture from the bitmap */
-	std::vector<uint8_t> sdf_data;
-	std::vector<Point> points_0;
-	std::vector<Point> points_1;
-	sdf_data.resize(tex_width * tex_height);
-	points_0.resize(tex_width * tex_height);
-	points_1.resize(tex_width * tex_height);
-
-	/** Initialize points */
-	for(size_t y = 0; y < tex_height; ++y)
+	ret.glyphs.reserve(glyphs.size());
+	for(const auto& glyph : glyphs)
 	{
-		for(size_t x = 0; x < tex_width; ++x)
-		{
-			if(bitmap_data[y * tex_width + x] > 0)
-			{
-				points_0[y * tex_width + x] = { 0, 0 };
-				points_1[y * tex_width + x] = { 9999, 9999 };
-			}
-			else
-			{
-				points_0[y * tex_width + x] = { 9999, 9999 };
-				points_1[y * tex_width + x] = { 0, 0 };
-			}
-		}
+		int x, y, w, h;
+		glyph.getBoxRect(x, y, w, h);
+		
+		double l, b, r, t;
+		glyph.getQuadPlaneBounds(l, b, r, t);
+
+		ret.glyphs.emplace_back(glyph.getCodepoint(),
+			glyph.getAdvance(),
+			MSDFGlyph::Bounds { l, b, r, t },
+			maths::Rect2D(x, y, w, h));
 	}
 
-	/** Generate SDF data into the 2 arrays */
-	generate_sdf_data(tex_width, tex_height, points_0);
-	generate_sdf_data(tex_width, tex_height, points_1);
 
-	/** Construct the final SDF data and store it */
-	for(size_t y = 0; y < tex_height; ++y)
-	{
-		for(size_t x = 0; x < tex_width; ++x)
-		{
-			int dist1 = (int)(sqrt((double)points_0[y * tex_width + x].dist_sqrt()));
-			int dist2 = (int)(sqrt((double)points_1[y * tex_width + x].dist_sqrt()));
-			int dist = dist1 - dist2;
-			
-			dist *= 3;
-			dist += 128;
-				
-			if (dist < 0) 
-				dist = 0;
-			if (dist > 255) 
-				dist = 255;
-
-			sdf_data[y * tex_width + x] = dist;
-		}
-	}
-
-	return sdf_data;
+	return ret;
 }
 
 }

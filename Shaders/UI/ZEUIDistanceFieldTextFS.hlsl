@@ -1,17 +1,29 @@
 #include "UI/ZEUIBase.hlsl"
 
-[[vk::binding(0)]]
-Texture2D Font;
-
-[[vk::binding(1)]]
+[[vk::binding(0, 1)]]
 SamplerState Sampler;
 
-const float smoothing = 1.0 / 16.0;
+[[vk::binding(1, 1)]]
+Texture2D Font;
+
+[[vk::binding(2, 1)]]
+cbuffer FontData
+{
+    /** Pixel range used to generate the SDF */
+    float DistanceFieldRange;
+};
+
+float median(float r, float g, float b)
+{
+    return max(min(r, g), min(max(r, g), b));
+}
 
 float4 fragment(VSOutput input) : SV_TARGET
 {
-    float dist = Font.Sample(Sampler, input.TexCoord).r;
-    float alpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, dist);
+    float3 msdf = Font.Sample(Sampler, input.TexCoord).rgb;
+    float dist = median(msdf.r, msdf.g, msdf.b);
+    float screen_px_dist = DistanceFieldRange * (dist - 0.5);
+    float alpha = clamp(screen_px_dist + 0.5, 0.0, 1.0);
     
-    return float4(input.Color, alpha);
+    return float4(1, 1, 1, alpha);
 }

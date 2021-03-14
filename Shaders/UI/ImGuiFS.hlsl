@@ -10,10 +10,10 @@ struct VSOutput
 };
 
 [[vk::binding(1)]]
-Texture2D Texture : register(t0, space0);
+SamplerState Sampler : register(t1, space0);
 
 [[vk::binding(2)]]
-SamplerState Sampler : register(t1, space0);
+Texture2D Texture : register(t0, space0);
 
 float4 Main(VSOutput Input) : SV_TARGET
 {
