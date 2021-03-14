@@ -50,9 +50,9 @@ void TextureEditorTab::draw()
 	ImGui::SetCursorPos(ImVec2((max_w - width) / 2, (max_h - height) / 2));
 	if(texture->is_ready())
 	{
-		ImGui::Image(const_cast<gfx::ResourceHandle*>(&texture->get_texture_view()), ImVec2(
+		/*ImGui::Image(const_cast<gfx::ResourceHandle*>(&texture->get_texture_view()), ImVec2(
 			width, 
-			height));
+			height));*/
 	}
 
 	ImGui::SetCursorPos(cursor_before_img);

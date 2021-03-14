@@ -11,7 +11,7 @@ namespace ze::editor
 {
 
 CMapEditor::CMapEditor(World& in_world)
-	: world(in_world), viewport(0, 0, 1280, 720), viewport_fullscreen(false), is_moving_camera(false),
+	: world(in_world), viewport_fullscreen(false), is_moving_camera(false),
 	cam_fwd(maths::Vector3f::get_forward()), cam_pitch(0.f), cam_yaw(0.f)
 {
 	EntityList = std::make_unique<CEntityList>(in_world, *this);
@@ -78,7 +78,7 @@ void CMapEditor::Draw(const ImGuiID& InDockspaceID)
 		viewport.resize(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
 	}
 
-	ImGui::Image(const_cast<gfx::ResourceHandle*>(&viewport.get_color_attachment_view()), ImGui::GetContentRegionAvail());
+	//ImGui::Image(const_cast<gfx::ResourceHandle*>(&viewport.get_color_attachment_view()), ImGui::GetContentRegionAvail());
 	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
 	{
 		viewport_fullscreen = !viewport_fullscreen;

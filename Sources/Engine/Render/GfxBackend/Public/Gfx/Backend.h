@@ -457,6 +457,17 @@ struct StencilOpState
 	uint32_t write_mask;
 	uint32_t reference;
 
+	StencilOpState(const StencilOp in_fail_op = StencilOp::Zero,
+		const StencilOp in_pass_op = StencilOp::Zero,
+		const StencilOp in_depth_fail_op = StencilOp::Zero,
+		const CompareOp in_compare_op = CompareOp::Never,
+		const uint32_t in_compare_mask = 0,
+		const uint32_t in_write_mask = 0,
+		const uint32_t in_reference = 0) : fail_op(in_fail_op),
+		pass_op(in_pass_op), depth_fail_op(in_depth_fail_op),
+		compare_op(in_compare_op), compare_mask(in_compare_mask),
+		write_mask(in_write_mask), reference(in_reference) {}
+
 	bool operator==(const StencilOpState& in_other) const
 	{
 		return fail_op == in_other.fail_op &&
@@ -478,6 +489,17 @@ struct PipelineDepthStencilStateCreateInfo
 	bool enable_stencil_test;
 	StencilOpState front_face;
 	StencilOpState back_face;
+
+	PipelineDepthStencilStateCreateInfo(const bool in_enable_depth_test = false,
+		const bool in_enable_depth_write = false,
+		const CompareOp in_compare_op = CompareOp::Never,
+		const bool in_enable_depth_bounds_test = false,
+		const bool in_enable_stencil_test = false,
+		const StencilOpState in_front_face = StencilOpState(),
+		const StencilOpState in_back_face = StencilOpState()) : enable_depth_test(in_enable_depth_test),
+		enable_depth_write(in_enable_depth_write), depth_compare_op(in_compare_op),
+		enable_depth_bounds_test(in_enable_depth_bounds_test), enable_stencil_test(in_enable_stencil_test),
+		front_face(in_front_face), back_face(in_back_face) {}
 
 	bool operator==(const PipelineDepthStencilStateCreateInfo& in_other) const
 	{

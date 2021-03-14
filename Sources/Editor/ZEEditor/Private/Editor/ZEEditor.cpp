@@ -13,7 +13,7 @@
 #include "Assets/AssetManager.h"
 #include "Editor/AssetUtils/AssetUtils.h"
 #include "ZEFS/FileStream.h"
-#include "Gfx/Backend.h"
+#include "Gfx/Gfx.h"
 #include "Engine/Viewport.h"
 #include "Shader/ShaderCompiler.h"
 #include <SDL.h>
@@ -30,7 +30,6 @@
 #include "Maths/Matrix/Transformations.h"
 #include "Editor/Assets/AssetActions.h"
 #include "Editor/Widgets/Tab.h"
-#include "Gfx/CommandSystem.h"
 #include "Editor/NotificationSystem.h"
 #include <sstream>
 #include "Gfx/GpuVector.h"
@@ -73,59 +72,17 @@ EditorApp::EditorApp() : EngineApp()
 	window = make_widget_unique<ui::Window>(1280, 720, "ZinoEngine Editor (ZEUI)", 0, 0, 
 		ui::WindowFlagBits::Centered | ui::WindowFlagBits::Resizable | ui::WindowFlagBits::Maximized);
 	
-	swapchain = gfx::RenderBackend::get().swapchain_create(
+	swapchain = gfx::Device::get().create_swapchain(
 		ze::gfx::SwapChainCreateInfo(
 			window->get_handle(),
 			window->get_width(),
-			window->get_height()));
+			window->get_height())).second;
 	if(!swapchain)
 		ze::logger::fatal("Failed to create swapchain");
 
-	cmd_pool = gfx::RenderBackend::get().command_pool_create(gfx::CommandPoolType::Gfx);
-	auto lists = gfx::RenderBackend::get().command_pool_allocate(*cmd_pool, 1);
-	cmd_list = lists[0];
-
-	cmd_list_fence = gfx::RenderBackend::get().fence_create(false);
-
-	auto [render_pass_result, render_pass_handle] = gfx::RenderBackend::get().render_pass_create(
-		gfx::RenderPassCreateInfo(
-			{
-				/** backbuffer */
-				gfx::AttachmentDescription(
-					gfx::Format::B8G8R8A8Unorm,
-					gfx::SampleCountFlagBits::Count1,
-					gfx::AttachmentLoadOp::Clear,
-					gfx::AttachmentStoreOp::Store,
-					gfx::AttachmentLoadOp::DontCare,
-					gfx::AttachmentStoreOp::DontCare,
-					gfx::TextureLayout::Undefined,
-					gfx::TextureLayout::Present),
-			},
-			{
-				gfx::SubpassDescription({}, { gfx::AttachmentReference(0, gfx::TextureLayout::ColorAttachment) }),
-			}));
-	render_pass = render_pass_handle;
-	
-	auto [vp_render_pass_result, vp_render_pass_handle] = gfx::RenderBackend::get().render_pass_create(
-		gfx::RenderPassCreateInfo(
-			{
-				/** backbuffer */
-				gfx::AttachmentDescription(
-					gfx::Format::B8G8R8A8Unorm,
-					gfx::SampleCountFlagBits::Count1,
-					gfx::AttachmentLoadOp::Clear,
-					gfx::AttachmentStoreOp::Store,
-					gfx::AttachmentLoadOp::DontCare,
-					gfx::AttachmentStoreOp::DontCare,
-					gfx::TextureLayout::Undefined,
-					gfx::TextureLayout::ShaderReadOnly),
-			},
-			{
-				gfx::SubpassDescription({}, { gfx::AttachmentReference(0, gfx::TextureLayout::ColorAttachment) }),
-			}));
-	vp_render_pass = vp_render_pass_handle;
 
 	/** Initialize ImGui */
+	ImGui::CreateContext();
 	ImGui_ImplSDL2_InitForVulkan(reinterpret_cast<SDL_Window*>(window->get_handle()));
 
 	ImGuiIO& io = ImGui::GetIO();
@@ -144,12 +101,12 @@ EditorApp::EditorApp() : EngineApp()
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	font = io.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 18.f);
-	ze::ui::imgui::initialize(cmd_list, *render_pass);
+	ze::ui::imgui::initialize();
 	ImGui::SetCurrentFont(font);
 	ImGui::NewFrame();
 	ImGui::Render();
 
-	ui_renderer = std::make_unique<ui::Renderer>(*render_pass);
+	ui_renderer = std::make_unique<ui::Renderer>();
 
 	{
 		using namespace ui;
@@ -211,76 +168,16 @@ EditorApp::EditorApp() : EngineApp()
 	register_property_editor(reflection::Type::get<float>(), new FloatPropertyEditor);
 	register_property_editor(reflection::Type::get<maths::Vector3f>(), new Vector3fPropertyEditor);
 	register_property_editor(reflection::Type::get<maths::Vector3d>(), new Vector3dPropertyEditor);
-
-	/** TEST VP */
-
-	auto [layout_result, pipeline_layout_handle] = gfx::RenderBackend::get().pipeline_layout_create(
-		gfx::PipelineLayoutCreateInfo(
-			{ },
-			{
-				gfx::PushConstantRange(gfx::ShaderStageFlagBits::Vertex,
-					0,
-					sizeof(glm::mat4))
-			}));
-	vp_pipeline_layout = pipeline_layout_handle;
-
-	/** Compile shaders */
-		//gfx::shaders::ShaderCompilerOutput vs_ = gfx::shaders::compile_shader(
-	/*		gfx::shaders::ShaderStage::Vertex,
-			"Tests/TriangleVS.hlsl",
-			"Main",
-			gfx::shaders::ShaderCompilerTarget::VulkanSpirV,
-			true).get();
-
-		gfx::shaders::ShaderCompilerOutput fs_ = gfx::shaders::compile_shader(
-			gfx::shaders::ShaderStage::Fragment,
-			"Tests/TriangleFS.hlsl",
-			"Main",
-			gfx::shaders::ShaderCompilerTarget::VulkanSpirV,
-			true).get();
-
-		vs = gfx::RenderBackend::get().shader_create(gfx::ShaderCreateInfo(
-			vs_.bytecode)).second;
-
-		fs = gfx::RenderBackend::get().shader_create(gfx::ShaderCreateInfo(
-			fs_.bytecode)).second;*/
-
-	//auto [pipeline_result, pipeline_handle] = gfx::RenderBackend::get().gfx_pipeline_create(
-	//	gfx::GfxPipelineCreateInfo(
-	//		{
-	//			gfx::GfxPipelineShaderStage(
-	//				gfx::ShaderStageFlagBits::Vertex,
-	//				*vs,
-	//				"Main"),
-	//			gfx::GfxPipelineShaderStage(
-	//				gfx::ShaderStageFlagBits::Fragment,
-	//				*fs,
-	//				"Main"),
-	//		},
-	//		gfx::PipelineVertexInputStateCreateInfo(),
-	//		gfx::PipelineInputAssemblyStateCreateInfo(),
-	//		gfx::PipelineRasterizationStateCreateInfo(),
-	//		gfx::PipelineMultisamplingStateCreateInfo(),
-	//		gfx::PipelineDepthStencilStateCreateInfo(),
-	//		gfx::PipelineColorBlendStateCreationInfo(
-	//			false, gfx::LogicOp::NoOp,
-	//			{
-	//				gfx::PipelineColorBlendAttachmentState(false)
-	//			}),
-	//		*vp_pipeline_layout,
-	//		*vp_render_pass));
-	//vp_pipeline = pipeline_handle;
-
-	gfx::hlcs::initialize();
 }
 
 EditorApp::~EditorApp()
 {
-	gfx::hlcs::destroy();
+	gfx::Device::get().wait_gpu_idle();
 	assetmanager::unload_all();
 	destroy_asset_actions_mgr();
 	destroy_asset_factory_mgr();
 	ze::ui::imgui::destroy();
+	ImGui::DestroyContext();
 }
 
 void EditorApp::add_tab(OwnerPtr<Tab> in_tab)
@@ -296,14 +193,14 @@ void EditorApp::process_event(const SDL_Event& in_event, const float in_delta_ti
 
 	if(in_event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
 	{
-		gfx::RenderBackend::get().swapchain_resize(*swapchain,
+		gfx::Device::get().wait_gpu_idle();
+
+		gfx::Device::get().resize_swapchain(*swapchain,
 			in_event.window.data1, in_event.window.data2);
 
 		io.DisplaySize = ImVec2(in_event.window.data1, in_event.window.data2);
 		window->set_width(in_event.window.data1);
 		window->set_height(in_event.window.data2);
-
-		post_tick(in_delta_time);
 	}
 
 	ImGui_ImplSDL2_ProcessEvent(&in_event);
@@ -314,9 +211,6 @@ void EditorApp::post_tick(const float in_delta_time)
 {
     notifications_update(in_delta_time);
 
-	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(window->get_handle()));
-	ImGui::NewFrame();
-	ImGui::ShowDemoWindow();
 #if 0
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(static_cast<float>(main_window.get_width()), static_cast<float>(main_window.get_height())),
@@ -392,13 +286,16 @@ void EditorApp::post_tick(const float in_delta_time)
 		}
 	}
 	ImGui::End();
+
 #endif
-	ImGui::Render();
+
+	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(window->get_handle()));
+	ImGui::NewFrame();
+	ImGui::ShowDemoWindow();
 
 	using namespace gfx;
 
-	RenderBackend::get().new_frame();
-	gfx::hlcs::begin_new_frame();
+	Device::get().new_frame();
 	ui_renderer->new_frame();
 
 	int w = 0, h = 0;
@@ -407,125 +304,54 @@ void EditorApp::post_tick(const float in_delta_time)
 		& SDL_WINDOW_MINIMIZED) || w == 0 || h == 0)
 		return;
 
-	ze::ui::imgui::update();
-
 	/** Draw */
-	if(RenderBackend::get().swapchain_acquire_image(*swapchain))
+	if(Device::get().acquire_swapchain_texture(*swapchain))
 	{
-		RenderBackend::get().command_pool_reset(*cmd_pool);
-		RenderBackend::get().command_list_begin(cmd_list);
-#if 0
-		/** MAIN VIEWPORT */
-		gfx::Framebuffer vp_fb;
-		vp_fb.color_attachments[0] = map_tab_widget->get_map_editor().get_viewport().get_color_attachment_view();
-		vp_fb.width = map_tab_widget->get_map_editor().get_viewport().get_viewport().width;
-		vp_fb.height = map_tab_widget->get_map_editor().get_viewport().get_viewport().height;
-		vp_fb.layers = 1;
-		RenderBackend::get().cmd_begin_render_pass(
-			cmd_list,
-			*vp_render_pass,
-			vp_fb,
+		using namespace gfx;
+
+		CommandList* list = Device::get().allocate_cmd_list(CommandListType::Gfx);
+
+		gfx::RenderPassInfo render_pass;
+		render_pass.attachments = {
+			gfx::AttachmentDescription(
+				gfx::Format::B8G8R8A8Unorm,
+				gfx::SampleCountFlagBits::Count1,
+				gfx::AttachmentLoadOp::Clear,
+				gfx::AttachmentStoreOp::Store,
+				gfx::AttachmentLoadOp::DontCare,
+				gfx::AttachmentStoreOp::DontCare,
+				gfx::TextureLayout::Undefined,
+				gfx::TextureLayout::Present),
+		};
+		render_pass.subpasses = {
+			gfx::SubpassDescription({}, { gfx::AttachmentReference(0, gfx::TextureLayout::ColorAttachment) })
+		};
+		render_pass.color_attachments[0] = Device::get().get_swapchain_backbuffer_texture_view(*swapchain);
+		render_pass.width = w;
+		render_pass.height = h;
+		render_pass.layers = 1;
+		list->begin_render_pass(render_pass,
 			maths::Rect2D(maths::Vector2f(),
-				maths::Vector2f(map_tab_widget->get_map_editor().get_viewport().get_viewport().width, 
-					map_tab_widget->get_map_editor().get_viewport().get_viewport().height)),
+				maths::Vector2f(w, h)),
 			{
 				gfx::ClearColorValue({0, 0, 0, 1})
 			});
-		RenderBackend::get().cmd_set_viewport(cmd_list, 0, { map_tab_widget->get_map_editor().get_viewport().get_viewport() });
-		RenderBackend::get().cmd_set_scissor(cmd_list, 0, { maths::Rect2D(maths::Vector2f(0), 
-			maths::Vector2f(map_tab_widget->get_map_editor().get_viewport().get_viewport().width,
-				map_tab_widget->get_map_editor().get_viewport().get_viewport().height)) });
-		test_renderer(cmd_list);
-		RenderBackend::get().cmd_end_render_pass(cmd_list);
 
-		/** EDITOR */
-		if(map_tab_widget->get_map_editor().is_viewport_fullscreen())
-		{
-			RenderBackend::get().cmd_pipeline_barrier(cmd_list,
-				gfx::PipelineStageFlagBits::ColorAttachmentOutput,
-				gfx::PipelineStageFlagBits::Transfer,
-				{
-					gfx::TextureMemoryBarrier(map_tab_widget->get_map_editor().get_viewport().get_texture(),
-						gfx::AccessFlagBits::ColorAttachmentWrite,
-						gfx::AccessFlagBits::TransferRead,
-						gfx::TextureLayout::ShaderReadOnly,
-						gfx::TextureLayout::TransferSrc,
-						gfx::TextureSubresourceRange(gfx::TextureAspectFlagBits::Color, 0, 1, 0, 1)),
-					
-					gfx::TextureMemoryBarrier(RenderBackend::get().swapchain_get_backbuffer_texture(*swapchain),
-						gfx::AccessFlags(),
-						gfx::AccessFlagBits::TransferWrite,
-						gfx::TextureLayout::Undefined,
-						gfx::TextureLayout::TransferDst,
-						gfx::TextureSubresourceRange(gfx::TextureAspectFlagBits::Color, 0, 1, 0, 1)),
-				});
-			
-			RenderBackend::get().cmd_copy_texture(cmd_list,
-				map_tab_widget->get_map_editor().get_viewport().get_texture(),
-				gfx::TextureLayout::TransferSrc,
-				RenderBackend::get().swapchain_get_backbuffer_texture(*swapchain),
-				gfx::TextureLayout::TransferDst,
-				{
-					gfx::TextureCopyRegion(
-						gfx::TextureSubresourceLayers(gfx::TextureAspectFlagBits::Color, 0, 0, 1),
-						gfx::Offset3D(),
-						gfx::TextureSubresourceLayers(gfx::TextureAspectFlagBits::Color, 0, 0, 1),
-						gfx::Offset3D(),
-						gfx::Extent3D(map_tab_widget->get_map_editor().get_viewport().get_viewport().width,
-							map_tab_widget->get_map_editor().get_viewport().get_viewport().height, 
-							1))
-				});
+		list->set_viewport(gfx::Viewport(0, 0, w, h));
+		list->set_scissor(maths::Rect2D({ 0, 0 }, { w, h }));
 
-			RenderBackend::get().cmd_pipeline_barrier(cmd_list,
-				gfx::PipelineStageFlagBits::Transfer,
-				gfx::PipelineStageFlagBits::Transfer,
-				{
-					gfx::TextureMemoryBarrier(RenderBackend::get().swapchain_get_backbuffer_texture(*swapchain),
-						gfx::AccessFlagBits::TransferWrite,
-						gfx::AccessFlags(),
-						gfx::TextureLayout::TransferDst,
-						gfx::TextureLayout::Present,
-						gfx::TextureSubresourceRange(gfx::TextureAspectFlagBits::Color, 0, 1, 0, 1))
-				});
-		}
-		else
-#endif
-		{
-			gfx::Framebuffer fb;
-			fb.color_attachments[0] = RenderBackend::get().swapchain_get_backbuffer(*swapchain);
-			fb.width = w;
-			fb.height = h;
-			fb.layers = 1;
-			RenderBackend::get().cmd_begin_render_pass(
-				cmd_list,
-				*render_pass,
-				fb,
-				maths::Rect2D(maths::Vector2f(),
-					maths::Vector2f(w, h)),
-				{
-					gfx::ClearColorValue({0, 0, 0, 1})
-				});
-				RenderBackend::get().cmd_set_viewport(cmd_list, 0, { gfx::Viewport(0, 0, w, h) });
-				ze::ui::imgui::draw(cmd_list);
+		ui_renderer->render(*window.get(), list);
 
-				RenderBackend::get().cmd_set_scissor(cmd_list, 0, { maths::Rect2D({ 0, 0 }, { w, h }) });
-				ui_renderer->render(*window.get(), cmd_list);
-			RenderBackend::get().cmd_end_render_pass(cmd_list);
-		}
-		RenderBackend::get().command_list_end(cmd_list);
+		ImGui::Render();
+		ze::ui::imgui::update();
+		ze::ui::imgui::draw(list);
+
+		list->end_render_pass();
+		Device::get().submit(list);
 	}
 
-	gfx::hlcs::submit_all_lists();
-
-	RenderBackend::get().queue_execute(
-		RenderBackend::get().get_gfx_queue(),
-		{ cmd_list },
-		*cmd_list_fence);
-	RenderBackend::get().swapchain_present(*swapchain);
-
-	// TODO: MOVE UP start signaled
-	RenderBackend::get().fence_wait_for({ *cmd_list_fence });
-	RenderBackend::get().fence_reset({ *cmd_list_fence });
+	Device::get().end_frame();
+	Device::get().present(*swapchain);
 }
 
 bool EditorApp::has_tab(std::string in_name)
@@ -539,47 +365,7 @@ bool EditorApp::has_tab(std::string in_name)
 
 void EditorApp::test_renderer(const gfx::ResourceHandle& in_cmd_list)
 {
-	gfx::RenderBackend::get().cmd_bind_pipeline(
-		in_cmd_list,
-		gfx::PipelineBindPoint::Gfx,
-		*vp_pipeline);
 
-	for (Entity entity : world->get_entity_mgr().get_entities())
-	{
-		if(!world->get_component_mgr().has_component(entity, reflection::Class::get<TransformComponent>()))
-			continue;
-
-		auto& transform = world->get_component_mgr().get_component<TransformComponent>(entity);
-		
-		maths::Matrix4f world = maths::translate(
-			maths::Vector3f(static_cast<float>(transform.position.x),
-				static_cast<float>(transform.position.y),
-				static_cast<float>(transform.position.z))) * 
-			maths::scale(transform.scale);
-
-		maths::Vector3f cam_pos(static_cast<float>(map_tab_widget->get_map_editor().get_cam_pos().x),
-				static_cast<float>(map_tab_widget->get_map_editor().get_cam_pos().y),
-				static_cast<float>(map_tab_widget->get_map_editor().get_cam_pos().z));
-
-		maths::Matrix4f view = maths::look_at(cam_pos,
-			cam_pos + map_tab_widget->get_map_editor().get_cam_fwd(),
-			maths::Vector3f::get_up());
-
-		maths::Matrix4f proj = maths::infinite_perspective(maths::radians(90.f), 
-			map_tab_widget->get_map_editor().get_viewport().get_viewport().width / 
-			(float) map_tab_widget->get_map_editor().get_viewport().get_viewport().height, 0.1f);
-
-		maths::Matrix4f wvp = proj * view * world;
-
-		gfx::RenderBackend::get().cmd_push_constants(in_cmd_list,
-			*vp_pipeline_layout,
-			gfx::ShaderStageFlagBits::Vertex,
-			0,
-			sizeof(maths::Matrix4f),
-			&wvp);
-
-		gfx::RenderBackend::get().cmd_draw(in_cmd_list, 3, 1, 0, 0);
-	}
 }
 
 void EditorApp::draw_main_tab()

@@ -39,7 +39,7 @@ ze_create_module(ZEUI
 	Private/ZEUI/Window.cpp
 	Private/ZEUI/Widget.cpp
 	Private/ZEUI/ZEUI.cpp)
-ze_add_public_modules(ZEUI Core GfxCore EffectSystem)
+ze_add_public_modules(ZEUI Core GfxCore Gfx EffectSystem)
 ZE_ADD_PRIVATE_MODULES(ZEUI ImGui)
 
 target_include_directories(ZEUI

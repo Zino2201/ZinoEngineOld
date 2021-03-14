@@ -137,6 +137,9 @@ Effect::Permutation* Effect::get_permutation(EffectPermutationId id)
 		return &it->second;
 
 #if ZE_WITH_EDITOR
+	if(pending_compilation.contains(id))
+		return nullptr;
+
 	/** Before doing anything, checks if the permutation exists in the cache */
 	std::vector<ShaderStageFlagBits> stage_to_compile;
 	std::vector<shaders::ShaderCompilerReflectionDataOutput> reflection_datas;
@@ -217,7 +220,7 @@ void Effect::build_pipeline_layout(EffectPermutationId id)
 		shaders::ShaderCompilerReflectionDataOutput reflection_data;
 		ar <=> reflection_data;
 
-		for(const auto&  parameter : reflection_data.parameter_map.get_parameters())
+		for(const auto& parameter : reflection_data.parameter_map.get_parameters())
 		{
 			DescriptorType desc_type = DescriptorType::UniformBuffer;
 			switch(parameter.type) 

@@ -2,7 +2,6 @@
 
 #include "Assets/Asset.h"
 #include "Maths/Vector.h"
-#include "Gfx/Backend.h"
 #include "Serialization/Types/Vector.h"
 #include "Model.gen.h"
 
@@ -131,7 +130,7 @@ public:
     /**
      * \return Handle to the large vertex buffer array containing all models vertex buffers
      */
-    static gfx::ResourceHandle get_vertex_buffer();
+    //static gfx::ResourceHandle get_vertex_buffer();
 
     ZE_FORCEINLINE auto& get_lods() { return lods; }
 private:

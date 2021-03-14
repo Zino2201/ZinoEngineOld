@@ -7,6 +7,9 @@
 namespace ze
 {
 
+/**
+ * A non-contigous array that guarantee element's positions to be fixed
+ */
 template<typename T>
 class CoherentArray
 {
@@ -52,7 +55,7 @@ public:
 	    CoherentArrayIterator& operator-(difference_type in_diff)
 	    {
 		    current_idx -= in_diff;
-		    ZE_CHECK(current_idx > 0 && current_idx <= array.get_size() - 1);
+		    ZE_CHECK(current_idx > 0 && current_idx <= array.get_capacity() - 1);
 	    }
 
 	    friend difference_type operator-(const CoherentArrayIterator& left, const CoherentArrayIterator& right)
@@ -183,7 +186,7 @@ public:
 
     ZE_FORCEINLINE bool is_valid(const size_t& in_index) const
     {
-        return in_index < bitset.capacity() && bitset[in_index];
+        return in_index < capacity && bitset[in_index];
     }
   
     ZE_FORCEINLINE bool is_empty() const

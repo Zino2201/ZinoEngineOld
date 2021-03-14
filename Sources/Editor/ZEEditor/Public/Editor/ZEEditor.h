@@ -2,7 +2,7 @@
 
 #include "Engine/Engine.h"
 #include <filesystem>
-#include "Gfx/Backend.h"
+#include "Gfx/Gfx.h"
 #include "Engine/Viewport.h"
 #include "ZEUI/Window.h"
 #include "ZEUI/Render/Renderer.h"
@@ -40,13 +40,7 @@ private:
 		const std::filesystem::path& InTarget);
 private:
 	gfx::UniqueSwapchain swapchain;
-	gfx::UniqueCommandPool cmd_pool;
-	gfx::ResourceHandle cmd_list;
-	gfx::UniqueFence cmd_list_fence;
-	gfx::UniqueRenderPass render_pass;
-	gfx::UniqueRenderPass vp_render_pass;
 	gfx::UniquePipelineLayout vp_pipeline_layout;
-	gfx::UniquePipeline vp_pipeline;
 	gfx::UniqueShader vs;
 	gfx::UniqueShader fs;
 	ImFont* font;

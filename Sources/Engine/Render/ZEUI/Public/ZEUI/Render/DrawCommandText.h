@@ -3,20 +3,24 @@
 #include "DrawCommand.h"
 #include "Font.h"
 
+struct hb_buffer_t;
+
 namespace ze::ui
 {
 
 struct DrawCommandPrimitiveText final : public DrawCommandPrimitive
 {
 	FontInfo font;
-	std::string_view text;
+	hb_buffer_t* text;
+	size_t text_size;
+	gfx::DeviceResourceHandle font_data;
 
 	DrawCommandPrimitiveText(const FontInfo& in_font,
-		const std::string_view& in_text) : font(in_font), text(in_text) {}
+		hb_buffer_t* in_text,
+		const size_t in_text_size,
+		const gfx::DeviceResourceHandle& in_font_data) : font(in_font), text(in_text), text_size(in_text_size), font_data(in_font_data) {}
 
-	std::pair<std::vector<Vertex>, std::vector<uint32_t>> get_geometry(const DrawCommand& commmand) override;
-	gfx::EffectPermPtr get_effect() const;
-	std::vector<gfx::ResourceHandle> get_descriptor_sets() const;
+	void build(const DrawCommand& commmand) override;
 };
 
 }

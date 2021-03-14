@@ -24,7 +24,8 @@ size_t get_free_vertex_idx_or_grow()
 
 static gfx::ResourceHandle get_vertex_buffer()
 {
-	return vertex_buffer.get_handle();
+    return {};
+	//return vertex_buffer.get_handle();
 }
 
 void Model::load_to_gpu_memory()

@@ -6,7 +6,7 @@
 namespace ze::ui::imgui
 {
 
-IMGUI_API bool initialize(const gfx::ResourceHandle& in_cmd_list, const gfx::ResourceHandle& in_renderpass);
+IMGUI_API bool initialize();
 IMGUI_API void destroy();
 
 /**

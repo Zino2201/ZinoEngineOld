@@ -1,5 +1,4 @@
 #include "ZEUI/Primitives/DockableTab.h"
-#include <SDL2/SDL.h>
 #include "ImGui/ImGui.h"
 
 namespace ze::ui

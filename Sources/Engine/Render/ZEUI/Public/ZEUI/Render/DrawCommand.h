@@ -12,14 +12,49 @@ struct DrawCommand;
 /**
  * Base class for draw commands primitives
  * Primitives draw commands classes are used to build the geometry of a command
+ * Widgets can submit multiple primitives
  */
 struct DrawCommandPrimitive
 {
-	virtual ~DrawCommandPrimitive() = default;
+	struct Binding
+	{
+		gfx::DescriptorType type;
+		uint32_t set;
+		uint32_t binding;
+		gfx::DeviceResourceHandle resource;
 
-	virtual std::pair<std::vector<Vertex>, std::vector<uint32_t>> get_geometry(const DrawCommand& commmand) = 0;
-	virtual gfx::EffectPermPtr get_effect() const { return nullptr; }
-	virtual std::vector<gfx::ResourceHandle> get_descriptor_sets() const { return {}; }
+		Binding(const gfx::DescriptorType& in_type,
+			const uint32_t in_set,
+			const uint32_t in_binding,
+			const gfx::DeviceResourceHandle& in_resource) :
+			type(in_type), set(in_set), binding(in_binding), resource(in_resource) {}
+
+		ZE_FORCEINLINE bool operator==(const Binding& other) const
+		{
+			return type == other.type &&
+				set == other.set &&
+				binding == other.binding &&
+				resource == other.resource;
+		}
+	};
+
+	DrawCommandPrimitive() : effect(nullptr) {}
+	virtual ~DrawCommandPrimitive() = default;
+	virtual void build(const DrawCommand& commmand) = 0;
+
+	ZE_FORCEINLINE gfx::EffectPermPtr get_effect() const { return effect; }
+	ZE_FORCEINLINE std::vector<Binding> get_bindings() const { return bindings; }
+	ZE_FORCEINLINE const std::vector<Vertex>& get_vertices() const { return vertices; }
+	ZE_FORCEINLINE const std::vector<uint32_t>& get_indices() const { return indices; }
+private:
+	/*
+	 * Build primitives geometry and effect/bindings
+	 */
+protected:
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+	std::vector<Binding> bindings;
+	gfx::EffectPermPtr effect;
 };
 
 /**

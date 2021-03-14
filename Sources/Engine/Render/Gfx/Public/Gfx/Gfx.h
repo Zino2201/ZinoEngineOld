@@ -899,7 +899,7 @@ public:
 		reset(std::move(other.handle));
 	}
 
-	UniqueDeviceResourceHandle get()
+	DeviceResourceHandle get()
 	{
 		ZE_CHECKF(handle, "Tried to get an invalid handle");
 		return handle;
@@ -1066,6 +1066,20 @@ private:
 using LinearSampler = StaticSampler<Filter::Linear,
 	Filter::Linear, 
 	Filter::Linear,
+	SamplerAddressMode::Repeat,
+	SamplerAddressMode::Repeat,
+	SamplerAddressMode::Repeat,
+	1,
+	false,
+	CompareOp::Never,
+	false,
+	1,
+	0,
+	1>;
+
+using NearestSampler = StaticSampler<Filter::Nearest,
+	Filter::Nearest, 
+	Filter::Nearest,
 	SamplerAddressMode::Repeat,
 	SamplerAddressMode::Repeat,
 	SamplerAddressMode::Repeat,

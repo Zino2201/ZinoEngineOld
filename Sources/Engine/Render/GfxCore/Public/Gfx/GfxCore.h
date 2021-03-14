@@ -19,6 +19,9 @@ enum class Format
 	D24UnormS8Uint,
 
 	/** RGB 8-bit (unsigned short) */
+	R8Unorm,
+
+	/** RGB 8-bit (unsigned short) */
 	R8G8B8Unorm,
 
 	/** RGBA 8-bit (unsigned short) */

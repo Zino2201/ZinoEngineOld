@@ -7,7 +7,7 @@ namespace ze::ui
 
 struct DrawCommandPrimitiveRect final : public DrawCommandPrimitive
 {
-	std::pair<std::vector<Vertex>, std::vector<uint32_t>> get_geometry(const DrawCommand& commmand) override;
+	void build(const DrawCommand& commmand) override;
 };
 
 }

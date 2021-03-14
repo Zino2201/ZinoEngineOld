@@ -3,6 +3,7 @@
 #include "ZEUI/Widget.h"
 #include "ZEUI/Item.h"
 #include "ZEUI/Render/Font.h"
+#include "Gfx/UniformBuffer.h"
 
 struct hb_buffer_t;
 struct hb_font_t;
@@ -40,6 +41,7 @@ private:
 	hb_buffer_t* cached_buffer;
 	hb_face_t* cached_face;
 	hb_font_t* hb_font;
+	gfx::UniformBuffer<float> font_data;
 };
 	
 }

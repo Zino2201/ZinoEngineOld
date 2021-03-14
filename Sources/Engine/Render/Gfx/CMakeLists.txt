@@ -1,6 +1,7 @@
 ze_create_module(Gfx
     Public/Gfx/Gfx.h
     Public/Gfx/GpuVector.h
+    Public/Gfx/UniformBuffer.h
     Private/Gfx/Gfx.cpp
     Private/Gfx/GpuVector.cpp
     Private/Gfx/CommandList.cpp

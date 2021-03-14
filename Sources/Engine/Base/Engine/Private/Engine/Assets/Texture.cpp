@@ -1,5 +1,4 @@
 #include "Engine/Assets/Texture.h"
-#include "Gfx/CommandSystem.h"
 #if ZE_WITH_EDITOR
 #include "AssetDataCache/AssetDataCache.h"
 #include "TextureCompressor.h"
@@ -65,39 +64,37 @@ void Texture::generate_mipmaps(const std::vector<uint8_t>& in_data)
 	using namespace gfx;
 
 	/** Mip0 texture */
-	TextureCreateInfo tex_create_info;
-	tex_create_info.format = gfx::Format::R8G8B8A8Unorm;
-	tex_create_info.mem_usage = MemoryUsage::GpuOnly;
-	tex_create_info.usage_flags = TextureUsageFlagBits::TransferSrc | TextureUsageFlagBits::TransferDst;
-	tex_create_info.array_layers = 1;
-	tex_create_info.mip_levels = miplevels;
-	tex_create_info.width = width;
-	tex_create_info.height = height;
-	tex_create_info.depth = depth;
+	TextureInfo tex_create_info;
+	tex_create_info.create_info.format = gfx::Format::R8G8B8A8Unorm;
+	tex_create_info.create_info.mem_usage = MemoryUsage::GpuOnly;
+	tex_create_info.create_info.array_layers = 1;
+	tex_create_info.create_info.mip_levels = miplevels;
+	tex_create_info.create_info.width = width;
+	tex_create_info.create_info.height = height;
+	tex_create_info.create_info.depth = depth;
 	switch(type)
 	{
 	case ze::TextureType::Tex1D:
-		tex_create_info.type = gfx::TextureType::Tex1D;
+		tex_create_info.create_info.type = gfx::TextureType::Tex1D;
 		break;
 
 	case ze::TextureType::Tex2D:
-		tex_create_info.type = gfx::TextureType::Tex2D;
+		tex_create_info.create_info.type = gfx::TextureType::Tex2D;
 		break;
 
 	case ze::TextureType::Tex3D:
-		tex_create_info.type = gfx::TextureType::Tex3D;
+		tex_create_info.create_info.type = gfx::TextureType::Tex3D;
 		break;
 	}
 		
-	auto [result, handle] = RenderBackend::get().texture_create(tex_create_info);
+#if 0
+	auto [result, handle] = Device::get().create_texture(tex_create_info);
 	gfx::UniqueTexture texture(handle);
 
-	hlcs::CommandList& list = hlcs::allocate_cmd_list(true);
-	list.begin();
-
+	CommandList* list = Device::get().allocate_cmd_list(gfx::CommandListType::Gfx);
 	/** First, copy data to mipmap 0 in order to generate the rest */
 	{
-		gfx::ResourceHandle staging_buf = RenderBackend::get().buffer_create(BufferCreateInfo(
+		gfx::ResourceHandle staging_buf = Device::get().create_buffer(BufferCreateInfo(
 			in_data.size(), BufferUsageFlagBits::TransferSrc, MemoryUsage::CpuOnly));
 		list.add_owned_buffer(staging_buf);
 
@@ -227,12 +224,14 @@ void Texture::generate_mipmaps(const std::vector<uint8_t>& in_data)
 		memcpy(mipmaps[i].data.data(), map_data, mipmaps[i].data.size());
 		RenderBackend::get().buffer_unmap(*staging_buffers[i - 1]);
 	}
+#endif
 }
 
 void Texture::update_resource()
 {
 	using namespace gfx;
 
+#if 0
 	gfx_format = get_adequate_gfx_format();
 
 	if(texture && texture_view)
@@ -362,7 +361,7 @@ void Texture::update_resource()
 
 		texture_view = RenderBackend::get().texture_view_create(view_create_info);
 	}
-
+#endif
 #if !ZE_WITH_EDITOR
 	if(!keep_in_ram)
 		mipmaps.clear();

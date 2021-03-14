@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CompositeWidget.h"
-#include "Gfx/Backend.h"
 
 struct SDL_Window;
 

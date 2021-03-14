@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Maths/Vector.h"
-#include "Gfx/Backend.h"
+#include "Gfx/Gfx.h"
 
 namespace ze::ui
 {

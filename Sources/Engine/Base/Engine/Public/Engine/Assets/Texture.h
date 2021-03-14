@@ -3,7 +3,7 @@
 #include "Assets/Asset.h"
 #include "Serialization/Types/Vector.h"
 #include "Reflection/Enum.h"
-#include "Gfx/Backend.h"
+#include "Gfx/Gfx.h"
 #include "Texture.gen.h"
 
 namespace ze
@@ -176,8 +176,8 @@ public:
 	ZE_FORCEINLINE const auto& get_mipmaps() const { return mipmaps; }
 	ZE_FORCEINLINE const auto& get_mipmap(const size_t& in_level) const { return mipmaps[in_level]; }
 	ZE_FORCEINLINE const gfx::Format& get_gfx_format() const { return gfx_format; }
-	ZE_FORCEINLINE const gfx::ResourceHandle& get_texture() const { return *texture; }
-	ZE_FORCEINLINE const gfx::ResourceHandle& get_texture_view() const { return *texture_view; }
+	ZE_FORCEINLINE const gfx::DeviceResourceHandle& get_texture() const { return *texture; }
+	ZE_FORCEINLINE const gfx::DeviceResourceHandle& get_texture_view() const { return *texture_view; }
 	ZE_FORCEINLINE const bool is_ready() const { return ready; }
 private:
 #if ZE_WITH_EDITOR

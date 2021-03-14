@@ -28,7 +28,7 @@ std::unique_ptr<ImDrawData> draw_data;
 gfx::GfxPipelineRenderPassState render_pass_state;
 gfx::GfxPipelineInstanceState instance_state;
 
-bool initialize(const gfx::ResourceHandle& in_cmd_list, const gfx::ResourceHandle& in_renderpass)
+bool initialize()
 {
 	{
 		/** Compile shaders */

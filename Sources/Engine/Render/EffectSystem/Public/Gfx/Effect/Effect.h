@@ -121,6 +121,19 @@ struct EffectPermPtr
 	EffectPermPtr(Effect* in_effect, const EffectPermutationId& in_perm) : effect(in_effect),
 		permutation(in_perm) {}
 
+	Effect::Permutation* operator->() const
+	{
+		ZE_CHECK(effect);
+		auto perm = effect->get_permutation(permutation);
+
+		// TODO: Better way to wait... i'm too lazy to do it now
+		while(!perm || !effect->is_available(permutation))
+		{
+			perm = effect->get_permutation(permutation);
+		}
+		return perm;
+	}
+
 	bool operator==(const EffectPermPtr& other) const
 	{
 		return effect == other.effect && permutation == other.permutation;

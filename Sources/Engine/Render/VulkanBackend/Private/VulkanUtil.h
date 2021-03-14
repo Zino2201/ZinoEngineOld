@@ -21,6 +21,8 @@ ZE_FORCEINLINE vk::Format convert_format(Format in_format)
 		return vk::Format::eD32SfloatS8Uint;
 	case Format::B8G8R8A8Unorm:
 		return vk::Format::eB8G8R8A8Unorm;
+	case Format::R8Unorm:
+		return vk::Format::eR8Unorm;
 	case Format::R8G8B8Unorm:
 		return vk::Format::eR8G8B8Unorm;
 	case Format::R8G8B8A8Unorm:
@@ -73,6 +75,8 @@ ZE_FORCEINLINE Format to_format(vk::Format in_format)
 		return Format::D32SfloatS8Uint;
 	case vk::Format::eB8G8R8A8Unorm:
 		return Format::B8G8R8A8Unorm;
+	case vk::Format::eR8Unorm:
+		return Format::R8Unorm;
 	case vk::Format::eR8G8B8Unorm:
 		return Format::R8G8B8Unorm;
 	case vk::Format::eR8G8B8A8Unorm:
