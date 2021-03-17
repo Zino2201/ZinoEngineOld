@@ -36,6 +36,7 @@ jobs:
         curl https://dl.dropboxusercontent.com/s/vn0js0up6hujz8m/Build.zip?dl=1 --output Build.zip
         curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe?Human=true
         VulkanSDK.exe /S
+        vcpkg update
         vcpkg install sdl2[*]:x64-windows
         vcpkg install harfbuzz[*]:x64-windows
         vcpkg install freetype[*]:x64-windows
@@ -74,6 +75,7 @@ jobs:
         Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/
         curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe?Human=true
         VulkanSDK.exe /S
+        vcpkg update
         vcpkg install sdl2[*]:x64-windows
         vcpkg install harfbuzz[*]:x64-windows
         vcpkg install freetype[*]:x64-windows
@@ -111,6 +113,7 @@ jobs:
         Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/
         curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe?Human=true
         VulkanSDK.exe /S
+        vcpkg update
         vcpkg install sdl2[*]:x64-windows
         vcpkg install harfbuzz[*]:x64-windows
         vcpkg install freetype[*]:x64-windows
@@ -171,6 +174,7 @@ jobs:
         Expand-Archive -Force Build.zip ${{ github.workspace }}/Sources/Libs/
         curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe?Human=true
         VulkanSDK.exe /S
+        vcpkg update
         vcpkg install sdl2[*]:x64-windows
         vcpkg install harfbuzz[*]:x64-windows
         vcpkg install freetype[*]:x64-windows
