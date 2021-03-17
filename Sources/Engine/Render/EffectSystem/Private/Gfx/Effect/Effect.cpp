@@ -207,6 +207,7 @@ Effect::Permutation* Effect::get_permutation(EffectPermutationId id)
 	return nullptr;
 }
 
+#if ZE_WITH_EDITOR
 void Effect::build_pipeline_layout(EffectPermutationId id)
 {
 	robin_hood::unordered_map<uint32_t, std::vector<gfx::DescriptorSetLayoutBinding>> sets;
@@ -255,6 +256,7 @@ void Effect::build_pipeline_layout(EffectPermutationId id)
 	ZE_CHECK(result == Result::Success);
 	permutations[id].pipeline_layout = handle;
 }
+#endif
 
 std::vector<std::pair<std::string, std::string>> Effect::get_options_from_id(EffectPermutationId id) const
 {
