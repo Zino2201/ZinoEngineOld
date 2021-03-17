@@ -27,7 +27,7 @@ void AssetExplorer::construct()
 			glyph.advance, 
 			Font::Glyph::Bounds { glyph.bounds.l, glyph.bounds.b, glyph.bounds.r, glyph.bounds.t }, 
 			glyph.atlas_rect);
-	test = std::make_unique<Font>(sdf.width, sdf.height, sdf.raw_data, 2.0,
+	test = std::make_unique<Font>(fd, sdf.width, sdf.height, sdf.raw_data, 2.0,
 		glyphs,
 		sdf.em_size,
 		sdf.space_advance,
@@ -46,7 +46,7 @@ void AssetExplorer::construct()
 			->content()
 			[
 				make_widget<Text>()
-				->text("test texte harfbuzz")
+				->text("COUCOU CA VA ?")
 				->font(FontInfo(test.get(), 32))
 			]
 		]

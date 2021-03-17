@@ -8,6 +8,7 @@ namespace ze::editor
 
 struct MSDFGlyph
 {
+	uint32_t glyph_idx;
 	uint8_t character;
 	double advance;
 	struct Bounds

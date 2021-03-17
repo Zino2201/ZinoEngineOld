@@ -62,10 +62,10 @@ MSDFFontData generate_msdf_texture_from_font(const std::vector<uint8_t>& in_font
 	glyphs.reserve(num_glyphs);
 
 	/** ASCII codepoint */
-	for(char ch = 33; ch < 127; ++ch)
+	for(char ch = 0; ch < 127; ++ch)
 	{
 		glyphs.emplace_back();
-		ZE_CHECK(glyphs.back().load(font, ch));
+		glyphs.back().load(font, ch);
 		glyphs.back().edgeColoring(3.0, 2201);
 	}
 
@@ -110,12 +110,12 @@ MSDFFontData generate_msdf_texture_from_font(const std::vector<uint8_t>& in_font
 	getFontWhitespaceWidth(ret.space_advance, ret.tab_advance, font);
 	destroyFont(font);
 		
-	/** Free the FreeType face as we no longer need it */
-	FT_Done_Face(face);
-
 	ret.glyphs.reserve(glyphs.size());
 	for(const auto& glyph : glyphs)
 	{
+		if(glyph.getIndex() == 0)
+			continue;
+
 		int x, y, w, h;
 		glyph.getBoxRect(x, y, w, h);
 		
@@ -126,8 +126,18 @@ MSDFFontData generate_msdf_texture_from_font(const std::vector<uint8_t>& in_font
 			glyph.getAdvance(),
 			MSDFGlyph::Bounds { l, b, r, t },
 			maths::Rect2D(x, y, w, h));
-	}
 
+		ret.glyphs.back().glyph_idx = glyph.getIndex();
+	}
+	
+	/** Sort the glyphs by glyph IDX */
+	std::sort(ret.glyphs.begin(), ret.glyphs.end(),
+		[](const MSDFGlyph& left, const MSDFGlyph& right)
+		{
+			return left.glyph_idx < right.glyph_idx;
+		});
+	/** Free the FreeType face as we no longer need it */
+	FT_Done_Face(face);
 
 	return ret;
 }

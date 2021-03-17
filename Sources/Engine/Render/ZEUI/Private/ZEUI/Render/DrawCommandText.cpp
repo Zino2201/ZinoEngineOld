@@ -30,30 +30,20 @@ void DrawCommandPrimitiveText::build(const DrawCommand& command)
 	size_t idx_offset = 0;
 	for(size_t i = 0; i < glyph_count; ++i)
 	{
-		hb_codepoint_t ch = glyph_info[i].codepoint;
+		/** Glyph index 0 in FreeType = invalid glyph, everything is offseted */
+		hb_codepoint_t glyph_idx = glyph_info[i].codepoint - 1;
 		hb_position_t x_offset = glyph_pos[i].x_offset;
-		hb_position_t y_offset = glyph_pos[i].y_offset;
-		hb_position_t x_advance = glyph_pos[i].x_advance;
-		hb_position_t y_advance = glyph_pos[i].y_advance;
-
-		if(ch == '\0')
+		hb_position_t y_offset = glyph_pos[i].y_offset * 64.f;
+	
+		if(!font.font->has_glyph(glyph_idx))
 			continue;
 
-		if(std::isspace(ch))
+		const auto& glyph = font.font->get_glyph(glyph_idx);
+		if(std::isspace(glyph.character))
 		{
 			current_x += 2 * font.font->get_space_advance();
 			continue;
 		}
-
-		if(!font.font->has_glyph(ch))
-		{
-			if(!font.font->has_glyph('?'))
-				return;
-
-			ch = '?';
-		}
-
-		const auto& glyph = font.font->get_glyph(ch);
 
 		float u0 = glyph.atlas_rect.position.x / font.font->get_width();
 		float u1 = (glyph.atlas_rect.position.x + glyph.atlas_rect.size.x) / font.font->get_width();
@@ -64,8 +54,8 @@ void DrawCommandPrimitiveText::build(const DrawCommand& command)
 		float h = glyph.atlas_rect.size.y;
 
 		/** Offset from the baselne to properly position the glyph */
-		float offset_x = glyph.bounds.l;
-		float offset_y = -(glyph.bounds.b * 2) + command.size.y;
+		float offset_x = glyph.bounds.l + x_offset;
+		float offset_y = -(glyph.bounds.b * 2) + y_offset + command.size.y;
 	
 		vertices.emplace_back(maths::Vector2f(current_x + offset_x, current_y + offset_y),
 			maths::Vector3f(1, 0, 0),

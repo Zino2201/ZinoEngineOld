@@ -44,7 +44,8 @@ public:
 			advance(in_advance), bounds(in_bounds), atlas_rect(in_atlas_rect) {}
 	};
 
-	Font(const uint32_t in_texture_width,
+	Font(const std::vector<uint8_t>& in_font_data,
+		const uint32_t in_texture_width,
 		const uint32_t in_texture_height,
 		const std::vector<uint8_t>& in_texture_data,
 		const double in_texture_pixel_range,
@@ -53,19 +54,20 @@ public:
 		const double in_space_advance,
 		const double in_tab_advance);
 
-	const std::vector<uint8_t>& get_data() const { return data; }
+	const std::vector<uint8_t>& get_font_data() const { return font_data; }
 	const gfx::DeviceResourceHandle& get_texture() const { return *texture; }
 	const gfx::DeviceResourceHandle& get_texture_view() const { return *texture_view; }
 	double get_sdf_pixel_range() const { return sdf_pixel_range; }
 	uint32_t get_width() const { return width; }
 	uint32_t get_height() const { return height; }
-	const Glyph& get_glyph(const uint8_t in_character) const { return glyphs.find(in_character)->second; }
-	bool has_glyph(const uint8_t in_character) const { return glyphs.count(in_character); }
+	const Glyph& get_glyph(const uint8_t in_character) const { return glyphs[in_character]; }
+	bool has_glyph(const uint8_t in_character) const { return in_character < glyphs.size(); }
 	double get_em_size() const { return em_size; }
 	double get_space_advance() const { return space_advance; }
 	double get_tab_advance() const { return tab_advance; }
 private:
-	std::vector<uint8_t> data;
+	std::vector<uint8_t> font_data;
+	std::vector<uint8_t> texture_data;
 	uint32_t width;
 	uint32_t height;
 	double em_size;
@@ -74,7 +76,7 @@ private:
 	double tab_advance;
 	gfx::UniqueTexture texture;
 	gfx::UniqueTextureView texture_view;
-	robin_hood::unordered_map<uint8_t, Glyph> glyphs;
+	std::vector<Glyph> glyphs;
 };
 
 
