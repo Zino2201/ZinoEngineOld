@@ -38,7 +38,7 @@ jobs:
         VulkanSDK.exe /S
         vcpkg update
         vcpkg install sdl2[*]:x64-windows
-        vcpkg install harfbuzz[*]:x64-windows
+        vcpkg install harfbuzz[core]:x64-windows
         vcpkg install freetype[*]:x64-windows
       shell: cmd
 
@@ -77,7 +77,7 @@ jobs:
         VulkanSDK.exe /S
         vcpkg update
         vcpkg install sdl2[*]:x64-windows
-        vcpkg install harfbuzz[*]:x64-windows
+        vcpkg install harfbuzz[core]:x64-windows
         vcpkg install freetype[*]:x64-windows
       shell: cmd
 
@@ -115,7 +115,7 @@ jobs:
         VulkanSDK.exe /S
         vcpkg update
         vcpkg install sdl2[*]:x64-windows
-        vcpkg install harfbuzz[*]:x64-windows
+        vcpkg install harfbuzz[core]:x64-windows
         vcpkg install freetype[*]:x64-windows
       shell: cmd
 
@@ -176,7 +176,7 @@ jobs:
         VulkanSDK.exe /S
         vcpkg update
         vcpkg install sdl2[*]:x64-windows
-        vcpkg install harfbuzz[*]:x64-windows
+        vcpkg install harfbuzz[core]:x64-windows
         vcpkg install freetype[*]:x64-windows
       shell: cmd
 
