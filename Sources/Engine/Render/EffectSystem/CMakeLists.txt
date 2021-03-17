@@ -6,7 +6,7 @@ ze_create_module(EffectSystem
     Private/Gfx/Effect/EffectSystem.cpp)
 ze_add_public_modules(EffectSystem Core ShaderCore ShaderCompiler GfxCore Gfx)
 if(ZE_WITH_EDITOR)
-    ze_add_private_modules(AssetDataCache)
+    ze_add_private_modules(EffectSystem AssetDataCache)
 endif()
 ze_add_private_modules(EffectSystem ZEFS)
 
