@@ -3,7 +3,6 @@
 #include "EngineCore.h"
 #include "NonCopyable.h"
 #include <robin_hood.h>
-#include "Containers/CoherentArray.h"
 
 /**
  * Tick system

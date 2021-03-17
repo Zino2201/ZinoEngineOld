@@ -2,7 +2,7 @@
 
 #include "Gfx/Backend.h"
 #include <robin_hood.h>
-#include "Containers/CoherentArray.h"
+#include "Containers/SparseArray.h"
 #include <queue>
 #include <bitset>
 
@@ -853,13 +853,13 @@ private:
 private:
 	LifetimeHashMap<RenderPassCreateInfo, ResourceHandle, RenderPassDeleter> render_passes;
 	robin_hood::unordered_map<GfxPipelineCreateInfo, ResourceHandle> gfx_pipelines;
-	CoherentArray<Buffer> buffers;
-	CoherentArray<Texture> textures;
-	CoherentArray<TextureView> texture_views;
-	CoherentArray<Shader> shaders;
-	CoherentArray<PipelineLayout> pipeline_layouts;
-	CoherentArray<Sampler> samplers;
-	CoherentArray<Swapchain> swapchains;
+	SparseArray<Buffer> buffers;
+	SparseArray<Texture> textures;
+	SparseArray<TextureView> texture_views;
+	SparseArray<Shader> shaders;
+	SparseArray<PipelineLayout> pipeline_layouts;
+	SparseArray<Sampler> samplers;
+	SparseArray<Swapchain> swapchains;
 	std::array<Frame, max_frames_in_flight> frames;
 	size_t current_frame;
 };

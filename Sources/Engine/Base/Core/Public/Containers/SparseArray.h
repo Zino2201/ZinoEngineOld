@@ -11,11 +11,11 @@ namespace ze
  * A non-contigous array that guarantee element's positions to be fixed
  */
 template<typename T>
-class CoherentArray
+class SparseArray
 {
 public:
     template<typename U>
-    class CoherentArrayIterator
+    class SparseArrayIterator
     {
     public:
         using iterator_category = std::random_access_iterator_tag;
@@ -24,7 +24,7 @@ public:
         using pointer = U*;
         using reference = U&;
 
-        CoherentArrayIterator(CoherentArray<T>& in_array,
+        SparseArrayIterator(SparseArray<T>& in_array,
             const size_t& in_current_idx) :
             current_idx(in_current_idx), 
             array(in_array) {}
@@ -34,7 +34,7 @@ public:
             return array[current_idx];
         }
   
-        CoherentArrayIterator& operator++()
+        SparseArrayIterator& operator++()
         {
             while (current_idx != array.get_capacity())
             {
@@ -45,36 +45,36 @@ public:
             return *this;
         }
 
-        CoherentArrayIterator& operator=(const CoherentArrayIterator& other)
+        SparseArrayIterator& operator=(const SparseArrayIterator& other)
 	    {
 		    array = other.array;
             current_idx = other.current_idx;
 		    return *this;
 	    }
   
-	    CoherentArrayIterator& operator-(difference_type in_diff)
+	    SparseArrayIterator& operator-(difference_type in_diff)
 	    {
 		    current_idx -= in_diff;
 		    ZE_CHECK(current_idx > 0 && current_idx <= array.get_capacity() - 1);
 	    }
 
-	    friend difference_type operator-(const CoherentArrayIterator& left, const CoherentArrayIterator& right)
+	    friend difference_type operator-(const SparseArrayIterator& left, const SparseArrayIterator& right)
 	    {
 		    return right - left;
 	    }
 
-	    friend bool operator==(const CoherentArrayIterator& left, const CoherentArrayIterator& right)
+	    friend bool operator==(const SparseArrayIterator& left, const SparseArrayIterator& right)
 	    {
 		    return left.current_idx == right.current_idx;
 	    }
 
-        friend bool operator!=(const CoherentArrayIterator& left, const CoherentArrayIterator& right)
+        friend bool operator!=(const SparseArrayIterator& left, const SparseArrayIterator& right)
         {
             return left.current_idx != right.current_idx;
         }
     private:
         size_t current_idx;
-        CoherentArray<T>& array;
+        SparseArray<T>& array;
     };
 
     struct ElementsDeleter
@@ -86,13 +86,13 @@ public:
     };
 
     using ElementType = T;
-    using Iterator = CoherentArrayIterator<T>;
-    using ConstIterator = const CoherentArrayIterator<const T>;
+    using Iterator = SparseArrayIterator<T>;
+    using ConstIterator = const SparseArrayIterator<const T>;
   
-    CoherentArray() : size(0), capacity(0) {}
-    ~CoherentArray() = default;
+    SparseArray() : size(0), capacity(0) {}
+    ~SparseArray() = default;
   
-    CoherentArray(const CoherentArray& in_other)
+    SparseArray(const SparseArray& in_other)
     {
         elements = std::unique_ptr<T, ElementsDeleter>(reinterpret_cast<T*>(malloc(in_other.capacity * sizeof(T))));
         size = in_other.size;
@@ -102,7 +102,7 @@ public:
         memcpy(elements, in_other.elements, in_other.capacity * sizeof(T));
     }
   
-    CoherentArray(CoherentArray&& in_other)
+    SparseArray(SparseArray&& in_other)
         : elements(std::move(in_other.elements)), size(std::move(in_other.size)),
         capacity(std::move(in_other.capacity)), bitset(std::move(in_other.bitset)) {}
 
@@ -224,7 +224,7 @@ public:
          return at(in_index);
     }
   
-    CoherentArray& operator=(const CoherentArray& in_other)
+    SparseArray& operator=(const SparseArray& in_other)
     {
         elements = std::unique_ptr<T, ElementsDeleter>(reinterpret_cast<T*>(malloc(in_other.capacity * sizeof(T)));
         size = in_other.size;
