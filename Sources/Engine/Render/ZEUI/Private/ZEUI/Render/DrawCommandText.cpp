@@ -18,8 +18,11 @@ maths::Vector2f DrawCommandPrimitiveText::measure(hb_buffer_t* text, const FontI
 	{
 		/** Glyph index 0 in FreeType = invalid glyph, everything is offseted */
 		hb_codepoint_t glyph_idx = glyph_info[i].codepoint - 1;
-		hb_position_t x_offset = glyph_pos[i].x_offset;
-		hb_position_t y_offset = glyph_pos[i].y_offset * 64.f;
+	
+		float scale = in_font.size / in_font.font->get_em_size();
+		
+		hb_position_t x_offset = glyph_pos[i].x_offset * scale;
+		hb_position_t y_offset = glyph_pos[i].y_offset * 64.f * scale;
 	
 		if(!in_font.font->has_glyph(glyph_idx))
 			continue;
@@ -27,18 +30,18 @@ maths::Vector2f DrawCommandPrimitiveText::measure(hb_buffer_t* text, const FontI
 		const auto& glyph = in_font.font->get_glyph(glyph_idx);
 		if(std::isspace(glyph.character))
 		{
-			size.x += 2 * in_font.font->get_space_advance();
+			size.x += 2 * (in_font.font->get_space_advance() * scale);
 			continue;
 		}
 
-		float w = glyph.atlas_rect.size.x;
-		float h = glyph.atlas_rect.size.y;
+		float w = glyph.atlas_rect.size.x * scale;
+		float h = glyph.atlas_rect.size.y * scale;
 
 		/** Offset from the baselne to properly position the glyph */
-		float offset_x = glyph.bounds.l + x_offset;
-		float offset_y = -(glyph.bounds.b * 2) + y_offset;
+		float offset_x = (glyph.bounds.l * scale) + x_offset;
+		float offset_y = (-(glyph.bounds.b * 2) * scale) + y_offset;
 	
-		size.x += (w / 2) + glyph.advance;
+		size.x += (w / 2) + (glyph.advance * scale);
 		size.y = std::max(size.y, h + offset_y);
 	}
 
@@ -70,8 +73,11 @@ void DrawCommandPrimitiveText::build(const DrawCommand& command)
 	{
 		/** Glyph index 0 in FreeType = invalid glyph, everything is offseted */
 		hb_codepoint_t glyph_idx = glyph_info[i].codepoint - 1;
-		hb_position_t x_offset = glyph_pos[i].x_offset;
-		hb_position_t y_offset = glyph_pos[i].y_offset * 64.f;
+		
+		float scale = font.size / font.font->get_em_size();
+		
+		hb_position_t x_offset = glyph_pos[i].x_offset * scale;
+		hb_position_t y_offset = glyph_pos[i].y_offset * 64.f * scale;
 	
 		if(!font.font->has_glyph(glyph_idx))
 			continue;
@@ -79,7 +85,7 @@ void DrawCommandPrimitiveText::build(const DrawCommand& command)
 		const auto& glyph = font.font->get_glyph(glyph_idx);
 		if(std::isspace(glyph.character))
 		{
-			current_x += 2 * font.font->get_space_advance();
+			current_x += 2 * (font.font->get_space_advance() * scale);
 			continue;
 		}
 
@@ -88,12 +94,12 @@ void DrawCommandPrimitiveText::build(const DrawCommand& command)
 		float v0 = glyph.atlas_rect.position.y / font.font->get_height();
 		float v1 = (glyph.atlas_rect.position.y + glyph.atlas_rect.size.y) / font.font->get_height();
 
-		float w = glyph.atlas_rect.size.x;
-		float h = glyph.atlas_rect.size.y;
+		float w = glyph.atlas_rect.size.x * scale;
+		float h = glyph.atlas_rect.size.y * scale;
 
 		/** Offset from the baselne to properly position the glyph */
-		float offset_x = glyph.bounds.l + x_offset;
-		float offset_y = -(glyph.bounds.b * 2) + y_offset;
+		float offset_x = (glyph.bounds.l * scale) + x_offset;
+		float offset_y = (-(glyph.bounds.b * 2) * scale) + y_offset;
 	
 		vertices.emplace_back(maths::Vector2f(current_x + offset_x, current_y + offset_y),
 			maths::Vector2f(u0, v0),
@@ -116,7 +122,7 @@ void DrawCommandPrimitiveText::build(const DrawCommand& command)
 		indices.emplace_back(idx_offset + 0);
 
 		idx_offset += 4;
-		current_x += (w / 2) + glyph.advance;
+		current_x += (w / 2) + (glyph.advance * scale);
 	}
 }
 

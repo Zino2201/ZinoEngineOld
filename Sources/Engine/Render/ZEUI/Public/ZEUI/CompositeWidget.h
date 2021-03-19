@@ -14,7 +14,7 @@ namespace ze::ui
 class ZEUI_API CompositeWidget : public Widget
 {
 public:
-	CompositeWidget() : content_(this) {}
+	CompositeWidget() : content_(this), child_fill_parent(false) {}
 
 	ZE_FORCEINLINE SimpleItem& content() { return content_; }
 
@@ -23,6 +23,8 @@ public:
 	void paint(Renderer& renderer, DrawContext& context) override;
 private:
 	SimpleItem content_;
+protected:
+	bool child_fill_parent;
 };
 
 }

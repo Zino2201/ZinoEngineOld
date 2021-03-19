@@ -40,6 +40,9 @@ Window::Window(const uint32_t in_width,
 	SDL_GetWindowSize(handle, &w, &h);
 	width = w;
 	height = h;
+
+	desired_size = { w, h };
+	child_fill_parent = true;
 }
 
 Window::~Window()

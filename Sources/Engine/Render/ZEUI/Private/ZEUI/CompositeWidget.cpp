@@ -8,7 +8,8 @@ void CompositeWidget::compute_desired_size(const maths::Vector2f& in_available_s
 	if(content_.is_valid())
 	{
 		content_.get().compute_desired_size(in_available_size);
-		desired_size = content_.get().get_desired_size();
+		if(!child_fill_parent)
+			desired_size = content_.get().get_desired_size();
 	}
 }
 
@@ -16,7 +17,8 @@ void CompositeWidget::arrange_children()
 {
 	if(content_.is_valid())
 	{
-		WidgetRect rect(maths::Vector2f(), arranged_rect.absolute_position, content_.get().get_desired_size());
+		WidgetRect rect(maths::Vector2f(), arranged_rect.absolute_position, 
+			child_fill_parent ? desired_size : content_.get().get_desired_size());
 		content_.get().set_arranged_rect(rect);
 		content_.get().arrange_children();
 	}
