@@ -25,7 +25,8 @@ void Text::paint(Renderer& renderer, DrawContext& context)
 {
 	Widget::paint(renderer, context);
 
-	context.add(new DrawCommandPrimitiveText(font_, cached_buffer, text_.size(), font_data), arranged_rect.absolute_position, arranged_rect.size);
+	context.add(new DrawCommandPrimitiveText(font_, cached_buffer, text_.get().size(), 
+		font_data), arranged_rect.absolute_position, arranged_rect.size);
 }
 
 void Text::cache_layout()
@@ -38,7 +39,7 @@ void Text::cache_layout()
 	else
 		hb_buffer_reset(cached_buffer);
 
-	hb_buffer_add_utf8(cached_buffer, text_.c_str(), -1, 0, -1);
+	hb_buffer_add_utf8(cached_buffer, text_.get().c_str(), -1, 0, -1);
 	hb_buffer_set_direction(cached_buffer, HB_DIRECTION_LTR);
 	hb_buffer_set_script(cached_buffer, HB_SCRIPT_LATIN);
 	hb_buffer_set_language(cached_buffer, hb_language_from_string("en", -1));

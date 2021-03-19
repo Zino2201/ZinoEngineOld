@@ -8,6 +8,7 @@
 #include "ZEUI/Render/Renderer.h"
 
 namespace ze { class Viewport; class World; }
+namespace ze::ui { class Text; }
 
 struct ImFont;
 
@@ -50,6 +51,7 @@ private:
 	std::unique_ptr<ui::Window> window;
 	std::unique_ptr<MapEditorTab> map_editor_tab;
 	std::unique_ptr<ui::Renderer> ui_renderer;
+	ui::Text* text;
 };
 
 }

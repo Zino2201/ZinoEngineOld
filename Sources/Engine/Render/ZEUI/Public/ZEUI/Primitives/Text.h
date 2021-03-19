@@ -4,6 +4,7 @@
 #include "ZEUI/Item.h"
 #include "ZEUI/Render/Font.h"
 #include "Gfx/UniformBuffer.h"
+#include "ZEUI/Attribute.h"
 
 struct hb_buffer_t;
 struct hb_font_t;
@@ -18,11 +19,11 @@ namespace ze::ui
 class ZEUI_API Text final : public Widget
 {	
 public:
-	Text(const std::string_view& text = "")
+	Text(const std::string& text = "")
 		: text_(text), cached_buffer(nullptr), hb_font(nullptr), cached_face(nullptr) {}
 	~Text();
 
-	Text* text(const std::string& in_text) { text_ = in_text; cache_layout(); return this; }
+	Text* text(const std::string& in_text) { text_.set(in_text); cache_layout(); return this; }
 	Text* font(const FontInfo& in_font);
 
 	void construct() override;
@@ -36,7 +37,7 @@ private:
 	void cache_layout();
 	void update_font();
 private:
-	std::string text_;
+	Attribute<std::string> text_;
 	FontInfo font_;
 	hb_buffer_t* cached_buffer;
 	hb_face_t* cached_face;

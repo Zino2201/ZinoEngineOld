@@ -9,6 +9,7 @@ ze_create_module(ZEUI
 	Public/ZEUI/Window.h
 	Public/ZEUI/CompositeWidget.h
 	Public/ZEUI/Brush.h
+	Public/ZEUI/Attribute.h
 	Public/ZEUI/Primitives/Canvas.h
 	Public/ZEUI/Primitives/Text.h
 	Public/ZEUI/Primitives/DockSpace.h

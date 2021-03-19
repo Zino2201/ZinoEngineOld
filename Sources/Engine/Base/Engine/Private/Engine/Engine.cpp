@@ -12,7 +12,7 @@
 namespace ze
 {
 
-static ConVarRef<int32_t> cvar_maxfps("r_maxfps", 144,
+static ConVarRef<int32_t> cvar_maxfps("r_maxfps", 25000000,
 	"Max FPS.",
 	0,
 	300);

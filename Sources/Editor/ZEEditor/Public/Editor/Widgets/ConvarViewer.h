@@ -6,7 +6,7 @@ namespace ze::editor
 class ConvarViewer
 {
 public:
-	void draw();
+	static void draw();
 };
 
 }
