@@ -8,11 +8,13 @@ ze_create_module(ZEUI
 	Public/ZEUI/Widget.h
 	Public/ZEUI/Window.h
 	Public/ZEUI/CompositeWidget.h
+	Public/ZEUI/Brush.h
 	Public/ZEUI/Primitives/Canvas.h
 	Public/ZEUI/Primitives/Text.h
 	Public/ZEUI/Primitives/DockSpace.h
 	Public/ZEUI/Primitives/DockableTab.h
 	Public/ZEUI/Primitives/DockTabBar.h
+	Public/ZEUI/Primitives/Box.h
 	Public/ZEUI/Containers/HorizontalContainer.h
 	Public/ZEUI/Containers/VerticalContainer.h
 	Public/ZEUI/Containers/ScrollableContainer.h
@@ -26,6 +28,7 @@ ze_create_module(ZEUI
 	Private/ZEUI/Primitives/DockSpace.cpp
 	Private/ZEUI/Primitives/DockableTab.cpp
 	Private/ZEUI/Primitives/DockTabBar.cpp
+	Private/ZEUI/Primitives/Box.cpp
 	Private/ZEUI/Containers/VerticalContainer.cpp
 	Private/ZEUI/Containers/HorizontalContainer.cpp
 	Private/ZEUI/Containers/ScrollableContainer.cpp

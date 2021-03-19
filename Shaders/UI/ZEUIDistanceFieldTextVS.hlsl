@@ -3,8 +3,8 @@
 struct VSInput
 {
     float2 Position : POSITION;
-    float3 Color : COLOR;
     float2 TexCoord : TEXCOORD;
+    float4 Color : COLOR;
 };
 
 [[vk::binding(0)]]

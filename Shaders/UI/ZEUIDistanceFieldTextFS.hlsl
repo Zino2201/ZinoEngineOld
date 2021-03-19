@@ -25,5 +25,5 @@ float4 fragment(VSOutput input) : SV_TARGET
     float screen_px_dist = DistanceFieldRange * (dist - 0.5);
     float alpha = clamp(screen_px_dist + 0.5, 0.0, 1.0);
     
-    return float4(1, 1, 1, alpha);
+    return float4(input.Color.r, input.Color.g, input.Color.b, alpha * input.Color.a);
 }

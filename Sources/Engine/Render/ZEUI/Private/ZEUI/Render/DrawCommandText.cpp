@@ -7,6 +7,44 @@
 namespace ze::ui
 {
 
+maths::Vector2f DrawCommandPrimitiveText::measure(hb_buffer_t* text, const FontInfo& in_font)
+{
+	maths::Vector2f size;
+
+	uint32_t glyph_count;
+	hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos(text, &glyph_count);
+	hb_glyph_position_t* glyph_pos = hb_buffer_get_glyph_positions(text, &glyph_count);
+	for(size_t i = 0; i < glyph_count; ++i)
+	{
+		/** Glyph index 0 in FreeType = invalid glyph, everything is offseted */
+		hb_codepoint_t glyph_idx = glyph_info[i].codepoint - 1;
+		hb_position_t x_offset = glyph_pos[i].x_offset;
+		hb_position_t y_offset = glyph_pos[i].y_offset * 64.f;
+	
+		if(!in_font.font->has_glyph(glyph_idx))
+			continue;
+
+		const auto& glyph = in_font.font->get_glyph(glyph_idx);
+		if(std::isspace(glyph.character))
+		{
+			size.x += 2 * in_font.font->get_space_advance();
+			continue;
+		}
+
+		float w = glyph.atlas_rect.size.x;
+		float h = glyph.atlas_rect.size.y;
+
+		/** Offset from the baselne to properly position the glyph */
+		float offset_x = glyph.bounds.l + x_offset;
+		float offset_y = -(glyph.bounds.b * 2) + y_offset;
+	
+		size.x += (w / 2) + glyph.advance;
+		size.y = std::max(size.y, h + offset_y);
+	}
+
+	return size;
+}
+
 void DrawCommandPrimitiveText::build(const DrawCommand& command)
 {
 	effect = { gfx::effect_get_by_name("ZEUIDistanceFieldText"), {} };
@@ -55,7 +93,7 @@ void DrawCommandPrimitiveText::build(const DrawCommand& command)
 
 		/** Offset from the baselne to properly position the glyph */
 		float offset_x = glyph.bounds.l + x_offset;
-		float offset_y = -(glyph.bounds.b * 2) + y_offset + command.size.y;
+		float offset_y = -(glyph.bounds.b * 2) + y_offset;
 	
 		vertices.emplace_back(maths::Vector2f(current_x + offset_x, current_y + offset_y),
 			maths::Vector2f(u0, v0),

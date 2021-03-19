@@ -4,6 +4,7 @@
 #include "ZEUI/Containers/HorizontalContainer.h"
 #include "ZEUI/Containers/ScrollableContainer.h"
 #include "ZEFS/Utils.h"
+#include "ZEUI/Primitives/Box.h"
 #include "SDFFontGen.h"
 
 namespace ze::editor
@@ -45,9 +46,14 @@ void AssetExplorer::construct()
 			+ make_item<VerticalContainer>()
 			->content()
 			[
-				make_widget<Text>()
-				->text("COUCOU CA VA ?")
-				->font(FontInfo(test.get(), 32))
+				make_widget<Box>()
+				->brush(Brush::make_color(maths::Color(1, 0, 0)))
+				->content()
+				[
+					make_widget<Text>()
+					->font(FontInfo(test.get(), 32))
+					->text("Coucou je suis dans une box :o")
+				]
 			]
 		]
 		+ make_item<HorizontalContainer>()

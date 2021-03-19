@@ -24,6 +24,7 @@ struct DrawCommandPrimitiveText final : public DrawCommandPrimitive
 		color(in_color) {}
 
 	void build(const DrawCommand& commmand) override;
+	static maths::Vector2f measure(hb_buffer_t* text, const FontInfo& in_font);
 };
 
 }

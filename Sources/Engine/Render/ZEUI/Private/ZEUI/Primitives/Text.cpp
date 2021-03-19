@@ -18,8 +18,7 @@ void Text::construct()
 
 void Text::compute_desired_size(const maths::Vector2f& available_size)
 {
-	ImVec2 im_size = ImVec2(512, 512); //ImGui::CalcTextSize(text_.c_str());
-	desired_size = maths::Vector2f(im_size.x, im_size.y);
+	desired_size = DrawCommandPrimitiveText::measure(cached_buffer, font_);
 }
 
 void Text::paint(Renderer& renderer, DrawContext& context)

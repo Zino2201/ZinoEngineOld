@@ -82,7 +82,7 @@ public:
 		std::sort(commands.begin(), commands.end(),
 			[](const DrawCommand& left, const DrawCommand& right)
 			{
-				return left.primitive->get_effect().effect > right.primitive->get_effect().effect;
+				return left.primitive->get_effect().effect < right.primitive->get_effect().effect;
 			});
 	}
 
