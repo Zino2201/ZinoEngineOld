@@ -22,7 +22,7 @@ void DrawCommandPrimitiveText::build(const DrawCommand& command)
 
 	/** Baseline/cursor position */
 	float current_x = command.position.x;
-	float current_y = command.position.y;
+	float current_y = command.position.y + command.size.y;
 
 	uint32_t glyph_count;
 	hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos(text, &glyph_count);
@@ -58,17 +58,17 @@ void DrawCommandPrimitiveText::build(const DrawCommand& command)
 		float offset_y = -(glyph.bounds.b * 2) + y_offset + command.size.y;
 	
 		vertices.emplace_back(maths::Vector2f(current_x + offset_x, current_y + offset_y),
-			maths::Vector3f(1, 0, 0),
-			maths::Vector2f(u0, v0));
-		vertices.emplace_back(maths::Vector2f((current_x + w) + offset_x, current_y + offset_y), 
-			maths::Vector3f(1, 0, 0), 
-			maths::Vector2f(u1, v0));
-		vertices.emplace_back(maths::Vector2f((current_x + w) + offset_x, (current_y - h) + offset_y), 
-			maths::Vector3f(1, 0, 0), 
-			maths::Vector2f(u1, v1));
+			maths::Vector2f(u0, v0),
+			color);
+		vertices.emplace_back(maths::Vector2f((current_x + w) + offset_x, current_y + offset_y),
+			maths::Vector2f(u1, v0),
+			color);
+		vertices.emplace_back(maths::Vector2f((current_x + w) + offset_x, (current_y - h) + offset_y),
+			maths::Vector2f(u1, v1),
+			color);
 		vertices.emplace_back(maths::Vector2f((current_x) + offset_x, (current_y - h) + offset_y), 
-			maths::Vector3f(1, 0, 0),
-			maths::Vector2f(u0, v1));
+			maths::Vector2f(u0, v1),
+			color);
 
 		indices.emplace_back(idx_offset + 0);
 		indices.emplace_back(idx_offset + 1);

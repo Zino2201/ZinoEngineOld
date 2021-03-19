@@ -14,11 +14,14 @@ struct DrawCommandPrimitiveText final : public DrawCommandPrimitive
 	hb_buffer_t* text;
 	size_t text_size;
 	gfx::DeviceResourceHandle font_data;
+	maths::Color color;
 
 	DrawCommandPrimitiveText(const FontInfo& in_font,
 		hb_buffer_t* in_text,
 		const size_t in_text_size,
-		const gfx::DeviceResourceHandle& in_font_data) : font(in_font), text(in_text), text_size(in_text_size), font_data(in_font_data) {}
+		const gfx::DeviceResourceHandle& in_font_data,
+		const maths::Color& in_color = maths::Color::white()) : font(in_font), text(in_text), text_size(in_text_size), font_data(in_font_data),
+		color(in_color) {}
 
 	void build(const DrawCommand& commmand) override;
 };

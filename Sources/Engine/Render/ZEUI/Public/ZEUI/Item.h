@@ -28,6 +28,15 @@ public:
 		return this_;
 	}
 
+	template<typename OtherItemType>
+		requires std::derived_from<OtherItemType, Item<OtherItemType>>
+	ItemType& operator[](const OtherItemType& item)
+	{
+		this_.add(item.owner);
+		ZE_CHECK(widget);
+		return this_;
+	}
+
 	Widget& get() 
 	{ 
 		ZE_CHECK(widget); 

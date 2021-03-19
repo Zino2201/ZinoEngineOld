@@ -90,14 +90,13 @@ void Renderer::update_buffers()
 
 	size_t current_vertex_offset = 0;
 	size_t current_first_index = 0;
+	size_t current_vertex_idx = 0;
 
 	for(auto& context : contexts)
 	{
 		/** Sort and batch the context commands first */
 		context->sort();
 		context->batch();
-
-		size_t current_vertex_idx = 0;
 
 		for(auto& batch : context->get_batches())
 		{
@@ -106,14 +105,7 @@ void Renderer::update_buffers()
 				memcpy(vertex_data, cmd->primitive->get_vertices().data(), cmd->primitive->get_vertices().size() * sizeof(Vertex));
 				memcpy(index_data, cmd->primitive->get_indices().data(), cmd->primitive->get_indices().size() * sizeof(uint32_t));
 				vertex_data += cmd->primitive->get_vertices().size() * sizeof(Vertex);
-
-				for(const auto& index : cmd->primitive->get_indices())
-				{
-					size_t idx = current_vertex_idx + index;
-					memcpy(index_data, &idx, sizeof(uint32_t));
-					index_data += sizeof(uint32_t);
-				}
-
+				index_data += cmd->primitive->get_indices().size() * sizeof(uint32_t);
 				current_vertex_idx += cmd->primitive->get_vertices().size();
 			}
 

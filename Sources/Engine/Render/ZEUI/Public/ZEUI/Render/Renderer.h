@@ -60,8 +60,9 @@ public:
 	void add(Args&&... args)
 	{
 		commands.emplace_back(new PrimitiveType, std::forward<Args>(args)...);
-		renderer.add_geometry_count(commands.back().primitive->get_geometry(commands.back()).first.size(), 
-			commands.back().primitive->get_geometry(commands.back()).second.size());
+		commands.back().primitive->build(commands.back());
+		renderer.add_geometry_count(commands.back().primitive->get_vertices().size(),
+			commands.back().primitive->get_indices().size());
 	}	
 
 	template<typename... Args>
@@ -115,8 +116,8 @@ public:
 			}
 
 			batch->commands.emplace_back(&command);
-			batch->vertex_count += first.primitive->get_vertices().size();
-			batch->index_count += first.primitive->get_indices().size();
+			batch->vertex_count += command.primitive->get_vertices().size();
+			batch->index_count += command.primitive->get_indices().size();
 		}
 	}
 
