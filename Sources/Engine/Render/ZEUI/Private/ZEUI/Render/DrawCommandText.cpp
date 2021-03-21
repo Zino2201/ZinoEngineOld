@@ -42,7 +42,7 @@ maths::Vector2f DrawCommandPrimitiveText::measure(hb_buffer_t* text, const FontI
 		float offset_y = (-(glyph.bounds.b * 2) * scale) + y_offset;
 	
 		size.x += (w / 2) + (glyph.advance * scale);
-		size.y = std::max(size.y, h + offset_y);
+		size.y = std::max(size.y, h - offset_y);
 	}
 
 	return size;
@@ -53,7 +53,7 @@ void DrawCommandPrimitiveText::build(const DrawCommand& command)
 	effect = { gfx::effect_get_by_name("ZEUIDistanceFieldText"), {} };
 	bindings = 
 	{ 
-		Binding(gfx::DescriptorType::Sampler, 1, 0, gfx::NearestSampler::get()), 
+		Binding(gfx::DescriptorType::Sampler, 1, 0, gfx::LinearSampler::get()), 
 		Binding(gfx::DescriptorType::SampledTexture, 1, 1, font.font->get_texture_view()), 
 		Binding(gfx::DescriptorType::UniformBuffer, 1, 2, font_data), 
 	};

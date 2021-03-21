@@ -62,6 +62,16 @@ struct DeviceResourceHandle
 		return handle;
 	}
 
+	ZE_FORCEINLINE bool operator==(const DeviceResourceHandle& other) const
+	{
+		return handle == other.handle;
+	}
+
+	ZE_FORCEINLINE bool operator!=(const DeviceResourceHandle& other) const
+	{
+		return handle != other.handle;
+	}
+
 	ZE_FORCEINLINE uint64_t get_index() const
 	{
 		return handle >> 54;
