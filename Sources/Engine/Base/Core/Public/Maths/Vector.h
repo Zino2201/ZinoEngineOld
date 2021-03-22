@@ -420,6 +420,12 @@ ZE_FORCEINLINE Vector4<T> operator*(const Vector4<T>& a, const T& b)
 
 namespace std
 {
+	template<typename T>
+	ze::maths::Vector2<T> max(const ze::maths::Vector2<T>& a, const ze::maths::Vector2<T>& b)
+	{
+		return a.x + a.y > b.x + b.y ? a : b; 
+	}
+
 	template<typename T> 
 	struct hash<ze::maths::Vector2<T>>
 	{

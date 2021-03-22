@@ -14,17 +14,17 @@ namespace ze::ui
 class ZEUI_API CompositeWidget : public Widget
 {
 public:
-	CompositeWidget() : content_(this), child_fill_parent(false) {}
+	CompositeWidget() : content_(this) {}
 
 	ZE_FORCEINLINE SimpleItem& content() { return content_; }
 
-	void compute_desired_size(const maths::Vector2f& in_available_size) override;
+	void compute_desired_size(maths::Vector2f in_available_size) override;
 	void arrange_children() override;
 	void paint(Renderer& renderer, DrawContext& context) override;
-private:
-	SimpleItem content_;
+
+	SimpleItem* item() { return &content_; }
 protected:
-	bool child_fill_parent;
+	SimpleItem content_;
 };
 
 }

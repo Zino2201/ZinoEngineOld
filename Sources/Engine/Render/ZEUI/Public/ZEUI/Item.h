@@ -6,6 +6,28 @@
 namespace ze::ui
 {
 
+enum class HorizontalAlignMode
+{
+	Left,
+	Center,
+	Right,
+};
+
+enum class VerticalAlignMode
+{
+	Top,
+	Center,
+	Bottom
+};
+
+enum class SizeMode
+{
+	Auto,
+
+	/** Fill parent */
+	Fill
+};
+
 /*
  * A item contained in a Container widget
  * This wraps a widget and allow additional per-child information
@@ -53,8 +75,12 @@ protected:
 	ItemType& this_;
 };
 
-struct ZEUI_API SimpleItem : public Item<SimpleItem>
+/**
+ * A simple item with horizontal/vertical alignement
+ */
+class ZEUI_API SimpleItem : public Item<SimpleItem>
 {
+public:
 	SimpleItem() {}
 	SimpleItem(Widget* in_owner) : Item(in_owner) {}
 
@@ -66,6 +92,15 @@ struct ZEUI_API SimpleItem : public Item<SimpleItem>
 		widget->set_parent(owner);
 		widget->construct();
 	}
+
+	SimpleItem* horizontal_align(HorizontalAlignMode in_align_mode) { horizontal_align_mode = in_align_mode; return this; }
+	SimpleItem* size_mode(SizeMode in_size_mode) { size_mode_ = in_size_mode; return this; }
+
+	ZE_FORCEINLINE HorizontalAlignMode get_horizontal_align_mode() const { return horizontal_align_mode; }
+	ZE_FORCEINLINE SizeMode get_size_mode() const { return size_mode_; }
+private:
+	HorizontalAlignMode horizontal_align_mode;
+	SizeMode size_mode_;
 };
 
 template<typename T, typename... Args>

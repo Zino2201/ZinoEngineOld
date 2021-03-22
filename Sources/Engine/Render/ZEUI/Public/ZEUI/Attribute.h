@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include "Delegates/Delegate.h"
+#include <variant>
 
 namespace ze::ui
 {
@@ -32,6 +33,7 @@ class Attribute
 		}
 	};
 public:
+	Attribute() : getter(ConstantGetter()) {}
 	Attribute(const T& in_value) { set(in_value); }
 
 	void set(const T& in_value)

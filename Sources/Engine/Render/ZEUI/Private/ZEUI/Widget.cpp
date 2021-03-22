@@ -3,7 +3,14 @@
 namespace ze::ui
 {
 
-Widget::Widget() : size_changed(true), children_arrangement_changed(true) {} 
+Widget::Widget() : parent(nullptr), size_changed(true), children_arrangement_changed(true) {} 
+
+void Widget::notify_size_changed()
+{
+	size_changed = true;
+	if(parent)
+		parent->notify_size_changed();
+}
 
 void Widget::construct()
 {
@@ -14,7 +21,7 @@ void Widget::paint(Renderer& renderer, DrawContext& context)
 {
 	if(size_changed)
 	{
-		compute_desired_size(maths::Vector2f());
+		compute_desired_size(desired_size);
 	}
 
 	if(children_arrangement_changed || size_changed)

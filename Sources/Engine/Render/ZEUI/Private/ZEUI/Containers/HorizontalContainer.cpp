@@ -6,15 +6,13 @@
 namespace ze::ui
 {
 
-void HorizontalContainer::compute_desired_size(const maths::Vector2f& available_size)
+void HorizontalContainer::compute_desired_size(maths::Vector2f available_size)
 {
 	desired_size = maths::Vector2f(0.f);
-	maths::Vector2f available_container_container = available_size;
-
 	for(const auto& child : items)
 	{
-		child->get().compute_desired_size(available_container_container);
-		available_container_container -= child->get().get_desired_size();
+		child->get().compute_desired_size(available_size);
+		available_size -= child->get().get_desired_size();
 
 		desired_size.x += child->get().get_desired_size().x;
 		desired_size.y = std::max(desired_size.y, child->get().get_desired_size().y);

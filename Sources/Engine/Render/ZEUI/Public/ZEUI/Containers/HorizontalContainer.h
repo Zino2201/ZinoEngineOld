@@ -21,7 +21,7 @@ class HorizontalContainer : public Container
 public:
 	using Item = HorizontalContainerItem;
 
-	void compute_desired_size(const maths::Vector2f& available_size) override;
+	void compute_desired_size(maths::Vector2f available_size) override;
 	void arrange_children() override;
 };
 

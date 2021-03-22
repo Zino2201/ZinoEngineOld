@@ -4,15 +4,14 @@
 namespace ze::ui
 {
 
-void VerticalContainer::compute_desired_size(const maths::Vector2f& available_size)
+void VerticalContainer::compute_desired_size(maths::Vector2f available_size)
 {
 	desired_size = maths::Vector2f(0.f);
-	maths::Vector2f available_container_container = available_size;
 
 	for(const auto& child : items)
 	{
-		child->get().compute_desired_size(available_container_container);
-		available_container_container -= child->get().get_desired_size();
+		child->get().compute_desired_size(available_size);
+		available_size -= child->get().get_desired_size();
 
 		desired_size.x = std::max(desired_size.x, child->get().get_desired_size().x);
 		desired_size.y += child->get().get_desired_size().y;
@@ -28,6 +27,15 @@ void VerticalContainer::arrange_children()
 		VerticalContainerItem& item = *static_cast<VerticalContainerItem*>(child.get());
 
 		WidgetRect rect(current_pos, arranged_rect.absolute_position + current_pos, child->get().get_desired_size());
+		switch (item.halign_mode_.get())
+		{
+		case HorizontalAlignMode::Center:
+			rect.absolute_position.x = (arranged_rect.size.x / 2) - (rect.size.x / 2);
+			break;
+		case HorizontalAlignMode::Right:
+			rect.absolute_position.x = arranged_rect.size.x - rect.size.x;
+			break;
+		}
 
 		/** Apply padding */
 		rect.absolute_position.x += item.padding_.left;

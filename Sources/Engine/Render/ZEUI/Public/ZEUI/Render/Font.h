@@ -7,6 +7,13 @@
 namespace ze::ui
 {
 
+enum class TextAlignMode
+{
+	Left,
+	Center,
+	Right
+};
+
 /**
  * A TypeFace is a collection of fonts
  * E.g: Roboto is a TypeFace that contains Bold, Italic, ... fonts

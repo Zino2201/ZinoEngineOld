@@ -37,7 +37,7 @@ public:
 	/**
 	 * Compute the desired widget size
 	 */
-	virtual void compute_desired_size(const maths::Vector2f& available_size) = 0;
+	virtual void compute_desired_size(maths::Vector2f available_size) = 0;
 
 	/**
 	 * Arrange children widgets
@@ -51,6 +51,8 @@ public:
 
 	ZE_FORCEINLINE const maths::Vector2f& get_desired_size() const { return desired_size; }
 	ZE_FORCEINLINE const WidgetRect& get_arranged_rect() const { return arranged_rect; }
+protected:
+	void notify_size_changed();
 protected:
 	Widget* parent;
 	maths::Vector2f desired_size;

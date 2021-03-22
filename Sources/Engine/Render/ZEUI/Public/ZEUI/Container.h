@@ -29,7 +29,7 @@ public:
 	void operator=(const Container&) = delete;
 
 	void add(ContainerItem* in_item);
-	void compute_desired_size(const maths::Vector2f& available_size) override;
+	void compute_desired_size(maths::Vector2f available_size) override;
 	void paint(Renderer& renderer, DrawContext& context) override;
 protected:
 	std::vector<std::unique_ptr<ContainerItem>> items;

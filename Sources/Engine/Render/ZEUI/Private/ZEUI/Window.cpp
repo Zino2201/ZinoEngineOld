@@ -40,15 +40,28 @@ Window::Window(const uint32_t in_width,
 	SDL_GetWindowSize(handle, &w, &h);
 	width = w;
 	height = h;
-
-	desired_size = { w, h };
-	child_fill_parent = true;
 }
 
 Window::~Window()
 {
 	ZE_CHECK(handle);
 	SDL_DestroyWindow(handle);
+}
+
+void Window::compute_desired_size(maths::Vector2f in_available_size)
+{
+	content_.get().compute_desired_size(in_available_size);
+
+	desired_size = { width, height };
+}
+
+void Window::arrange_children()
+{
+	if(content_.is_valid())
+	{
+		content_.get().set_arranged_rect(WidgetRect(maths::Vector2f(), arranged_rect.absolute_position, 
+			desired_size));
+	}
 }
 
 void Window::paint_window(Renderer& renderer)

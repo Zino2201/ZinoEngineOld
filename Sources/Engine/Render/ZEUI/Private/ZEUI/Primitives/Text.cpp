@@ -16,16 +16,16 @@ void Text::construct()
 	cache_layout();
 }
 
-void Text::compute_desired_size(const maths::Vector2f& available_size)
+void Text::compute_desired_size(maths::Vector2f available_size)
 {
-	desired_size = DrawCommandPrimitiveText::measure(cached_buffer, font_);
+	desired_size = DrawCommandPrimitiveText::measure(align_mode_.get(), cached_buffer, font_);
 }
 
 void Text::paint(Renderer& renderer, DrawContext& context)
 {
 	Widget::paint(renderer, context);
 
-	context.add(new DrawCommandPrimitiveText(font_, cached_buffer, text_.get().size(), 
+	context.add(new DrawCommandPrimitiveText(font_, cached_buffer, text_.get().size(), align_mode_.get(),
 		font_data), arranged_rect.absolute_position, arranged_rect.size);
 }
 
@@ -45,6 +45,8 @@ void Text::cache_layout()
 	hb_buffer_set_language(cached_buffer, hb_language_from_string("en", -1));
 	hb_buffer_guess_segment_properties(cached_buffer);
 	hb_shape(hb_font, cached_buffer, nullptr, 0);
+
+	notify_size_changed();
 }
 
 void Text::update_font()

@@ -40,7 +40,9 @@ public:
 	ZE_FORCEINLINE const uint32_t get_y() const { return y; }
 	ZE_FORCEINLINE const std::string& get_title() const { return title; }
 	ZE_FORCEINLINE SDL_Window* get_handle() const { return handle; }
-
+	
+	void compute_desired_size(maths::Vector2f in_available_size) override;
+	void arrange_children() override;
 	void paint_window(Renderer& renderer);
 private:
 	uint32_t width;
