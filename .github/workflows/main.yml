@@ -40,6 +40,7 @@ jobs:
         vcpkg install sdl2[*]:x64-windows
         vcpkg install harfbuzz[core]:x64-windows
         vcpkg install freetype[*]:x64-windows
+        vcpkg install qt5-base:x64-windows
       shell: cmd
 
     - run: | 
@@ -79,6 +80,7 @@ jobs:
         vcpkg install sdl2[*]:x64-windows
         vcpkg install harfbuzz[core]:x64-windows
         vcpkg install freetype[*]:x64-windows
+        vcpkg install qt5-base:x64-windows
       shell: cmd
 
     - run: | 
@@ -117,6 +119,7 @@ jobs:
         vcpkg install sdl2[*]:x64-windows
         vcpkg install harfbuzz[core]:x64-windows
         vcpkg install freetype[*]:x64-windows
+        vcpkg install qt5-base:x64-windows
       shell: cmd
 
     - run: |
@@ -178,6 +181,7 @@ jobs:
         vcpkg install sdl2[*]:x64-windows
         vcpkg install harfbuzz[core]:x64-windows
         vcpkg install freetype[*]:x64-windows
+        vcpkg install qt5-base:x64-windows
       shell: cmd
 
     - run: |
