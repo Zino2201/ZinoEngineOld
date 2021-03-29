@@ -4,7 +4,7 @@
 namespace ze::editor
 {
 
-void EntityList::construct()
+void ZEUIEntityList::construct()
 {
 	using namespace ui;
 

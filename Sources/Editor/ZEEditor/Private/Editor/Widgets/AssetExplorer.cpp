@@ -10,29 +10,13 @@
 namespace ze::editor
 {
 
-AssetExplorer::AssetExplorer() : asset_list(nullptr)
+ZEUIAssetExplorer::ZEUIAssetExplorer() : asset_list(nullptr)
 {
 }
 
-void AssetExplorer::construct()
+void ZEUIAssetExplorer::construct()
 {
 	using namespace ui;
-
-	auto fd = filesystem::read_file_to_vector("Assets/Fonts/Roboto-Thin.ttf", true);
-	auto sdf = generate_msdf_texture_from_font(fd, 16);
-
-	std::vector<Font::Glyph> glyphs;
-	glyphs.reserve(sdf.glyphs.size());
-	for(const auto& glyph : sdf.glyphs)
-		glyphs.emplace_back(glyph.character, 
-			glyph.advance, 
-			Font::Glyph::Bounds { glyph.bounds.l, glyph.bounds.b, glyph.bounds.r, glyph.bounds.t }, 
-			glyph.atlas_rect);
-	test = std::make_unique<Font>(fd, sdf.width, sdf.height, sdf.raw_data, 2.0,
-		glyphs,
-		sdf.em_size,
-		sdf.space_advance,
-		sdf.tab_advance);
 
 	title("Asset Explorer");
 
@@ -47,7 +31,7 @@ void AssetExplorer::construct()
 			->content()
 			[
 				make_widget<Box>()
-				->brush(Brush::make_color(maths::Color(1, 0, 0)))
+				->brush(Brush::make_color(maths::Color::from_hex(0x34495e)))
 				->content()
 				[
 					make_widget<Text>()

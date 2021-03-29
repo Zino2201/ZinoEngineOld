@@ -8,10 +8,10 @@ void CompositeWidget::compute_desired_size(maths::Vector2f in_available_size)
 	if(content_.is_valid())
 	{
 		content_.get().compute_desired_size(in_available_size);
-		if(content_.get_size_mode() != SizeMode::Fill)
-			desired_size = content_.get().get_desired_size();
+		if(content_.get_size_mode() == SizeMode::Fill)
+			desired_size = in_available_size;
 		else
-			desired_size = parent->get_desired_size();
+			desired_size = content_.get().get_desired_size();
 	}
 }
 

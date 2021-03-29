@@ -5,7 +5,7 @@
 namespace ze::editor
 {
 
-class EntityProperties : public ui::DockableTab
+class ZEUIEntityProperties : public ui::DockableTab
 {
 public:
 	void construct() override;

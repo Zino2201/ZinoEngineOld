@@ -5,7 +5,7 @@
 namespace ze::editor
 {
 
-class EntityList : public ui::DockableTab
+class ZEUIEntityList : public ui::DockableTab
 {
 public:
 	void construct() override;

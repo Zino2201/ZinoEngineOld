@@ -4,7 +4,7 @@
 namespace ze::editor
 {
 
-void EntityProperties::construct()
+void ZEUIEntityProperties::construct()
 {
 	using namespace ui;
 

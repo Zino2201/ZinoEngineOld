@@ -26,3 +26,6 @@
 [submodule "Sources/Libs/msdf-atlas-gen"]
 	path = Sources/Libs/msdf-atlas-gen
 	url = https://github.com/Chlumsky/msdf-atlas-gen.git
+[submodule "Sources/Libs/Qt-Advanced-Docking-System"]
+	path = Sources/Libs/Qt-Advanced-Docking-System
+	url = https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System.git

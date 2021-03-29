@@ -26,6 +26,7 @@
 #include "Editor/ArithmeticPropertyEditors.h"
 #include "Editor/VectorPropertyEditor.h"
 #include "Editor/Widgets/MapTabWidget.h"
+#include "Editor/Widgets/ConvarViewer.h"
 #include "Maths/Matrix.h"
 #include "Maths/Matrix/Transformations.h"
 #include "Editor/Assets/AssetActions.h"
@@ -37,26 +38,50 @@
 #include "ZEUI/Primitives/Text.h"
 #include "ZEUI/Primitives/DockSpace.h"
 #include "ZEUI/Primitives/DockableTab.h"
+#include "ZEUI/Primitives/Box.h"
 #include "ZEUI/Primitives/DockTabBar.h"
+#include "ZEUI/Containers/VerticalContainer.h"
 #include "Editor/Widgets/MapEditorTab.h"
 #include "Editor/Widgets/AssetExplorer.h"
+#include "ZEFS/Utils.h"
+#include "SDFFontGen.h"
+#include "ZEUI/Primitives/Text.h"
+#include "ZEUI/Containers/Docking.h"
+#include <QApplication>
+#include <QFile>
+#include <QTextStream>
+#include <QFontDatabase>
+#include <QFileInfo>
+#include <QLabel>
+#include <QDateTime>
+#include <QProxyStyle>
+#include "Editor/MainWindow.h"
+#include "Editor/Windows/AssetExplorer.h"
+#include "Editor/Windows/EntityProperties.h"
+#include "Editor/Windows/EntityList.h"
+#include "Editor/Windows/Viewport.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);
 
 namespace ze::editor
 {
 
-int event_filter(void* pthis, const SDL_Event *event)
+class ZEProxyStyle : public QProxyStyle
 {
-    if (event->type == SDL_WINDOWEVENT &&
-        event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-    {
-        EditorApp* app = (EditorApp*) pthis;
-		app->process_event(*event, 0);
-    }
+public:
+	using QProxyStyle::QProxyStyle;
 
-    return 1;
-}
+	int styleHint(StyleHint hint, const QStyleOption* option, 
+		const QWidget* widget, QStyleHintReturn* returnData) const override
+    {
+        if (hint == QStyle::SH_ToolTip_WakeUpDelay)
+        {
+            return 0;
+        }
+
+        return QProxyStyle::styleHint(hint, option, widget, returnData);
+    }
+};
 
 EditorApp* app = nullptr;
 
@@ -69,115 +94,34 @@ EditorApp::EditorApp() : EngineApp()
 {
 	app = this;
 
-	window = make_widget_unique<ui::Window>(1280, 720, "ZinoEngine Editor (ZEUI)", 0, 0, 
-		ui::WindowFlagBits::Centered | ui::WindowFlagBits::Resizable | ui::WindowFlagBits::Maximized);
-	
-	swapchain = gfx::Device::get().create_swapchain(
-		ze::gfx::SwapChainCreateInfo(
-			window->get_handle(),
-			window->get_width(),
-			window->get_height())).second;
-	if(!swapchain)
-		ze::logger::fatal("Failed to create swapchain");
+	assetdatabase::scan("Assets", assetdatabase::AssetScanMode::Sync);
 
+	int argc = 0;
+	char* argv = nullptr;
+	qt_app = std::make_unique<QApplication>(argc, &argv);
+	qt_app->setStyle(new ZEProxyStyle(qt_app->style()));
 
-	/** Initialize ImGui */
-	ImGui::CreateContext();
-	ImGui_ImplSDL2_InitForVulkan(reinterpret_cast<SDL_Window*>(window->get_handle()));
+	QFontDatabase::addApplicationFont(":Fonts/Roboto-Bold.ttf");
 
-	ImGuiIO& io = ImGui::GetIO();
-	ImGui::StyleColorsDark();
-	/** Default ZE editor style */
+	QFile f(":Style.qss");
+	if (f.exists())   
 	{
-		ImGuiStyle& style = ImGui::GetStyle();
-		style.WindowRounding = 2.f;
-		style.TabRounding = 2.f;
+		f.open(QFile::ReadOnly | QFile::Text);
+		QTextStream ts(&f);
+		qt_app->setStyleSheet(ts.readAll());
 	}
 
-	io.DisplaySize = ImVec2(static_cast<float>(window->get_width()), static_cast<float>(window->get_height()));
-	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
-	io.WantCaptureKeyboard = true;
-	io.WantCaptureMouse = true;
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
-	font = io.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 18.f);
-	ze::ui::imgui::initialize();
-	ImGui::SetCurrentFont(font);
-	ImGui::NewFrame();
-	ImGui::Render();
-
-	ui_renderer = std::make_unique<ui::Renderer>();
-
-	{
-		using namespace ui;
-
-		window->content()
-		[
-			make_widget<AssetExplorer>()
-			/*make_widget<DockTabBar>()
-			+ make_item<DockTabBar>()
-			->content()
-			[
-				make_widget<MapEditorTab>()
-			]
-			+ make_item<DockTabBar>()
-			->content()
-			[
-				make_widget<AssetExplorer>()
-			]*/
-		];
-	}
-
-	SDL_SetEventFilter((SDL_EventFilter) &event_filter, this);
-
-	initialize_asset_factory_mgr();
-	initialize_asset_actions_mgr();
-	
-	assetutils::get_on_asset_imported().bind(std::bind(&EditorApp::on_asset_imported,
-		this, std::placeholders::_1, std::placeholders::_2));
-
-	/** Scan Assets directory */
-	assetdatabase::scan("Assets", assetdatabase::AssetScanMode::Async);
-
-	world = std::make_unique<World>();
-
-	size_t c = 147;
-	size_t x = 0;
-	size_t y = 0;
-	for(size_t i = 0; i < c; ++i)
-	{
-		x++;
-
-		if(x > c / 3)
-		{
-			x = 0;
-			y += 1;
-		}
-
-		Entity ent = world->spawn_entity();
-		TransformComponent& data = world->add_component<TransformComponent>(ent);
-		data.position.x = x - 0.5;
-		data.position.y = y;
-	}
-
-	map_tab_widget = std::make_unique<CMapTabWidget>(*world.get());
-
-	/*** type editors */
-	register_property_editor(reflection::Type::get<bool>(), new BoolPropertyEditor);
-	register_property_editor(reflection::Type::get<uint32_t>(), new Uint32PropertyEditor);
-	register_property_editor(reflection::Type::get<float>(), new FloatPropertyEditor);
-	register_property_editor(reflection::Type::get<maths::Vector3f>(), new Vector3fPropertyEditor);
-	register_property_editor(reflection::Type::get<maths::Vector3d>(), new Vector3dPropertyEditor);
+	main_window = std::make_unique<MainWindow>();
+	main_window->showMaximized();
+	main_window->add_window(new AssetExplorer);
+	main_window->add_window(new EntityProperties);
+	main_window->add_window(new EntityList);
+	main_window->add_window(new Viewport);
 }
 
 EditorApp::~EditorApp()
 {
 	gfx::Device::get().wait_gpu_idle();
-	assetmanager::unload_all();
-	destroy_asset_actions_mgr();
-	destroy_asset_factory_mgr();
-	ze::ui::imgui::destroy();
-	ImGui::DestroyContext();
 }
 
 void EditorApp::add_tab(OwnerPtr<Tab> in_tab)
@@ -188,107 +132,31 @@ void EditorApp::add_tab(OwnerPtr<Tab> in_tab)
 void EditorApp::process_event(const SDL_Event& in_event, const float in_delta_time)
 {
 	EngineApp::process_event(in_event, in_delta_time);
-
-	ImGuiIO& io = ImGui::GetIO();
-
-	if(in_event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-	{
-		gfx::Device::get().wait_gpu_idle();
-
-		gfx::Device::get().resize_swapchain(*swapchain,
-			in_event.window.data1, in_event.window.data2);
-
-		io.DisplaySize = ImVec2(in_event.window.data1, in_event.window.data2);
-		window->set_width(in_event.window.data1);
-		window->set_height(in_event.window.data2);
-	}
-
-	ImGui_ImplSDL2_ProcessEvent(&in_event);
-	map_tab_widget->get_map_editor().process_event(in_event, in_delta_time);
 }
 
 void EditorApp::post_tick(const float in_delta_time)
 {
-    notifications_update(in_delta_time);
+	qt_app->processEvents();
 
-#if 0
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(static_cast<float>(main_window.get_width()), static_cast<float>(main_window.get_height())),
-		ImGuiCond_Always);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-	if (ImGui::Begin("MainEditorWindow", nullptr, ImGuiWindowFlags_NoDocking
-		| ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove
-		| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoResize))
+#if ZE_DEBUG
+	QFile f("C:\\Projects\\ZinoEngine\\Sources\\Editor\\ZEEditor\\Assets\\Style.qss");
+	static QDateTime last_write_time;
+	QFileInfo info(f);
+
+	if (f.exists() && info.lastModified() != last_write_time)   
 	{
-		ImGui::PopStyleVar(3);
-		ImGui::ShowDemoWindow();
-
-		/** Notifications */
-        const float width = 340;
-        const float height = 80;
-        const float offset_x = 50;
-        const float offset_y = 15;
-        float win_offset_y = height + offset_y;
-        for(const auto& notification : notifications_get())
-        {
-            ImGuiIO& io = ImGui::GetIO();
-
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5.0f, 0.0f));
-            ImGui::SetNextWindowSize(ImVec2(width, height));
-            ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - (width + offset_x), io.DisplaySize.y - win_offset_y));
-            ImGui::Begin(notification.message.c_str(), nullptr, ImGuiWindowFlags_NoDecoration |
-                ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
-            ImGui::SetCursorPosY((height / 2) - (ImGui::CalcTextSize(notification.message.c_str(), nullptr, false, width).y) / 2);
-            ImGui::TextWrapped("%s", notification.message.c_str());
-            win_offset_y += ImGui::GetWindowSize().y + offset_y;
-            ImGui::End();
-            ImGui::PopStyleVar(1);
-        }
-
-		if (ImGui::BeginTabBar("MainTabBar", ImGuiTabBarFlags_TabListPopupButton
-			| ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_AutoSelectNewTabs))
-		{
-			ImGui::SameLine(ImGui::GetColumnWidth() - 500);
-			ImGui::Text("ZinoEngine v%d.%d.%d | FPS: %d | MS: %.2f | %s",
-				get_version().major, 
-				get_version().minor,
-				get_version().patch,
-				static_cast<int32_t>(1.0 / in_delta_time), 
-				in_delta_time * 1000.0,
-				ZE_CONFIGURATION_NAME);
-			draw_main_tab();
-
-			size_t tab_to_remove = -1;
-
-			size_t i = 0;
-			for(const auto& tab : tabs)
-			{
-				bool open = true;
-				bool draw = ImGui::BeginTabItem(tab->get_name().c_str(), &open);
-				if(!open)
-					tab_to_remove = i;
-				i++;
-				if(draw)
-				{
-					tab->draw();
-					ImGui::EndTabItem();
-				}
-			}
-
-			if(tab_to_remove != -1)
-			{
-				tabs.erase(tabs.begin() + tab_to_remove);
-			}
-
-			ImGui::EndTabBar();
-		}
+		f.open(QFile::ReadOnly | QFile::Text);
+		QTextStream ts(&f);
+		qt_app->setStyleSheet(ts.readAll());
 	}
-	ImGui::End();
 
+	last_write_time = info.lastModified();
 #endif
 
+	main_window->get_perf_text()->setText(QString::asprintf("FPS: %i (%.2f ms)",
+		(int) (1.f / in_delta_time), in_delta_time * 1000.f));
+
+#if 0
 	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(window->get_handle()));
 	ImGui::NewFrame();
 	ImGui::ShowDemoWindow();
@@ -296,7 +164,6 @@ void EditorApp::post_tick(const float in_delta_time)
 	using namespace gfx;
 
 	Device::get().new_frame();
-	ui_renderer->new_frame();
 
 	int w = 0, h = 0;
 	SDL_GetWindowSize(reinterpret_cast<SDL_Window*>(window->get_handle()), &w, &h);
@@ -340,8 +207,6 @@ void EditorApp::post_tick(const float in_delta_time)
 		list->set_viewport(gfx::Viewport(0, 0, w, h));
 		list->set_scissor(maths::Rect2D({ 0, 0 }, { w, h }));
 
-		ui_renderer->render(*window.get(), list);
-
 		ImGui::Render();
 		ze::ui::imgui::update();
 		ze::ui::imgui::draw(list);
@@ -352,6 +217,7 @@ void EditorApp::post_tick(const float in_delta_time)
 
 	Device::get().end_frame();
 	Device::get().present(*swapchain);
+#endif
 }
 
 bool EditorApp::has_tab(std::string in_name)

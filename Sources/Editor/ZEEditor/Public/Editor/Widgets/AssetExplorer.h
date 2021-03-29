@@ -15,10 +15,10 @@ class ScrollableContainer;
 namespace ze::editor
 {
 
-class AssetExplorer : public ui::DockableTab
+class ZEUIAssetExplorer : public ui::DockableTab
 {
 public:
-	AssetExplorer();
+	ZEUIAssetExplorer();
 
 	void construct() override;
 private:

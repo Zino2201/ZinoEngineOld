@@ -50,7 +50,7 @@ Window::~Window()
 
 void Window::compute_desired_size(maths::Vector2f in_available_size)
 {
-	content_.get().compute_desired_size(in_available_size);
+	content_.get().compute_desired_size({ width, height });
 
 	desired_size = { width, height };
 }

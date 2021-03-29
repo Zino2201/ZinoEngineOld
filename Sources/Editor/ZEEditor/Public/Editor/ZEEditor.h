@@ -8,9 +8,14 @@
 #include "ZEUI/Render/Renderer.h"
 
 namespace ze { class Viewport; class World; }
-namespace ze::ui { class Text; }
+namespace ze::ui 
+{ 
+class Text; 
+class DockManager;
+}
 
 struct ImFont;
+class QApplication;
 
 namespace ze::editor
 {
@@ -18,6 +23,7 @@ namespace ze::editor
 class CMapTabWidget;
 class Tab;
 class MapEditorTab;
+class MainWindow;
 
 class ZEEDITOR_API EditorApp final : public EngineApp
 {
@@ -49,9 +55,8 @@ private:
 	std::unique_ptr<CMapTabWidget> map_tab_widget;
 	std::vector<std::unique_ptr<Tab>> tabs;
 	std::unique_ptr<ui::Window> window;
-	std::unique_ptr<MapEditorTab> map_editor_tab;
-	std::unique_ptr<ui::Renderer> ui_renderer;
-	ui::Text* text;
+	std::unique_ptr<QApplication> qt_app;
+	std::unique_ptr<MainWindow> main_window;
 };
 
 }

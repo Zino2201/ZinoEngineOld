@@ -3,7 +3,6 @@ find_package(freetype CONFIG REQUIRED)
 set(MSDFGEN_SRCS ${ZE_LIBS_DIR}/msdfgen)
 set(MSDF_ATLAS_SRCS ${ZE_LIBS_DIR}/msdf-atlas-gen)
 
-
 ze_create_module(SDFFontGen 
     Public/SDFFontGen.h
     Private/SDFFontGen.cpp

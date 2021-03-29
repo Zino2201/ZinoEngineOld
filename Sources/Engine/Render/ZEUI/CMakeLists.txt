@@ -19,6 +19,7 @@ ze_create_module(ZEUI
 	Public/ZEUI/Containers/HorizontalContainer.h
 	Public/ZEUI/Containers/VerticalContainer.h
 	Public/ZEUI/Containers/ScrollableContainer.h
+	Public/ZEUI/Containers/Docking.h
 	Public/ZEUI/Render/DrawCommand.h
 	Public/ZEUI/Render/DrawCommandRect.h
 	Public/ZEUI/Render/DrawCommandText.h
@@ -33,6 +34,8 @@ ze_create_module(ZEUI
 	Private/ZEUI/Containers/VerticalContainer.cpp
 	Private/ZEUI/Containers/HorizontalContainer.cpp
 	Private/ZEUI/Containers/ScrollableContainer.cpp
+	Private/ZEUI/Containers/DockTab.cpp
+	Private/ZEUI/Containers/DockManager.cpp
 	Private/ZEUI/Render/DrawCommand.cpp
 	Private/ZEUI/Render/DrawCommandRect.cpp
 	Private/ZEUI/Render/DrawCommandText.cpp

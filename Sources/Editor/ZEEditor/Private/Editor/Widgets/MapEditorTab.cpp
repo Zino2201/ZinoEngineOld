@@ -19,12 +19,12 @@ void MapEditorTab::construct()
 		+ make_item<DockSpace>()
 		->content()
 		[
-			make_widget<EntityList>()
+			make_widget<ZEUIEntityList>()
 		]
 		+ make_item<DockSpace>()
 		->content()
 		[
-			make_widget<EntityProperties>()
+			make_widget<ZEUIEntityProperties>()
 		]
 	];
 
