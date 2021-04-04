@@ -14,7 +14,7 @@ ze_create_module(ZEEditor
     Private/Editor/Windows/AssetExplorer.cpp
 	Private/Editor/ZEEditor.cpp)
 
-ze_add_public_modules(ZEEditor ZEUI QtAdvancedDockingSystem)
+ze_add_public_modules(ZEEditor ZEUI)
 ze_add_private_modules(ZEEditor
 	Core ShaderCore Engine Reflection ImGui MapEditor AssetDatabase AssetUtils PropertyEditor AssetActions NotificationSystem
     SDFFontGen)
