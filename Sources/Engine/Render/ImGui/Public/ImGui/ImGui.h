@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include "Module/Module.h"
 

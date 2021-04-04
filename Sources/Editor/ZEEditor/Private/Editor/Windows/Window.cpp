@@ -5,7 +5,7 @@ namespace ze::editor
 {
 
 Window::Window(const std::string& in_title, 
-	const WindowFlags& in_flags) : title(in_title), flags(in_flags), imgui_flags(0)
+	const WindowFlags& in_flags, int in_imgui_flags) : title(in_title), flags(in_flags), imgui_flags(in_imgui_flags)
 {
 
 }

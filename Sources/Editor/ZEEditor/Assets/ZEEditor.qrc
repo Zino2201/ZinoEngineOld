@@ -1,9 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>Fonts/Roboto-Regular.ttf</file>
-        <file>Style.qss</file>
-        <file>Fonts/Roboto-Bold.ttf</file>
-        <file>Icons/icons8-folder-64.png</file>
-        <file>Icons/icons8-file-64.png</file>
-    </qresource>
-</RCC>

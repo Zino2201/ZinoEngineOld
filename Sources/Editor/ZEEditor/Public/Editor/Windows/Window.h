@@ -20,7 +20,8 @@ ENABLE_FLAG_ENUMS(WindowFlagBits, WindowFlags);
 class Window
 {
 public:
-	Window(const std::string& in_title, const WindowFlags& in_flags = WindowFlags());
+	Window(const std::string& in_title, const WindowFlags& in_flags = WindowFlags(),
+		int in_imgui_flags = 0);
 
 	/**
 	 * Draw the window and its childs
