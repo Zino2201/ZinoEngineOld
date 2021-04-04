@@ -2,6 +2,7 @@
 #include "Device.h"
 #include "VulkanBackend.h"
 #include <robin_hood.h>
+#include "VulkanUtil.h"
 
 namespace ze::gfx::vulkan
 {
@@ -11,7 +12,10 @@ robin_hood::unordered_set<ResourceHandle> fences;
 robin_hood::unordered_set<ResourceHandle> semaphores;
 #endif
 
-ResourceHandle VulkanBackend::fence_create(const bool in_is_signaled)
+vk::Result last_fence_result;
+vk::Result last_semaphore_result;
+
+std::pair<Result, ResourceHandle> VulkanBackend::fence_create(const bool in_is_signaled)
 {
 	ResourceHandle handle = create_resource<Fence>(*device, in_is_signaled);
 
@@ -19,7 +23,7 @@ ResourceHandle VulkanBackend::fence_create(const bool in_is_signaled)
 	fences.insert(handle);
 #endif
 
-	return handle;
+	return { convert_vk_result(last_fence_result), handle };
 }
 
 void VulkanBackend::fence_destroy(const ResourceHandle& in_handle)
@@ -71,6 +75,8 @@ Fence::Fence(Device& in_device, const bool in_is_signaled) :
 		ze::logger::error("Failed to create fence {}: {}", vk::to_string(result));
 
 	fence = std::move(handle);
+
+	last_fence_result = result;
 }
 
 Fence* Fence::get(const ResourceHandle& in_handle)
@@ -83,7 +89,7 @@ Fence* Fence::get(const ResourceHandle& in_handle)
 	return get_resource<Fence>(in_handle);
 }
 
-ResourceHandle VulkanBackend::semaphore_create()
+std::pair<Result, ResourceHandle> VulkanBackend::semaphore_create()
 {
 	ResourceHandle handle = create_resource<Semaphore>(*device);
 
@@ -91,7 +97,7 @@ ResourceHandle VulkanBackend::semaphore_create()
 	semaphores.insert(handle);
 #endif
 	
-	return handle;
+	return { convert_vk_result(last_semaphore_result), handle };
 }
 
 void VulkanBackend::semaphore_destroy(const ResourceHandle& in_handle)
@@ -111,6 +117,8 @@ Semaphore::Semaphore(Device& in_device) :
 		ze::logger::error("Failed to create semaphore {}: {}", vk::to_string(result));
 
 	semaphore = std::move(handle);
+
+	last_semaphore_result = result;
 }
 
 Semaphore* Semaphore::get(const ResourceHandle& in_handle)

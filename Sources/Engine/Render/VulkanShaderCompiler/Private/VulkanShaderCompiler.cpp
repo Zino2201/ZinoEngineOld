@@ -192,15 +192,15 @@ public:
 	}
 };
 
-class CVulkanShaderCompilerModule : public ze::module::Module
+class VULKANSHADERCOMPILER_API VulkanShaderCompilerModule : public ze::module::Module
 {
 public:
-	CVulkanShaderCompilerModule()
+	VulkanShaderCompilerModule()
 	{
 		sc = register_shader_compiler(ShaderCompilerTarget::VulkanSpirV, new VulkanShaderCompiler(ShaderCompilerTarget::VulkanSpirV));
 	}
 
-	~CVulkanShaderCompilerModule()
+	~VulkanShaderCompilerModule()
 	{
 		unregister_shader_compiler(sc);
 	}
@@ -208,4 +208,4 @@ private:
 	ShaderCompiler* sc;
 };
 
-ZE_DEFINE_MODULE(CVulkanShaderCompilerModule, VulkanShaderCompiler);
+ZE_DEFINE_MODULE(VulkanShaderCompilerModule, VulkanShaderCompiler);

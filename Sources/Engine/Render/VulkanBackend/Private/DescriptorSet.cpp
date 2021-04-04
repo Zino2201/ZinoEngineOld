@@ -127,7 +127,6 @@ void DescriptorSet::update(const uint64_t& in_hash, const std::vector<Descriptor
 
 	device.get_device().updateDescriptorSets(writes, {});
 
-		ze::logger::verbose("updateDescriptorSets! {}", reinterpret_cast<void*>(static_cast<VkDescriptorSet>(set)));
 }
 
 }

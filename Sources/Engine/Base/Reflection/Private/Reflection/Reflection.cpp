@@ -39,6 +39,11 @@ robin_hood::unordered_map<std::string, std::function<void(void*, void*)>>& get_a
 	return archive_map[in_archive];
 }
 
+void free_archive_map()
+{
+	archive_map.clear();
+}
+
 }
 
 }

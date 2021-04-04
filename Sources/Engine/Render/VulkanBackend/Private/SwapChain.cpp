@@ -132,7 +132,7 @@ vk::Result SwapChain::create(const uint32_t in_width,
 	image_views.clear();
 
 	/** Choose swapchain details */
-	vk::SurfaceCapabilitiesKHR capabilities = device.get_physical_device().getSurfaceCapabilitiesKHR(surface).value;
+	auto [sc_result, capabilities] = device.get_physical_device().getSurfaceCapabilitiesKHR(surface);
 
 	format = choose_swapchain_format(device.get_physical_device().getSurfaceFormatsKHR(surface).value);
 	vk::PresentModeKHR present_mode = choose_present_mode(device.get_physical_device().getSurfacePresentModesKHR(surface).value);

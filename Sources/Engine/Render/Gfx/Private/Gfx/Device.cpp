@@ -23,22 +23,26 @@ Swapchain::Swapchain(const SwapChainCreateInfo& in_info, const ResourceHandle& i
 
 Swapchain::~Swapchain()
 {
-	for(const auto& texture : textures)
-		Device::get().textures.remove(texture.get_index());
-	
-	for(const auto& texture_view : texture_views)
-		Device::get().texture_views.remove(texture_view.get_index());
+	/** For some reasons, for-each loops crashes here */
+	for(size_t i = 0; i < textures.size(); ++i)
+		Device::get().textures.remove(textures[i].get_index());
+
+	for(size_t i = 0; i < texture_views.size(); ++i)
+		Device::get().texture_views.remove(texture_views[i].get_index());
+
+	textures.clear();
+	texture_views.clear();
 
 	Backend::get().swapchain_destroy(handle);
 }
 
 void Swapchain::create_texture_handles()
 {
-	for(const auto& texture : textures)
-		Device::get().textures.remove(texture.get_index());
-	
-	for(const auto& texture_view : texture_views)
-		Device::get().texture_views.remove(texture_view.get_index());
+	for (size_t i = 0; i < textures.size(); ++i)
+		Device::get().textures.remove(textures[i].get_index());
+
+	for (size_t i = 0; i < texture_views.size(); ++i)
+		Device::get().texture_views.remove(texture_views[i].get_index());
 
 	textures.clear();
 	texture_views.clear();
@@ -104,6 +108,11 @@ void Device::Frame::free_resources()
 	{
 		Device::get().swapchains.remove(swapchain.get_index());
 	}
+
+	for(const auto& semaphore : expired_semaphores)
+	{
+		Device::get().semaphores.remove(semaphore.get_index());
+	}
 }
 
 Device* device = nullptr;
@@ -133,7 +142,6 @@ void Device::destroy()
 		Backend::get().fence_destroy(frame.gfx_fence);
 		Backend::get().fence_destroy(frame.compute_fence);
 		Backend::get().fence_destroy(frame.transfer_fence);
-		Backend::get().semaphore_destroy(frame.render_finished_semaphore);
 	}
 
 	for(const auto& [ci, handle] : render_passes)
@@ -205,7 +213,7 @@ void Device::end_frame()
 	get_current_frame().command_lists.clear();
 }
 
-void Device::submit(CommandList* list)
+void Device::submit(CommandList* list, const std::vector<DeviceResourceHandle>& in_signal_semaphores)
 {
 	std::vector<CommandList*>* lists = nullptr;
 	switch(list->get_type())
@@ -223,6 +231,9 @@ void Device::submit(CommandList* list)
 
 	list->end();
 	lists->emplace_back(list);
+
+	for(const auto& signal : in_signal_semaphores)
+		get_current_frame().gfx_signal_semaphores.emplace_back(signal);
 }
 
 void Device::wait_gpu_idle()
@@ -255,8 +266,9 @@ void Device::submit_queue(const CommandListType& in_type)
 	case CommandListType::Gfx:
 		lists = &get_current_frame().gfx_lists;
 		fence = get_current_frame().gfx_fence;
-		signal_semaphores.emplace_back(get_current_frame().render_finished_semaphore);
 		get_current_frame().gfx_submitted = true;
+		for(const auto& semaphore : get_current_frame().gfx_signal_semaphores)
+			signal_semaphores.emplace_back(get_semaphore(semaphore)->get_handle());
 		break;
 	case CommandListType::Compute:
 		lists = &get_current_frame().compute_lists;
@@ -277,6 +289,7 @@ void Device::submit_queue(const CommandListType& in_type)
 
 	if(!handles.empty())
 	{
+		// TODO: Support multiple queues
 		ResourceHandle queue = Backend::get().get_gfx_queue();
 		Backend::get().queue_execute(queue,
 			handles,
@@ -449,6 +462,15 @@ std::pair<Result, DeviceResourceHandle> Device::create_swapchain(const gfx::Swap
 	return { result, DeviceResourceHandle::make(swapchains.emplace(in_info, handle), DeviceResourceType::SwapChain) };
 }
 
+std::pair<Result, DeviceResourceHandle> Device::create_semaphore()
+{
+	auto [result, handle] = Backend::get().semaphore_create();
+	if(!handle)
+		return { result, {} };
+
+	return { result, DeviceResourceHandle::make(semaphores.emplace(handle), DeviceResourceType::Semaphore) };
+}
+
 bool Device::acquire_swapchain_texture(const DeviceResourceHandle& in_swapchain)
 {
 	Swapchain* swapchain = get_swapchain(in_swapchain);
@@ -475,10 +497,16 @@ DeviceResourceHandle Device::get_swapchain_backbuffer_texture_view(const DeviceR
 	return swapchain->get_current_texture_view();
 }
 
-void Device::present(const DeviceResourceHandle& in_swapchain)
+void Device::present(const DeviceResourceHandle& in_swapchain, const std::vector<DeviceResourceHandle>& in_wait_semaphores)
 {
 	Swapchain* swapchain = get_swapchain(in_swapchain);
-	Backend::get().swapchain_present(swapchain->get_handle(), { get_current_frame().render_finished_semaphore });
+
+	std::vector<ResourceHandle> handles;
+	handles.reserve(in_wait_semaphores.size());
+	for(const auto& semaphore : in_wait_semaphores)
+		handles.emplace_back(get_semaphore(semaphore)->get_handle());
+
+	Backend::get().swapchain_present(swapchain->get_handle(), handles);
 }
 
 /** Cmd */
@@ -561,6 +589,11 @@ void Device::destroy_swapchain(const DeviceResourceHandle& in_handle)
 	get_current_frame().expired_swapchains.emplace_back(in_handle);
 }
 
+void Device::destroy_semaphore(const DeviceResourceHandle& in_handle)
+{
+	get_current_frame().expired_semaphores.emplace_back(in_handle);
+}
+
 /** Useful getters */
 ResourceHandle Device::get_backend_texture(const DeviceResourceHandle& in_texture) const
 {
@@ -627,6 +660,13 @@ Shader* Device::get_shader(const DeviceResourceHandle& in_handle)
 	ZE_CHECK(in_handle.get_resource_type() == DeviceResourceType::Shader && shaders.is_valid(in_handle.get_index()));
 	Shader& shader = shaders[in_handle.get_index()];
 	return &shader;
+}
+
+Semaphore* Device::get_semaphore(const DeviceResourceHandle& in_handle)
+{
+	ZE_CHECK(in_handle.get_resource_type() == DeviceResourceType::Semaphore && semaphores.is_valid(in_handle.get_index()));
+	Semaphore& semaphore = semaphores[in_handle.get_index()];
+	return &semaphore;
 }
 
 }

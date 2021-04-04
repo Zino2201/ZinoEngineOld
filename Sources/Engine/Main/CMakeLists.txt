@@ -1,7 +1,6 @@
 find_package(SDL2 CONFIG REQUIRED)
 
 ze_create_exec_module(ZinoEngine Private/Main.cpp)
-#ze_create_exec_module(ZinoEngine WIN32 Private/Main.cpp)
 
 ze_add_private_modules(ZinoEngine 
 	Core ZEFS ShaderCore ShaderCompiler VulkanShaderCompiler Engine GfxCore VulkanBackend)

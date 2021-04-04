@@ -1306,7 +1306,7 @@ public:
 	/**
 	 * Create a fence
 	 */
-	virtual ResourceHandle fence_create(const bool in_is_signaled = false) = 0;
+	virtual std::pair<Result, ResourceHandle> fence_create(const bool in_is_signaled = false) = 0;
 
 	/** Destroy functions */
 	virtual void buffer_destroy(const ResourceHandle& in_handle) = 0;
@@ -1592,7 +1592,7 @@ public:
 	/**
 	 * Create a semaphore
 	 */
-	virtual ResourceHandle semaphore_create() = 0;
+	virtual std::pair<Result, ResourceHandle> semaphore_create() = 0;
 
 	/** Getters */
 

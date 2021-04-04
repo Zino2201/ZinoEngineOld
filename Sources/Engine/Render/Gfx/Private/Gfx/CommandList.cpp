@@ -229,6 +229,7 @@ void CommandList::bind_index_buffer(const DeviceResourceHandle& in_buffer,
 void CommandList::set_viewport(const Viewport& in_viewport)
 {
 	Backend::get().cmd_set_viewport(handle, 0, { in_viewport });
+	Backend::get().cmd_set_scissor(handle, 0, { maths::Rect2D({ 0, 0 }, { in_viewport.width, in_viewport.height }) });
 }
 
 void CommandList::set_scissor(const maths::Rect2D& in_scissor)

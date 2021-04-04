@@ -35,6 +35,7 @@
 #include <sstream>
 #include <filesystem>
 #include "Serialization/Types/Map.h"
+#include "Reflection/Serialization.h"
 
 namespace FS = ze::filesystem;
 
@@ -140,9 +141,7 @@ void PreInit()
 
 			std::filesystem::create_directories("Logs/");
 			
-			std::stringstream ss;
-			ss << std::put_time(LocalTime, "Logs/ZinoEngine_%H_%M_%S.log");
-			ze::logger::add_sink(std::make_unique<FS::FileSink>("File", ss.str()));
+			ze::logger::add_sink(std::make_unique<FS::FileSink>("File", "Logs/Latest.log"));
 		}
 		ze::logger::info("=== ZinoEngine {} Build ===", ZE_CONFIGURATION_NAME);
 		
@@ -236,6 +235,8 @@ void Exit()
 	RenderBackend.reset();
 
 	ze::jobsystem::stop();
+
+	ze::reflection::serialization::free_archive_map();
 
 	/** Clear all modules */
 	ze::module::unload_modules();

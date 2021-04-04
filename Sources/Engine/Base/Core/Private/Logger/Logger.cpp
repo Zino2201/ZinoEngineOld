@@ -40,9 +40,6 @@ void log(SeverityFlagBits severity, const std::string& str)
 	{
 		message_box("ZinoEngine Fatal Error", message.message.c_str(),
 			MessageBoxButtonFlagBits::Ok, MessageBoxIcon::Critical);
-#if ZE_DEBUG
-		ZE_DEBUGBREAK();
-#endif
 		app::exit(-1);
 	}
 }

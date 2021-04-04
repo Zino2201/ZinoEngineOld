@@ -68,7 +68,7 @@ Module* load_module(const std::string_view& name)
 #endif
 	path += ".";
 	path += get_shared_lib_extension();
-	void* handle = load_module_handle(path.c_str());
+	void* handle = load_module_handle(path);
 	if(!handle)
 	{
 		DWORD err_msg = GetLastError();

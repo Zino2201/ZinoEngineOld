@@ -7,12 +7,11 @@ namespace ze
 
 enum class NativeWindowFlagBits
 {
-    None = 0,
-
     Resizable = 1 << 0,
     Maximized = 1 << 1,
     Borderless = 1 << 2,
     Centered = 1 << 3,
+    NoBackground = 1 << 4
 };
 ENABLE_FLAG_ENUMS(NativeWindowFlagBits, NativeWindowFlags);
 
@@ -23,7 +22,7 @@ class ENGINE_API NativeWindow
 {
 public:
     NativeWindow(const char* in_name, const uint32_t in_width,
-        const uint32_t in_height, const int x = 0, const int y = 0, NativeWindowFlags in_flags = NativeWindowFlagBits::None);
+        const uint32_t in_height, const int x = 0, const int y = 0, NativeWindowFlags in_flags = NativeWindowFlags());
     ~NativeWindow();
 
     void set_width(const uint32_t& InWidth); 

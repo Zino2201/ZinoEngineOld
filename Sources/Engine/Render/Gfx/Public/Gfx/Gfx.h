@@ -240,6 +240,8 @@ private:
 	DeviceResourceHandle pipeline_layout;
 	ResourceHandle render_pass;
 	ResourceHandle gfx_pipeline;
+	std::vector<ResourceHandle> wait_semaphores;
+	std::vector<ResourceHandle> signal_semaphores;
 
 	/** Current bindings */
 	std::array<std::array<Descriptor, max_bindings>, max_descriptor_sets> bindings;
@@ -643,6 +645,27 @@ private:
 	std::vector<DeviceResourceHandle> texture_views;
 };
 
+/**
+ * A semaphore, used for GPU <=> GPU synchronization 
+ * Works across queues
+ */
+class Semaphore
+{
+public:
+	Semaphore(const ResourceHandle& in_handle) : handle(in_handle) {}
+	~Semaphore() 
+	{
+		gfx::Backend::get().semaphore_destroy(handle);
+	}
+
+	ZE_FORCEINLINE ResourceHandle get_handle() const { return handle; }
+private:
+	ResourceHandle handle;
+};
+
+/**
+ * A fence, used for CPU <=> GPU synchronization
+ */
 class Fence
 {
 	void wait() {}
@@ -708,7 +731,6 @@ class Device
 		ResourceHandle gfx_fence;
 		ResourceHandle compute_fence;
 		ResourceHandle transfer_fence;
-		ResourceHandle render_finished_semaphore;
 		bool gfx_submitted;
 
 		/** Deferred destruction resources */
@@ -719,6 +741,12 @@ class Device
 		std::vector<DeviceResourceHandle> expired_pipeline_layouts;
 		std::vector<DeviceResourceHandle> expired_samplers;
 		std::vector<DeviceResourceHandle> expired_swapchains;
+
+		/** Recycled resources */
+		std::vector<DeviceResourceHandle> expired_semaphores;
+		//std::vector<DeviceResourceHandle> recycled_semaphores;
+
+		std::vector<DeviceResourceHandle> gfx_signal_semaphores;
 
 		/** Fences to wait at frame start */
 		std::vector<ResourceHandle> wait_fences;
@@ -733,11 +761,11 @@ class Device
 			expired_pipeline_layouts.reserve(5);
 			expired_samplers.reserve(5);
 			expired_swapchains.reserve(5);
+			expired_semaphores.reserve(5);
 			wait_fences.reserve(5);
-			gfx_fence = Backend::get().fence_create();
-			compute_fence = Backend::get().fence_create();
-			transfer_fence = Backend::get().fence_create();
-			render_finished_semaphore = Backend::get().semaphore_create();
+			gfx_fence = Backend::get().fence_create().second;
+			compute_fence = Backend::get().fence_create().second;
+			transfer_fence = Backend::get().fence_create().second;
 		}
 
 		/**
@@ -753,6 +781,11 @@ class Device
 			expired_pipeline_layouts.clear();
 			expired_samplers.clear();
 			expired_swapchains.clear();
+			expired_semaphores.clear();
+			gfx_lists.clear();
+			compute_lists.clear();
+			transfer_lists.clear();
+			gfx_signal_semaphores.clear();
 		}
 
 		void free_resources();
@@ -805,6 +838,7 @@ public:
 	std::pair<Result, DeviceResourceHandle> create_pipeline_layout(const gfx::PipelineLayoutCreateInfo& in_info);
 	std::pair<Result, DeviceResourceHandle> create_sampler(const gfx::SamplerCreateInfo& in_info);
 	std::pair<Result, DeviceResourceHandle> create_swapchain(const gfx::SwapChainCreateInfo& in_info);
+	std::pair<Result, DeviceResourceHandle> create_semaphore();
 	
 	/** Deferred destroy functions */
 	void destroy_buffer(const DeviceResourceHandle& in_handle);
@@ -814,6 +848,7 @@ public:
 	void destroy_pipeline_layout(const DeviceResourceHandle& in_handle);
 	void destroy_sampler(const DeviceResourceHandle& in_handle);
 	void destroy_swapchain(const DeviceResourceHandle& in_handle);
+	void destroy_semaphore(const DeviceResourceHandle& in_handle);
 
 	/**
 	 * Allocate a command list from this thread's command pool
@@ -825,18 +860,29 @@ public:
 	void unmap_buffer(const DeviceResourceHandle& in_buffer);
 
 	/** Swapchain */
+	/**
+	 * Acquire a available swapchain texture (async operation!)
+	 */
 	bool acquire_swapchain_texture(const DeviceResourceHandle& in_swapchain);
 	void resize_swapchain(const DeviceResourceHandle& in_swapchain, const uint32_t in_width,
 		const uint32_t in_height);
 	DeviceResourceHandle get_swapchain_backbuffer_texture(const DeviceResourceHandle& in_swapchain);
 	DeviceResourceHandle get_swapchain_backbuffer_texture_view(const DeviceResourceHandle& in_swapchain);
-	void present(const DeviceResourceHandle& in_swapchain);
+
+	/**
+	 * Present the specified swapchain
+	 * \param in_swapchain Swapchain to present
+	 * \param in_wait_semaphores Semaphores to wait to before presenting
+	 */
+	void present(const DeviceResourceHandle& in_swapchain, const std::vector<DeviceResourceHandle>& in_wait_semaphores = {});
 
 	/**
 	 * Queue submission of a command list
 	 * All submissions are processed at the end of the frame
+	 * \param in_list The list to submit
+	 * \param in_signal_semaphores The semaphores to signal when the execution finished
 	 */
-	void submit(CommandList* in_list);
+	void submit(CommandList* in_list, const std::vector<DeviceResourceHandle>& in_signal_semaphores = {});
 
 	/**
 	 * Wait the GPU until it has nothing to do
@@ -859,6 +905,7 @@ private:
 	TextureView* get_texture_view(const DeviceResourceHandle& in_handle);
 	Swapchain* get_swapchain(const DeviceResourceHandle& in_handle);
 	Shader* get_shader(const DeviceResourceHandle& in_handle);
+	Semaphore* get_semaphore(const DeviceResourceHandle& in_handle);
 	Frame& get_current_frame() { return frames[current_frame]; }
 private:
 	LifetimeHashMap<RenderPassCreateInfo, ResourceHandle, RenderPassDeleter> render_passes;
@@ -870,6 +917,7 @@ private:
 	SparseArray<PipelineLayout> pipeline_layouts;
 	SparseArray<Sampler> samplers;
 	SparseArray<Swapchain> swapchains;
+	SparseArray<Semaphore> semaphores;
 	std::array<Frame, max_frames_in_flight> frames;
 	size_t current_frame;
 };
@@ -1003,6 +1051,14 @@ struct SwapchainDeleter
 	}
 };
 
+struct SemaphoreDeleter
+{
+	void operator()(const DeviceResourceHandle& in_handle) const
+	{
+		Device::get().destroy_semaphore(in_handle);
+	}
+};
+
 }
 
 using UniqueBuffer = UniqueDeviceResourceHandle<DeviceResourceType::Buffer, detail::BufferDeleter>;
@@ -1011,6 +1067,7 @@ using UniqueTextureView = UniqueDeviceResourceHandle<DeviceResourceType::Texture
 using UniqueShader = UniqueDeviceResourceHandle<DeviceResourceType::Shader, detail::ShaderDeleter>;
 using UniquePipelineLayout = UniqueDeviceResourceHandle<DeviceResourceType::PipelineLayout, detail::PipelineLayoutDeleter>;
 using UniqueSwapchain = UniqueDeviceResourceHandle<DeviceResourceType::SwapChain, detail::SwapchainDeleter>;
+using UniqueSemaphore = UniqueDeviceResourceHandle<DeviceResourceType::Semaphore, detail::SemaphoreDeleter>;
 
 struct StaticSamplerBase
 {

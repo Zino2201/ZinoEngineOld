@@ -81,11 +81,11 @@ public:
 	ResourceHandle get_gfx_queue() const override;
 
 	/** Sync */
-	ResourceHandle fence_create(const bool in_is_signaled = false) override;
+	std::pair<Result, ResourceHandle> fence_create(const bool in_is_signaled = false) override;
 	void fence_wait_for(const std::vector<ResourceHandle>& in_fences,
 		const bool in_wait_all = true, const uint64_t in_timeout = std::numeric_limits<uint64_t>::max()) override;
 	void fence_reset(const std::vector<ResourceHandle>& in_fences) override;
-	ResourceHandle semaphore_create() override;
+	std::pair<Result, ResourceHandle> semaphore_create() override;
 
 	/** Commands */
 	ResourceHandle command_pool_create() override;
