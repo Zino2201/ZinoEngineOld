@@ -39,10 +39,10 @@ struct ViewportData
 	ViewportDrawData draw_data;
 	bool owned_by_renderer;
 	gfx::UniqueSemaphore render_finished_semaphore;
-	bool can_present;
+	bool has_submitted_work;
 
 	ViewportData() 
-		: owned_by_renderer(true), can_present(false)
+		: owned_by_renderer(true), has_submitted_work(false)
 	{
 		render_finished_semaphore = gfx::Device::get().create_semaphore().second;
 	}

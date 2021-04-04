@@ -189,9 +189,7 @@ void imgui_render_window_callback(ImGuiViewport* viewport, void* list_ptr)
 	
 	ViewportData* data = reinterpret_cast<ViewportData*>(viewport->RendererUserData);
 	update_viewport_buffers(viewport->DrawData, data->draw_data);
-	data->can_present = false;
-	if(data->draw_data.vertex_buffer_size == 0)
-		return;
+	data->has_submitted_work = false;
 
 	if(Device::get().acquire_swapchain_texture(*data->window.swapchain))
 	{
@@ -229,7 +227,7 @@ void imgui_render_window_callback(ImGuiViewport* viewport, void* list_ptr)
 		list->end_render_pass();
 
 		Device::get().submit(list, { *data->render_finished_semaphore });
-		data->can_present = true;
+		data->has_submitted_work = true;
 	}
 }
 
@@ -238,7 +236,7 @@ void imgui_swap_buffers_callback(ImGuiViewport* viewport, void* unused)
 	using namespace gfx;
 	
 	ViewportData* data = reinterpret_cast<ViewportData*>(viewport->RendererUserData);
-	if(data->can_present)
+	if(data->has_submitted_work)
 	{
 		Device::get().present(*data->window.swapchain, { *data->render_finished_semaphore });
 	}
