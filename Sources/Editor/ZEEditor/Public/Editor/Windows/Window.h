@@ -7,8 +7,7 @@ namespace ze::editor
 
 enum class WindowFlagBits
 {
-	/** Do the window have a dock space ? In this case, only child windows can dock to that dock space */
-	HasDockSpace = 1 << 0
+
 };
 ENABLE_FLAG_ENUMS(WindowFlagBits, WindowFlags);
 
@@ -29,6 +28,8 @@ public:
 	void draw_window();
 
 	void add(Window* in_window);
+
+	void set_internal_childs_class(int in_internal_childs_class) { internal_childs_class = in_internal_childs_class; }
 protected:
 	virtual void draw() = 0;
 private:
@@ -36,6 +37,7 @@ private:
 	WindowFlags flags;
 	int imgui_flags;
 	std::vector<std::unique_ptr<Window>> childs;
+	int internal_childs_class;
 };
 
 }

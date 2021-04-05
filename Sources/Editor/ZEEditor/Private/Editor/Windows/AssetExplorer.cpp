@@ -3,6 +3,7 @@
 #include <imgui_internal.h>
 #include "Gfx/Gfx.h"
 #include "AssetDatabase/AssetDatabase.h"
+#include "Reflection/Class.h"
 
 namespace ze::editor
 {
@@ -12,7 +13,8 @@ static const ImVec2 entry_size = ImVec2(90, 120);
 
 AssetExplorer::AssetExplorer() : Window("Asset Explorer", 
 	WindowFlags(),
-	ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse) 
+	ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse),
+	current_path("Assets")
 {
 
 }
@@ -32,7 +34,12 @@ void AssetExplorer::draw_project_hierarchy()
 	if(ImGui::TreeNodeEx("Game", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow |
 		ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_SpanAvailWidth))
 	{
-		draw_project_hierarchy_tree("");
+		if(ImGui::IsItemClicked())
+		{
+			set_current_path("Assets");
+		}
+
+		draw_project_hierarchy_tree("Assets");
 		ImGui::TreePop();
 	}
 	ImGui::EndChild();
@@ -45,6 +52,10 @@ void AssetExplorer::draw_project_hierarchy_tree(const std::filesystem::path& in_
 		if(ImGui::TreeNodeEx(entry.string().c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow |
 			ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_SpanAvailWidth))
 		{
+			if(ImGui::IsItemClicked())
+			{
+				set_current_path(in_root / entry);
+			}
 			draw_project_hierarchy_tree(in_root / entry);
 			ImGui::TreePop();
 		}
@@ -54,14 +65,29 @@ void AssetExplorer::draw_project_hierarchy_tree(const std::filesystem::path& in_
 void AssetExplorer::draw_asset_list()
 {
 	ImGui::BeginChild("Asset List", ImGui::GetContentRegionAvail());
-	ImGui::Columns(ImGui::GetContentRegionAvail().x / entry_size.x, nullptr, false);
-	for(const auto& entry : assetdatabase::get_assets("Assets"))
+	ImGui::Columns(std::max<int>(1, ImGui::GetContentRegionAvail().x / entry_size.x), nullptr, false);
+	for(const auto& entry : assetdatabase::get_assets(current_path))
 	{
 		/** Asset button & image */
 		{
 			ImVec2 cursor = ImGui::GetCursorPos();
 
 			ImGui::Selectable(std::string("##" + entry.name).c_str(), false, ImGuiSelectableFlags_None, entry_size);
+
+			/** Asset properties */
+			if(ImGui::IsItemHovered())
+			{
+				ImGui::BeginTooltip();
+				ImGui::Text("Type: %s", entry.asset_class->get_name().c_str());
+				ImGui::Text("Disk size: %f KiB", entry.size / 1048576.f);
+				ImGui::Separator();
+				ImGui::Text("Path: %s", entry.path.string().c_str());
+				ImGui::Text("ZE v%d.%d.%d", entry.engine_ver.major,
+					entry.engine_ver.minor,
+					entry.engine_ver.patch);
+				ImGui::EndTooltip();
+			}
+
 			ImGui::SetCursorPos(cursor);
 			
 			ImVec2 thumbnail_size = ImVec2(64, 64);
@@ -86,6 +112,11 @@ void AssetExplorer::draw_asset_list()
 	}
 	ImGui::Columns(1);
 	ImGui::EndChild();
+}
+
+void AssetExplorer::set_current_path(const std::filesystem::path& in_current_path)
+{
+	current_path = in_current_path;
 }
 
 }

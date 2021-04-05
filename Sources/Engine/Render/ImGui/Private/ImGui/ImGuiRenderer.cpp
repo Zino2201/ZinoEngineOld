@@ -181,6 +181,7 @@ void imgui_set_window_size(ImGuiViewport* viewport, ImVec2 size)
 		size.x, size.y);
 	data->window.width = size.x;
 	data->window.height = size.y;
+	gfx::Device::get().wait_gpu_idle();
 }
 
 void imgui_render_window_callback(ImGuiViewport* viewport, void* list_ptr)
