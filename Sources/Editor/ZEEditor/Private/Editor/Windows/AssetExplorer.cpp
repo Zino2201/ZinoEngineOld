@@ -2,8 +2,8 @@
 #include "ImGui/ImGui.h"
 #include <imgui_internal.h>
 #include "Gfx/Gfx.h"
-#include "AssetDatabase/AssetDatabase.h"
 #include "Reflection/Class.h"
+#include "Editor/IconManager.h"
 
 namespace ze::editor
 {
@@ -31,9 +31,15 @@ void AssetExplorer::draw()
 void AssetExplorer::draw_project_hierarchy()
 {
 	ImGui::BeginChild("Project Hierarchy", ImVec2(max_hierarchy_width, ImGui::GetContentRegionAvail().y));
-	if(ImGui::TreeNodeEx("Game", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow |
+	if(ImGui::TreeNodeEx("##Game", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow |
 		ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_SpanAvailWidth))
 	{
+		Icon* icon = get_icon("icon-asset-directory");
+		ImGui::SameLine(0, 5);
+		ImGui::Image((void*) &icon->texture_view, ImVec2(16, 16));
+		ImGui::SameLine(0, 5);
+		ImGui::TextUnformatted("Game");
+
 		if(ImGui::IsItemClicked())
 		{
 			set_current_path("Assets");
@@ -49,9 +55,14 @@ void AssetExplorer::draw_project_hierarchy_tree(const std::filesystem::path& in_
 {
 	for(const auto& entry : assetdatabase::get_subdirectories(in_root))
 	{
-		if(ImGui::TreeNodeEx(entry.string().c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow |
+		if(ImGui::TreeNodeEx(std::string("##" + entry.string()).c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow |
 			ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_SpanAvailWidth))
 		{
+			Icon* icon = get_icon("icon-asset-directory");
+			ImGui::SameLine(0, 5);
+			ImGui::Image((void*) &icon->texture_view, ImVec2(16, 16));
+			ImGui::SameLine(0, 5);
+			ImGui::TextUnformatted(entry.string().c_str());
 			if(ImGui::IsItemClicked())
 			{
 				set_current_path(in_root / entry);
@@ -66,52 +77,74 @@ void AssetExplorer::draw_asset_list()
 {
 	ImGui::BeginChild("Asset List", ImGui::GetContentRegionAvail());
 	ImGui::Columns(std::max<int>(1, ImGui::GetContentRegionAvail().x / entry_size.x), nullptr, false);
+	
+	for(const auto& entry : assetdatabase::get_subdirectories(current_path))
+	{
+		draw_asset_entry(entry.filename().string(), DirectoryEntry());
+		ImGui::NextColumn();
+	}
+	
 	for(const auto& entry : assetdatabase::get_assets(current_path))
 	{
-		/** Asset button & image */
-		{
-			ImVec2 cursor = ImGui::GetCursorPos();
-
-			ImGui::Selectable(std::string("##" + entry.name).c_str(), false, ImGuiSelectableFlags_None, entry_size);
-
-			/** Asset properties */
-			if(ImGui::IsItemHovered())
-			{
-				ImGui::BeginTooltip();
-				ImGui::Text("Type: %s", entry.asset_class->get_name().c_str());
-				ImGui::Text("Disk size: %f KiB", entry.size / 1048576.f);
-				ImGui::Separator();
-				ImGui::Text("Path: %s", entry.path.string().c_str());
-				ImGui::Text("ZE v%d.%d.%d", entry.engine_ver.major,
-					entry.engine_ver.minor,
-					entry.engine_ver.patch);
-				ImGui::EndTooltip();
-			}
-
-			ImGui::SetCursorPos(cursor);
-			
-			ImVec2 thumbnail_size = ImVec2(64, 64);
-			ImVec2 cursor_pos_offset = ImVec2(thumbnail_size.x / 8, 0);
-			ImRect bb(ImGui::GetCursorScreenPos() + cursor_pos_offset, ImGui::GetCursorScreenPos() + cursor_pos_offset + thumbnail_size);
-		/*	ImGui::GetWindowDrawList()->AddRectFilled(bb.Min, bb.Max,
-				IM_COL32(255, 0, 0, 255));*/
-			ImGui::GetWindowDrawList()->AddImage(0, bb.Min + ImVec2(1, 1), bb.Max - ImVec2(1, 1), ImVec2(0, 0), ImVec2(1, 1), 
-				IM_COL32_WHITE);
-		}
-
-		/** Asset name text */
-		{
-			std::string name = entry.name.c_str();
-			ImVec2 available_size = ImGui::GetContentRegionAvail();
-			ImVec2 text_size = ImGui::CalcTextSize(name.c_str());
-			ImGui::SetCursorPosY(entry_size.y - text_size.y);
-			ImGui::TextUnformatted(name.c_str());
-		}
-
+		draw_asset_entry(entry.name, entry);
 		ImGui::NextColumn();
 	}
 	ImGui::Columns(1);
 	ImGui::EndChild();
+}
+
+void AssetExplorer::draw_asset_entry(const std::string& in_name, 
+	const std::variant<assetdatabase::AssetPrimitiveData, DirectoryEntry>& in_data)
+{
+	bool is_asset = in_data.index() == 0;
+
+	/** Asset button & image */
+	{
+		ImVec2 cursor = ImGui::GetCursorPos();
+
+		ImGui::Selectable(std::string("##" + in_name).c_str(), false, ImGuiSelectableFlags_None, entry_size);
+
+		/** Asset properties */
+		if(is_asset && ImGui::IsItemHovered())
+		{
+			const assetdatabase::AssetPrimitiveData& asset_data = std::get<0>(in_data);
+
+			ImGui::BeginTooltip();
+			ImGui::Text("Type: %s", asset_data.asset_class->get_name().c_str());
+			ImGui::Text("Disk size: %f KiB", asset_data.size / 1048576.f);
+			ImGui::Separator();
+			ImGui::Text("Path: %s", asset_data.path.string().c_str());
+			ImGui::Text("ZE v%d.%d.%d", asset_data.engine_ver.major,
+				asset_data.engine_ver.minor,
+				asset_data.engine_ver.patch);
+			ImGui::EndTooltip();
+		}
+
+		ImGui::SetCursorPos(cursor);
+			
+		ImVec2 thumbnail_size = ImVec2(64, 64);
+		ImVec2 cursor_pos_offset = ImVec2(thumbnail_size.x / 8, 16);
+		ImRect bb(ImGui::GetCursorScreenPos() + cursor_pos_offset, ImGui::GetCursorScreenPos() + cursor_pos_offset + thumbnail_size);
+	/*	ImGui::GetWindowDrawList()->AddRectFilled(bb.Min, bb.Max,
+			IM_COL32(255, 0, 0, 255));*/
+
+		auto asset_icon = get_icon(is_asset ? "icon-asset-file" : "icon-asset-directory");
+		ImGui::GetWindowDrawList()->AddImage(
+			(void*) &asset_icon->texture_view.get(), 
+			bb.Min + ImVec2(1, 1), 
+			bb.Max - ImVec2(1, 1), 
+			ImVec2(0, 0), 
+			ImVec2(1, 1), 
+			IM_COL32_WHITE);
+	}
+
+	/** Asset name text */
+	{
+		ImVec2 available_size = ImGui::GetContentRegionAvail();
+		ImVec2 text_size = ImGui::CalcTextSize(in_name.c_str());
+		ImGui::SetCursorPosY(entry_size.y - text_size.y);
+		ImGui::TextUnformatted(in_name.c_str());
+	}
 }
 
 void AssetExplorer::set_current_path(const std::filesystem::path& in_current_path)

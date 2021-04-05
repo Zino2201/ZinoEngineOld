@@ -17,6 +17,7 @@
 #include "Gfx/GpuVector.h"
 #include "Engine/NativeWindow.h"
 #include "Editor/Windows/MapEditor.h"
+#include "Editor/IconManager.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);
 
@@ -129,6 +130,10 @@ EditorApp::EditorApp() : EngineApp(),
 	main_viewport_data.window.width = window->get_width();
 	main_viewport_data.window.height = window->get_height();
 	main_viewport_data.owned_by_renderer = false;
+
+	/** Load default icons */
+	load_icon_file("icon-asset-file", "Assets/Icons/icons8-file-64.png");
+	load_icon_file("icon-asset-directory", "Assets/Icons/icons8-folder-64.png");
 }
 
 EditorApp::~EditorApp()
@@ -138,6 +143,7 @@ EditorApp::~EditorApp()
 	main_viewport_data.window.swapchain.reset();
 	ImGui::DestroyContext();
 	ui::imgui::destroy();
+	free_icons();
 }
 
 void EditorApp::process_event(const SDL_Event& in_event, const float in_delta_time)
@@ -181,7 +187,7 @@ void EditorApp::post_tick(const float in_delta_time)
 
 	/** UI rendering */
 	ImGui::ShowDemoWindow();
-	ImGui::ShowStyleEditor();
+	//ImGui::ShowStyleEditor();
 	ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos, ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(window->get_width(), window->get_height()), ImGuiCond_Always);
 	ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);

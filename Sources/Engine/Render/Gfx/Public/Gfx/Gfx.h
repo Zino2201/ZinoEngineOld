@@ -957,7 +957,7 @@ public:
 		reset(std::move(other.handle));
 	}
 
-	DeviceResourceHandle get()
+	const DeviceResourceHandle& get() const
 	{
 		ZE_CHECKF(handle, "Tried to get an invalid handle");
 		return handle;

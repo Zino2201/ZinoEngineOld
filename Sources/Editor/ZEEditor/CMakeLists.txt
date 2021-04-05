@@ -1,6 +1,8 @@
 find_package(SDL2 CONFIG REQUIRED)
 
 ze_create_module(ZEEditor 
+    Public/Editor/ZEEditor.h
+    Public/Editor/IconManager.h
     Public/Editor/Windows/MapEditor.h
     Public/Editor/Windows/Window.h
     Public/Editor/Windows/AssetExplorer.h
@@ -12,6 +14,7 @@ ze_create_module(ZEEditor
     Private/Editor/Windows/MapEditor.cpp
     Private/Editor/Windows/Window.cpp
     Private/Editor/Windows/AssetExplorer.cpp
+    Private/Editor/IconManager.cpp
 	Private/Editor/ZEEditor.cpp)
 
 ze_add_public_modules(ZEEditor ZEUI)

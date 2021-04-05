@@ -133,6 +133,7 @@ void EngineApp::loop()
 	{
 		using namespace std::chrono_literals;
 
+		focused = true;
 		const std::chrono::duration<double, std::milli> min_ms(focused ? (1000.0 / cvar_maxfps.get()) : (1000.0 / cvar_unfocus_fps.get()));
 		const auto target_sleep_time = current + min_ms;
 		std::this_thread::sleep_until(target_sleep_time - 1ms);
