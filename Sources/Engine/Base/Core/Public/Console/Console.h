@@ -12,11 +12,9 @@ namespace ze
 class CORE_API CConsole : public CNonCopyable
 {
 public:
-	static CConsole& Get()
-	{
-		static CConsole Instance;
-		return Instance;
-	}
+	CConsole();
+	~CConsole();
+	static CConsole& Get();
 	
 	template<typename... Args>
 	size_t EmplaceConVar(Args&&... InArgs)

@@ -25,7 +25,7 @@ void Viewport::draw()
 		tool_max,
 		IM_COL32(70, 70, 70, 255));
 
-	std::string str = "Resolution: " + std::to_string((int) ImGui::GetWindowSize().x) + "x" + std::to_string((int) ImGui::GetWindowSize().y);
+	std::string str = std::to_string((int) ImGui::GetWindowSize().x) + "x" + std::to_string((int) ImGui::GetWindowSize().y);
 	ImVec2 size = ImGui::CalcTextSize(str.c_str());
 	ImGui::SetCursorPosX(ImGui::GetWindowSize().x - size.x - 5);
 	ImGui::SetCursorPosY(ImGui::GetWindowSize().y - size.y - 5);

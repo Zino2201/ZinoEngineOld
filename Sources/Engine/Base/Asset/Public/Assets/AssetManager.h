@@ -66,14 +66,17 @@ private:
 	Delegate<void> on_completed;
 };
 
-ASSET_API std::pair<Asset*, std::shared_ptr<AssetRequestHandle>> load_asset_sync(const std::filesystem::path& in_path);
+/** Shared pointer to a asset request handle, allows an asset to be kept alive until no other requests are left */
+using AssetRequestPtr = std::shared_ptr<assetmanager::AssetRequestHandle>;
+
+ASSET_API std::pair<Asset*, AssetRequestPtr> load_asset_sync(const std::filesystem::path& in_path);
 
 /**
  * Load an asset asynchronously 
  * Call on_completed when finished
  * \warning on_completed maybe called before load_asset_async returns (e.g asset already loaded)
  */
-ASSET_API std::shared_ptr<AssetRequestHandle> load_asset_async(const std::filesystem::path& in_path,
+ASSET_API AssetRequestPtr load_asset_async(const std::filesystem::path& in_path,
 	std::function<AssetRequestHandle::OnCompletedFuncSignature>&& on_completed = nullptr);
 ASSET_API void free_asset(const std::filesystem::path& in_path);
 ASSET_API void unload_all();

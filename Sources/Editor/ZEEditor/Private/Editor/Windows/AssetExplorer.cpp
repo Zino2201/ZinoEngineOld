@@ -4,6 +4,9 @@
 #include "Gfx/Gfx.h"
 #include "Reflection/Class.h"
 #include "Editor/IconManager.h"
+#include "Editor/Assets/AssetActions.h"
+#include "Editor/AssetUtils/AssetUtils.h"
+#include "ZEFS/Paths.h"
 
 namespace ze::editor
 {
@@ -77,6 +80,28 @@ void AssetExplorer::draw_project_hierarchy_tree(const std::filesystem::path& in_
 void AssetExplorer::draw_asset_list()
 {
 	ImGui::BeginChild("Asset List", ImGui::GetContentRegionAvail());
+
+	if(ImGui::BeginPopupContextWindow())
+	{
+		ImGui::TextUnformatted("Asset actions");
+		ImGui::Separator();
+		if(ImGui::BeginMenu("Create new asset"))
+		{
+			if(ImGui::MenuItem("AAAA"))
+			{
+			}
+			ImGui::EndMenu();
+		}
+
+		if(ImGui::MenuItem("Import here"))
+		{
+			assetutils::import_assets_dialog(filesystem::get_current_working_dir() / current_path,
+				current_path);
+		}
+
+		ImGui::EndPopup();
+	}
+
 	ImGui::Columns(std::max<int>(1, ImGui::GetContentRegionAvail().x / entry_size.x), nullptr, false);
 	
 	for(const auto& entry : assetdatabase::get_subdirectories(current_path))
@@ -120,11 +145,17 @@ void AssetExplorer::draw_asset_entry(const std::string& in_name,
 				asset_data.engine_ver.patch);
 			ImGui::EndTooltip();
 		}
-		else if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+		
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 		{
 			if(is_asset)
 			{
-
+				const assetdatabase::AssetPrimitiveData& asset_data = std::get<0>(in_data);
+				if(AssetActions* actions = get_actions_for(asset_data.asset_class))
+				{
+					auto request = assetmanager::load_asset_sync(asset_data.path);
+					actions->open_editor(request.first, request.second);
+				}
 			}
 			else
 			{

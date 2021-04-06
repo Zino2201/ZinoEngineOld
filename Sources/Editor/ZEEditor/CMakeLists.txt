@@ -10,8 +10,13 @@ ze_create_module(ZEEditor
     Public/Editor/Windows/EntityList.h
     Public/Editor/Windows/EntityProperties.h
     Public/Editor/Windows/Tools.h
+    Public/Editor/Assets/AssetActions.h
+    Public/Editor/Assets/AssetFactory.h
+    Public/Editor/Assets/TextureActions.h
+    Public/Editor/Windows/Assets/Texture/TextureEditor.h
     Private/Editor/Assets/Factories/AssetFactory.cpp
     Private/Editor/Assets/Actions/TextureActions.cpp
+    Private/Editor/Assets/Actions/AssetActions.cpp
     Private/Editor/Assets/Actions/ModelActions.cpp
     Private/Editor/Assets/Factories/StbTextureFactory.cpp
     Private/Editor/Assets/Factories/TinyObjFactory.cpp
@@ -22,13 +27,14 @@ ze_create_module(ZEEditor
     Private/Editor/Windows/EntityList.cpp
     Private/Editor/Windows/EntityProperties.cpp
     Private/Editor/Windows/Tools.cpp
+    Private/Editor/Windows/Console.cpp
+    Private/Editor/Windows/Assets/Texture/TextureEditor.cpp
     Private/Editor/IconManager.cpp
 	Private/Editor/ZEEditor.cpp)
 
 ze_add_public_modules(ZEEditor ZEUI)
 ze_add_private_modules(ZEEditor
-	Core ShaderCore Engine Reflection ImGui MapEditor AssetDatabase AssetUtils PropertyEditor AssetActions NotificationSystem
-    SDFFontGen)
+	Core ShaderCore Engine Reflection ImGui AssetDatabase AssetUtils NotificationSystem SDFFontGen)
 	
 target_include_directories(ZEEditor
     PUBLIC 

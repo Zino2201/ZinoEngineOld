@@ -17,14 +17,16 @@ void Window::add(Window* in_window)
 {
 	childs.emplace_back(in_window);
 	childs.back()->window_class.ClassId = internal_childs_class;
-	childs.back()->window_class.DockingAllowUnclassed = false;
+	childs.back()->window_class.DockingAllowUnclassed = true;
 }
 
 void Window::draw_window()
 {
 	ImGui::PushID(title.c_str());
 	ImGui::SetNextWindowClass(&window_class);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 	ImGui::Begin(title.c_str(), nullptr, imgui_flags);
+	ImGui::PopStyleVar();
 	if(flags & WindowFlagBits::HasExplicitDockSpace)
 	{
 		std::string dockspace("EDS_" + title);

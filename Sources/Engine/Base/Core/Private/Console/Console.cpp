@@ -4,6 +4,26 @@
 namespace ze
 {
 
+CConsole* console = nullptr;
+
+CConsole::CConsole()
+{
+	console = this;
+}
+
+CConsole::~CConsole()
+{
+	delete console;
+	console = nullptr;
+}
+
+CConsole& CConsole::Get()
+{
+	if(!console)
+		console = new CConsole;
+	return *console;
+}
+
 void CConsole::Execute(const std::string_view& InCmdName, 
 	const std::vector<std::string_view>& InParams)
 {

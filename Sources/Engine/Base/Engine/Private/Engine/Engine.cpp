@@ -13,7 +13,7 @@ namespace ze
 {
 
 static ConVarRef<int32_t> cvar_maxfps("r_maxfps", 300,
-	"Max FPS.",
+	"Max FPS when focused. 0 to disable.",
 	0,
 	300);
 

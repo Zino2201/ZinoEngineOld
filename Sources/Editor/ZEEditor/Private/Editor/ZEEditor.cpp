@@ -18,6 +18,12 @@
 #include "Engine/NativeWindow.h"
 #include "Editor/Windows/MapEditor.h"
 #include "Editor/IconManager.h"
+#include "Editor/Windows/Window.h"
+#include "Editor/Assets/AssetActions.h"
+#include "ZEFS/Paths.h"
+#include "ZEFS/Utils.h"
+#include <filesystem>
+#include "Editor/Windows/Console.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);
 
@@ -33,8 +39,7 @@ EditorApp& EditorApp::get()
 
 EditorApp::EditorApp() : EngineApp(),
 	window(std::make_unique<NativeWindow>("ZinoEngine Editor", 1280, 720,
-		0, 0, NativeWindowFlagBits::Centered | NativeWindowFlagBits::Resizable | NativeWindowFlagBits::Maximized)),
-	map_editor(std::make_unique<MapEditor>())
+		0, 0, NativeWindowFlagBits::Centered | NativeWindowFlagBits::Resizable | NativeWindowFlagBits::Maximized))
 {
 	app = this;
 
@@ -56,7 +61,6 @@ EditorApp::EditorApp() : EngineApp(),
 		style.ScrollbarRounding = 0.f;
 		style.WindowMenuButtonPosition = ImGuiDir_Right;
 		style.ItemSpacing = ImVec2(8, 4);
-		style.WindowPadding = ImVec2(0, 0);
 		style.WindowBorderSize = 0.f;
 		style.FrameBorderSize = 1.f;
 		style.PopupBorderSize = 1.f;
@@ -136,11 +140,20 @@ EditorApp::EditorApp() : EngineApp(),
 	/** Load default icons */
 	load_icon_file("icon-asset-file", "Assets/Icons/icons8-file-64.png");
 	load_icon_file("icon-asset-directory", "Assets/Icons/icons8-folder-64.png");
+
+	/** Default windows */
+	main_windows.emplace_back(std::make_unique<MapEditor>());
+	main_windows.emplace_back(std::make_unique<Console>());
+
+	assetutils::get_on_asset_imported().bind(std::bind(&EditorApp::on_asset_imported,
+		this, std::placeholders::_1, std::placeholders::_2));
+	initialize_asset_actions_mgr();
 }
 
 EditorApp::~EditorApp()
 {
 	gfx::Device::get().wait_gpu_idle();
+	destroy_asset_actions_mgr();
 	ImGui::GetMainViewport()->RendererUserData = nullptr;
 	main_viewport_data.window.swapchain.reset();
 	ImGui::DestroyContext();
@@ -188,7 +201,7 @@ void EditorApp::post_tick(const float in_delta_time)
 	Device::get().new_frame();
 
 	/** UI rendering */
-	//ImGui::ShowDemoWindow();
+	ImGui::ShowDemoWindow();
 	//ImGui::ShowStyleEditor();
 	ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos, ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(window->get_width(), window->get_height()), ImGuiCond_Always);
@@ -202,7 +215,8 @@ void EditorApp::post_tick(const float in_delta_time)
 	ImGui::PopStyleVar(3);
 	ImGui::DockSpace(ImGui::GetID("ZEEditor_MainWindow_BG_DOCK"), ImVec2(window->get_width(), window->get_height()),
 		0);
-	map_editor->draw_window();
+	for(const auto& window : main_windows)
+		window->draw_window();
 	ImGui::End();
 
 	ImGui::Render();
@@ -222,8 +236,47 @@ void EditorApp::post_tick(const float in_delta_time)
 
 void EditorApp::on_asset_imported(const std::filesystem::path& in_path,
 	const std::filesystem::path& in_target_path)
-{
+{	
+	/** Try to find an asset factory compatible with this format */
+	std::string extension = in_path.extension().string().substr(1, in_path.extension().string().size() - 1);
+	AssetFactory* factory = get_factory_for_format(extension);
+	if (!factory)
+	{
+		ze::logger::error("Asset {} can't be imported: unknown format", in_path.string());
+		return;
+	}
 
+	/** Open a stream to the file */
+	filesystem::FileIStream stream(in_path, filesystem::FileReadFlagBits::Binary);
+	if (!stream)
+	{
+		ze::logger::error("Failed to open an input stream for file {}", in_path.string());
+		return;
+	}
+
+	/** Serialize the asset and then unload it */
+	Asset* asset = factory->create_from_stream(stream);
+	const ze::reflection::Class* asset_class = asset->get_class();
+	std::string name = "NewAsset";
+	while(std::filesystem::exists(in_target_path / (name + ".zasset")))
+		name += "(1)";
+
+	assetutils::save_asset(*asset, in_target_path, name);
+	delete asset;
+
+	/** Notify the database */
+	assetdatabase::scan(in_target_path);
+
+	if(AssetActions* actions = get_actions_for(asset_class))
+	{
+		auto request = assetmanager::load_asset_sync(in_target_path / (name + ".zasset"));
+		actions->open_editor(request.first, request.second);
+	}
+}
+
+void EditorApp::add_window(OwnerPtr<Window> in_window) 
+{ 
+	main_windows.emplace_back(in_window); 
 }
 
 }
