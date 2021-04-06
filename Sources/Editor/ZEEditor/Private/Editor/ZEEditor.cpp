@@ -45,6 +45,7 @@ EditorApp::EditorApp() : EngineApp(),
 
 	ImGuiIO& io = ImGui::GetIO();
 	ImGui::StyleColorsDark();
+	io.ConfigViewportsNoAutoMerge = false;
 
 	/** Default ZE editor style */
 	{
@@ -55,6 +56,7 @@ EditorApp::EditorApp() : EngineApp(),
 		style.ScrollbarRounding = 0.f;
 		style.WindowMenuButtonPosition = ImGuiDir_Right;
 		style.ItemSpacing = ImVec2(8, 4);
+		style.WindowPadding = ImVec2(0, 0);
 		style.WindowBorderSize = 0.f;
 		style.FrameBorderSize = 1.f;
 		style.PopupBorderSize = 1.f;
@@ -186,7 +188,7 @@ void EditorApp::post_tick(const float in_delta_time)
 	Device::get().new_frame();
 
 	/** UI rendering */
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 	//ImGui::ShowStyleEditor();
 	ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos, ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(window->get_width(), window->get_height()), ImGuiCond_Always);
@@ -198,7 +200,8 @@ void EditorApp::post_tick(const float in_delta_time)
 		| ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove
 		| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoResize);
 	ImGui::PopStyleVar(3);
-	ImGui::DockSpace(ImGuiID("ZEEditor_MainWindow_BG_DOCK"), ImVec2(window->get_width(), window->get_height()));
+	ImGui::DockSpace(ImGui::GetID("ZEEditor_MainWindow_BG_DOCK"), ImVec2(window->get_width(), window->get_height()),
+		0);
 	map_editor->draw_window();
 	ImGui::End();
 

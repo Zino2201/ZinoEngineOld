@@ -1,13 +1,15 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "ImGui/ImGui.h"
 
 namespace ze::editor
 {
 
 enum class WindowFlagBits
 {
-
+	/** Does the window contains a dock space ? Allows childrens to dock inside the window */
+	HasExplicitDockSpace = 1 << 0
 };
 ENABLE_FLAG_ENUMS(WindowFlagBits, WindowFlags);
 
@@ -28,16 +30,15 @@ public:
 	void draw_window();
 
 	void add(Window* in_window);
-
-	void set_internal_childs_class(int in_internal_childs_class) { internal_childs_class = in_internal_childs_class; }
 protected:
 	virtual void draw() = 0;
-private:
+protected:
 	std::string title;
 	WindowFlags flags;
 	int imgui_flags;
 	std::vector<std::unique_ptr<Window>> childs;
 	int internal_childs_class;
+	ImGuiWindowClass window_class;
 };
 
 }

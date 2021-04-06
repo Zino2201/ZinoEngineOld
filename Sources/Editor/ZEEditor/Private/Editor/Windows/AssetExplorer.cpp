@@ -58,15 +58,16 @@ void AssetExplorer::draw_project_hierarchy_tree(const std::filesystem::path& in_
 		if(ImGui::TreeNodeEx(std::string("##" + entry.string()).c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow |
 			ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_SpanAvailWidth))
 		{
+			if(ImGui::IsItemClicked())
+			{
+				set_current_path(in_root / entry);
+			}
+
 			Icon* icon = get_icon("icon-asset-directory");
 			ImGui::SameLine(0, 5);
 			ImGui::Image((void*) &icon->texture_view, ImVec2(16, 16));
 			ImGui::SameLine(0, 5);
 			ImGui::TextUnformatted(entry.string().c_str());
-			if(ImGui::IsItemClicked())
-			{
-				set_current_path(in_root / entry);
-			}
 			draw_project_hierarchy_tree(in_root / entry);
 			ImGui::TreePop();
 		}
@@ -80,7 +81,7 @@ void AssetExplorer::draw_asset_list()
 	
 	for(const auto& entry : assetdatabase::get_subdirectories(current_path))
 	{
-		draw_asset_entry(entry.filename().string(), DirectoryEntry());
+		draw_asset_entry(entry.filename().string(), DirectoryEntry { current_path / entry });
 		ImGui::NextColumn();
 	}
 	
@@ -118,6 +119,18 @@ void AssetExplorer::draw_asset_entry(const std::string& in_name,
 				asset_data.engine_ver.minor,
 				asset_data.engine_ver.patch);
 			ImGui::EndTooltip();
+		}
+		else if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+		{
+			if(is_asset)
+			{
+
+			}
+			else
+			{
+				const DirectoryEntry& dir_data = std::get<1>(in_data);
+				set_current_path(dir_data.full_path);
+			}
 		}
 
 		ImGui::SetCursorPos(cursor);

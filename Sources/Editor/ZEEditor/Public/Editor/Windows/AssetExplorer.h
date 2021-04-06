@@ -12,7 +12,10 @@ namespace ze::editor
 class AssetExplorer : public Window
 {
 public:
-	struct DirectoryEntry {};
+	struct DirectoryEntry 
+	{
+		std::filesystem::path full_path;
+	};
 	
 	AssetExplorer();
 	void draw() override;

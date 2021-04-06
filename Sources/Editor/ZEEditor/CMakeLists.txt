@@ -6,6 +6,10 @@ ze_create_module(ZEEditor
     Public/Editor/Windows/MapEditor.h
     Public/Editor/Windows/Window.h
     Public/Editor/Windows/AssetExplorer.h
+    Public/Editor/Windows/Viewport.h
+    Public/Editor/Windows/EntityList.h
+    Public/Editor/Windows/EntityProperties.h
+    Public/Editor/Windows/Tools.h
     Private/Editor/Assets/Factories/AssetFactory.cpp
     Private/Editor/Assets/Actions/TextureActions.cpp
     Private/Editor/Assets/Actions/ModelActions.cpp
@@ -14,6 +18,10 @@ ze_create_module(ZEEditor
     Private/Editor/Windows/MapEditor.cpp
     Private/Editor/Windows/Window.cpp
     Private/Editor/Windows/AssetExplorer.cpp
+    Private/Editor/Windows/Viewport.cpp
+    Private/Editor/Windows/EntityList.cpp
+    Private/Editor/Windows/EntityProperties.cpp
+    Private/Editor/Windows/Tools.cpp
     Private/Editor/IconManager.cpp
 	Private/Editor/ZEEditor.cpp)
 
