@@ -8,9 +8,11 @@ static int window_internal_class_counter = 1;
 
 Window::Window(const std::string& in_title, 
 	const WindowFlags& in_flags, int in_imgui_flags) : 
-	title(in_title), flags(in_flags), imgui_flags(in_imgui_flags), internal_childs_class(window_internal_class_counter++)
+	title(in_title), flags(in_flags), imgui_flags(in_imgui_flags), internal_childs_class(window_internal_class_counter++),
+	next_dock_id(-2201)
 {
-	
+	if(flags & WindowFlagBits::Transient)
+		imgui_flags |= ImGuiWindowFlags_NoSavedSettings;
 }
 
 void Window::add(Window* in_window)
@@ -24,19 +26,32 @@ void Window::draw_window()
 {
 	ImGui::PushID(title.c_str());
 	ImGui::SetNextWindowClass(&window_class);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-	ImGui::Begin(title.c_str(), nullptr, imgui_flags);
-	ImGui::PopStyleVar();
-	if(flags & WindowFlagBits::HasExplicitDockSpace)
+	if(flags & WindowFlagBits::DockToMainDockSpaceOnce)
 	{
-		std::string dockspace("EDS_" + title);
-		ImGui::DockSpace(ImGui::GetID(dockspace.c_str()), ImVec2(0, 0), ImGuiDockNodeFlags_None, &window_class);
+		ImGui::SetNextWindowDockID(ImGuiID(2201), ImGuiCond_Once);
 	}
-	draw();
-	ImGui::End();
-	for(const auto& child : childs)
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+	if(ImGui::Begin(title.c_str(), nullptr, imgui_flags))
 	{
-		child->draw_window();
+		ImGui::PopStyleVar();
+		
+		if(flags & WindowFlagBits::HasExplicitDockSpace)
+		{
+			std::string dockspace("EDS_" + title);
+			ImGui::DockSpace(ImGui::GetID(dockspace.c_str()), ImVec2(0, 0), ImGuiDockNodeFlags_None, &window_class);
+		}
+		draw();
+		ImGui::End();	
+		for(const auto& child : childs)
+		{
+			child->draw_window();
+		}
+	}
+	else
+	{
+		ImGui::PopStyleVar();
+		ImGui::End();
 	}
 	ImGui::PopID();
 }

@@ -9,7 +9,12 @@ namespace ze::editor
 enum class WindowFlagBits
 {
 	/** Does the window contains a dock space ? Allows childrens to dock inside the window */
-	HasExplicitDockSpace = 1 << 0
+	HasExplicitDockSpace = 1 << 0,
+
+	/** Should ImGui save daa about this window in a .ini ? */
+	Transient = 1 << 1,
+
+	DockToMainDockSpaceOnce = 1 << 2
 };
 ENABLE_FLAG_ENUMS(WindowFlagBits, WindowFlags);
 
@@ -23,6 +28,7 @@ class Window
 public:
 	Window(const std::string& in_title, const WindowFlags& in_flags = WindowFlags(),
 		int in_imgui_flags = 0);
+	virtual ~Window() = default;
 
 	/**
 	 * Draw the window and its childs
@@ -30,6 +36,8 @@ public:
 	void draw_window();
 
 	void add(Window* in_window);
+
+	ZE_FORCEINLINE const std::string& get_title() const { return title; }
 protected:
 	virtual void draw() = 0;
 protected:
@@ -39,6 +47,7 @@ protected:
 	std::vector<std::unique_ptr<Window>> childs;
 	int internal_childs_class;
 	ImGuiWindowClass window_class;
+	ImGuiID next_dock_id;
 };
 
 }

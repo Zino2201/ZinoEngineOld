@@ -42,6 +42,7 @@ private:
 	ImFont* font;
 	std::unique_ptr<NativeWindow> window;
 	std::vector<std::unique_ptr<Window>> main_windows;
+	std::vector<std::unique_ptr<Window>> main_windows_queue;
 	ui::imgui::ViewportData main_viewport_data;
 };
 

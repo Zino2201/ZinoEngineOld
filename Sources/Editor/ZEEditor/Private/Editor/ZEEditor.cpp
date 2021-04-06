@@ -2,7 +2,7 @@
 #include "Module/Module.h"
 #include "Engine/Viewport.h"
 #include "ImGui/ImGui.h"
-#include "examples/imgui_impl_sdl.h"
+#include "backends/imgui_impl_sdl.h"
 #include <SDL.h>
 #include "Assets/Asset.h"
 #include "AssetDatabase/AssetDatabase.h"
@@ -20,10 +20,12 @@
 #include "Editor/IconManager.h"
 #include "Editor/Windows/Window.h"
 #include "Editor/Assets/AssetActions.h"
+#include "Editor/Assets/AssetFactory.h"
 #include "ZEFS/Paths.h"
 #include "ZEFS/Utils.h"
 #include <filesystem>
 #include "Editor/Windows/Console.h"
+#include <imgui_internal.h>
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);
 
@@ -148,11 +150,13 @@ EditorApp::EditorApp() : EngineApp(),
 	assetutils::get_on_asset_imported().bind(std::bind(&EditorApp::on_asset_imported,
 		this, std::placeholders::_1, std::placeholders::_2));
 	initialize_asset_actions_mgr();
+	initialize_asset_factory_mgr();
 }
 
 EditorApp::~EditorApp()
 {
 	gfx::Device::get().wait_gpu_idle();
+	destroy_asset_factory_mgr();
 	destroy_asset_actions_mgr();
 	ImGui::GetMainViewport()->RendererUserData = nullptr;
 	main_viewport_data.window.swapchain.reset();
@@ -200,6 +204,11 @@ void EditorApp::post_tick(const float in_delta_time)
 
 	Device::get().new_frame();
 
+	/** Process new windows to add */
+	for(auto& window : main_windows_queue)
+		main_windows.push_back(std::move(window));
+	main_windows_queue.clear();
+
 	/** UI rendering */
 	ImGui::ShowDemoWindow();
 	//ImGui::ShowStyleEditor();
@@ -209,15 +218,20 @@ void EditorApp::post_tick(const float in_delta_time)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-	ImGui::Begin("ZEEditor_MainWindow_BG", nullptr, ImGuiWindowFlags_NoDocking
+	if(ImGui::Begin("ZEEditor_MainWindow_BG", nullptr, ImGuiWindowFlags_NoDocking
 		| ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove
-		| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoResize);
+		| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoResize))
+	{
+		ImGui::DockSpace(ImGuiID(2201), ImVec2(window->get_width(), window->get_height()),
+			0);
+	}
 	ImGui::PopStyleVar(3);
-	ImGui::DockSpace(ImGui::GetID("ZEEditor_MainWindow_BG_DOCK"), ImVec2(window->get_width(), window->get_height()),
-		0);
-	for(const auto& window : main_windows)
-		window->draw_window();
 	ImGui::End();
+
+	for(const auto& window : main_windows)
+	{
+		window->draw_window();
+	}
 
 	ImGui::Render();
 
@@ -257,7 +271,7 @@ void EditorApp::on_asset_imported(const std::filesystem::path& in_path,
 	/** Serialize the asset and then unload it */
 	Asset* asset = factory->create_from_stream(stream);
 	const ze::reflection::Class* asset_class = asset->get_class();
-	std::string name = "NewAsset";
+	std::string name = in_path.filename().replace_extension("").string();
 	while(std::filesystem::exists(in_target_path / (name + ".zasset")))
 		name += "(1)";
 
@@ -276,7 +290,7 @@ void EditorApp::on_asset_imported(const std::filesystem::path& in_path,
 
 void EditorApp::add_window(OwnerPtr<Window> in_window) 
 { 
-	main_windows.emplace_back(in_window); 
+	main_windows_queue.emplace_back(std::unique_ptr<Window>(in_window)); 
 }
 
 }
