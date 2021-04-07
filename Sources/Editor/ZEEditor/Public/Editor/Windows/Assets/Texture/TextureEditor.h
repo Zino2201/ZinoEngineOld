@@ -2,6 +2,7 @@
 
 #include "Editor/Windows/Window.h"
 #include "Assets/AssetManager.h"
+#include "Editor/PropertiesEditor.h"
 
 namespace ze { class Texture; }
 
@@ -22,6 +23,7 @@ private:
 	Asset* asset;
 	assetmanager::AssetRequestPtr asset_request;
 	Texture* texture;
+	PropertiesEditor properties_editor;
 };
 
 }

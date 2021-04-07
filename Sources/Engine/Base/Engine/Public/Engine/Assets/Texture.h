@@ -189,30 +189,30 @@ private:
 	ZPROPERTY(Serializable)
 	TextureType type;
 
-	ZPROPERTY(Editable, Visible, Serializable)
+	ZPROPERTY(Editable, Visible, Serializable, Category = "Base")
 	TextureFilter filter;
 		
-	ZPROPERTY(Editable, Visible, Serializable)
+	ZPROPERTY(Editable, Visible, Serializable, Category = "Base")
 	TextureCompressionMode compression_mode;
 
-	ZPROPERTY(Editable, Visible, Serializable)
+	ZPROPERTY(Editable, Visible, Serializable, Category = "Base")
 	TextureFormat format;
 
-	ZPROPERTY(Visible)
+	ZPROPERTY()
 	uint32_t width;
 	
-	ZPROPERTY(Visible)
+	ZPROPERTY()
 	uint32_t height;
 	
-	ZPROPERTY(Visible)
+	ZPROPERTY()
 	uint32_t depth;
 
 	std::vector<TextureMipmap> mipmaps;
 
-	ZPROPERTY(Editable, Visible)
+	ZPROPERTY(Editable, Visible, Category = "Mipmaps")
 	bool use_mipmaps;
 
-	ZPROPERTY(Editable, Visible)
+	ZPROPERTY(Editable, Visible, Category = "Misc")
 	bool keep_in_ram;
 
 	gfx::Format gfx_format;

@@ -3,6 +3,8 @@ find_package(SDL2 CONFIG REQUIRED)
 ze_create_module(ZEEditor 
     Public/Editor/ZEEditor.h
     Public/Editor/IconManager.h
+    Public/Editor/PropertyEditor.h
+    Public/Editor/PropertiesEditor.h
     Public/Editor/Windows/MapEditor.h
     Public/Editor/Windows/Window.h
     Public/Editor/Windows/AssetExplorer.h
@@ -20,6 +22,8 @@ ze_create_module(ZEEditor
     Private/Editor/Assets/Actions/ModelActions.cpp
     Private/Editor/Assets/Factories/StbTextureFactory.cpp
     Private/Editor/Assets/Factories/TinyObjFactory.cpp
+    Private/Editor/PropertyEditors/PrimitivesPropertyEditors.h
+    Private/Editor/PropertyEditors/PrimitivesPropertyEditors.cpp
     Private/Editor/Windows/MapEditor.cpp
     Private/Editor/Windows/Window.cpp
     Private/Editor/Windows/AssetExplorer.cpp
@@ -29,7 +33,9 @@ ze_create_module(ZEEditor
     Private/Editor/Windows/Tools.cpp
     Private/Editor/Windows/Console.cpp
     Private/Editor/Windows/Assets/Texture/TextureEditor.cpp
+    Private/Editor/PropertiesEditor.cpp
     Private/Editor/IconManager.cpp
+    Private/Editor/PropertyEditor.cpp
 	Private/Editor/ZEEditor.cpp)
 
 ze_add_public_modules(ZEEditor ZEUI)

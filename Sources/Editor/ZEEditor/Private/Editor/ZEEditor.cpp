@@ -26,6 +26,8 @@
 #include <filesystem>
 #include "Editor/Windows/Console.h"
 #include <imgui_internal.h>
+#include "Editor/PropertyEditor.h"
+#include "Editor/PropertyEditors/PrimitivesPropertyEditors.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);
 
@@ -93,15 +95,15 @@ EditorApp::EditorApp() : EngineApp(),
 		colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
 		colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
 		colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
-		colors[ImGuiCol_CheckMark]              = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+		colors[ImGuiCol_CheckMark]              = ImVec4(0.71f, 0.71f, 0.71f, 1.00f);
 		colors[ImGuiCol_SliderGrab]             = ImVec4(0.24f, 0.52f, 0.88f, 1.00f);
 		colors[ImGuiCol_SliderGrabActive]       = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-		colors[ImGuiCol_Button]                 = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
-		colors[ImGuiCol_ButtonHovered]          = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-		colors[ImGuiCol_ButtonActive]           = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
-		colors[ImGuiCol_Header]                 = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
-		colors[ImGuiCol_HeaderHovered]          = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
-		colors[ImGuiCol_HeaderActive]           = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+		colors[ImGuiCol_Button]                 = ImVec4(0.29f, 0.29f, 0.29f, 0.40f);
+		colors[ImGuiCol_ButtonHovered]          = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
+		colors[ImGuiCol_ButtonActive]           = ImVec4(0.23f, 0.23f, 0.23f, 1.00f);
+		colors[ImGuiCol_Header]                 = ImVec4(0.11f, 0.11f, 0.11f, 0.31f);
+		colors[ImGuiCol_HeaderHovered]          = ImVec4(0.13f, 0.13f, 0.13f, 0.80f);
+		colors[ImGuiCol_HeaderActive]           = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
 		colors[ImGuiCol_Separator]              = ImVec4(0.15f, 0.14f, 0.16f, 0.50f);
 		colors[ImGuiCol_SeparatorHovered]       = ImVec4(0.15f, 0.14f, 0.16f, 1.00f);
 		colors[ImGuiCol_SeparatorActive]        = ImVec4(0.14f, 0.13f, 0.16f, 1.00f);
@@ -156,6 +158,9 @@ EditorApp::EditorApp() : EngineApp(),
 		this, std::placeholders::_1, std::placeholders::_2));
 	initialize_asset_actions_mgr();
 	initialize_asset_factory_mgr();
+
+	/** Property editors */
+	register_property_editor(reflection::Type::get<bool>(), new BoolPropertyEditor);
 }
 
 EditorApp::~EditorApp()

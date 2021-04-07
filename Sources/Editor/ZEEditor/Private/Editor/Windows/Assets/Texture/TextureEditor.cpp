@@ -12,7 +12,8 @@ TextureEditor::TextureEditor(Asset* in_asset,
 		WindowFlagBits::Transient | WindowFlagBits::DockToMainDockSpaceOnce),
 		asset(in_asset),
 		asset_request(in_request_handle),
-		texture(static_cast<Texture*>(in_asset))
+		texture(static_cast<Texture*>(in_asset)),
+	properties_editor(reflection::Class::get<Texture>(), in_asset)
 {
 }
 
@@ -20,8 +21,8 @@ void TextureEditor::draw()
 {
 	ImGui::Columns(2, nullptr, false);
 
-	const ImVec2 texture_size(512, 512);
-	const ImVec2 texture_quad_size(256 * 1.5f, 256 * 1.5f);
+	const ImVec2 texture_size(ImGui::GetContentRegionAvail());
+	const ImVec2 texture_quad_size(512, 512);
 	{
 		ImRect bb(ImGui::GetCursorScreenPos(), ImGui::GetCursorScreenPos() + texture_size);
 		ImGui::GetWindowDrawList()->AddRectFilled(bb.Min, bb.Max,
@@ -79,17 +80,10 @@ void TextureEditor::draw()
 	ImGui::NextColumn();
 	
 	/** Parameters */
-	ImGui::BeginChild("Properties", ImGui::GetContentRegionAvail());
+	ImGui::BeginChild("Properties", ImGui::GetContentRegionAvail(), true);
 	{
 		ImGui::TextUnformatted("Parameters");
-		ImGui::Columns(2);
-		ImGui::Text("Test");
-		ImGui::NextColumn();
-
-		bool v;
-		ImGui::Checkbox("Ah", &v);
-
-		ImGui::Columns(1);
+		properties_editor.draw();
 	}
 	ImGui::EndChild();
 
