@@ -52,7 +52,7 @@ void import_assets_dialog(const std::filesystem::path& in_path,
 void save_asset(ze::Asset& in_asset, const std::filesystem::path& in_path,
 	const std::string& in_name)
 {
-	std::string filename = in_name + ".zasset";
+	std::string filename = in_name + ".zeasset";
 	ze::filesystem::FileOStream stream(in_path / filename,
 		ze::filesystem::FileWriteFlagBits::Binary |
 		ze::filesystem::FileWriteFlagBits::ReplaceExisting);

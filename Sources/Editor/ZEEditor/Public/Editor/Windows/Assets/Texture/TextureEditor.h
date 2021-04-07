@@ -3,6 +3,8 @@
 #include "Editor/Windows/Window.h"
 #include "Assets/AssetManager.h"
 
+namespace ze { class Texture; }
+
 namespace ze::editor
 {
 
@@ -19,6 +21,7 @@ protected:
 private:
 	Asset* asset;
 	assetmanager::AssetRequestPtr asset_request;
+	Texture* texture;
 };
 
 }

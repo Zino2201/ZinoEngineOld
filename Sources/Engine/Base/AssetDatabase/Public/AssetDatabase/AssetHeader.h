@@ -11,12 +11,12 @@ namespace ze
  */
 struct AssetHeader
 {
-    char id[7];
+    char id[8];
     ZEVersion engine_ver;
     std::string class_name;
 
     AssetHeader() : id("") {}
-    AssetHeader(const std::string& in_class_name) : id("ZASSET"),
+    AssetHeader(const std::string& in_class_name) : id("ZEASSET"),
         engine_ver(get_version()),
         class_name(in_class_name) {}
 
@@ -30,7 +30,7 @@ struct AssetHeader
 
     bool is_valid() const
     {
-        return strcmp(id, "ZASSET") == 0;
+        return strcmp(id, "ZEASSET") == 0;
     }
 };
 

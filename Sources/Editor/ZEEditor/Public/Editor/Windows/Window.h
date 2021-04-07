@@ -11,9 +11,10 @@ enum class WindowFlagBits
 	/** Does the window contains a dock space ? Allows childrens to dock inside the window */
 	HasExplicitDockSpace = 1 << 0,
 
-	/** Should ImGui save daa about this window in a .ini ? */
+	/** Should ImGui save data about this window in the .ini ? */
 	Transient = 1 << 1,
 
+	/** Automaticly dock to the main dockspace once */
 	DockToMainDockSpaceOnce = 1 << 2
 };
 ENABLE_FLAG_ENUMS(WindowFlagBits, WindowFlags);
@@ -32,10 +33,24 @@ public:
 
 	/**
 	 * Draw the window and its childs
+	 * \return True if the window is still opened
 	 */
-	void draw_window();
+	bool draw_window();
 
+	/** 
+	 * Add the specified window as a child of the window
+	 */
 	void add(Window* in_window);
+
+	/**
+	 * Set new parent
+	 */
+	void set_parent(Window* in_parent) { parent = in_parent; }
+
+	/** 
+	 * Destroy the specified child window
+	 */
+	void destroy_child(Window* in_child);
 
 	ZE_FORCEINLINE const std::string& get_title() const { return title; }
 protected:
@@ -48,6 +63,7 @@ protected:
 	int internal_childs_class;
 	ImGuiWindowClass window_class;
 	ImGuiID next_dock_id;
+	Window* parent;
 };
 
 }

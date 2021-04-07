@@ -35,6 +35,7 @@ public:
 	void post_tick(const float in_delta_time) override;
 
 	void add_window(OwnerPtr<Window> in_window);
+	bool has_window(const std::string& in_title);
 private:
 	void on_asset_imported(const std::filesystem::path& InPath,
 		const std::filesystem::path& InTarget);

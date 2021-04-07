@@ -53,6 +53,11 @@ EditorApp::EditorApp() : EngineApp(),
 	ImGuiIO& io = ImGui::GetIO();
 	ImGui::StyleColorsDark();
 	io.ConfigViewportsNoAutoMerge = false;
+	io.DisplaySize = ImVec2(static_cast<float>(window->get_width()), static_cast<float>(window->get_height()));
+	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+	io.WantCaptureKeyboard = true;
+	io.WantCaptureMouse = true;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 
 	/** Default ZE editor style */
 	{
@@ -62,6 +67,7 @@ EditorApp::EditorApp() : EngineApp(),
 		style.TabRounding = 0.f;
 		style.ScrollbarRounding = 0.f;
 		style.WindowMenuButtonPosition = ImGuiDir_Right;
+		style.TabMinWidthForCloseButton = 0.f;
 		style.ItemSpacing = ImVec2(8, 4);
 		style.WindowBorderSize = 0.f;
 		style.FrameBorderSize = 1.f;
@@ -103,7 +109,7 @@ EditorApp::EditorApp() : EngineApp(),
 		colors[ImGuiCol_ResizeGripHovered]      = ImVec4(0.11f, 0.11f, 0.11f, 0.67f);
 		colors[ImGuiCol_ResizeGripActive]       = ImVec4(0.00f, 0.00f, 0.00f, 0.95f);
 		colors[ImGuiCol_Tab]                    = ImVec4(0.16f, 0.16f, 0.16f, 0.86f);
-		colors[ImGuiCol_TabHovered]             = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+		colors[ImGuiCol_TabHovered]             = ImVec4(0.29f, 0.29f, 0.29f, 0.80f);
 		colors[ImGuiCol_TabActive]              = ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
 		colors[ImGuiCol_TabUnfocused]           = ImVec4(0.24f, 0.24f, 0.24f, 0.97f);
 		colors[ImGuiCol_TabUnfocusedActive]     = ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
@@ -113,6 +119,11 @@ EditorApp::EditorApp() : EngineApp(),
 		colors[ImGuiCol_PlotLinesHovered]       = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
 		colors[ImGuiCol_PlotHistogram]          = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
 		colors[ImGuiCol_PlotHistogramHovered]   = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+		colors[ImGuiCol_TableHeaderBg]          = ImVec4(0.19f, 0.19f, 0.20f, 1.00f);
+		colors[ImGuiCol_TableBorderStrong]      = ImVec4(0.31f, 0.31f, 0.35f, 1.00f);
+		colors[ImGuiCol_TableBorderLight]       = ImVec4(0.23f, 0.23f, 0.25f, 1.00f);
+		colors[ImGuiCol_TableRowBg]             = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+		colors[ImGuiCol_TableRowBgAlt]          = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
 		colors[ImGuiCol_TextSelectedBg]         = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
 		colors[ImGuiCol_DragDropTarget]         = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
 		colors[ImGuiCol_NavHighlight]           = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
@@ -120,12 +131,6 @@ EditorApp::EditorApp() : EngineApp(),
 		colors[ImGuiCol_NavWindowingDimBg]      = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
 		colors[ImGuiCol_ModalWindowDimBg]       = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 	}
-
-	io.DisplaySize = ImVec2(static_cast<float>(window->get_width()), static_cast<float>(window->get_height()));
-	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
-	io.WantCaptureKeyboard = true;
-	io.WantCaptureMouse = true;
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 
 	font = io.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 18.f);
 	ze::ui::imgui::initialize();
@@ -211,7 +216,7 @@ void EditorApp::post_tick(const float in_delta_time)
 
 	/** UI rendering */
 	ImGui::ShowDemoWindow();
-	//ImGui::ShowStyleEditor();
+	ImGui::ShowStyleEditor();
 	ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos, ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(window->get_width(), window->get_height()), ImGuiCond_Always);
 	ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
@@ -222,15 +227,29 @@ void EditorApp::post_tick(const float in_delta_time)
 		| ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove
 		| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoResize))
 	{
-		ImGui::DockSpace(ImGuiID(2201), ImVec2(window->get_width(), window->get_height()),
-			0);
+		ImGui::DockSpace(ImGuiID(2201), ImVec2(window->get_width(), window->get_height()), 0);
 	}
 	ImGui::PopStyleVar(3);
 	ImGui::End();
 
+	std::vector<Window*> expired_childs;
 	for(const auto& window : main_windows)
 	{
-		window->draw_window();
+		bool expired = window->draw_window();
+		if(!expired)
+			expired_childs.emplace_back(window.get());
+	}
+
+	for(const auto& expired_child : expired_childs)
+	{
+		for(size_t i = 0; i < main_windows.size(); ++i)
+		{
+			if(main_windows[i].get() == expired_child)
+			{
+				main_windows.erase(main_windows.begin() + i);
+				break;
+			}
+		}
 	}
 
 	ImGui::Render();
@@ -272,7 +291,7 @@ void EditorApp::on_asset_imported(const std::filesystem::path& in_path,
 	Asset* asset = factory->create_from_stream(stream);
 	const ze::reflection::Class* asset_class = asset->get_class();
 	std::string name = in_path.filename().replace_extension("").string();
-	while(std::filesystem::exists(in_target_path / (name + ".zasset")))
+	while(std::filesystem::exists(in_target_path / (name + ".zeasset")))
 		name += "(1)";
 
 	assetutils::save_asset(*asset, in_target_path, name);
@@ -283,7 +302,7 @@ void EditorApp::on_asset_imported(const std::filesystem::path& in_path,
 
 	if(AssetActions* actions = get_actions_for(asset_class))
 	{
-		auto request = assetmanager::load_asset_sync(in_target_path / (name + ".zasset"));
+		auto request = assetmanager::load_asset_sync(in_target_path / (name + ".zeasset"));
 		actions->open_editor(request.first, request.second);
 	}
 }
@@ -291,6 +310,17 @@ void EditorApp::on_asset_imported(const std::filesystem::path& in_path,
 void EditorApp::add_window(OwnerPtr<Window> in_window) 
 { 
 	main_windows_queue.emplace_back(std::unique_ptr<Window>(in_window)); 
+}
+
+bool EditorApp::has_window(const std::string& in_title)
+{
+	for(const auto& window : main_windows)
+	{
+		if(window->get_title() == in_title)
+			return true;
+	}
+
+	return false;
 }
 
 }

@@ -7,6 +7,8 @@
 #include "Editor/Assets/AssetActions.h"
 #include "Editor/AssetUtils/AssetUtils.h"
 #include "ZEFS/Paths.h"
+#include "Editor/ZEEditor.h"
+#include "Assets/Asset.h"
 
 namespace ze::editor
 {
@@ -154,7 +156,19 @@ void AssetExplorer::draw_asset_entry(const std::string& in_name,
 				if(AssetActions* actions = get_actions_for(asset_data.asset_class))
 				{
 					auto request = assetmanager::load_asset_sync(asset_data.path);
-					actions->open_editor(request.first, request.second);
+					std::string window_title_name = request.first->get_path().filename().replace_extension("").string();
+					
+					/**
+					 * Focus the already existing asset editor with this asset if it exists
+					 */
+					if(EditorApp::get().has_window(window_title_name))
+					{
+						ImGui::SetWindowFocus(window_title_name.c_str());
+					}
+					else
+					{
+						actions->open_editor(request.first, request.second);
+					}
 				}
 			}
 			else
