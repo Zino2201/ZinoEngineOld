@@ -17,6 +17,7 @@ class TextureEditor : public Window
 public:
 	TextureEditor(Asset* in_asset, 
 		const assetmanager::AssetRequestPtr& in_request_handle);
+	~TextureEditor();
 protected:
 	void draw();
 private:

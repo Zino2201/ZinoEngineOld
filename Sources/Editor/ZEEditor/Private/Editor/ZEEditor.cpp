@@ -208,6 +208,20 @@ void EditorApp::process_event(const SDL_Event& in_event, const float in_delta_ti
 
 void EditorApp::post_tick(const float in_delta_time)
 {
+	static std::vector<Window*> expired_childs;
+	for(const auto& expired_child : expired_childs)
+	{
+		for(size_t i = 0; i < main_windows.size(); ++i)
+		{
+			if(main_windows[i].get() == expired_child)
+			{
+				main_windows.erase(main_windows.begin() + i);
+				break;
+			}
+		}
+	}
+	expired_childs.clear();
+	
 	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(window->get_handle()));
 	ImGui::NewFrame();
 	using namespace gfx;
@@ -237,24 +251,11 @@ void EditorApp::post_tick(const float in_delta_time)
 	ImGui::PopStyleVar(3);
 	ImGui::End();
 
-	std::vector<Window*> expired_childs;
 	for(const auto& window : main_windows)
 	{
 		bool expired = window->draw_window();
 		if(!expired)
 			expired_childs.emplace_back(window.get());
-	}
-
-	for(const auto& expired_child : expired_childs)
-	{
-		for(size_t i = 0; i < main_windows.size(); ++i)
-		{
-			if(main_windows[i].get() == expired_child)
-			{
-				main_windows.erase(main_windows.begin() + i);
-				break;
-			}
-		}
 	}
 
 	ImGui::Render();

@@ -37,6 +37,13 @@ void Window::destroy_child(Window* in_child)
 
 bool Window::draw_window()
 {
+	/**
+	 * Destroy expired childs
+	 */
+	/*for(const auto& child : expired_childs)
+		destroy_child(child);
+	expired_childs.clear();*/
+
 	ImGui::PushID(title.c_str());
 	ImGui::SetNextWindowClass(&window_class);
 	if(flags & WindowFlagBits::DockToMainDockSpaceOnce)
@@ -59,18 +66,14 @@ bool Window::draw_window()
 		ImGui::End();	
 
 		/**
-		 * Draw childs and destroy expired ones
+		 * Draw childs
 		 */
-		std::vector<Window*> expired_childs;
 		for(const auto& child : childs)
 		{
 			bool expired = child->draw_window();
 			if(!expired)
 				expired_childs.emplace_back(child.get());
 		}
-
-		for(const auto& child : expired_childs)
-			destroy_child(child);
 	}
 	else
 	{

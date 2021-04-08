@@ -17,12 +17,15 @@ TextureEditor::TextureEditor(Asset* in_asset,
 {
 }
 
+TextureEditor::~TextureEditor() {}
+
 void TextureEditor::draw()
 {
 	ImGui::Columns(2, nullptr, false);
 
 	const ImVec2 texture_size(ImGui::GetContentRegionAvail());
 	const ImVec2 texture_quad_size(512, 512);
+	if(texture->get_texture_view())
 	{
 		ImRect bb(ImGui::GetCursorScreenPos(), ImGui::GetCursorScreenPos() + texture_size);
 		ImGui::GetWindowDrawList()->AddRectFilled(bb.Min, bb.Max,

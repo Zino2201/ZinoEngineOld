@@ -64,6 +64,7 @@ protected:
 	ImGuiWindowClass window_class;
 	ImGuiID next_dock_id;
 	Window* parent;
+	std::vector<Window*> expired_childs;
 };
 
 }
