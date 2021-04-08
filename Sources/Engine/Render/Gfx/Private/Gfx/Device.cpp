@@ -310,8 +310,12 @@ std::pair<Result, DeviceResourceHandle> Device::create_buffer(const BufferInfo& 
 	if(!handle)
 		return { result, {} };
 	
-	DeviceResourceHandle buffer = DeviceResourceHandle::make(buffers.emplace(in_info, handle),
-		DeviceResourceType::Buffer);
+	DeviceResourceHandle buffer;
+	{
+		std::lock_guard<std::mutex> guard(resources_mutex);
+		buffer = DeviceResourceHandle::make(buffers.emplace(in_info, handle),
+			DeviceResourceType::Buffer);
+	}
 
 	if(!in_initial_data.empty())
 	{
@@ -364,8 +368,12 @@ std::pair<Result, DeviceResourceHandle> Device::create_texture(TextureInfo in_in
 	if(!handle)
 		return { result, {} };
 
-	DeviceResourceHandle texture = DeviceResourceHandle::make(textures.emplace(in_info, handle),
-		DeviceResourceType::Texture);
+	DeviceResourceHandle texture;
+	{
+		std::lock_guard<std::mutex> guard(resources_mutex);
+		texture = DeviceResourceHandle::make(textures.emplace(in_info, handle),
+			DeviceResourceType::Texture);
+	}
 
 	if(!in_initial_data.data.empty())
 	{
@@ -419,6 +427,7 @@ std::pair<Result, DeviceResourceHandle> Device::create_texture_view(const Textur
 	if(!handle)
 		return { result, {} };
 
+	std::lock_guard<std::mutex> guard(resources_mutex);
 	return { result, DeviceResourceHandle::make(texture_views.emplace(in_info, handle), DeviceResourceType::TextureView) };
 }
 
@@ -429,6 +438,7 @@ std::pair<Result, DeviceResourceHandle> Device::create_shader(const ShaderCreate
 	if(!handle)
 		return { result, {} };
 
+	std::lock_guard<std::mutex> guard(resources_mutex);
 	return { result, DeviceResourceHandle::make(shaders.emplace(in_info, handle), DeviceResourceType::Shader) };
 }
 
@@ -439,6 +449,7 @@ std::pair<Result, DeviceResourceHandle> Device::create_pipeline_layout(const gfx
 	if(!handle)
 		return { result, {} };
 
+	std::lock_guard<std::mutex> guard(resources_mutex);
 	return { result, DeviceResourceHandle::make(pipeline_layouts.emplace(in_info, handle), DeviceResourceType::PipelineLayout) };
 }
 
@@ -449,6 +460,7 @@ std::pair<Result, DeviceResourceHandle> Device::create_sampler(const gfx::Sample
 	if(!handle)
 		return { result, {} };
 
+	std::lock_guard<std::mutex> guard(resources_mutex);
 	return { result, DeviceResourceHandle::make(samplers.emplace(in_info, handle), DeviceResourceType::Sampler) };
 }
 
@@ -459,6 +471,7 @@ std::pair<Result, DeviceResourceHandle> Device::create_swapchain(const gfx::Swap
 	if(!handle)
 		return { result, {} };
 
+	std::lock_guard<std::mutex> guard(resources_mutex);
 	return { result, DeviceResourceHandle::make(swapchains.emplace(in_info, handle), DeviceResourceType::SwapChain) };
 }
 
@@ -468,6 +481,7 @@ std::pair<Result, DeviceResourceHandle> Device::create_semaphore()
 	if(!handle)
 		return { result, {} };
 
+	std::lock_guard<std::mutex> guard(resources_mutex);
 	return { result, DeviceResourceHandle::make(semaphores.emplace(handle), DeviceResourceType::Semaphore) };
 }
 
@@ -523,6 +537,7 @@ ResourceHandle Device::create_or_find_render_pass(const RenderPassCreateInfo& in
 	if(render_pass)
 		return ResourceHandle(render_pass->handle);
 
+	std::lock_guard<std::mutex> guard(resources_mutex);
 	auto [result, handle] = Backend::get().render_pass_create(in_create_info);
 	render_passes.insert(in_create_info, { handle });
 	return handle;
@@ -549,6 +564,7 @@ ResourceHandle Device::create_or_find_gfx_pipeline(const GfxPipelineRenderPassSt
 	if(pipeline != gfx_pipelines.end())
 		return pipeline->second;
 
+	std::lock_guard<std::mutex> guard(resources_mutex);
 	auto [result, handle] = Backend::get().gfx_pipeline_create(create_info);
 	gfx_pipelines.insert({ create_info, handle });
 	return handle;
@@ -556,41 +572,49 @@ ResourceHandle Device::create_or_find_gfx_pipeline(const GfxPipelineRenderPassSt
 
 void Device::destroy_buffer(const DeviceResourceHandle& in_handle)
 {
+	std::lock_guard<std::mutex> guard(get_current_frame().frame_lock);
 	get_current_frame().expired_buffers.emplace_back(in_handle);
 }
 
 void Device::destroy_texture(const DeviceResourceHandle& in_handle)
 {
+	std::lock_guard<std::mutex> guard(get_current_frame().frame_lock);
 	get_current_frame().expired_textures.emplace_back(in_handle);
 }
 
 void Device::destroy_texture_view(const DeviceResourceHandle& in_handle)
 {
+	std::lock_guard<std::mutex> guard(get_current_frame().frame_lock);
 	get_current_frame().expired_texture_views.emplace_back(in_handle);
 }
 
 void Device::destroy_shader(const DeviceResourceHandle& in_handle)
 {
+	std::lock_guard<std::mutex> guard(get_current_frame().frame_lock);
 	get_current_frame().expired_shaders.emplace_back(in_handle);
 }
 
 void Device::destroy_pipeline_layout(const DeviceResourceHandle& in_handle)
 {
+	std::lock_guard<std::mutex> guard(get_current_frame().frame_lock);
 	get_current_frame().expired_pipeline_layouts.emplace_back(in_handle);
 }
 
 void Device::destroy_sampler(const DeviceResourceHandle& in_handle)
 {
+	std::lock_guard<std::mutex> guard(get_current_frame().frame_lock);
 	get_current_frame().expired_samplers.emplace_back(in_handle);
 }
 
 void Device::destroy_swapchain(const DeviceResourceHandle& in_handle)
 {
+	std::lock_guard<std::mutex> guard(get_current_frame().frame_lock);
 	get_current_frame().expired_swapchains.emplace_back(in_handle);
 }
 
 void Device::destroy_semaphore(const DeviceResourceHandle& in_handle)
 {
+	std::lock_guard<std::mutex> guard(get_current_frame().frame_lock);
 	get_current_frame().expired_semaphores.emplace_back(in_handle);
 }
 

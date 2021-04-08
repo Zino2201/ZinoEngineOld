@@ -8,12 +8,13 @@ namespace ze::editor
 
 TextureEditor::TextureEditor(Asset* in_asset, 
 	const assetmanager::AssetRequestPtr& in_request_handle)
-	: Window(in_asset->get_path().filename().replace_extension("").string(),
-		WindowFlagBits::Transient | WindowFlagBits::DockToMainDockSpaceOnce),
+	: Window(in_asset->get_path().stem().string(),
+		WindowFlagBits::Transient | WindowFlagBits::DockToMainDockSpaceOnce,
+		ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse),
 		asset(in_asset),
 		asset_request(in_request_handle),
 		texture(static_cast<Texture*>(in_asset)),
-	properties_editor(reflection::Class::get<Texture>(), in_asset)
+	properties_editor(reflection::Class::get<Texture>(), in_asset), zoom(1.f)
 {
 }
 
@@ -24,8 +25,9 @@ void TextureEditor::draw()
 	ImGui::Columns(2, nullptr, false);
 
 	const ImVec2 texture_size(ImGui::GetContentRegionAvail());
-	const ImVec2 texture_quad_size(512, 512);
-	if(texture->get_texture_view())
+	ImVec2 texture_quad_size(texture->get_width() * zoom, texture->get_height() * zoom);
+	
+	if(texture->is_ready())
 	{
 		ImRect bb(ImGui::GetCursorScreenPos(), ImGui::GetCursorScreenPos() + texture_size);
 		ImGui::GetWindowDrawList()->AddRectFilled(bb.Min, bb.Max,
@@ -34,30 +36,10 @@ void TextureEditor::draw()
 		ImGui::SetCursorPos(texture_size / 2 - texture_quad_size / 2);
 		ImVec2 screen_pos = ImGui::GetCursorScreenPos();
 		ImGui::Image((void*) &texture->get_texture_view(), texture_quad_size);
-		if (ImGui::IsItemHovered())
-        {
-			ImGui::BeginTooltip();
-			float region_sz = 32.0f;
-			float region_x = ImGui::GetIO().MousePos.x - screen_pos.x - region_sz * 0.5f;
-			float region_y = ImGui::GetIO().MousePos.y - screen_pos.y - region_sz * 0.5f;
-			float zoom = 4.0f;
-
-			if (region_x < 0.0f)
-				region_x = 0.0f;
-			else if (region_x > texture_quad_size.x - region_sz) 
-				region_x = texture_quad_size.x - region_sz;
-
-			if (region_y < 0.0f) 
-				region_y = 0.0f;
-			else if (region_y > texture_quad_size.y - region_sz) 
-				region_y = texture_quad_size.y - region_sz;
-
-			ImVec2 uv0 = ImVec2((region_x) / texture_quad_size.x, (region_y) / texture_quad_size.y);
-			ImVec2 uv1 = ImVec2((region_x + region_sz) / texture_quad_size.x, (region_y + region_sz) / texture_quad_size.y);
-			ImGui::Image((void*) &texture->get_texture_view(), 
-				ImVec2(region_sz * zoom, region_sz * zoom), uv0, uv1, ImVec4(1, 1, 1, 1), ImVec4(1, 1, 1, 0.5));
-			ImGui::EndTooltip();
-        }
+		if (ImGui::IsItemHovered() && ImGui::GetIO().MouseWheel != 0.f)
+		{
+			zoom = std::clamp(zoom + (ImGui::GetIO().MouseWheel * (ImGui::GetIO().DeltaTime * 50.f)), 0.1f, 5.f);
+		}
 		ImGui::SetCursorPos(cursor_pos + ImVec2(5, 5));
 	}
 
@@ -79,6 +61,12 @@ void TextureEditor::draw()
 	{
 		ImGui::TextColored(ImVec4(1.0f, 0, 0, 1), "ERROR: No mipmap data! Asset may be corrupted!");
 	}
+
+	{
+		std::string zoom_txt = fmt::format("Zoom: {}%", static_cast<int>(zoom * 100));
+		ImGui::TextUnformatted(zoom_txt.c_str());
+	}
+
 	ImGui::EndGroup();
 
 	ImGui::NextColumn();
@@ -89,12 +77,13 @@ void TextureEditor::draw()
 		ImGui::TextUnformatted("Parameters");
 		if(properties_editor.draw())
 		{
-			auto data = texture->get_mipmap(0).data;
-			texture->generate_mipmaps(data);
+			texture->generate_mipmaps();
 			texture->update_resource();
 		}
 	}
 	ImGui::EndChild();
+
+	//properties editor get by name
 
 	ImGui::Columns(1);
 }

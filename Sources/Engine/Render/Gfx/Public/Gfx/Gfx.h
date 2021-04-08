@@ -5,6 +5,7 @@
 #include "Containers/SparseArray.h"
 #include <queue>
 #include <bitset>
+#include <mutex>
 
 namespace std
 {
@@ -157,7 +158,7 @@ public:
 	static constexpr int max_bindings = 16;
 
 	CommandList(const CommandListType& in_type,
-		const ResourceHandle& in_handle);
+		const ResourceHandle& in_handle, const std::thread::id& in_thread);
 
 	void begin();
 	void end();
@@ -251,6 +252,9 @@ private:
 
 	/** Descriptor set cache */
 	robin_hood::unordered_map<uint64_t, ResourceHandle> descriptor_sets;
+
+	/** The thread that owns the list */
+	std::thread::id thread;
 };
 
 /**
@@ -736,6 +740,8 @@ class Device
 		ResourceHandle transfer_fence;
 		bool gfx_submitted;
 
+		std::mutex frame_lock;
+
 		/** Deferred destruction resources */
 		std::vector<DeviceResourceHandle> expired_buffers;
 		std::vector<DeviceResourceHandle> expired_textures;
@@ -922,6 +928,7 @@ private:
 	SparseArray<Swapchain> swapchains;
 	SparseArray<Semaphore> semaphores;
 	std::array<Frame, max_frames_in_flight> frames;
+	std::mutex resources_mutex;
 	size_t current_frame;
 };
 

@@ -156,7 +156,7 @@ void AssetExplorer::draw_asset_entry(const std::string& in_name,
 				if(AssetActions* actions = get_actions_for(asset_data.asset_class))
 				{
 					auto request = assetmanager::load_asset_sync(asset_data.path);
-					std::string window_title_name = request.first->get_path().filename().replace_extension("").string();
+					std::string window_title_name = request.first->get_path().stem().string();
 					
 					/**
 					 * Focus the already existing asset editor with this asset if it exists

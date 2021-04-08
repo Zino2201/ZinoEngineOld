@@ -39,7 +39,7 @@ CommandList* ThreadedCommandPool::Pool::allocate_cmd_list(CommandListType type)
 	}
 	else
 	{
-		command_lists.emplace_back(std::make_unique<CommandList>(type, Backend::get().command_pool_allocate(handle, 1)[0]));
+		command_lists.emplace_back(std::make_unique<CommandList>(type, Backend::get().command_pool_allocate(handle, 1)[0], std::this_thread::get_id()));
 		free_command_list++;
 		return command_lists.back().get();
 	}

@@ -25,6 +25,7 @@ private:
 	assetmanager::AssetRequestPtr asset_request;
 	Texture* texture;
 	PropertiesEditor properties_editor;
+	float zoom;
 };
 
 }

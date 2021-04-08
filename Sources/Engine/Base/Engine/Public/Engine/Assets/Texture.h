@@ -52,7 +52,7 @@ enum class TextureCompressionMode
 	/** Default compression (BC1/BC3) */
 	Default,
 
-	/** High quality (BC7, slow) */
+	/** High quality (BC7 slow) */
 	HighQuality,
 
 	/** R8 */
@@ -76,10 +76,7 @@ struct TextureMipmap
 
 	/** Actual texture data, stored as RGB(A) 32 in editor */
 	std::vector<uint8_t> data;
-#if ZE_WITH_EDITOR
-	/** Actual data used for rendering, only available in editor */
-	std::vector<uint8_t> cached_data;
-#endif
+
 
 	TextureMipmap() : width(0), height(0),
 		depth(0) {}
@@ -96,16 +93,14 @@ struct TextureMipmap
 		in_archive <=> width;
 		in_archive <=> height;
 		in_archive <=> depth;
+#if !ZE_WITH_EDITOR
 		in_archive <=> data;
+#endif
 	}
 
 	const auto& get_data() const
 	{
-#if ZE_WITH_EDITOR
-		return cached_data;
-#else
 		return data;
-#endif
 	}
 };
 
@@ -139,12 +134,14 @@ public:
 		const std::vector<uint8_t>& in_data,
 		const bool in_create_gpu_resources) 
 		: type(in_type), filter(in_filter), compression_mode(in_compression_mode), format(in_format), 
-		width(in_width), height(in_height), depth(in_depth), use_mipmaps(in_use_mipmaps), keep_in_ram(false)
+		width(in_width), height(in_height), depth(in_depth), use_mipmaps(in_use_mipmaps), keep_in_ram(false), ready(false),
+		uncompressed_data(in_data)
 	{ 
-		generate_mipmaps(in_data);
-
-		if(in_create_gpu_resources)
-			update_resource(); 
+		ZE_CHECK(!uncompressed_data.empty());
+		uint32_t miplevels = 1;
+		if(use_mipmaps)
+			miplevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
+		mipmaps.resize(miplevels);
 	}
 	
 	template<typename ArchiveType>
@@ -160,6 +157,7 @@ public:
 		in_archive <=> mipmaps;
 		in_archive <=> use_mipmaps;
 		in_archive <=> keep_in_ram;
+		in_archive <=> uncompressed_data;
 
 		if constexpr (serialization::IsInputArchive<ArchiveType>)
 			update_resource();
@@ -170,11 +168,6 @@ public:
 	 */
 	void update_resource();
 
-	/**
-	 * Generate the mipmaps for the specified data and store them in the texture's mipmaps using the render system	
-	 */
-	void generate_mipmaps(const std::vector<uint8_t>& in_data);
-
 	ZE_FORCEINLINE TextureType get_type() const { return type; }
 	ZE_FORCEINLINE uint32_t get_width() const { return width; }
 	ZE_FORCEINLINE uint32_t get_height() const { return height; }
@@ -183,10 +176,17 @@ public:
 	ZE_FORCEINLINE const gfx::Format& get_gfx_format() const { return gfx_format; }
 	ZE_FORCEINLINE const gfx::DeviceResourceHandle& get_texture() const { return *texture; }
 	ZE_FORCEINLINE const gfx::DeviceResourceHandle& get_texture_view() const { return *texture_view; }
-private:
+	ZE_FORCEINLINE bool is_ready() const { return ready; }
+
 #if ZE_WITH_EDITOR
-	std::vector<uint8_t> load_data_cache(const uint32_t in_mip_level);
+	void generate_mipmaps();
 #endif
+private:
+	std::vector<uint8_t> get_mipmap_data(const uint32_t in_mip_level);
+
+	/** 
+	 * Generate mipmaps data and write them to the asset data cache
+	 */
 
 	gfx::Format get_adequate_gfx_format() const;
 private:
@@ -218,6 +218,12 @@ private:
 
 	ZPROPERTY(Editable, Visible, Category = "Misc")
 	bool keep_in_ram;
+
+	/** Raw texture data, not compressed. Used for generating compressed mipmaps */
+	std::vector<uint8_t> uncompressed_data;
+
+	/** Is texture ready yet ? */
+	std::atomic_bool ready;
 
 	gfx::Format gfx_format;
 	gfx::UniqueTexture texture;

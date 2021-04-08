@@ -7,19 +7,29 @@ namespace ze
 
 struct TexcOutputHandler : public nvtt::OutputHandler
 {
-	TexcOutputHandler(uint8_t* in_target_data) : target_data(in_target_data) {}
+	TexcOutputHandler(std::vector<std::vector<uint8_t>>& in_output) : output(in_output), current_mip(nullptr) {}
 	
-	void beginImage(int size, int width, int height, int depth, int face, int mipLevel) override {}
-	void endImage() override {}
+	void beginImage(int size, int width, int height, int depth, int face, int mipLevel) override 
+	{
+		output[mipLevel].resize(size);
+		current_mip = output[mipLevel].data();
+	}
+
+	void endImage() override 
+	{
+		current_mip = nullptr;
+	}
 
 	bool writeData(const void* data, int size) override
 	{
-		memcpy(target_data, data, size);
-		target_data += size;
+		ZE_CHECK(current_mip);
+		memcpy(current_mip, data, size);
+		current_mip += size;
 		return true;
 	}
 	
-	uint8_t* target_data;
+	std::vector<std::vector<uint8_t>>& output;
+	uint8_t* current_mip;
 };
 
 struct TexcErrorHandler : public nvtt::ErrorHandler
@@ -45,13 +55,16 @@ struct TexcColorRGB32Unorm
 	uint8_t b;
 };
 
-std::vector<uint8_t> texc_compress(const uint32_t in_width,
+std::vector<std::vector<uint8_t>> texc_compress(const uint32_t in_width,
 	const uint32_t in_height,
 	const uint32_t in_depth,
 	const std::vector<uint8_t>& in_uncompressed_data,
 	const TexcPixelFormat in_src_pixel_format,
-	const gfx::Format& in_target_format)
+	const gfx::Format& in_target_format,
+	const uint32_t in_mip_levels)
 {
+	ZE_CHECK(in_mip_levels > 0);
+
 	std::vector<TexcColorRGBA32Unorm> src_data;
 	src_data.reserve(in_width * in_height * in_depth * 4);
 
@@ -93,6 +106,7 @@ std::vector<uint8_t> texc_compress(const uint32_t in_width,
 	switch(in_target_format)
 	{
 	case gfx::Format::R8G8B8A8Unorm:
+	case gfx::Format::R8G8B8A8Srgb:
 		nvtt_format = nvtt::Format_RGBA;
 		break;
 	case gfx::Format::Bc1RgbUnormBlock:
@@ -125,65 +139,50 @@ std::vector<uint8_t> texc_compress(const uint32_t in_width,
 		return {};
 	}
 
-	/** Calculate final size */
-	uint32_t block_width = 4;
-	uint32_t block_height = 4;
-	uint32_t block_size = (nvtt_format == nvtt::Format_BC1 || nvtt_format == nvtt::Format_BC4) ? 8 : 16;
-	uint32_t texture_blocks_width = std::max(in_width / block_width, 1Ui32);
-	uint32_t texture_blocks_height = std::max(in_height / block_height, 1Ui32);
-
-	std::vector<uint8_t> output;
-	output.resize(texture_blocks_width * texture_blocks_height * block_size);
-
-	/** Calculate jobs count */
-	uint32_t blocks_per_job = std::max<uint32_t>(texture_blocks_width, std::ceil(std::log2(2048)));
-	uint32_t rows_per_job = blocks_per_job / texture_blocks_width;
-	uint32_t job_count = texture_blocks_height / rows_per_job;
+	std::vector<std::vector<uint8_t>> output;
+	output.resize(in_mip_levels);
 
 	nvtt::OutputOptions output_options;	
+	nvtt::CompressionOptions compression_options;
+	compression_options.setFormat(nvtt_format);
+	compression_options.setPixelType(nvtt::PixelType::PixelType_UnsignedNorm);
+	compression_options.setQuality(nvtt::Quality::Quality_Fastest);
+	compression_options.setColorWeights(1, 1, 1);
 
-	std::vector<std::reference_wrapper<const jobsystem::Job>> jobs;
-	jobs.reserve(job_count);
+	nvtt::InputOptions input_opts;
+	input_opts.setTextureLayout(nvtt::TextureType_2D, in_width, in_height);
+	input_opts.setMipmapGeneration(false, -1);
+	input_opts.setFormat(nvtt::InputFormat_BGRA_8UB);
+	input_opts.setMipmapData(src_data.data(), in_width, in_height, 1, 0, 0);
+	input_opts.setMipmapGeneration(in_mip_levels > 1, in_mip_levels);
 
-	const uint8_t* src_data_ptr = reinterpret_cast<const uint8_t*>(src_data.data());
-	uint8_t* dst_data_ptr = output.data();
-	for(uint32_t i = 0; i < job_count; ++i)
+	nvtt::OutputOptions output_opts;
+	TexcOutputHandler handler(output);
+	TexcErrorHandler error;
+	output_opts.setOutputHeader(false);
+	output_opts.setOutputHandler(&handler);
+	output_opts.setErrorHandler(&error);
+
+	nvtt::Compressor compressor;
+	compressor.enableCudaAcceleration(true);
+	compressor.process(input_opts, compression_options, output_opts);
+
+	/** Flip B & R channels if required */
+	if(nvtt_format == nvtt::Format_RGBA)
 	{
-		uint32_t height = rows_per_job * block_height;
-
-		jobs.push_back(jobsystem::async(
-			[nvtt_format, src_data_ptr, dst_data_ptr, in_width, height](const jobsystem::Job& in_job)
+		for(size_t mip = 0; mip < in_mip_levels; ++mip)
+		{
+			for(size_t i = 0; i < output[mip].size(); i += sizeof(TexcColorRGBA32Unorm))
 			{
-				nvtt::CompressionOptions compression_options;
-				compression_options.setFormat(nvtt_format);
-				compression_options.setPixelType(nvtt::PixelType::PixelType_UnsignedNorm);
-				compression_options.setQuality(nvtt::Quality::Quality_Fastest);
-				compression_options.setColorWeights(1, 1, 1);
-
-				nvtt::InputOptions input_opts;
-				input_opts.setTextureLayout(nvtt::TextureType_2D, in_width, height);
-				input_opts.setMipmapGeneration(false, -1);
-				input_opts.setFormat(nvtt::InputFormat_BGRA_8UB);
-				input_opts.setMipmapData(src_data_ptr, in_width, height);
-
-				nvtt::OutputOptions output_opts;
-				TexcOutputHandler handler(dst_data_ptr);
-				TexcErrorHandler error;
-				output_opts.setOutputHeader(false);
-				output_opts.setOutputHandler(&handler);
-				output_opts.setErrorHandler(&error);
-
-				nvtt::Compressor compressor;
-				compressor.enableCudaAcceleration(true);
-				compressor.process(input_opts, compression_options, output_opts);
-			}));
-
-		src_data_ptr += static_cast<uint64_t>(rows_per_job) * block_height * in_width * sizeof(TexcColorRGBA32Unorm);
-		dst_data_ptr += rows_per_job * texture_blocks_width * block_size;
+				TexcColorRGBA32Unorm color = *reinterpret_cast<const TexcColorRGBA32Unorm*>(output[mip].data() + i);	
+			
+				output[mip][i + 0] = color.b;
+				output[mip][i + 1] = color.g;
+				output[mip][i + 2] = color.r;
+				output[mip][i + 3] = color.a;
+			}
+		}
 	}
-
-	for(const auto& job : jobs)
-		jobsystem::wait(job);
 
 	return output;
 }
