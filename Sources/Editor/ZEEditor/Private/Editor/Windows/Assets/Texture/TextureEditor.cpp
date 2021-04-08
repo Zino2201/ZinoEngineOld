@@ -30,7 +30,7 @@ void TextureEditor::draw()
 		ImVec2 cursor_pos = ImGui::GetCursorPos();
 		ImGui::SetCursorPos(texture_size / 2 - texture_quad_size / 2);
 		ImVec2 screen_pos = ImGui::GetCursorScreenPos();
-		ImGui::Image(0, texture_quad_size);
+		ImGui::Image((void*) &texture->get_texture_view(), texture_quad_size);
 		if (ImGui::IsItemHovered())
         {
 			ImGui::BeginTooltip();
@@ -51,7 +51,8 @@ void TextureEditor::draw()
 
 			ImVec2 uv0 = ImVec2((region_x) / texture_quad_size.x, (region_y) / texture_quad_size.y);
 			ImVec2 uv1 = ImVec2((region_x + region_sz) / texture_quad_size.x, (region_y + region_sz) / texture_quad_size.y);
-			ImGui::Image(0, ImVec2(region_sz * zoom, region_sz * zoom), uv0, uv1, ImVec4(1, 1, 1, 1), ImVec4(1, 1, 1, 0.5));
+			ImGui::Image((void*) &texture->get_texture_view(), 
+				ImVec2(region_sz * zoom, region_sz * zoom), uv0, uv1, ImVec4(1, 1, 1, 1), ImVec4(1, 1, 1, 0.5));
 			ImGui::EndTooltip();
         }
 		ImGui::SetCursorPos(cursor_pos + ImVec2(5, 5));
@@ -60,16 +61,16 @@ void TextureEditor::draw()
 	/** "HUD" display onto the image displaying informations */
 	ImGui::BeginGroup();
 	ImGui::Text("Type: %s", std::to_string(texture->get_type()).c_str());
-	ImGui::Text("Format: %s", std::to_string(texture->get_gfx_format()).c_str());
-	ImGui::Text("%dx%dx1 (Mip 0/%d)",
+	ImGui::Text("GPU Format: %s", std::to_string(texture->get_gfx_format()).c_str());
+	ImGui::Text("Res: %dx%dx1 (Mip 0/%d)",
 		texture->get_width(),
 		texture->get_height(),
-		texture->get_mipmaps().size());
+		texture->get_mipmaps().size() - 1);
 	if(!texture->get_mipmaps().empty())
 	{
-		ImGui::Text("VRAM Size (Mip %d): %d KiB", 
+		ImGui::Text("VRAM Size (Mip %d): %f KiB", 
 			0,
-			(int) texture->get_mipmap(0).get_data().size() / 1048576.f);
+			texture->get_mipmap(0).get_data().size() / 1048576.f);
 	}
 	else
 	{
@@ -83,7 +84,12 @@ void TextureEditor::draw()
 	ImGui::BeginChild("Properties", ImGui::GetContentRegionAvail(), true);
 	{
 		ImGui::TextUnformatted("Parameters");
-		properties_editor.draw();
+		if(properties_editor.draw())
+		{
+			auto data = texture->get_mipmap(0).data;
+			texture->generate_mipmaps(data);
+			texture->update_resource();
+		}
 	}
 	ImGui::EndChild();
 

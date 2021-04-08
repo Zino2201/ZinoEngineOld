@@ -19,7 +19,7 @@ class PropertiesEditor
 public:
 	PropertiesEditor(const ze::reflection::Class* in_class, void* in_object);
 
-	void draw();
+	bool draw();
 private:
 	const ze::reflection::Class* refl_class;
 	void* object;

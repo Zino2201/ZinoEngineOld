@@ -393,6 +393,9 @@ struct TextureInfo
 
 	TextureCreateInfo create_info;
 
+	TextureInfo() {}
+	TextureInfo(const TextureCreateInfo& in_create_info) : create_info(in_create_info) {}
+
 	static TextureInfo make_2d_texture(const uint32_t in_width, const uint32_t in_height,
 		const Format in_format, const uint32_t in_mip_levels, const TextureUsageFlags in_usage_flags)
 	{

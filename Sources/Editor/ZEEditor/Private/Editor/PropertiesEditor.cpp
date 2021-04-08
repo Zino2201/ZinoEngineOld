@@ -24,10 +24,12 @@ PropertiesEditor::PropertiesEditor(const ze::reflection::Class* in_class, void* 
 	}
 }
 
-void PropertiesEditor::draw()
+bool PropertiesEditor::draw()
 {
 	ImGui::Spacing();
 	
+	bool edited = false;
+
 	/** Display reflected properties */
 	for(auto& [name, category] : categories)
 	{
@@ -48,6 +50,12 @@ void PropertiesEditor::draw()
 					{
 						ImGui::TableNextColumn(); 
 						ImGui::TextUnformatted(property->get_name().c_str());
+						if(ImGui::IsItemHovered())
+						{
+							ImGui::BeginTooltip();
+							ImGui::TextUnformatted(property->get_type()->get_name().c_str());
+							ImGui::EndTooltip();
+						}
 					}
 					{
 						ImGui::TableNextColumn(); 
@@ -61,7 +69,8 @@ void PropertiesEditor::draw()
 						if(PropertyEditor* editor = get_property_editor(property->get_type()))
 						{
 							std::string unique_label = "##" + property->get_name();
-							editor->draw(unique_label.c_str(), property->get_value_ptr(object));
+							if(editor->draw(unique_label.c_str(), property->get_value_ptr(object)))
+								edited = true;
 						}
 						else
 						{
@@ -82,6 +91,8 @@ void PropertiesEditor::draw()
 		ImGui::PopID();
 
 	}
+
+	return edited;
 }
 
 }

@@ -72,7 +72,7 @@ EditorApp::EditorApp() : EngineApp(),
 		style.TabMinWidthForCloseButton = 0.f;
 		style.ItemSpacing = ImVec2(8, 4);
 		style.WindowBorderSize = 0.f;
-		style.FrameBorderSize = 1.f;
+		style.FrameBorderSize = 0.f;
 		style.PopupBorderSize = 1.f;
 		style.TabBorderSize = 1.f;
 
@@ -85,8 +85,8 @@ EditorApp::EditorApp() : EngineApp(),
 		colors[ImGuiCol_Border]                 = ImVec4(0.09f, 0.09f, 0.09f, 0.50f);
 		colors[ImGuiCol_BorderShadow]           = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
 		colors[ImGuiCol_FrameBg]                = ImVec4(0.16f, 0.16f, 0.16f, 0.54f);
-		colors[ImGuiCol_FrameBgHovered]         = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
-		colors[ImGuiCol_FrameBgActive]          = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
+		colors[ImGuiCol_FrameBgHovered]         = ImVec4(0.30f, 0.30f, 0.30f, 0.40f);
+		colors[ImGuiCol_FrameBgActive]          = ImVec4(0.00f, 0.48f, 1.00f, 0.67f);
 		colors[ImGuiCol_TitleBg]                = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
 		colors[ImGuiCol_TitleBgActive]          = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
 		colors[ImGuiCol_TitleBgCollapsed]       = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);

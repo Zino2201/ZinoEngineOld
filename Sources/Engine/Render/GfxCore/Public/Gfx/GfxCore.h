@@ -54,9 +54,12 @@ enum class Format
 	/** BC1/DXT1 */
 	Bc1RgbUnormBlock,
 	Bc1RgbaUnormBlock,
+	Bc1RgbSrgbBlock,
+	Bc1RgbaSrgbBlock,
 	
 	/** BC3/DXT5 */
 	Bc3UnormBlock,
+	Bc3SrgbBlock,
 	
 	/** BC5 */
 	Bc5UnormBlock,
@@ -68,6 +71,7 @@ enum class Format
 
 	/** BC7 */
 	Bc7UnormBlock,
+	Bc7SrgbBlock,
 };
 
 /** Utils structures */
@@ -135,10 +139,18 @@ ZE_FORCEINLINE std::string to_string(const ze::gfx::Format& in_format)
 		return "Bc1RgbUnormBlock";
 	case ze::gfx::Format::Bc1RgbaUnormBlock:
 		return "Bc1RgbaUnormBlock";
+	case ze::gfx::Format::Bc1RgbSrgbBlock:
+		return "Bc1RgbSrgbBlock";
+	case ze::gfx::Format::Bc1RgbaSrgbBlock:
+		return "Bc1RgbaSrgbBlock";
 	case ze::gfx::Format::Bc3UnormBlock:
 		return "Bc3UnormBlock";
+	case ze::gfx::Format::Bc3SrgbBlock:
+		return "Bc3SrgbBlock";
 	case ze::gfx::Format::Bc7UnormBlock:
 		return "Bc7UnormBlock";
+	case ze::gfx::Format::Bc7SrgbBlock:
+		return "Bc7SrgbBlock";
 	case ze::gfx::Format::Bc5UnormBlock:
 		return "Bc5UnormBlock";
 	case ze::gfx::Format::Bc5SnormBlock:

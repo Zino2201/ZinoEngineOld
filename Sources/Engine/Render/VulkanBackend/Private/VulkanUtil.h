@@ -45,10 +45,18 @@ ZE_FORCEINLINE vk::Format convert_format(Format in_format)
 		return vk::Format::eBc1RgbUnormBlock;
 	case Format::Bc1RgbaUnormBlock:
 		return vk::Format::eBc1RgbaUnormBlock;
+	case Format::Bc1RgbaSrgbBlock:
+		return vk::Format::eBc1RgbaSrgbBlock;
+	case Format::Bc1RgbSrgbBlock:
+		return vk::Format::eBc1RgbSrgbBlock;
 	case Format::Bc3UnormBlock:
 		return vk::Format::eBc3UnormBlock;
+	case Format::Bc3SrgbBlock:
+		return vk::Format::eBc3SrgbBlock;
 	case Format::Bc7UnormBlock:
 		return vk::Format::eBc7UnormBlock;
+	case Format::Bc7SrgbBlock:
+		return vk::Format::eBc7SrgbBlock;
 	case Format::Bc5UnormBlock:
 		return vk::Format::eBc5UnormBlock;
 	case Format::Bc5SnormBlock:
@@ -99,10 +107,18 @@ ZE_FORCEINLINE Format to_format(vk::Format in_format)
 		return Format::Bc1RgbUnormBlock;
 	case vk::Format::eBc1RgbaUnormBlock:
 		return Format::Bc1RgbaUnormBlock;
+	case vk::Format::eBc1RgbSrgbBlock:
+		return Format::Bc1RgbSrgbBlock;
+	case vk::Format::eBc1RgbaSrgbBlock:
+		return Format::Bc1RgbaSrgbBlock;
 	case vk::Format::eBc3UnormBlock:
 		return Format::Bc3UnormBlock;
+	case vk::Format::eBc3SrgbBlock:
+		return Format::Bc3SrgbBlock;
 	case vk::Format::eBc7UnormBlock:
 		return Format::Bc7UnormBlock;
+	case vk::Format::eBc7SrgbBlock:
+		return Format::Bc7SrgbBlock;
 	case vk::Format::eBc5UnormBlock:
 		return Format::Bc5UnormBlock;
 	case vk::Format::eBc5SnormBlock:

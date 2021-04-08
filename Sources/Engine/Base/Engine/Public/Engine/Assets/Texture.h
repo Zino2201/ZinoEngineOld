@@ -29,13 +29,18 @@ enum class TextureFilter
 };
 
 /**
- * Texture format (the texture is actually stored in RGBA, this value is used to choose the correct compression format)
+ * Texture format (the texture is actually stored in RGBA, this value is used to choose the correct compression format and final gpu format)
  */
 ZENUM()
 enum class TextureFormat
 {
-	RGB32,
-	RGBA32,
+	/** Linear formats */
+	LinearRGB,
+	LinearRGBA,
+
+	/** Non-linear formats (sRGB) */
+	sRGB,
+	sRGBA
 };
 
 ZENUM()
@@ -47,7 +52,7 @@ enum class TextureCompressionMode
 	/** Default compression (BC1/BC3) */
 	Default,
 
-	/** High quality (BC7, slow to compress!) */
+	/** High quality (BC7, slow) */
 	HighQuality,
 
 	/** R8 */
@@ -121,7 +126,7 @@ public:
 		Ver0 = 0,
 	};
 
-	Texture() : ready(false) {}
+	Texture() {}
 	
 	Texture(const TextureType in_type,
 		const TextureFilter in_filter,
@@ -134,7 +139,7 @@ public:
 		const std::vector<uint8_t>& in_data,
 		const bool in_create_gpu_resources) 
 		: type(in_type), filter(in_filter), compression_mode(in_compression_mode), format(in_format), 
-		width(in_width), height(in_height), depth(in_depth), use_mipmaps(in_use_mipmaps), keep_in_ram(false), ready(false)
+		width(in_width), height(in_height), depth(in_depth), use_mipmaps(in_use_mipmaps), keep_in_ram(false)
 	{ 
 		generate_mipmaps(in_data);
 
@@ -178,7 +183,6 @@ public:
 	ZE_FORCEINLINE const gfx::Format& get_gfx_format() const { return gfx_format; }
 	ZE_FORCEINLINE const gfx::DeviceResourceHandle& get_texture() const { return *texture; }
 	ZE_FORCEINLINE const gfx::DeviceResourceHandle& get_texture_view() const { return *texture_view; }
-	ZE_FORCEINLINE const bool is_ready() const { return ready; }
 private:
 #if ZE_WITH_EDITOR
 	std::vector<uint8_t> load_data_cache(const uint32_t in_mip_level);
@@ -218,7 +222,6 @@ private:
 	gfx::Format gfx_format;
 	gfx::UniqueTexture texture;
 	gfx::UniqueTextureView texture_view;
-	bool ready;
 };
 ZE_SERL_TYPE_VERSION(Texture, Texture::Ver0);
 

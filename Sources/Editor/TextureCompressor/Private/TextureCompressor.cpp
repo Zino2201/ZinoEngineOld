@@ -96,15 +96,19 @@ std::vector<uint8_t> texc_compress(const uint32_t in_width,
 		nvtt_format = nvtt::Format_RGBA;
 		break;
 	case gfx::Format::Bc1RgbUnormBlock:
+	case gfx::Format::Bc1RgbSrgbBlock:
 		nvtt_format = nvtt::Format_BC1;
 		break;
 	case gfx::Format::Bc1RgbaUnormBlock:
+	case gfx::Format::Bc1RgbaSrgbBlock:
 		nvtt_format = nvtt::Format_BC1a;
 		break;
 	case gfx::Format::Bc3UnormBlock:
+	case gfx::Format::Bc3SrgbBlock:
 		nvtt_format = nvtt::Format_BC3;
 		break;
 	case gfx::Format::Bc5UnormBlock:
+	case gfx::Format::Bc5SnormBlock:
 		nvtt_format = nvtt::Format_BC5;
 		break;
 	case gfx::Format::Bc6HUfloatBlock:
@@ -112,6 +116,7 @@ std::vector<uint8_t> texc_compress(const uint32_t in_width,
 		nvtt_format = nvtt::Format_BC6;
 		break;
 	case gfx::Format::Bc7UnormBlock:
+	case gfx::Format::Bc7SrgbBlock:
 		nvtt_format = nvtt::Format_BC7;
 		break;
 	default:
