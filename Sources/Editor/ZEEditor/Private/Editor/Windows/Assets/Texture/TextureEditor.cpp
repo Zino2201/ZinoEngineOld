@@ -117,3 +117,4 @@ void TextureEditor::on_mipmap_changed(void* in_enabled)
 }
 
 }
+
