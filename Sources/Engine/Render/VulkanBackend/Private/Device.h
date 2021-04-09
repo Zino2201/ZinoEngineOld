@@ -43,16 +43,16 @@ public:
 	ZE_FORCEINLINE bool is_valid() const { return device && allocator.allocator != VK_NULL_HANDLE; }
 	ZE_FORCEINLINE vk::Device& get_device() { return *device; }
 	ZE_FORCEINLINE vk::PhysicalDevice& get_physical_device() { return physical_device; }
-	ZE_FORCEINLINE ResourceHandle get_gfx_queue() { return gfx_queue.get(); }
-	ZE_FORCEINLINE ResourceHandle get_present_queue() { return present_queue.get(); }
+	ZE_FORCEINLINE ResourceHandle get_gfx_queue() { return gfx_queue; }
+	ZE_FORCEINLINE ResourceHandle get_present_queue() { return present_queue; }
 	ZE_FORCEINLINE VmaAllocator& get_allocator() { return allocator.allocator; }
 	ZE_FORCEINLINE const QueueFamilyIndices& get_queue_family_indices() const { return queue_family_indices; }
 private:
 	vk::PhysicalDevice physical_device;
 	vk::UniqueDevice device;
 	AllocatorWrapper allocator;
-	SharedResourceHandle<ResourceType::Queue> gfx_queue;
-	SharedResourceHandle<ResourceType::Queue> present_queue;
+	ResourceHandle gfx_queue;
+	ResourceHandle present_queue;
 	QueueFamilyIndices queue_family_indices;
 };
 

@@ -8,7 +8,7 @@ namespace ze::gfx::vulkan
 
 class Device;
 
-class VULKANBACKEND_API VulkanBackend : public RenderBackend
+class VulkanBackend final : public Backend
 {
 public:
 	~VulkanBackend();
@@ -16,19 +16,23 @@ public:
 	std::pair<bool, std::string> initialize() override;
 	void device_wait_idle() override;
 	void new_frame() override;
+	BackendFeatureFlags get_features() const override
+	{
+		return BackendFeatureFlagBits::CommandPoolTrimming;
+	}
 
-	ResourceHandle buffer_create(const BufferCreateInfo& in_create_info) override;
-	ResourceHandle swapchain_create(const SwapChainCreateInfo& in_create_info) override; 
+	std::pair<Result, ResourceHandle> buffer_create(const BufferCreateInfo& in_create_info) override;
+	std::pair<Result, ResourceHandle> swapchain_create(const SwapChainCreateInfo& in_create_info) override; 
 	std::pair<Result, ResourceHandle> texture_create(const TextureCreateInfo& in_create_info) override;
 	std::pair<Result, ResourceHandle> texture_create(const vk::Image& in_image, const TextureCreateInfo& in_create_info);
-	ResourceHandle texture_view_create(const TextureViewCreateInfo& in_create_info) override;
-	ResourceHandle texture_view_create(const vk::Image& in_image,
+	std::pair<Result, ResourceHandle> texture_view_create(const TextureViewCreateInfo& in_create_info) override;
+	std::pair<Result, ResourceHandle> texture_view_create(const vk::Image& in_image,
 		const TextureViewCreateInfo& in_create_info);
 	std::pair<Result, ResourceHandle> shader_create(const ShaderCreateInfo& in_create_info) override;
 	std::pair<Result, ResourceHandle> render_pass_create(const RenderPassCreateInfo& in_create_info) override;
 	std::pair<Result, ResourceHandle> gfx_pipeline_create(const GfxPipelineCreateInfo& in_create_info) override;
 	std::pair<Result, ResourceHandle> pipeline_layout_create(const PipelineLayoutCreateInfo& in_create_info) override;
-	std::pair<Result, ResourceHandle> descriptor_set_create(const DescriptorSetCreateInfo& in_create_info) override;
+	std::pair<Result, ResourceHandle> descriptor_set_create(const vk::DescriptorSet& in_set);
 	std::pair<Result, ResourceHandle> sampler_create(const SamplerCreateInfo& in_create_info) override;
 
 	void buffer_destroy(const ResourceHandle& in_handle) override;
@@ -42,8 +46,12 @@ public:
 	void render_pass_destroy(const ResourceHandle& in_handle) override;
 	void pipeline_destroy(const ResourceHandle& in_handle) override;
 	void pipeline_layout_destroy(const ResourceHandle& in_handle) override;
-	void descriptor_set_destroy(const ResourceHandle& in_handle) override;
+	void descriptor_set_destroy(const ResourceHandle& in_handle);
 	void sampler_destroy(const ResourceHandle& in_handle) override;
+
+	ResourceHandle pipeline_layout_allocate_descriptor_set(const ResourceHandle& in_pipeline_layout,
+		const uint32_t in_set,
+		const std::vector<Descriptor>& descriptors) override;
 
 	/** Buffer */
 	std::pair<Result, void*> buffer_map(const ResourceHandle& in_buffer) override;
@@ -55,6 +63,9 @@ public:
 		const uint32_t in_new_height) override;
 	ResourceHandle swapchain_get_backbuffer(const ResourceHandle& in_swapchain) override;
 	ResourceHandle swapchain_get_backbuffer_texture(const ResourceHandle& in_swapchain) override;
+	uint32_t swapchain_get_backbuffer_index(const ResourceHandle& in_swapchain) override;
+	std::vector<ResourceHandle> swapchain_get_backbuffer_textures(const ResourceHandle& in_swapchain) override;
+	std::vector<ResourceHandle> swapchain_get_backbuffer_texture_views(const ResourceHandle& in_swapchain) override;
 	void swapchain_present(const ResourceHandle& in_swapchain,
 		const std::vector<ResourceHandle>& in_wait_semaphores) override;
 
@@ -70,15 +81,17 @@ public:
 	ResourceHandle get_gfx_queue() const override;
 
 	/** Sync */
-	ResourceHandle fence_create(const bool in_is_signaled = false) override;
+	std::pair<Result, ResourceHandle> fence_create(const bool in_is_signaled = false) override;
 	void fence_wait_for(const std::vector<ResourceHandle>& in_fences,
 		const bool in_wait_all = true, const uint64_t in_timeout = std::numeric_limits<uint64_t>::max()) override;
 	void fence_reset(const std::vector<ResourceHandle>& in_fences) override;
-	ResourceHandle semaphore_create() override;
+	std::pair<Result, ResourceHandle> semaphore_create() override;
 
 	/** Commands */
-	ResourceHandle command_pool_create(CommandPoolType in_type) override;
+	ResourceHandle command_pool_create() override;
 	void command_pool_reset(const ResourceHandle& in_pool) override;
+	void command_pool_trim(const ResourceHandle& in_pool) override;
+	void command_pool_free(const ResourceHandle& in_pool, const std::vector<ResourceHandle>& in_lists) override;
 	std::vector<ResourceHandle> command_pool_allocate(const ResourceHandle& in_pool, const size_t in_count) override;
 	Result command_list_begin(const ResourceHandle& in_command_list) override;
 	Result command_list_end(const ResourceHandle& in_command_list) override;
@@ -161,7 +174,7 @@ public:
 		const std::vector<TextureBlitRegion>& in_regions,
 		const Filter& in_filter) override;
 
-	ZE_FORCEINLINE bool is_valid() const override { return !!instance; }
+	//ZE_FORCEINLINE bool is_valid() const override { return !!instance; }
 	ZE_FORCEINLINE vk::Instance& get_instance() { return *instance; }
 private:
 	bool is_phys_device_usable(const vk::PhysicalDevice& in_device) const;
@@ -172,17 +185,35 @@ private:
 };
 
 /**
- * Create a resource handle by using Vulkan handle + hashing create info
+ * Create a resource
  */
-template<typename T, typename U>
-ResourceHandle create_resource_handle(ResourceType in_type, const T& in_c_handle, 
-	const U& in_create_info)
+template<typename T, typename... Args>
+ResourceHandle create_resource(Args&&... args)
 {
-	static_assert(!std::is_class_v<T>, "Please cast to the C handle");
+	T* ptr = new T(std::forward<Args>(args)...);
+	if(ptr->is_valid())
+	{
+		return ResourceHandle { reinterpret_cast<uint64_t>(ptr) };
+	}
+	
+	delete ptr;
+	return {};
+}
 
-	uint64_t seed = static_cast<std::underlying_type_t<ResourceType>>(in_type) + reinterpret_cast<uint64_t>(in_c_handle);
-	hash_combine(seed, in_create_info);
-	return { in_type, seed };
+template<typename T>
+void delete_resource(const ResourceHandle& handle)
+{
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	/** Call the ::get() function to validate the handle */
+	T::get(handle);
+#endif
+	delete reinterpret_cast<T*>(handle.handle);
+}
+
+template<typename T>
+ZE_FORCEINLINE T* get_resource(const ResourceHandle& handle)
+{
+	return reinterpret_cast<T*>(handle.handle);
 }
 
 VulkanBackend& get_backend();

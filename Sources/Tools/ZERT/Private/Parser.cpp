@@ -389,9 +389,20 @@ void Parser::parse_class(const bool in_struct)
 
             for(const auto& arg : property_args)
             {
-                std::string sanitized_arg = arg;
-                sanitized_arg.erase(std::remove_if(sanitized_arg.begin(), sanitized_arg.end(), isspace), sanitized_arg.end());
-                prop.metadatas.insert({ arg, "true" });
+                if(arg.find("=") != std::string::npos)
+                {
+                    std::string sanitized_arg = arg;
+                    sanitized_arg.erase(std::remove_if(sanitized_arg.begin(), sanitized_arg.end(), isspace), sanitized_arg.end());
+                    sanitized_arg.erase(std::remove(sanitized_arg.begin(), sanitized_arg.end(), '"'), sanitized_arg.end());
+                    std::vector<std::string> value_args = tokenize(sanitized_arg, '=');
+                    prop.metadatas.insert({ value_args[0], value_args[1] });
+                }
+                else
+                {
+                    std::string sanitized_arg = arg;
+                    sanitized_arg.erase(std::remove_if(sanitized_arg.begin(), sanitized_arg.end(), isspace), sanitized_arg.end());
+                    prop.metadatas.insert({ arg, "true" });
+                }
             }
         }
     }

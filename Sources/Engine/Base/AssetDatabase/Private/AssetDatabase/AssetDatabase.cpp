@@ -80,7 +80,7 @@ bool is_registered(const std::filesystem::path& path)
 
 bool is_valid_asset(const std::filesystem::path& path)
 {
-	return path.extension().string() == ".zasset";
+	return path.extension().string() == ".zeasset";
 }
 
 void scan_internal(const std::filesystem::path& path)

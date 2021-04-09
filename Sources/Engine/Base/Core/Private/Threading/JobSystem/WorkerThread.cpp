@@ -79,7 +79,7 @@ void WorkerThread::stop()
 	should_sleep = false;
 	active = false;
 	sleep_condition_var.notify_all();
-	thread.join();
+	thread.detach();
 }
 
 }

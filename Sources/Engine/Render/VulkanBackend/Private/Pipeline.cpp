@@ -13,27 +13,29 @@
 namespace ze::gfx::vulkan
 {
 
-robin_hood::unordered_map<ResourceHandle, Pipeline> pipelines;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> pipelines;
+#endif
+
 vk::Result last_pipeline_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::gfx_pipeline_create(const GfxPipelineCreateInfo& in_create_info)
 {
-	ResourceHandle handle;
-
-	Pipeline pipeline(*device, in_create_info);
-	if(pipeline.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::Pipeline, 
-			static_cast<VkPipeline>(pipeline.get_pipeline()), in_create_info);
-		pipelines.insert({ handle, std::move(pipeline) });
-	}
+	ResourceHandle handle = create_resource<Pipeline>(*device, in_create_info);
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	pipelines.insert(handle);
+#endif
 
 	return { convert_vk_result(last_pipeline_result), handle };
 }
 
 void VulkanBackend::pipeline_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<Pipeline>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	pipelines.erase(in_handle);
+#endif
 }
 
 Pipeline::Pipeline(Device& in_device, const GfxPipelineCreateInfo& in_create_info)
@@ -188,12 +190,12 @@ Pipeline::Pipeline(Device& in_device, const GfxPipelineCreateInfo& in_create_inf
 
 Pipeline* Pipeline::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto pipeline = pipelines.find(in_handle);
+	ZE_CHECKF(pipeline != pipelines.end(), "Invalid pipeline");
+#endif	
 
-	if(pipeline != pipelines.end())
-		return &pipeline->second;
-		
-	return nullptr;
+	return get_resource<Pipeline>(in_handle);
 }
 
 }

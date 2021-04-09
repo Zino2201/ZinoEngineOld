@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include "Module/Module.h"
 
@@ -30,6 +31,11 @@ struct SImGuiAutoStyleColor
 struct SImGuiAutoStyleVar
 {
 	SImGuiAutoStyleVar(ImGuiStyleVar InIdx, const ImVec2& InVal)
+	{
+		ImGui::PushStyleVar(InIdx, InVal);
+	}
+
+	SImGuiAutoStyleVar(ImGuiStyleVar InIdx, const float& InVal)
 	{
 		ImGui::PushStyleVar(InIdx, InVal);
 	}

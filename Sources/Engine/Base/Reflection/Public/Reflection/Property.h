@@ -60,6 +60,13 @@ public:
 	ZE_FORCEINLINE const size_t& get_offset() const { return offset; }
 	ZE_FORCEINLINE const PropertyFlags& get_flags() const { return flags; }
 	ZE_FORCEINLINE const std::unique_ptr<detail::PropertyImplBase>& get_impl() const { return impl; }
+	ZE_FORCEINLINE const std::string& get_metadata(const std::string& in_key) const 
+	{ 
+		auto it = metadata.find(in_key);
+		if(it != metadata.end())
+			return it->second;
+		return ""; 
+	}
 	ZE_FORCEINLINE bool has_metadata(const std::string& in_key) const { return metadata.contains(in_key); }
 
 	ZE_FORCEINLINE bool operator<(const Property& other) const { return name < other.name; }

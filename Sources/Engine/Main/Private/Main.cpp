@@ -15,6 +15,7 @@
 #include "Engine/TickSystem.h"
 #include "Engine/InputSystem.h"
 #include "Gfx/Vulkan/Backend.h"
+#include "Gfx/Gfx.h"
 
 #if ZE_WITH_EDITOR
 #include "Editor/ZEEditor.h"
@@ -34,6 +35,7 @@
 #include <sstream>
 #include <filesystem>
 #include "Serialization/Types/Map.h"
+#include "Reflection/Serialization.h"
 
 namespace FS = ze::filesystem;
 
@@ -45,7 +47,8 @@ void Exit();
 /** Global variables */
 
 /** Render system ptr */
-static std::unique_ptr<ze::gfx::RenderBackend> RenderBackend;
+static std::unique_ptr<ze::gfx::Backend> RenderBackend;
+static std::unique_ptr<ze::gfx::Device> Device;
 
 /** Current app */
 
@@ -63,10 +66,8 @@ bool bRun = true;
  * ZinoEngine main
  */
 #if ZE_PLATFORM(WINDOWS) 
-int CALLBACK WinMain(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR lpCmdLine,
-	int nCmdShow)
+
+int main(int argc, char** argv)
 {
 	char Buffer[MAX_PATH];
 	::GetCurrentDirectoryA(MAX_PATH, Buffer);
@@ -75,10 +76,20 @@ int CALLBACK WinMain(HINSTANCE hInstance,
 	Path += ZE_CONFIGURATION_NAME;
 	SetDllDirectoryA(Path.c_str());
 
+
 	int Err = Init();
 	Exit();
-	return Err;
+	return Err;	
 }
+
+int CALLBACK WinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPSTR lpCmdLine,
+	int nCmdShow)
+{
+	return main(0, nullptr);
+}
+
 #else
 int main(int argc, char** argv)
 {
@@ -130,9 +141,7 @@ void PreInit()
 
 			std::filesystem::create_directories("Logs/");
 			
-			std::stringstream ss;
-			ss << std::put_time(LocalTime, "Logs/ZinoEngine_%H_%M_%S.log");
-			ze::logger::add_sink(std::make_unique<FS::FileSink>("File", ss.str()));
+			ze::logger::add_sink(std::make_unique<FS::FileSink>("File", "Logs/Latest.log"));
 		}
 		ze::logger::info("=== ZinoEngine {} Build ===", ZE_CONFIGURATION_NAME);
 		
@@ -167,8 +176,12 @@ void PreInit()
 		/** Load render modules */
 		LoadRequiredModule("ShaderCore");
 		LoadRequiredModule("GfxCore");
-		LoadRequiredModule("ImGui");
+		LoadRequiredModule("GfxBackend");
+		LoadRequiredModule("Gfx");
 		LoadRequiredModule("ShaderCompiler");
+		LoadRequiredModule("EffectSystem");
+		LoadRequiredModule("ImGui");
+		LoadRequiredModule("ZEUI");
 	}
 
 	/** INITIALIZE RENDER SYSTEM **/
@@ -176,12 +189,13 @@ void PreInit()
 		ze::logger::info("Initializing render system");
 		LoadRequiredModule("VulkanBackend");
 		LoadRequiredModule("VulkanShaderCompiler");
-		OwnerPtr<ze::gfx::RenderBackend> backend = ze::gfx::vulkan::create_vulkan_backend();
+		OwnerPtr<ze::gfx::Backend> backend = ze::gfx::vulkan::create_vulkan_backend();
 		auto [result, msg] = backend->initialize();
 		if(!result)
 			ze::logger::fatal("Failed to initialize backend:\n{}.\n\nCheck logs for additional informations.", msg);
 		
-		RenderBackend = std::unique_ptr<ze::gfx::RenderBackend>(backend);
+		RenderBackend = std::unique_ptr<ze::gfx::Backend>(backend);
+		Device = std::make_unique<ze::gfx::Device>();
 	}
 }
 
@@ -193,6 +207,7 @@ int Init()
 
 	/** INITIALIZE ENGINE CLASS */
 #if ZE_WITH_EDITOR
+	LoadRequiredModule("SDFFontGen");
 	LoadRequiredModule("ZEEditor");
 	engine_app = std::make_unique<ze::editor::EditorApp>();
 #else
@@ -213,10 +228,15 @@ void Exit()
 	/** Delete engine */
 	engine_app.reset();
 
+	ze::module::unload_module("EffectSystem");
+
+	ze::gfx::Device::get().destroy();
 	/** Delete render system */
 	RenderBackend.reset();
 
 	ze::jobsystem::stop();
+
+	ze::reflection::serialization::free_archive_map();
 
 	/** Clear all modules */
 	ze::module::unload_modules();

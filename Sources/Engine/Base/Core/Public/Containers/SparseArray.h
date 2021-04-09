@@ -3,277 +3,274 @@
 #include <vector>
 #include "boost/dynamic_bitset/dynamic_bitset.hpp"
 #include <iterator>  
-#include "Assertions.h"
 
 namespace ze
 {
-  
-template<typename ElementType>
-struct SparseArrayIterator
-{
-    using iterator_category = std::random_access_iterator_tag;
-    using value_type = ElementType;
-    using difference_type = std::ptrdiff_t;
-    using pointer = ElementType*;
-    using reference = ElementType&;
-  
-    SparseArrayIterator(std::vector<ElementType>& in_elements,
-        boost::dynamic_bitset<uint8_t>& in_bitset, const size_t& in_current_idx) :
-        current_idx(in_current_idx), 
-        elements(in_elements), bitset(in_bitset) {}
-
-    SparseArrayIterator(const SparseArrayIterator& other) : current_idx(other.current_idx),
-        elements(other.elements), bitset(other.bitset) {}
-
-    void operator=(const SparseArrayIterator& other)
-    {
-        current_idx = other.current_idx;
-        elements = other.elements;
-        bitset = other.bitset;
-    }
-
-    void operator=(SparseArrayIterator&& other)
-    {
-        current_idx = std::move(other.current_idx);
-        elements = std::move(other.elements);
-        bitset = std::move(other.bitset);
-    }
-
-    SparseArrayIterator operator+(const SparseArrayIterator& other)
-    {
-        return SparseArrayIterator(elements, bitset, current_idx + other.current_idx);
-    }
-
-    SparseArrayIterator operator+(const difference_type& other)
-    {
-        return SparseArrayIterator(elements, bitset, current_idx + other);
-    }
-
-    ZE_FORCEINLINE ElementType& operator*()
-    {
-        return elements[current_idx];
-    }
-  
-    ZE_FORCEINLINE ElementType& operator*() const
-    {
-        return elements[current_idx];
-    }
-
-    SparseArrayIterator& operator++()
-    {
-        while (current_idx != bitset.size())
-        {
-            if(bitset[++current_idx])
-                return *this;
-        }
-
-        return *this;
-    }
-
-    SparseArrayIterator& operator--()
-    {
-        while (current_idx != 0)
-        {
-            if(bitset[--current_idx])
-                return *this;
-        }
-
-        return *this;
-    }
-  
-	ZE_FORCEINLINE SparseArrayIterator& operator-(difference_type diff)
-	{
-		current_idx -= diff;
-		ZE_CHECK(current_idx > 0 && current_idx <= elements.size() - 1);
-	}
-
-    ZE_FORCEINLINE bool operator<(const SparseArrayIterator& other) const
-    {
-        return current_idx < other.current_idx;
-    }
-
-    ZE_FORCEINLINE bool operator>(const SparseArrayIterator& other) const
-    {
-        return current_idx > other.current_idx;
-    }
-
-	ZE_FORCEINLINE friend difference_type operator-(const SparseArrayIterator& left, const SparseArrayIterator& right)
-	{
-		return right.current_idx - left.current_idx;
-	}
-
-	ZE_FORCEINLINE friend bool operator==(const SparseArrayIterator& left, const SparseArrayIterator& right)
-	{
-		return left.current_idx == right.current_idx;
-	}
-
-    ZE_FORCEINLINE friend bool operator!=(const SparseArrayIterator& left, const SparseArrayIterator& right)
-    {
-        return left.current_idx != right.current_idx;
-    }
-private:
-    size_t current_idx;
-    std::vector<ElementType>& elements;
-    boost::dynamic_bitset<uint8_t>& bitset;
-};
 
 /**
- * A array that ensure that a object will always keep its indice even when the array is modified
- * Allows O(1) deletion but introduces holes in memory
+ * A non-contigous array that guarantee element's positions to be fixed
  */
-template<typename T, typename Container = std::vector<T>>
+template<typename T>
 class SparseArray
 {
 public:
+    template<typename U>
+    class SparseArrayIterator
+    {
+    public:
+        using iterator_category = std::random_access_iterator_tag;
+        using value_type = U;
+        using difference_type = std::ptrdiff_t;
+        using pointer = U*;
+        using reference = U&;
+
+        SparseArrayIterator(SparseArray<T>& in_array,
+            const size_t& in_current_idx) :
+            current_idx(in_current_idx), 
+            array(in_array) {}
+  
+        U& operator*()
+        {
+            return array[current_idx];
+        }
+  
+        SparseArrayIterator& operator++()
+        {
+            while (current_idx != array.get_capacity())
+            {
+                if(array.bitset[++current_idx])
+                    return *this;
+            }
+
+            return *this;
+        }
+
+        SparseArrayIterator& operator=(const SparseArrayIterator& other)
+	    {
+		    array = other.array;
+            current_idx = other.current_idx;
+		    return *this;
+	    }
+  
+	    SparseArrayIterator& operator-(difference_type in_diff)
+	    {
+		    current_idx -= in_diff;
+		    ZE_CHECK(current_idx > 0 && current_idx <= array.get_capacity() - 1);
+	    }
+
+	    friend difference_type operator-(const SparseArrayIterator& left, const SparseArrayIterator& right)
+	    {
+		    return right - left;
+	    }
+
+	    friend bool operator==(const SparseArrayIterator& left, const SparseArrayIterator& right)
+	    {
+		    return left.current_idx == right.current_idx;
+	    }
+
+        friend bool operator!=(const SparseArrayIterator& left, const SparseArrayIterator& right)
+        {
+            return left.current_idx != right.current_idx;
+        }
+    private:
+        size_t current_idx;
+        SparseArray<T>& array;
+    };
+
+    struct ElementsDeleter
+    {
+        void operator()(T* ptr) const
+        {
+            free(ptr);
+        }
+    };
+
     using ElementType = T;
     using Iterator = SparseArrayIterator<T>;
     using ConstIterator = const SparseArrayIterator<const T>;
   
-    SparseArray() = default;
+    SparseArray() : size(0), capacity(0) {}
     ~SparseArray() = default;
   
-    SparseArray(const SparseArray& other) :
-        elements(other.elements), 
-        allocated_bitset(other.allocated_bitset) {}
+    SparseArray(const SparseArray& in_other)
+    {
+        elements = std::unique_ptr<T, ElementsDeleter>(reinterpret_cast<T*>(malloc(in_other.capacity * sizeof(T))));
+        size = in_other.size;
+        capacity = in_other.capacity;
+        bitset = in_other.bitset;
+        
+        memcpy(elements, in_other.elements, in_other.capacity * sizeof(T));
+    }
   
-    SparseArray(SparseArray&& other) :
-        elements(std::move(other.elements)), 
-        allocated_bitset(std::move(other.allocated_bitset)) {}
-  
-    size_t add(const T& element)
+    SparseArray(SparseArray&& in_other)
+        : elements(std::move(in_other.elements)), size(std::move(in_other.size)),
+        capacity(std::move(in_other.capacity)), bitset(std::move(in_other.bitset)) {}
+
+    size_t add(const T& in_element)
     {
         size_t idx = get_free_index_or_grow();
+        ZE_ASSERTF(!bitset[Idx], "Index {} already contains a element!", idx); 
   
-        if(idx >= elements.size())
-            elements.emplace_back(element);
-        else
-            elements[idx] = element;
-
-        allocated_bitset.set(idx, true);
+        new (elements.get() + idx) T(in_element);
+        bitset.set(idx, true);
   
+        size++;
+        
         return idx;
     }
   
-    size_t add(T&& element)
+    size_t add(T&& in_element)
     {
         size_t idx = get_free_index_or_grow();
+        ZE_ASSERTF(!bitset[idx], "Index {} already contains a element!", idx); 
   
-        if(idx >= elements.size())
-            elements.emplace_back(std::move(element));
-        else
-            elements[idx] = std::move(element));
-        
-        allocated_bitset.set(idx, true);
+        new (elements.get() + idx) T(std::move(in_element));
+        bitset.set(idx, true);
   
+        size++;
+
         return idx;
     }
   
     template<typename... Args>
-    size_t emplace(Args&&... InArgs)
+    size_t emplace(Args... in_args)
     {
         size_t idx = get_free_index_or_grow();
-        if(idx >= elements.size())
-            elements.emplace_back(std::forward<Args>(InArgs)...);
-        else
-            elements[idx] = T(std::forward<Args>(InArgs)...);
-        allocated_bitset.set(idx, true);
+        ZE_ASSERTF(!bitset[idx], "Index {} already contains a element!", idx); 
+  
+        new (elements.get() + idx) T(std::forward<Args>(in_args)...);
+        bitset.set(idx, true);
+
+        size++;
   
         return idx;
     }
   
-    void remove(const size_t& index)
+    void remove(const size_t& in_index)
     {
-        ZE_ASSERT(InIndex < Elements.size());
+        ZE_ASSERT(is_valid(in_index));
   
-        allocated_bitset.set(index, false);
+        at(in_index).~T();
+        bitset.set(in_index, false);
+
+        size--;
     }
   
-    void reserve(const size_t& capacity)
+    void reserve(const size_t& in_new_capacity)
     {
-        elements.reserve(capacity);
-        allocated_bitset.reserve(capacity);
+        if(in_new_capacity > capacity)
+            realloc(in_new_capacity);
     }
   
-    ZE_FORCEINLINE T& at(const size_t& idx)
+    ZE_FORCEINLINE T& at(const size_t& in_index)
     {
-        ZE_CHECK(idx < elements.size());
-        ZE_CHECK(allocated_bitset[idx]);
-  
-        return elements[idx];
+        ZE_ASSERT(is_valid(in_index));
+        return *(elements.get() + in_index);
+    }
+
+    ZE_FORCEINLINE const T& at(const size_t& in_index) const
+    {
+        ZE_ASSERT(is_valid(in_index));
+        return *(elements.get() + in_index);
     }
   
-    size_t get_size() const
+    ZE_FORCEINLINE size_t get_size() const
     {
-        return elements.size();
+        return size;
     }
   
-    size_t get_capacity() const
+    ZE_FORCEINLINE size_t get_capacity() const
     {
-        return elements.capacity();
+        return capacity;
+    }
+
+    ZE_FORCEINLINE bool is_valid(const size_t& in_index) const
+    {
+        return in_index < capacity && bitset[in_index];
     }
   
-    bool is_empty() const
+    ZE_FORCEINLINE bool is_empty() const
     {
-        return elements.empty();
+        return bitset.none();
     }
   
     Iterator begin()
     {
-        return Iterator(elements, allocated_bitset, 0);
+        return Iterator(*this, 0);
     }
   
     ConstIterator cbegin() const
     {
-        return ConstIterator(elements, allocated_bitset, 0);
+        return ConstIterator(*this, 0);
     }
   
     Iterator end()
     {
-        return Iterator(elements, allocated_bitset, 
-            elements.size() == 0 ? 0 : elements.size());
+        return Iterator(*this, size);
     }
   
     ConstIterator cend() const
     {
-        return ConstIterator(elements, allocated_bitset, 
-            elements.size() == 0 ? 0 : elements.size());
+        return ConstIterator(*this, size);
     }
   
-    ZE_FORCEINLINE ElementType& operator[](const size_t& index)
+    ElementType& operator[](const size_t& in_index)
     {
-        return at(index);
+        return at(in_index);
     }
   
-    ZE_FORCEINLINE const ElementType& operator[](const size_t& index) const
+    const ElementType& operator[](const size_t& in_index) const
     {
-        return at(index);
+         return at(in_index);
     }
   
-    SparseArray& operator=(const SparseArray& other)
+    SparseArray& operator=(const SparseArray& in_other)
     {
-        elements = other.elements;
-        allocated_bitset = other.allocated_bitset;
+        elements = std::unique_ptr<T, ElementsDeleter>(reinterpret_cast<T*>(malloc(in_other.capacity * sizeof(T)));
+        size = in_other.size;
+        capacity = in_other.capacity;
+        bitset = in_other.bitset;
+        
+        memcpy(elements, in_other.elements, in_other.capacity * sizeof(T));
+        
         return *this;
     }
-
-    const Container& get_container() const { return container; }
 private:
+    void realloc(const size_t& in_new_capacity)
+    {
+        if(size > 0)
+        {
+            auto old_elements = std::move(elements);
+            elements = std::unique_ptr<T, ElementsDeleter>(reinterpret_cast<T*>(malloc(in_new_capacity * sizeof(T))));
+            memmove(elements.get(), old_elements.get(), capacity * sizeof(T));
+        }
+        else
+        {
+            elements = std::unique_ptr<T, ElementsDeleter>(reinterpret_cast<T*>(malloc(in_new_capacity * sizeof(T))));
+        }
+
+        bitset.resize(in_new_capacity);
+        capacity = in_new_capacity;
+    }
+
     size_t get_free_index_or_grow()
     {
-        for(size_t i = 0; i < allocated_bitset.size(); ++i)
+        for(size_t i = 0; i < bitset.size(); ++i)
         {
-            if(!allocated_bitset[i])
+            if(!bitset[i])
                 return i;
         }
+
+        /** At this point, we need to grow the elements array */
+        realloc(++capacity);
   
-        elements.reserve(elements.capacity() + 1);
-        allocated_bitset.push_back(false);
-  
-        return elements.size();
+        return capacity - 1;
     }
 private:
-    Container elements; 
-    boost::dynamic_bitset<uint8_t> allocated_bitset;
+    std::unique_ptr<T, ElementsDeleter> elements;
+    size_t size;
+    size_t capacity;
+    boost::dynamic_bitset<uint8_t> bitset;
 };
   
 };

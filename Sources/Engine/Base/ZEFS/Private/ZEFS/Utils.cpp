@@ -13,10 +13,14 @@ std::string read_file_to_string(const std::string_view& path)
 	return std::string(Array.begin(), Array.end());
 }
 
-std::vector<uint8_t> read_file_to_vector(const std::string_view& path)
+std::vector<uint8_t> read_file_to_vector(const std::string_view& path, const bool binary)
 {
 	/** Start at the end to get the file size */
-	FileIStream fs(path, FileReadFlagBits::End);
+	FileReadFlags flags = FileReadFlagBits::End;
+	if(binary)
+		flags |= FileReadFlagBits::Binary;
+
+	FileIStream fs(path, flags);
 	if (!fs)
 		return {};
 

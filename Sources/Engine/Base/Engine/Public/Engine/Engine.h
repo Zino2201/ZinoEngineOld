@@ -27,6 +27,8 @@ public:
      */
     static double get_elapsed_time();
     static double get_delta_time();
+
+    void set_focused(bool in_focused) { focused = in_focused; }
 protected:
     virtual void process_event(const SDL_Event& in_event, const float in_delta_time);
 

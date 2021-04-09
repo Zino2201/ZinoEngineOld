@@ -17,6 +17,7 @@ static constexpr bool IsSerializableWithReflection = false;
  * Get the binding map for the specified archive
  */
 REFLECTION_API robin_hood::unordered_map<std::string, std::function<void(void*, void*)>>& get_archive_map(const char* in_archive);
+void free_archive_map();
 
 /**
  * Structure that register an archive binding

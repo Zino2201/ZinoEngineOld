@@ -12,8 +12,8 @@
 namespace ze
 {
 
-static ConVarRef<int32_t> cvar_maxfps("r_maxfps", 144,
-	"Max FPS.",
+static ConVarRef<int32_t> cvar_maxfps("r_maxfps", 300,
+	"Max FPS when focused. 0 to disable.",
 	0,
 	300);
 
@@ -64,6 +64,7 @@ void EngineApp::process_event(const SDL_Event& in_event, const float in_delta_ti
 	if (in_event.type == SDL_MOUSEMOTION)
 		ze::input::set_mouse_delta(maths::Vector2f(in_event.motion.xrel, in_event.motion.yrel));
 
+	/*
 	if (in_event.type == SDL_WINDOWEVENT)
 	{
 		switch(in_event.window.event)
@@ -76,11 +77,13 @@ void EngineApp::process_event(const SDL_Event& in_event, const float in_delta_ti
 			break;
 		}
 	}
+	*/
 }
 
 int EngineApp::run()
 {
 	should_run = true;
+	focused = true;
 
 	while(should_run)
 	{
@@ -126,11 +129,11 @@ void EngineApp::loop()
 	post_tick(delta_time_as_secs);
 
 	/** Fps limiter */
-	if(focused && cvar_maxfps.get() != 0 ||
-		!focused)
+	if(cvar_maxfps.get() != 0)
 	{
 		using namespace std::chrono_literals;
 
+		focused = true;
 		const std::chrono::duration<double, std::milli> min_ms(focused ? (1000.0 / cvar_maxfps.get()) : (1000.0 / cvar_unfocus_fps.get()));
 		const auto target_sleep_time = current + min_ms;
 		std::this_thread::sleep_until(target_sleep_time - 1ms);

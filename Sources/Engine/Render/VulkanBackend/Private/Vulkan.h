@@ -10,7 +10,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
 
-#define ZE_ENABLE_VULKAN_DEBUG_FEATURES ZE_FEATURE(DEVELOPMENT)
+#define ZE_ENABLE_VULKAN_DEBUG_FEATURES ZE_DEBUG
 
 const std::vector<const char*> validation_layers =
 {

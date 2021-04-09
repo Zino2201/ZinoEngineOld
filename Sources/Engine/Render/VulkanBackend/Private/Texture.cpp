@@ -7,21 +7,19 @@
 namespace ze::gfx::vulkan
 {
 
-robin_hood::unordered_map<ResourceHandle, Texture> textures;
-robin_hood::unordered_map<ResourceHandle, TextureView> texture_views;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> textures;
+robin_hood::unordered_set<ResourceHandle> texture_views;
+#endif
 vk::Result last_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::texture_create(const TextureCreateInfo& in_create_info)
 {
-	ResourceHandle handle;
+	ResourceHandle handle = create_resource<Texture>(*device, in_create_info);
 
-	Texture texture(*device, in_create_info);
-	if(texture.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::Texture, 
-			static_cast<VkImage>(texture.get_image()), in_create_info);
-		textures.insert({ handle, std::move(texture)});
-	}
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	textures.insert(handle);
+#endif
 
 	return { convert_vk_result(last_result), handle };
 }
@@ -29,15 +27,11 @@ std::pair<Result, ResourceHandle> VulkanBackend::texture_create(const TextureCre
 std::pair<Result, ResourceHandle> VulkanBackend::texture_create(const vk::Image& in_image,
 	const TextureCreateInfo& in_create_info)
 {
-	ResourceHandle handle;
+	ResourceHandle handle = create_resource<Texture>(*device, in_image, in_create_info);
 
-	Texture texture(*device, in_image, in_create_info);
-	if(texture.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::Texture, 
-			static_cast<VkImage>(texture.get_image()), in_create_info);
-		textures.insert({ handle, std::move(texture)});
-	}
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	textures.insert(handle);
+#endif
 
 	return { convert_vk_result(last_result), handle };
 }
@@ -80,7 +74,11 @@ Texture::Texture(Device& in_device, const TextureCreateInfo& in_create_infos) :
 
 void VulkanBackend::texture_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<Texture>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	textures.erase(in_handle);
+#endif
 }
 
 Texture::Texture(Device& in_device, const vk::Image& in_image,
@@ -102,48 +100,44 @@ Texture::~Texture()
 
 Texture* Texture::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto tex = textures.find(in_handle);
+	ZE_CHECKF(tex != textures.end(), "Invalid texture");
+#endif
 
-	if(tex != textures.end())
-		return &tex->second;
-	
-	return nullptr;
+	return get_resource<Texture>(in_handle);
 }
 
-ResourceHandle VulkanBackend::texture_view_create(const TextureViewCreateInfo& in_create_info)
+std::pair<Result, ResourceHandle> VulkanBackend::texture_view_create(const TextureViewCreateInfo& in_create_info)
 {
-	ResourceHandle handle;
+	ResourceHandle handle = create_resource<TextureView>(*device, in_create_info);
 
-	TextureView view(*device, in_create_info);
-	if(view.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::TextureView,
-			static_cast<VkImageView>(view.get_image_view()), in_create_info);
-		texture_views.insert({ handle, std::move(view) });
-	}
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	texture_views.insert(handle);
+#endif
 
-	return handle;
+	return { convert_vk_result(last_result), handle };
 }
 
-ResourceHandle VulkanBackend::texture_view_create(const vk::Image& in_image,
+std::pair<Result, ResourceHandle> VulkanBackend::texture_view_create(const vk::Image& in_image,
 	const TextureViewCreateInfo& in_create_info)
 {
-	ResourceHandle handle;
+	ResourceHandle handle = create_resource<TextureView>(*device, in_image, in_create_info);
 
-	TextureView view(*device, in_image, in_create_info);
-	if(view.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::TextureView,
-			static_cast<VkImageView>(view.get_image_view()), in_create_info);
-		texture_views.insert({ handle, std::move(view) });
-	}
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	texture_views.insert(handle);
+#endif
 
-	return handle;
+	return { convert_vk_result(last_result), handle };
 }
 
 void VulkanBackend::texture_view_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<TextureView>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	texture_views.erase(in_handle);
+#endif
 }
 
 TextureView::TextureView(Device& in_device, const TextureViewCreateInfo& in_create_info)
@@ -160,6 +154,7 @@ TextureView::TextureView(Device& in_device, const TextureViewCreateInfo& in_crea
 			convert_format(in_create_info.format),
 			vk::ComponentMapping(),
 			convert_texture_subresource_range(in_create_info.subresource_range)));
+	last_result = result;
 	if(!handle)
 	{
 		ze::logger::error("Failed to create texture view: {}", vk::to_string(result));
@@ -189,12 +184,12 @@ TextureView::TextureView(Device& in_device, const vk::Image& in_image,
 
 TextureView* TextureView::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto tex = texture_views.find(in_handle);
+	ZE_CHECKF(tex != texture_views.end(), "Invalid texture view");
+#endif
 
-	if(tex != texture_views.end())
-		return &tex->second;
-	
-	return nullptr;
+	return get_resource<TextureView>(in_handle);
 }
 
 }

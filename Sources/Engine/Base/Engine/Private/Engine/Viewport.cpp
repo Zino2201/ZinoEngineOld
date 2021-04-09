@@ -1,9 +1,9 @@
 #include "Engine/Viewport.h"
-#include "Gfx/Backend.h"
 
 namespace ze
 {
 
+#if 0
 Viewport::Viewport(float in_x,
 	float in_y,
 	float in_width,
@@ -11,6 +11,7 @@ Viewport::Viewport(float in_x,
 	const gfx::SharedTextureView& in_color_attachment_view) : viewport(in_x,
 		in_y, in_width, in_height), color_attachment_view(in_color_attachment_view)
 {
+#
 	if(!in_color_attachment_view)
 	{
 		color_attachment = gfx::RenderBackend::get().texture_create(
@@ -40,9 +41,10 @@ Viewport::Viewport(float in_x,
 					1)));
 	}
 }
-
+#endif
 void Viewport::resize(const float in_width, const float in_height)
 {
+#if 0
 	viewport.width = in_width;
 	viewport.height = in_height;
 	
@@ -74,6 +76,7 @@ void Viewport::resize(const float in_width, const float in_height)
 					0,
 					1)));
 	}
+#endif
 }
 
 } /* namespace ZE */

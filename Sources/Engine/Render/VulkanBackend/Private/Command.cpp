@@ -7,31 +7,30 @@
 namespace ze::gfx::vulkan
 {
 
-robin_hood::unordered_map<ResourceHandle, CommandPool> pools;
-robin_hood::unordered_map<ResourceHandle, CommandList> lists;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> pools;
+robin_hood::unordered_set<ResourceHandle> lists;
+#endif
 
-ResourceHandle VulkanBackend::command_pool_create(CommandPoolType in_type)
+ResourceHandle VulkanBackend::command_pool_create()
 {
-	ResourceHandle handle;
-
 	size_t queue_family = 0;
-	// TODO: support multiple types
-	ZE_CHECK(in_type == CommandPoolType::Gfx);
+	ResourceHandle handle = create_resource<CommandPool>(*device, queue_family);
 
-	CommandPool pool(*device, queue_family);
-	if(pool.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::CommandPool, 
-			static_cast<VkCommandPool>(pool.get_pool()), in_type);
-		pools.insert({ handle, std::move(pool)});
-	}
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	pools.insert(handle);
+#endif
 
 	return handle;
 }
 
 void VulkanBackend::command_pool_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<CommandPool>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	pools.erase(in_handle);
+#endif
 }
 
 void VulkanBackend::command_pool_reset(const ResourceHandle& in_pool)
@@ -59,16 +58,39 @@ std::vector<ResourceHandle> VulkanBackend::command_pool_allocate(const ResourceH
 
 	for(const auto& buffer : buffers)
 	{
-		CommandList list(*device,
-			*pool,
-			buffer);
-		ResourceHandle handle = create_resource_handle(ResourceType::CommandList, 
-			static_cast<VkCommandBuffer>(buffer), pool);
-		lists.insert({ handle, std::move(list)});
+		ResourceHandle handle = create_resource<CommandList>(*device, *pool, buffer);
 		handles.emplace_back(handle);
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+		lists.insert(handle);
+#endif
 	}
 
 	return handles;
+}
+
+void VulkanBackend::command_pool_trim(const ResourceHandle& in_pool)
+{
+	CommandPool* pool = CommandPool::get(in_pool);
+	ZE_CHECKF(pool, "Invalid pool given to command_pool_trim");
+
+	device->get_device().trimCommandPool(pool->get_pool());
+}
+
+void VulkanBackend::command_pool_free(const ResourceHandle& in_pool, const std::vector<ResourceHandle>& in_lists)
+{
+	CommandPool* pool = CommandPool::get(in_pool);
+	ZE_CHECKF(pool, "Invalid pool given to command_pool_free");
+
+	std::vector<vk::CommandBuffer> buffers;
+	buffers.reserve(in_lists.size());
+	for(const auto& handle : in_lists)
+	{
+		CommandList* list = CommandList::get(handle);
+		ZE_CHECKF(list, "Invalid list given to command_pool_free");
+		buffers.emplace_back(list->get_buffer());
+	}
+
+	device->get_device().freeCommandBuffers(pool->get_pool(), buffers);
 }
 
 Result VulkanBackend::command_list_begin(const ResourceHandle& in_command_list)
@@ -95,7 +117,7 @@ CommandPool::CommandPool(Device& in_device, const size_t in_queue_family)
 {
 	auto [result, handle] = device.get_device().createCommandPoolUnique(
 		vk::CommandPoolCreateInfo(
-			vk::CommandPoolCreateFlags(),
+			vk::CommandPoolCreateFlagBits::eTransient,
 			in_queue_family));
 	if(result != vk::Result::eSuccess)
 		ze::logger::error("Failed to create command pool: {}",
@@ -111,12 +133,12 @@ void CommandPool::reset()
 
 CommandPool* CommandPool::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto pool = pools.find(in_handle);
-
-	if(pool != pools.end())
-		return &pool->second;
+	ZE_CHECKF(pool != pools.end(), "Invalid command pool");
+#endif
 	
-	return nullptr;
+	return get_resource<CommandPool>(in_handle);
 }
 
 /** Command list */
@@ -128,12 +150,12 @@ CommandList::CommandList(Device& in_device,
 
 CommandList* CommandList::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto list = lists.find(in_handle);
+	ZE_CHECKF(list != lists.end(), "Invalid command list");
+#endif
 
-	if(list != lists.end())
-		return &list->second;
-	
-	return nullptr;
+	return get_resource<CommandList>(in_handle);
 }
 
 }

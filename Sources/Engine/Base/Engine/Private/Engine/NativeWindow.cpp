@@ -1,7 +1,11 @@
 #include "Engine/NativeWindow.h"
 #include <SDL.h>
+#include <SDL_syswm.h>
 #include "Module/Module.h"
-
+#if ZE_PLATFORM(WINDOWS)
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
 namespace ze
 {
 
@@ -31,6 +35,19 @@ NativeWindow::NativeWindow(const char* in_name, const uint32_t in_width, const u
 	SDL_GetWindowSize(reinterpret_cast<SDL_Window*>(handle), &w, &h);
 	set_width(w);
 	set_height(h);
+
+	if(in_flags & NativeWindowFlagBits::NoBackground)
+	{
+#if !ZE_PLATFORM(WINDOWS)
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		SDL_GetWindowWMInfo(reinterpret_cast<SDL_Window*>(handle), &info);
+		HWND hwnd = info.info.win.window;
+
+		SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+		SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 0, LWA_COLORKEY);
+#endif
+	}
 }
 
 NativeWindow::~NativeWindow()

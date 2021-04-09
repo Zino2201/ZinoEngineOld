@@ -12,7 +12,7 @@ ze_create_module(VulkanBackend
     Private/Surface.cpp Private/Texture.cpp Private/Sync.cpp Private/Command.cpp
     Private/Pipeline.cpp Private/Shader.cpp Private/RenderPass.cpp Private/PipelineLayout.cpp
     Private/Commands.cpp Private/DescriptorSet.cpp Private/Sampler.cpp)
-ze_add_public_modules(VulkanBackend GfxCore)
+ze_add_public_modules(VulkanBackend GfxCore GfxBackend)
 
 target_include_directories(VulkanBackend
     PUBLIC 

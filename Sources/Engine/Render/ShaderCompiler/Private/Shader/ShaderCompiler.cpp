@@ -25,8 +25,42 @@ void unregister_shader_compiler(ShaderCompiler* compiler)
 	shader_compilers.erase(compiler->get_target());
 }
 
-std::future<ShaderCompilerOutput> compile_shader(const ShaderStage& stage,
-    const std::string_view& shader_filename,
+ShaderCompilerOutput compile_shader(const ShaderStage& stage,
+	const std::string& shader_name, 
+    const std::string_view& shader_source,
+    const std::string_view& entry_point,
+    const ShaderCompilerTarget& target,
+    const bool& should_optimize)
+{
+	auto it = shader_compilers.find(target);
+
+	if(it != shader_compilers.end())
+	{
+		ze::logger::info("Compiling shader ({}) {}",
+			stage == ShaderStage::Vertex ? "Vertex" : "Fragment",
+			shader_name);
+
+		ShaderCompilerOutput output = it->second->compile_shader(
+			stage,
+			shader_name,
+			shader_source,
+			entry_point,
+			target,
+			should_optimize);
+
+		return output;
+	}
+	else
+	{
+		ze::logger::error("Failed to compile shader {}: unsupported format",
+			shader_name.data());
+		return {};
+	}
+}
+
+std::future<ShaderCompilerOutput> compile_shader_async(const ShaderStage& stage,
+  	const std::string& shader_name, 
+    const std::string_view& shader_source,
     const std::string_view& entry_point,
     const ShaderCompilerTarget& target,
     const bool& optimize)
@@ -37,37 +71,19 @@ std::future<ShaderCompilerOutput> compile_shader(const ShaderStage& stage,
 	{
 		ze::logger::info("Compiling shader ({}) {}",
 			stage == ShaderStage::Vertex ? "Vertex" : "Fragment",
-			shader_filename);
-
-		// TODO: SET DEFINES
-
-		std::string path;
-		path += "Shaders/";
-		path += shader_filename;
+			shader_name);
 
 		return ze::jobsystem::async<ShaderCompilerOutput>(
-			[it, stage, path = std::move(path), entry_point,
+			[it, stage, shader_name, source = std::move(shader_source), entry_point,
 				target, optimize](const ze::jobsystem::Job& in_job)
 			{
 				ShaderCompilerOutput output = it->second->compile_shader(
 					stage,
-					path.c_str(),
+					shader_name,
+					source,
 					entry_point,
 					target,
 					optimize);
-
-				if(output.success)
-					ze::logger::verbose("Shader {} compiled!",
-						path.c_str());
-				else
-				{
-					ze::logger::error("Failed to compile shader {} !",
-						path.c_str());
-					ze::message_box("Shader compilation failed!", 
-						output.err_msg, 
-						MessageBoxButtonFlagBits::Ok,
-						MessageBoxIcon::Critical);
-				}
 
 				return output;
 			});
@@ -75,7 +91,7 @@ std::future<ShaderCompilerOutput> compile_shader(const ShaderStage& stage,
 	else
 	{
 		ze::logger::error("Failed to compile shader {}: unsupported format",
-			shader_filename.data());
+			shader_name.data());
 		return {};
 	}
 }

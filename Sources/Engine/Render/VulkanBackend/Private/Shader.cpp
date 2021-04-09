@@ -7,27 +7,30 @@
 namespace ze::gfx::vulkan
 {
 
-robin_hood::unordered_map<ResourceHandle, Shader> shaders;
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+robin_hood::unordered_set<ResourceHandle> shaders;
+#endif
+
 vk::Result shader_last_result;
 
 std::pair<Result, ResourceHandle> VulkanBackend::shader_create(const ShaderCreateInfo& in_create_info)
 {
-	ResourceHandle handle;
+	ResourceHandle handle = create_resource<Shader>(*device, in_create_info);
 
-	Shader shader(*device, in_create_info);
-	if(shader.is_valid())
-	{
-		handle = create_resource_handle(ResourceType::Shader, 
-			static_cast<VkShaderModule>(shader.get_shader()), in_create_info);
-		shaders.insert({ handle, std::move(shader)});
-	}
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
+	shaders.insert(handle);
+#endif
 
 	return { convert_vk_result(shader_last_result), handle };
 }
 
 void VulkanBackend::shader_destroy(const ResourceHandle& in_handle)
 {
+	delete_resource<Shader>(in_handle);
+
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	shaders.erase(in_handle);
+#endif
 }
 
 Shader::Shader(Device& in_device, const ShaderCreateInfo& in_create_info) 
@@ -47,12 +50,12 @@ Shader::Shader(Device& in_device, const ShaderCreateInfo& in_create_info)
 
 Shader* Shader::get(const ResourceHandle& in_handle)
 {
+#if ZE_FEATURE(BACKEND_HANDLE_VALIDATION)
 	auto shader = shaders.find(in_handle);
+	ZE_CHECKF(shader != shaders.end(), "Invalid shader");
+#endif
 
-	if(shader != shaders.end())
-		return &shader->second;
-
-	return nullptr;
+	return get_resource<Shader>(in_handle);
 }
 
 }

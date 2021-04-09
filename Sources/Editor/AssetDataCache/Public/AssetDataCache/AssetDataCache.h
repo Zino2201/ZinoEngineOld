@@ -4,6 +4,7 @@
 #include <string_view>
 #include <vector>
 #include <future>
+#include <filesystem>
 
 /**
  * Asset cache API
@@ -33,5 +34,7 @@ ASSETDATACACHE_API std::future<std::vector<uint8_t>> get_async(const std::string
  * Returns true if the cache contains the key
  */
 ASSETDATACACHE_API bool has_key(const std::string& in_key);
+
+std::filesystem::path get_cache_dir();
 
 }

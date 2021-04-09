@@ -10,8 +10,8 @@ mkdir Binaries\RelWithDebInfo-Editor\ 2>NUL
 mkdir Binaries\RelWithDebInfo-Monolithic\ 2>NUL
 mkdir Binaries\Release-Monolithic\ 2>NUL
 
-copy Sources\Libs\ShaderConductor\Build\vs2019-win-vc142-x64\Bin\Debug\ShaderConductor.dll Binaries\Debug\ShaderConductor.dll
-copy Sources\Libs\ShaderConductor\Build\vs2019-win-vc142-x64\Bin\Debug\dxcompiler.dll Binaries\Debug\dxcompiler.dll
+copy Sources\Libs\ShaderConductor\Build\vs2019-win-vc142-x64\Bin\Debug\ShaderConductor.dll Binaries\Debug-Editor\ShaderConductor.dll
+copy Sources\Libs\ShaderConductor\Build\vs2019-win-vc142-x64\Bin\Debug\dxcompiler.dll Binaries\Debug-Editor\dxcompiler.dll
 
 copy Sources\Libs\ShaderConductor\Build\vs2019-win-vc142-x64\Bin\Release\ShaderConductor.dll Binaries\Release\ShaderConductor.dll
 copy Sources\Libs\ShaderConductor\Build\vs2019-win-vc142-x64\Bin\Release\dxcompiler.dll Binaries\Release\dxcompiler.dll
@@ -27,6 +27,6 @@ copy Sources\Libs\ShaderConductor\Build\vs2019-win-vc142-x64\Bin\Release\dxcompi
 
 copy "Sources\Libs\nvidia-texture-tools\project\vc2017\Debug.x64\bin\nvtt.dll" Binaries\Debug-Editor\nvtt.dll
 copy "Sources\Libs\nvidia-texture-tools\project\vc2017\Release.x64\bin\nvtt.dll" Binaries\RelWithDebInfo-Editor\nvtt.dll
-copy "Sources\Libs\nvidia-texture-tools\project\vc2017\Release.x64\bin\nvtt.dl" Binaries\Release-Editor\nvtt.dll
+copy "Sources\Libs\nvidia-texture-tools\project\vc2017\Release.x64\bin\nvtt.dll" Binaries\Release-Editor\nvtt.dll
 
 pause

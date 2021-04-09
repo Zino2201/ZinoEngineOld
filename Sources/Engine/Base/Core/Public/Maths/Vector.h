@@ -26,6 +26,42 @@ struct Vector2
 		in_archive <=> x;
 		in_archive <=> y;
 	}
+	
+	ZE_FORCEINLINE Vector2& operator+=(const Vector2& other)
+	{
+		x += other.x;
+		y += other.y;
+		return *this;
+	}
+
+	ZE_FORCEINLINE Vector2& operator+=(const T& other)
+	{
+		x += other;
+		y += other;
+		return *this;
+	}
+
+	ZE_FORCEINLINE Vector2& operator*=(const Vector2& other)
+	{
+		x *= other.x;
+		y *= other.y;
+		return *this;
+	}
+
+	ZE_FORCEINLINE Vector2& operator*=(const T& other)
+	{
+		x *= other;
+		y *= other;
+		return *this;
+	}
+
+	ZE_FORCEINLINE Vector2& operator-=(const Vector2& other)
+	{
+		x -= other.x;
+		y -= other.y;
+		return *this;
+	}
+
 
 	bool operator==(const Vector2& other) const
 	{
@@ -41,6 +77,42 @@ struct Vector2
 };
 
 using Vector2f = Vector2<float>;
+
+template<typename T>
+ZE_FORCEINLINE Vector2<T> operator+(const Vector2<T>& a, const Vector2<T>& b)
+{
+	return Vector2<T>(a) += b;
+}
+
+template<typename T>
+ZE_FORCEINLINE Vector2<T> operator+(const Vector2<T>& a, const T& b)
+{
+	return Vector2<T>(a) += b;
+}
+
+template<typename T>
+ZE_FORCEINLINE Vector2<T> operator*(const Vector2<T>& a, const Vector2<T>& b)
+{
+	return Vector2<T>(a) *= b;
+}
+
+template<typename T>
+ZE_FORCEINLINE Vector2<T> operator*(const Vector2<T>& a, const T& b)
+{
+	return Vector2<T>(a) *= b;
+}
+
+template<typename T>
+ZE_FORCEINLINE Vector2<T> operator-(const Vector2<T>& a, const Vector2<T>& b)
+{
+	return Vector2<T>(a) -= b;
+}
+
+template<typename T>
+ZE_FORCEINLINE Vector2<T> operator-(const Vector2<T>& other)
+{
+	return Vector2<T>(0) - other;
+}
 
 /**
  * Basic template class for a 3D vector
@@ -157,6 +229,17 @@ struct Vector3
 	}
 };
 
+/**
+ * A 3d vector (double-precision)
+ */
+using Vector3d = Vector3<double>;
+
+/**
+ * A 3d vector (single-precision)
+ */
+using Vector3f = Vector3<float>;
+
+/** Custom operators */
 template<typename T>
 ZE_FORCEINLINE Vector3<T> operator+(const Vector3<T>& a, const Vector3<T>& b)
 {
@@ -192,16 +275,6 @@ ZE_FORCEINLINE Vector3<T> operator-(const Vector3<T>& other)
 {
 	return Vector3<T>(0) - other;
 }
-
-/**
- * A 3d vector (double-precision)
- */
-using Vector3d = Vector3<double>;
-
-/**
- * A 3d vector (single-precision)
- */
-using Vector3f = Vector3<float>;
 
 /** Custom operators */
 ZE_FORCEINLINE Vector3d& operator+=(Vector3d& a, const Vector3f& b)
@@ -347,6 +420,12 @@ ZE_FORCEINLINE Vector4<T> operator*(const Vector4<T>& a, const T& b)
 
 namespace std
 {
+	template<typename T>
+	ze::maths::Vector2<T> max(const ze::maths::Vector2<T>& a, const ze::maths::Vector2<T>& b)
+	{
+		return a.x + a.y > b.x + b.y ? a : b; 
+	}
+
 	template<typename T> 
 	struct hash<ze::maths::Vector2<T>>
 	{
