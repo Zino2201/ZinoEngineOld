@@ -76,7 +76,9 @@ struct TextureMipmap
 
 	/** Actual texture data, stored as RGB(A) 32 in editor */
 	std::vector<uint8_t> data;
-
+	
+	/** View to this mipmap */
+	gfx::UniqueTextureView view;
 
 	TextureMipmap() : width(0), height(0),
 		depth(0) {}
@@ -142,6 +144,7 @@ public:
 		if(use_mipmaps)
 			miplevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 		mipmaps.resize(miplevels);
+		update_resource();
 	}
 	
 	template<typename ArchiveType>

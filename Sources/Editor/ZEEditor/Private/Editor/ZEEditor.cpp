@@ -296,7 +296,7 @@ void EditorApp::on_asset_imported(const std::filesystem::path& in_path,
 	/** Serialize the asset and then unload it */
 	Asset* asset = factory->create_from_stream(stream);
 	const ze::reflection::Class* asset_class = asset->get_class();
-	std::string name = in_path.filename().replace_extension("").string();
+	std::string name = in_path.stem().string();
 	while(std::filesystem::exists(in_target_path / (name + ".zeasset")))
 		name += "(1)";
 

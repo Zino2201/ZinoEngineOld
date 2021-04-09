@@ -21,11 +21,16 @@ public:
 protected:
 	void draw();
 private:
+	void on_mipmap_changed(void* in_enabled);
+private:
 	Asset* asset;
 	assetmanager::AssetRequestPtr asset_request;
 	Texture* texture;
 	PropertiesEditor properties_editor;
 	float zoom;
+	int current_miplevel;
+	bool should_update_resource;
+	bool should_update_mipmaps;
 };
 
 }

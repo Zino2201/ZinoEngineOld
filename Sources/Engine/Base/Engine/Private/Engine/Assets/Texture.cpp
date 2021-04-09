@@ -144,13 +144,22 @@ void Texture::update_resource()
 		break;
 	case ze::TextureType::Tex2D:
 		view_info = TextureViewInfo::make_2d_view(*texture, gfx_format, TextureSubresourceRange(
-			TextureAspectFlagBits::Color, 0, 1, 0, 1));
+			TextureAspectFlagBits::Color, 0, mipmaps.size(), 0, 1));
 		break;
 	case ze::TextureType::Tex3D:
 		ZE_DEBUGBREAK();
 		break;
 	}
+
 	texture_view = Device::get().create_texture_view(view_info).second;
+
+	/** Create texture views for each mipmaps */
+	for(size_t mip = 0; mip < mipmaps.size(); ++mip)
+	{
+		view_info.create_info.subresource_range.base_mip_level = mip;
+		view_info.create_info.subresource_range.level_count = 1;
+		mipmaps[mip].view = Device::get().create_texture_view(view_info).second;
+	}
 
 #if !ZE_WITH_EDITOR
 	/** Free data from the CPU as we don't need it anymore */

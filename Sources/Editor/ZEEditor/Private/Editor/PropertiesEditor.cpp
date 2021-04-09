@@ -70,7 +70,13 @@ bool PropertiesEditor::draw()
 						{
 							std::string unique_label = "##" + property->get_name();
 							if(editor->draw(unique_label.c_str(), property->get_value_ptr(object)))
+							{
 								edited = true;
+								if(on_value_changed_map.count(property->get_name()))
+								{
+									on_value_changed_map[property->get_name()].execute(property->get_value_ptr(object));
+								}
+							}
 						}
 						else
 						{
@@ -93,6 +99,11 @@ bool PropertiesEditor::draw()
 	}
 
 	return edited;
+}
+
+void PropertiesEditor::bind_to_value_changed(const std::string& in_property, const std::function<void(void*)>& in_func)
+{
+	on_value_changed_map[in_property].bind(in_func);
 }
 
 }
