@@ -27,7 +27,7 @@ struct ArchiveBindingCreator
 {
 	ArchiveBindingCreator()
 	{
-		if constexpr (ze::serialization::IsSerializable<T, Archive>)
+		if constexpr (ze::serialization::is_serializable<T, Archive>)
 		{
 			auto& Map = get_archive_map(ArchiveName<Archive>);
 

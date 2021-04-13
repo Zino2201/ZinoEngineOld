@@ -122,9 +122,7 @@ public:
     template<typename ArchiveType>
     void serialize(ArchiveType& in_archive)
     {
-	    in_archive <=> lods;
-	    in_archive <=> keep_in_ram;
-        load_to_gpu_memory();
+	  
     }
 
     /**

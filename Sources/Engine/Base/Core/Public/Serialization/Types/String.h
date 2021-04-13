@@ -18,7 +18,8 @@ ZE_FORCEINLINE void serialize(Archive& archive, std::string& string)
 	std::string::size_type size = string.size();
 	
 	archive <=> make_size(size);
-	if constexpr(IsInputArchive<Archive>)
+	
+	if constexpr(is_input_archive<Archive>)
 		string.resize(size);
 
 	archive <=> make_binary_data(string.data(), size);

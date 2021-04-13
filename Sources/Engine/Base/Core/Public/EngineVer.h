@@ -25,11 +25,13 @@ struct ZEVersion
 	}
 
 	template<typename Archive>
-	ZE_FORCEINLINE void serialize(Archive& archive)
+	void serialize(Archive& archive)
 	{
-		archive <=> major;
-		archive <=> minor;
-		archive <=> patch;
+		using namespace serialization;
+
+		archive <=> make_named_data("major", major);
+		archive <=> make_named_data("minor", minor);
+		archive <=> make_named_data("patch", patch);
 	}
 };
 

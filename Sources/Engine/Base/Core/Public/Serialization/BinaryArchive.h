@@ -64,6 +64,18 @@ ZE_FORCEINLINE void serialize(BinaryOutputArchive& archive, const BinaryData<T>&
 	archive.save_bytes(data.data, data.size);
 }
 
+template<typename T>
+ZE_FORCEINLINE void serialize(BinaryInputArchive& archive, NamedData<T>& data)
+{
+	archive <=> data.data;
+}
+
+template<typename T>
+ZE_FORCEINLINE void serialize(BinaryOutputArchive& archive, NamedData<T>& data)
+{
+	archive <=> data.data;
+}
+
 /** Containers size */
 template<typename T>
 ZE_FORCEINLINE void serialize(BinaryInputArchive& archive, Size<T>& data)

@@ -12,9 +12,10 @@ void serialize(Archive& archive, robin_hood::unordered_map<Key, Val>& value)
 {
 	typename robin_hood::unordered_map<Key, Val>::size_type size = value.size();
 
-	archive <=> make_size(size);
+	if constexpr(!is_text_archive<Archive>)
+		archive <=> make_size(size);
 
-	if constexpr(IsInputArchive<Archive>)
+	if constexpr(is_input_archive<Archive>)
 	{
 		for(decltype(size) i = 0; i < size; ++i)
 		{

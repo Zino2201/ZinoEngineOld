@@ -162,7 +162,7 @@ public:
 		in_archive <=> keep_in_ram;
 		in_archive <=> uncompressed_data;
 
-		if constexpr (serialization::IsInputArchive<ArchiveType>)
+		if constexpr (serialization::is_input_archive<ArchiveType>)
 			update_resource();
 	}
 

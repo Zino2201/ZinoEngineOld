@@ -26,3 +26,9 @@
 [submodule "Sources/Libs/msdf-atlas-gen"]
 	path = Sources/Libs/msdf-atlas-gen
 	url = https://github.com/Chlumsky/msdf-atlas-gen.git
+[submodule "Sources/Libs/stduuid"]
+	path = Sources/Libs/stduuid
+	url = https://github.com/mariusbancila/stduuid.git
+[submodule "Sources/Libs/rapidjson"]
+	path = Sources/Libs/rapidjson
+	url = https://github.com/Tencent/rapidjson.git

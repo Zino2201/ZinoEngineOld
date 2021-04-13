@@ -12,7 +12,7 @@ ZE_FORCEINLINE void serialize(Archive& archive, std::vector<T>& vector)
 	typename std::vector<T>::size_type size = vector.size();
 
 	archive <=> make_size(size);
-	if constexpr (IsInputArchive<Archive>)
+	if constexpr (is_input_archive<Archive>)
 		vector.resize(size);
 
 	for (auto& elem : vector)
