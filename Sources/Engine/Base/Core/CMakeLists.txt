@@ -3,6 +3,7 @@ find_package(glm REQUIRED PATHS ${ZE_LIBS_DIR}/glm/cmake/glm)
 ze_create_module(Core 
     Public/Maths/Matrix/Transformations.h
     Public/Maths/Color.h
+    Public/Serialization/Types/Uuid.h
     Private/EngineCore.cpp Private/App.cpp Private/StringUtil.cpp
     Private/Console/Console.cpp
     Private/Logger/Sinks/StdSink.cpp
@@ -21,6 +22,7 @@ target_include_directories(Core
         ${ZE_LIBS_DIR}/boost
         ${ZE_LIBS_DIR}/intrusive
         ${ZE_LIBS_DIR}/robin-hood-hashing/src/include
+        ${ZE_LIBS_DIR}/stduuid/include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Private
 )

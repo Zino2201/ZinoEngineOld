@@ -7,7 +7,7 @@
 #include <rapidjson/ostreamwrapper.h>
 #include <ostream>
 #include <stack>
-#include <queue>
+#include <uuid.h>
 #include <robin_hood.h>
 
 namespace ze::serialization
@@ -149,33 +149,33 @@ private:
  */
 template<typename T>
 	requires std::is_arithmetic_v<T>
-void serialize(JsonOutputArchive& archive, const T& data)
+inline void serialize(JsonOutputArchive& archive, const T& data)
 {
 	archive.write(data);
 }
 
 template<typename T>
 	requires std::is_arithmetic_v<T>
-void pre_serialize(JsonOutputArchive& archive, const T& data) 
+inline void pre_serialize(JsonOutputArchive& archive, const T& data) 
 {
 	archive.flush();
 }
 
 template<typename T>
 	requires std::is_arithmetic_v<T>
-void post_serialize(JsonOutputArchive& archive, const T& data) {}
+inline void post_serialize(JsonOutputArchive& archive, const T& data) {}
 
 /** Non arithmetic types */
 template<typename T>
 	requires (!std::is_arithmetic_v<T>)
-void pre_serialize(JsonOutputArchive& archive, const T& data)
+inline void pre_serialize(JsonOutputArchive& archive, const T& data)
 {
 	archive.start_object();
 }
 
 template<typename T>
 	requires (!std::is_arithmetic_v<T>)
-void post_serialize(JsonOutputArchive& archive, const T& data)
+inline void post_serialize(JsonOutputArchive& archive, const T& data)
 {
 	archive.end_object();
 }
@@ -184,35 +184,35 @@ void post_serialize(JsonOutputArchive& archive, const T& data)
  * Start an array if there is a Size<T>
  */
 template<typename T>
-void pre_serialize(JsonOutputArchive& archive, const Size<T>& data) 
+inline void pre_serialize(JsonOutputArchive& archive, const Size<T>& data) 
 {
 	archive.mark_object_as_array();
 }
 
 template<typename T>
-void serialize(JsonOutputArchive& archive, const Size<T>& data) {}
+inline void serialize(JsonOutputArchive& archive, const Size<T>& data) {}
 
 template<typename T>
-void post_serialize(JsonOutputArchive& archive, const Size<T>& data) {}
+inline void post_serialize(JsonOutputArchive& archive, const Size<T>& data) {}
 
 /** String */
-void serialize(JsonOutputArchive& archive, const std::string& data)
+inline void serialize(JsonOutputArchive& archive, const std::string& data)
 {
 	archive.write(data);
 }
 
-void pre_serialize(JsonOutputArchive& archive, const std::string& data) 
+inline void pre_serialize(JsonOutputArchive& archive, const std::string& data) 
 {
 	archive.flush();
 }
 
-void post_serialize(JsonOutputArchive& archive, const std::string& data) {}
+inline void post_serialize(JsonOutputArchive& archive, const std::string& data) {}
 
 /**
  * Named data
  */
 template<typename T>
-void serialize(JsonOutputArchive& archive, const NamedData<T>& data)
+inline void serialize(JsonOutputArchive& archive, const NamedData<T>& data)
 {
 	archive.set_next_name(data.name);
 	const T& cdata = data.data;
@@ -220,16 +220,16 @@ void serialize(JsonOutputArchive& archive, const NamedData<T>& data)
 }
 
 template<typename T>
-void pre_serialize(JsonOutputArchive& archive, const NamedData<T>& data) {}
+inline void pre_serialize(JsonOutputArchive& archive, const NamedData<T>& data) {}
 
 template<typename T>
-void post_serialize(JsonOutputArchive& archive, const NamedData<T>& data) {}
+inline void post_serialize(JsonOutputArchive& archive, const NamedData<T>& data) {}
 
 /**
  * Pair
  */
 template<typename T1, typename T2>
-void serialize(JsonOutputArchive& archive, const std::pair<T1, T2>& data)
+inline void serialize(JsonOutputArchive& archive, const std::pair<T1, T2>& data)
 {
 	archive.set_next_name(data.first);
 	const T2& cdata = data.second;
@@ -237,9 +237,13 @@ void serialize(JsonOutputArchive& archive, const std::pair<T1, T2>& data)
 }
 
 template<typename T1, typename T2>
-void pre_serialize(JsonOutputArchive& archive, const std::pair<T1, T2>& data) {}
+inline void pre_serialize(JsonOutputArchive& archive, const std::pair<T1, T2>& data) {}
 
 template<typename T1, typename T2>
-void post_serialize(JsonOutputArchive& archive, const std::pair<T1, T2>& data) {}
+inline void post_serialize(JsonOutputArchive& archive, const std::pair<T1, T2>& data) {}
+
+/** Don't turn uuids into objects */
+inline void pre_serialize(JsonOutputArchive& archive, const uuids::uuid& data) {}
+inline void post_serialize(JsonOutputArchive& archive, const uuids::uuid& data) {}
 
 }

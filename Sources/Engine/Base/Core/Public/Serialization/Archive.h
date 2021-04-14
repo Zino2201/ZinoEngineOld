@@ -90,7 +90,7 @@ public:
 			has_serialize_method_with_version<T, ArchiveType>)
 		{
 			uint32_t version = 0;
-			this_ <=> version;
+			this_ <=> make_named_data("version", version);
 			serialize(this_, data, version);
 		}
 		else
@@ -121,7 +121,7 @@ public:
 			has_serialize_method_with_version_const<T, ArchiveType>)
 		{
 			uint32_t version = TypeVersion<T>::version;
-			this_ <=> version;
+			this_ <=> make_named_data("version", version);
 			serialize(this_, data, version);
 		}
 		else
