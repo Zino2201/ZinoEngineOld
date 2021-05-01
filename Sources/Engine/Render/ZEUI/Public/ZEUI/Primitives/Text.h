@@ -20,7 +20,7 @@ class ZEUI_API Text final : public Widget
 {	
 public:
 	Text(const std::string& text = "")
-		: text_(text), align_mode_(TextAlignMode::Left), cached_buffer(nullptr), hb_font(nullptr), cached_face(nullptr) {}
+		: text_(text), align_mode_(TextAlignMode::Left), cached_buffer(nullptr), cached_face(nullptr), hb_font(nullptr) {}
 	~Text();
 
 	Text* text(const std::string& in_text) { text_.set(in_text); cache_layout(); return this; }

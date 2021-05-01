@@ -12,8 +12,8 @@ class Renderer;
 
 struct WidgetRect
 {
-	maths::Vector2f absolute_position;
 	maths::Vector2f position;
+	maths::Vector2f absolute_position;
 	maths::Vector2f size;
 
 	WidgetRect() = default;

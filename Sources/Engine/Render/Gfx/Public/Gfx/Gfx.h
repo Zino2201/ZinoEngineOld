@@ -760,7 +760,7 @@ class Device
 		/** Fences to wait at frame start */
 		std::vector<ResourceHandle> wait_fences;
 
-		Frame() : gfx_submitted(false), gfx_command_pool(CommandListType::Gfx)
+		Frame() : gfx_command_pool(CommandListType::Gfx), gfx_submitted(false)
 		{
 			gfx_lists.reserve(5);
 			expired_buffers.reserve(5);

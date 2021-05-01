@@ -168,14 +168,14 @@ Effect::Permutation* Effect::get_permutation(EffectPermutationId id)
 	if(!stage_to_compile.empty())
 	{
 		const auto& main_job = create_job(JobType::Normal,
-			[this, id, stage_to_compile, &reflection_datas](const Job& in_job) 
+			[this, id, stage_to_compile](const Job& in_job) 
 			{
 				const auto& root_job = create_job(JobType::Normal, [](const Job& in_job){});
 
 				for(const auto& stage : stage_to_compile)
 				{
 					const auto& child = create_child_job(JobType::Normal, root_job,
-						[this, id, stage, &reflection_datas](const Job& in_job)
+						[this, id, stage](const Job& in_job)
 						{
 							compile_permutation_stage(id, stage);
 						});
@@ -226,6 +226,11 @@ void Effect::build_pipeline_layout(EffectPermutationId id)
 			DescriptorType desc_type = DescriptorType::UniformBuffer;
 			switch(parameter.type) 
 			{
+			case shaders::ShaderParameterType::UniformBuffer:
+				break;
+			case shaders::ShaderParameterType::CombinedImageSampler:
+				ZE_CHECK(false);
+				break;
 			case shaders::ShaderParameterType::Texture:
 				desc_type = DescriptorType::SampledTexture;
 				break;
@@ -331,6 +336,8 @@ std::string Effect::get_stage_prefix(ShaderStageFlagBits stage) const
 		return "VS";
 	case ShaderStageFlagBits::Fragment:
 		return "FS";
+	default:
+		return "";
 	}
 }
 

@@ -136,8 +136,9 @@ public:
 		const std::vector<uint8_t>& in_data,
 		const bool in_create_gpu_resources) 
 		: type(in_type), filter(in_filter), compression_mode(in_compression_mode), format(in_format), 
-		width(in_width), height(in_height), depth(in_depth), use_mipmaps(in_use_mipmaps), keep_in_ram(false), ready(false),
-		uncompressed_data(in_data)
+		width(in_width), height(in_height), depth(in_depth), use_mipmaps(in_use_mipmaps), keep_in_ram(false),
+		uncompressed_data(in_data),
+		ready(false)
 	{ 
 		ZE_CHECK(!uncompressed_data.empty());
 		uint32_t miplevels = 1;

@@ -29,6 +29,8 @@ void VerticalContainer::arrange_children()
 		WidgetRect rect(current_pos, arranged_rect.absolute_position + current_pos, child->get().get_desired_size());
 		switch (item.halign_mode_.get())
 		{
+		case HorizontalAlignMode::Left:
+			break;
 		case HorizontalAlignMode::Center:
 			rect.absolute_position.x = (arranged_rect.size.x / 2) - (rect.size.x / 2);
 			break;

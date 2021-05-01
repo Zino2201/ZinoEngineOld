@@ -6,7 +6,7 @@
 namespace ze::editor
 {
 
-AssetFactory::AssetFactory() : asset_class(nullptr), can_be_instantiated(false) {}
+AssetFactory::AssetFactory() : asset_class(nullptr), can_be_instantiated(false), asset_file_extension("zeasset") {}
 
 robin_hood::unordered_set<const ze::reflection::Class*> added_factories;
 std::vector<std::unique_ptr<AssetFactory>> factories;

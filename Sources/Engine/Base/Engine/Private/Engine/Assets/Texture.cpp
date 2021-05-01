@@ -83,6 +83,10 @@ void Texture::update_resource()
 	case ze::TextureType::Tex3D:
 		tex_create_info.type = gfx::TextureType::Tex3D;
 		break;
+
+	case ze::TextureType::Cubemap:
+		ZE_CHECK(false);
+		break;
 	}
 		
 	auto [result, handle] = Device::get().create_texture(gfx::TextureInfo(tex_create_info));

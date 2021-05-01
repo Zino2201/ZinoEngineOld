@@ -16,9 +16,9 @@ public:
 
 	Queue(Queue&& other) :
 		device(other.device),
+		queue(std::exchange(other.queue, vk::Queue())),
 		family(std::move(other.family)),
-		idx(std::move(other.idx)),
-		queue(std::exchange(other.queue, vk::Queue())) {}
+		idx(std::move(other.idx)) {}
 
 	static Queue* get(const ResourceHandle& in_handle);
 

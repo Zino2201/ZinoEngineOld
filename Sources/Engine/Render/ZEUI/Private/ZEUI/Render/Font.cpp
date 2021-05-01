@@ -12,8 +12,9 @@ Font::Font(const std::vector<uint8_t>& in_font_data,
 	const double in_em_size,
 	const double in_space_advance,
 	const double in_tab_advance)
-	: font_data(in_font_data), texture_data(in_texture_data), width(in_texture_width), height(in_texture_height), sdf_pixel_range(in_texture_pixel_range),
-	em_size(in_em_size), space_advance(in_space_advance), tab_advance(in_tab_advance), glyphs(in_glyphs)
+	: font_data(in_font_data), texture_data(in_texture_data), width(in_texture_width), height(in_texture_height), em_size(in_em_size),
+	sdf_pixel_range(in_texture_pixel_range),
+	space_advance(in_space_advance), tab_advance(in_tab_advance), glyphs(in_glyphs)
 {
 	texture = gfx::Device::get().create_texture(
 		gfx::TextureInfo::make_2d_texture(in_texture_width, in_texture_height, gfx::Format::R8G8B8A8Unorm, 1, gfx::TextureUsageFlagBits::Sampled),

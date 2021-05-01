@@ -63,7 +63,7 @@ public:
 			size_t idx = 0;
 			for(auto it = begin; it != end; ++it, ++idx)
 			{
-				if(std::strncmp(in_name.c_str(), it->name.GetString(), std::strlen(in_name.c_str()) == 0))
+				if(std::strncmp(in_name.c_str(), it->name.GetString(), std::strlen(in_name.c_str())) == 0)
 				{
 					index = idx;
 					return;

@@ -138,8 +138,6 @@ std::pair<bool, std::string> VulkanBackend::initialize()
 		bool support_layers = false;
 		for (const char* layer_name : validation_layers) 
 		{
-			bool layer_found = false;
-
 			for (const auto& layer_properties : available_layers) 
 			{
 				if (strcmp(layer_name, layer_properties.layerName) == 0) 

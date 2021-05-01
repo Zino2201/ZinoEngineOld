@@ -26,7 +26,7 @@ OwnerPtr<Asset> TinyObjFactory::create_from_stream(std::istream& in_stream)
 	{
 		notification_add(NotificationType::Error, fmt::format("Failed to import obj: {}", err));
 		ze::logger::error("Failed to import obj: {}", err);
-		return false;
+		return nullptr;
 	}
 
 	OwnerPtr<Model> model = new Model(1);

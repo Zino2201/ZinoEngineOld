@@ -87,8 +87,6 @@ void draw_viewport(ImDrawData* draw_data,
 	const ViewportData& in_viewport,
 	gfx::CommandList* list)
 {
-	ImGuiIO& io = ImGui::GetIO();
-
 	/** Update UBO */
 	list->bind_pipeline_layout(*pipeline_layout);
 	list->set_pipeline_render_pass_state(render_pass_state);

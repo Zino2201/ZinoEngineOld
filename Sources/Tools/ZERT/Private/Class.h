@@ -17,7 +17,7 @@ class Class : public Type
 {
 public:
 	Class(const bool in_struct, const size_t& in_body_line, std::string in_name, std::string in_namespace = "") 
-		: zstruct(in_struct), body_line(in_body_line), Type(ReflType::Class, in_name, in_namespace) {}
+		: Type(ReflType::Class, in_name, in_namespace), zstruct(in_struct), body_line(in_body_line) {}
 
 	void add_parent(const std::string& in_parent) { parents.emplace_back(in_parent); }
 	void add_ctor(const std::string& in_ctor) { ctors.emplace_back(in_ctor); }

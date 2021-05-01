@@ -410,7 +410,7 @@ void Parser::parse_class(const bool in_struct)
 
 void Parser::parse_enum()
 {
-    size_t enum_end = file.find('};', cursor);
+    size_t enum_end = file.find("};", cursor);
 
     /** Jump to the enum declaration */
     cursor = file.find("enum class", cursor);

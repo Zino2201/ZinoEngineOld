@@ -49,11 +49,26 @@ public:
 		else
 		{
 			if constexpr(std::is_void_v<Ret>)
+			{
 				return;
-			else if constexpr(!std::is_reference_v<Ret>)
+			}
+
+			if constexpr(!std::is_void_v<Ret> && !std::is_reference_v<Ret>)
+			{
 				return {};
+			}
 
 			ZE_CHECK(false);
+		}
+
+		if constexpr (std::is_void_v<Ret>)
+		{
+			return;
+		}
+
+		if constexpr (!std::is_void_v<Ret> && !std::is_reference_v<Ret>)
+		{
+			return {};
 		}
 	}
 
