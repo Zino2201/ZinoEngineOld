@@ -86,6 +86,8 @@ public:
 	{
 		static_assert(do_support_loading<T, ArchiveType>, "T doesn't support loading! (no non-const-ref serialize function/method found)");
 
+		pre_serialize(this_, const_cast<const T&>(data));
+
 		if constexpr (has_serialize_function_with_version<T, ArchiveType> ||
 			has_serialize_method_with_version<T, ArchiveType>)
 		{
@@ -97,6 +99,8 @@ public:
 		{
 			serialize(this_, data);
 		}
+
+		post_serialize(this_, const_cast<const T&>(data));
 
 		return this_;
 	}
