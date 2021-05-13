@@ -36,7 +36,7 @@ namespace std
 {
 
 template<typename T>
-	requires ze::reflection::IsReflEnum<T>
+	requires ze::reflection::is_refl_enum<T>
 std::string to_string(const T& in_value)
 {
 	return static_cast<const ze::reflection::Enum*>(ze::reflection::Type::get<T>())->get_value_name(in_value);

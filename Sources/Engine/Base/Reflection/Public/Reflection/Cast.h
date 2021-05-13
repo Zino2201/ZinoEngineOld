@@ -12,7 +12,7 @@ namespace ze::reflection
  * Returns nullptr if the pointer cannot be casted
  */
 template<typename To, typename From>
-	requires IsReflClass<To> && IsReflClass<From>
+	requires is_refl_class<To> && is_refl_class<From>
 To* cast(From* from)
 {
 	const Class* from_class = from->get_class();

@@ -11,7 +11,7 @@ namespace ze::reflection::detail
 using AnyDataType = std::aligned_storage_t<sizeof(uintptr_t), alignof(uintptr_t)>;
 
 template<typename T>
-static constexpr bool FitInAny = sizeof(T) <= sizeof(uintptr_t) &&
+static constexpr bool fit_in_any = sizeof(T) <= sizeof(uintptr_t) &&
 	alignof(T) <= alignof(uintptr_t);
 
 enum class VisitType
@@ -283,6 +283,6 @@ struct AnyPolicyArithmetic : public AnyPolicyBase<T, AnyPolicyArithmetic<T>>
  */
 template<typename T> 
 using AnyPolicy = std::conditional_t<std::is_arithmetic_v<T>, AnyPolicyArithmetic<T>,
-		std::conditional_t<FitInAny<T>, AnyPolicySmall<T>, AnyPolicyLarge<T>>>;
+		std::conditional_t<fit_in_any<T>, AnyPolicySmall<T>, AnyPolicyLarge<T>>>;
 
 }

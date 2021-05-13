@@ -24,7 +24,7 @@ public:
 	}
 
 	template<typename T, typename Decayed = std::decay_t<T>>
-		requires IsReflType<Decayed>
+		requires is_refl_type<Decayed>
 	Any(T&& value) :
 		visit_func(&detail::AnyPolicy<Decayed>::visit)
 	{

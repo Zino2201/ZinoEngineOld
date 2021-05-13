@@ -4,16 +4,16 @@ namespace ze::reflection
 {
 
 template<typename T>
-static constexpr bool IsReflType = false;
+static constexpr bool is_refl_type = false;
 
 template<typename T>
-static constexpr bool IsReflClass = false;
+static constexpr bool is_refl_class = false;
 
 template<typename T>
-static constexpr bool IsReflEnum = false;
+static constexpr bool is_refl_enum = false;
 
 template<typename T>
-	requires IsReflType<T>
+	requires is_refl_type<T>
 static constexpr const char* type_name = "";
 
 }

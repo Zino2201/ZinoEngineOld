@@ -12,12 +12,13 @@
 #include "Maths/Vector.h"
 
 #define ZE_REFL_DECLARE_TYPE(Type) \
-	template<> static constexpr bool ze::reflection::IsReflType<Type> = true; \
+	template<> static constexpr bool ze::reflection::is_refl_type<Type> = true; \
 	template<> static constexpr const char* ze::reflection::type_name<Type> = #Type;
 
 #define ZE_REFL_DECLARE_CLASS(InClass) \
 	ZE_REFL_DECLARE_TYPE(InClass) \
-	template<> static constexpr bool ze::reflection::IsReflClass<InClass> = true;
+	template<> static constexpr bool ze::reflection::is_refl_class<InClass> = true; \
+	template<> static constexpr bool ze::reflection::serialization::is_serializable_with_reflection<InClass> = true;
 	
 #define ZE_REFL_DECLARE_STRUCT_BODY(InStruct) \
 	friend void ze::reflection::initialize_reflection_data(); \
@@ -28,10 +29,15 @@
 	virtual const ze::reflection::Class* get_class() const { return ze::reflection::Class::get<InClass>(); } \
 	private:
 
+#define ZE_REFL_DECLARE_CLASS_BODY_WITH_OVERRIDE(InClass) \
+	public: \
+	friend void ze::reflection::initialize_reflection_data(); \
+	virtual const ze::reflection::Class* get_class() const override { return ze::reflection::Class::get<InClass>(); } \
+	private:
 
 #define ZE_REFL_DECLARE_ENUM(InEnum) \
 	ZE_REFL_DECLARE_TYPE(InEnum) \
-	template<> static constexpr bool ze::reflection::IsReflEnum<InEnum> = true;
+	template<> static constexpr bool ze::reflection::is_refl_enum<InEnum> = true;
 
 /**
  * Macros parsed by the reflection tool
@@ -66,7 +72,7 @@ ZE_REFL_DECLARE_TYPE(int64_t)
 ZE_REFL_DECLARE_TYPE(ze::maths::Vector3d)
 ZE_REFL_DECLARE_TYPE(ze::maths::Vector3f)
 
-template<typename T> static constexpr bool ze::reflection::IsReflType<std::vector<T>> = true;
+template<typename T> static constexpr bool ze::reflection::is_refl_type<std::vector<T>> = true;
 template<typename T> static constexpr const char* ze::reflection::type_name<std::vector<T>> = "std::vector";
 
 namespace ze::reflection

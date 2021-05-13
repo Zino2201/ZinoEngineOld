@@ -83,6 +83,7 @@ public:
 				return begin[index].value;
 			default:
 				ZE_CHECKF(false, "Null iterator!");
+				return begin[0].value; // To remove warning
 			}
 		}
 

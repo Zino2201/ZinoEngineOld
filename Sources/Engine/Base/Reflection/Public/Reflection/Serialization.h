@@ -8,10 +8,10 @@ namespace ze::reflection::serialization
 {
 
 template<typename T>
-static constexpr const char* ArchiveName = "";
+static constexpr const char* archive_name = "";
 
 template<typename T>
-static constexpr bool IsSerializableWithReflection = false;
+static constexpr bool is_serializable_with_reflection = false;
 
 /**
  * Get the binding map for the specified archive
@@ -29,7 +29,7 @@ struct ArchiveBindingCreator
 	{
 		if constexpr (ze::serialization::is_serializable<T, Archive>)
 		{
-			auto& Map = get_archive_map(ArchiveName<Archive>);
+			auto& Map = get_archive_map(archive_name<Archive>);
 
 			Map.insert({ type_name<T>, [](void* archive, void* object)
 			{
@@ -79,7 +79,7 @@ struct RegisterArchive
 	namespace ze::reflection::serialization \
 	{  \
 		template<typename T> typename ze::reflection::serialization::RegisterArchive<T, Archive>::type register_archive(T*, Archive*);  \
-		template<> static constexpr const char* ArchiveName<Archive> = #Archive; \
+		template<> static constexpr const char* archive_name<Archive> = #Archive; \
 	}
 
 /**
@@ -91,7 +91,6 @@ struct RegisterArchive
 	{ \
 		static const RegisterTypeToArchive<Type>& ZE_CONCAT(refl_serl_inst_ref_, UniqueName) = \
 			Singleton<RegisterTypeToArchive<Type>>::get(); \
-		template<> static constexpr bool IsSerializableWithReflection<Type> = true; \
 	}
 
 template<typename T> 
@@ -99,7 +98,7 @@ struct RegisterTypeToArchive
 {
 	RegisterTypeToArchive()
 	{ 
-		static_assert(IsReflType<T>,
+		static_assert(is_refl_type<T>,
 			"ZE_REFL_SERL_REGISTER_TYPE only works with reflected types");
 		ze::reflection::serialization::register_archive(static_cast<T*>(nullptr), 0);
 	}
@@ -115,9 +114,10 @@ void register_archive(T*, int) {}
  * Serialize an reflected type
  */
 template<typename ArchiveType, typename T>
+	requires is_serializable_with_reflection<T>
 void serialize(ArchiveType& archive, T& object)
 {
-	auto& map = get_archive_map(ze::reflection::serialization::ArchiveName<ArchiveType>);
+	auto& map = get_archive_map(ze::reflection::serialization::archive_name<ArchiveType>);
 	auto serializer = map.find(object.get_class()->get_name());
 
 	ZE_CHECK(serializer != map.end());

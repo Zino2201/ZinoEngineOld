@@ -49,11 +49,36 @@ void Writer::write_h()
 		file << "ZE_REFL_DECLARE_CLASS(" << cl.znamespace << "::" << cl.name << ");\n";
 
 		if(cl.is_struct())
+		{
 			file << "#define ZE_Refl_Body_" << unique_id << "_" << cl.get_body_line() 
 			<< " ZE_REFL_DECLARE_STRUCT_BODY(" << cl.znamespace << "::" << cl.name << ");\n\n";
+		}
 		else
-			file << "#define ZE_Refl_Body_" << unique_id << "_" << cl.get_body_line() 
-				<< " ZE_REFL_DECLARE_CLASS_BODY(" << cl.znamespace << "::" << cl.name << ");\n\n";
+		{
+			bool found = false;
+			for (const auto& clazz : cl.get_parents())
+			{
+				for (const auto& type : typedb_get_types())
+				{
+					if (type.name.find(clazz) != std::string::npos)
+					{
+						found = true;
+						break;
+					}
+				}
+			}
+
+			if(found)
+			{
+				file << "#define ZE_Refl_Body_" << unique_id << "_" << cl.get_body_line()
+					<< " ZE_REFL_DECLARE_CLASS_BODY_WITH_OVERRIDE(" << cl.znamespace << "::" << cl.name << ");\n\n";
+			}
+			else
+			{
+				file << "#define ZE_Refl_Body_" << unique_id << "_" << cl.get_body_line()
+					<< " ZE_REFL_DECLARE_CLASS_BODY(" << cl.znamespace << "::" << cl.name << ");\n\n";
+			}
+		}
 	}
 
 	for(const auto& en : header.enums)

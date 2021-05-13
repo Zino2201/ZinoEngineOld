@@ -2,12 +2,10 @@
 
 #include "EngineCore.h"
 #include "Wrappers.h"
+#include "Traits.h"
 
 namespace ze::serialization
 {
-
-template<typename T>
-struct THasVersion : std::false_type {};
 
 /** Versionning */
 template<typename T>
@@ -84,7 +82,8 @@ public:
 	template<typename T>
 	ZE_FORCEINLINE ArchiveType& operator<=>(T&& data)
 	{
-		static_assert(do_support_loading<T, ArchiveType>, "T doesn't support loading! (no non-const-ref serialize function/method found)");
+		static_assert(do_support_loading<T, ArchiveType>, 
+			"T doesn't support loading! (no non-const-ref serialize function/method found)");
 
 		pre_serialize(this_, const_cast<const T&>(data));
 
@@ -104,7 +103,7 @@ public:
 
 		return this_;
 	}
-private:
+protected:
 	ArchiveType& this_;
 };
 
@@ -137,9 +136,19 @@ public:
 		
 		return this_;
 	}
-private:
+protected:
 	ArchiveType& this_;
 };
+
+
+template<typename T>
+static constexpr bool is_input_archive = std::is_base_of_v<InputArchive<T>, T>;
+
+template<typename T>
+static constexpr bool is_output_archive = std::is_base_of_v<OutputArchive<T>, T>;
+
+template<typename T>
+static constexpr bool is_archive = is_input_archive<T> || is_output_archive<T>;
 
 /** Pre-serialize and post-serialize, called before and after serialization. Useful for some serializers */
 template<typename Archive, typename T>
@@ -187,5 +196,3 @@ ZE_FORCEINLINE void serialize(Archive& archive, const T& data, const uint32_t& v
 }
 
 }
-
-#include "Traits.h"

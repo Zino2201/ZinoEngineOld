@@ -36,10 +36,10 @@ struct TypeBuilder
 		if constexpr(std::is_arithmetic_v<T>)
 			flags |= TypeFlagBits::Arithmetic; 
 
-		if constexpr(IsReflClass<T>)
+		if constexpr(is_refl_class<T>)
 			flags |= TypeFlagBits::Class; 
 
-		if constexpr(IsReflEnum<T>)
+		if constexpr(is_refl_enum<T>)
 			flags |= TypeFlagBits::Enum; 
 
 		type = RegistrationManager::get().register_type(new U(type_name<T>, sizeof(T), flags));
@@ -56,7 +56,7 @@ struct ClassBuilder : public TypeBuilder<T, Class>
 {
 	ClassBuilder(ClassFlags in_flags = ClassFlags()) : TypeBuilder<T, Class>() 
 	{
-		class_ = static_cast<const Class*>(type);
+		class_ = static_cast<const Class*>(this->type);
 
 		auto& class_flags = const_cast<ClassFlags&>(class_->get_class_flags());
 		if constexpr(std::is_abstract_v<T>)
@@ -91,7 +91,7 @@ struct ClassBuilder : public TypeBuilder<T, Class>
 		/**
 		 * ZERT can check if the parent is a reflected type, but for now it's too much boring work lol
 		 */
-		if constexpr(IsReflType<Parent>)
+		if constexpr(is_refl_type<Parent>)
 		{
 			LazyTypePtr& parent = const_cast<LazyTypePtr&>(class_->get_parent_lazy_ptr());
 			parent = LazyTypePtr(type_name<Parent>);
@@ -140,7 +140,7 @@ public:
     EnumBuilder() : 
 		TypeBuilder<T, Enum>()
     {
-        enum_ = static_cast<const Enum*>(type);
+        enum_ = static_cast<const Enum*>(this->type);
 
         auto& underlying_type = const_cast<LazyTypePtr&>(enum_->get_underlying_type_lazy_ptr());
 		underlying_type = LazyTypePtr(type_name<UnderlyingType>);

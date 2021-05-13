@@ -46,7 +46,7 @@ public:
 	 * Get a type by name, returns nullptr if not found
 	 */
 	template<typename T>
-		requires IsReflType<T>
+		requires is_refl_type<T>
 	ZE_FORCEINLINE static const Type* get()
 	{
 		return get_by_name(type_name<T>);
