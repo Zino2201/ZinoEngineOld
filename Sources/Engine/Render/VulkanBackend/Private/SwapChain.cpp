@@ -7,6 +7,7 @@
 #include "Texture.h"
 #include "VulkanUtil.h"
 #include "Sync.h"
+#include <thread>
 
 namespace ze::gfx::vulkan
 {
@@ -181,7 +182,7 @@ vk::Result SwapChain::create(const uint32_t in_width,
 		device.get_device().destroySwapchainKHR(old_swapchain);
 
 	/** Create images views */
-	std::vector<vk::Image> sw_images = device.get_device().getSwapchainImagesKHR(*swapchain).value;
+	auto [sw_images_result, sw_images] = device.get_device().getSwapchainImagesKHR(*swapchain);
 	images.reserve(sw_images.size());
 	image_views.reserve(sw_images.size());
 	for (int i = 0; i < sw_images.size(); ++i)
@@ -195,14 +196,14 @@ vk::Result SwapChain::create(const uint32_t in_width,
 				extent.width,
 				extent.height,
 				1,
-				0,
+				1,
 				1,
 				SampleCountFlagBits::Count1,
 				TextureUsageFlagBits::ColorAttachment));
 		images.emplace_back(std::move(tex));
 
 		ResourceHandle view = get_backend().texture_view_create(
-			sw_images[i], 
+			sw_images[i],
 			TextureViewCreateInfo(
 				ResourceHandle(),
 				TextureViewType::Tex2D,
@@ -213,7 +214,7 @@ vk::Result SwapChain::create(const uint32_t in_width,
 					1,
 					0,
 					1))).second;
-		if(!view)
+		if (!view)
 		{
 			ze::logger::error("Failed to create image view for swap chain image {} ({})",
 				i, vk::to_string(result));

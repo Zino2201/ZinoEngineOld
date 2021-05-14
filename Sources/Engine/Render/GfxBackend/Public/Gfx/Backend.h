@@ -74,6 +74,7 @@ enum class TextureLayout
 {
 	Undefined,
 	ColorAttachment,
+	DepthStencilAttachment,
 	DepthReadOnly,
 	ShaderReadOnly,
 	TransferSrc,

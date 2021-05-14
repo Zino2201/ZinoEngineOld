@@ -72,8 +72,8 @@ void VulkanBackend::command_pool_trim(const ResourceHandle& in_pool)
 {
 	CommandPool* pool = CommandPool::get(in_pool);
 	ZE_CHECKF(pool, "Invalid pool given to command_pool_trim");
-
-	device->get_device().trimCommandPool(pool->get_pool());
+	
+	//device->get_device().trimCommandPoolKHR(pool->get_pool(), vk::CommandPoolTrimFlags());
 }
 
 void VulkanBackend::command_pool_free(const ResourceHandle& in_pool, const std::vector<ResourceHandle>& in_lists)

@@ -56,7 +56,17 @@ vk::Framebuffer get_or_create_framebuffer(Device& in_device, const Framebuffer& 
 			continue;
 
 		TextureView* view = TextureView::get(attachment);
-		ZE_CHECKF(view, "Invalid texture view (attachment) given to framebuffer");
+		ZE_CHECKF(view, "Invalid texture view (color attachment) given to framebuffer");
+		attachments.emplace_back(view->get_image_view());
+	}
+
+	for (const auto& attachment : in_framebuffer.depth_attachments)
+	{
+		if (!attachment)
+			continue;
+
+		TextureView* view = TextureView::get(attachment);
+		ZE_CHECKF(view, "Invalid texture view (depth/stencil attachment) given to framebuffer");
 		attachments.emplace_back(view->get_image_view());
 	}
 

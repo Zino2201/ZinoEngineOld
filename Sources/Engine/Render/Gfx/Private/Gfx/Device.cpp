@@ -326,7 +326,7 @@ std::pair<Result, DeviceResourceHandle> Device::create_buffer(const BufferInfo& 
 				in_initial_data);
 
 			CommandList* list = allocate_cmd_list(CommandListType::Gfx);
-			list->copy_buffer(buffer, staging_buf);
+			list->copy_buffer(staging_buf, buffer);
 			destroy_buffer(staging_buf);
 			submit(list);
 		}

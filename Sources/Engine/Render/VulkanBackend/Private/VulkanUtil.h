@@ -253,6 +253,8 @@ ZE_FORCEINLINE vk::ImageLayout convert_texture_layout(const TextureLayout& in_la
 		return vk::ImageLayout::eUndefined;
 	case TextureLayout::ColorAttachment:
 		return vk::ImageLayout::eColorAttachmentOptimal;
+	case TextureLayout::DepthStencilAttachment:
+		return vk::ImageLayout::eDepthStencilAttachmentOptimal;
 	case TextureLayout::DepthReadOnly:
 		return vk::ImageLayout::eDepthReadOnlyOptimal;
 	case TextureLayout::ShaderReadOnly:
