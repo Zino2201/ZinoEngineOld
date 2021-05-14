@@ -5,3 +5,8 @@ add_subdirectory(ZEFS)
 add_subdirectory(Asset)
 add_subdirectory(AssetDatabase)
 add_subdirectory(JsonSerialization)
+add_subdirectory(Platform)
+
+if(WIN32)
+	add_subdirectory(PlatformWindows)
+endif()
