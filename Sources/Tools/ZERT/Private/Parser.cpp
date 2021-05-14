@@ -170,7 +170,8 @@ Parser::Parser(Header& in_header, const std::string& in_file,
                         std::string ns = namespace_stack.top();
                         if(namespace_stack.size() > 1)
                         {
-                            current_namespace.erase(current_namespace.find(ns) - sizeof("::"));
+                            size_t ns_idx = current_namespace.find(ns);
+                            current_namespace.erase(ns_idx - sizeof(":"));
                         }
                         else
                         {

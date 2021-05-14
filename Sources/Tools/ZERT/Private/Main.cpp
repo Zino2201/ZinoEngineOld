@@ -22,8 +22,8 @@ void fatal(std::string_view InMessage, ...)
 
 	char PrintfBuffer[2048];
 	vsprintf(PrintfBuffer, InMessage.data(), InArgs);
-	std::cerr << PrintfBuffer;
-	std::cerr << std::endl;
+	std::cout << PrintfBuffer;
+	std::cout << std::endl;
 
 	va_end(InArgs);
 
