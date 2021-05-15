@@ -168,14 +168,14 @@ Parser::Parser(Header& in_header, const std::string& in_file,
                     if(!namespace_stack.empty())
                     {
                         std::string ns = namespace_stack.top();
+                        size_t ns_idx = current_namespace.find(ns);
                         if(namespace_stack.size() > 1)
                         {
-                            size_t ns_idx = current_namespace.find(ns);
-                            current_namespace.erase(ns_idx - sizeof(":"));
+                            current_namespace.erase(ns_idx - 2);
                         }
                         else
                         {
-                            current_namespace.erase(current_namespace.find(ns));
+                            current_namespace.erase(ns_idx);
                         }
                         namespace_stack.pop();
                     }
@@ -247,26 +247,25 @@ void Parser::parse_class(const bool in_struct)
     /** Find class end */
     size_t fce_cursor = cursor + 4;
     size_t class_end = -1;
-    size_t nested_encounters = 0;
+    size_t nested_encounters = 1;
 
     while(true)
     {
-        if(file.substr(fce_cursor, 4).starts_with("enum"))
+        if(file.substr(fce_cursor, 4).find("enum") != std::string::npos ||
+            file.substr(fce_cursor, 3).find("= {") != std::string::npos)
         {
             nested_encounters++;
         }
-        else if(file.substr(fce_cursor, 2).starts_with("};"))
+        else if(file.substr(fce_cursor, 2).find("};") != std::string::npos)
         {
-            if(nested_encounters == 0)
-            {
-                class_end = fce_cursor;
-                break;
-            }
-            else
-            {
-                nested_encounters--;
-            }
+            nested_encounters--;
         }
+
+		if (nested_encounters == 0)
+		{
+			class_end = fce_cursor;
+			break;
+		}
 
         fce_cursor++; 
     }
