@@ -138,13 +138,13 @@ void AssetExplorer::draw_asset_entry(const std::string& in_name,
 			const assetdatabase::AssetPrimitiveData& asset_data = std::get<0>(in_data);
 
 			ImGui::BeginTooltip();
-			ImGui::Text("Type: %s", asset_data.asset_class->get_name().c_str());
+			ImGui::Text("Type: %s", asset_data.metadata.asset_class->get_name().c_str());
 			ImGui::Text("Disk size: %f KiB", asset_data.size / 1048576.f);
 			ImGui::Separator();
 			ImGui::Text("Path: %s", asset_data.path.string().c_str());
-			ImGui::Text("ZE v%d.%d.%d", asset_data.engine_ver.major,
-				asset_data.engine_ver.minor,
-				asset_data.engine_ver.patch);
+			ImGui::Text("Saved using ZE v%d.%d.%d", asset_data.metadata.engine_version.major,
+				asset_data.metadata.engine_version.minor,
+				asset_data.metadata.engine_version.patch);
 			ImGui::EndTooltip();
 		}
 		
@@ -153,7 +153,7 @@ void AssetExplorer::draw_asset_entry(const std::string& in_name,
 			if(is_asset)
 			{
 				const assetdatabase::AssetPrimitiveData& asset_data = std::get<0>(in_data);
-				if(AssetActions* actions = get_actions_for(asset_data.asset_class))
+				if(AssetActions* actions = get_actions_for(asset_data.metadata.asset_class))
 				{
 					auto request = assetmanager::load_asset_sync(asset_data.path);
 					std::string window_title_name = request.first->get_path().stem().string();

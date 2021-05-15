@@ -12,6 +12,8 @@
 #include "ZEFS/FileStream.h"
 #include "ZEFS/ZEFS.h"
 #include "PathTree.h"
+#include "Assets/AssetMetadata.h"
+#include "Assets/AssetManager.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, AssetDatabase);
 
@@ -31,44 +33,40 @@ void register_asset(const std::filesystem::path& path)
 	AssetPrimitiveData data;
 	data.name = path.stem().string();
 	data.path = path;
+	data.meta_path = path;
 
-	/** Open the asset */
-	filesystem::FileIStream stream(path, filesystem::FileReadFlagBits::Binary |
-		filesystem::FileReadFlagBits::End);
-	if (!stream)
-	{
-		ze::logger::error("Failed to open asset {}", path.string());
-		return;
-	}
-
-	/** Get size */
-	data.size = stream.tellg();
-	stream.seekg(0, std::ios::beg);
+	/** Metapath, if it exists */
+	data.meta_path = data.meta_path.stem().concat(".zemeta");
+	if(!ze::filesystem::exists(data.meta_path))
+		data.meta_path = "";
 
 	/** Parse the header */
-	AssetHeader header;
-	ze::serialization::BinaryInputArchive ar(stream);
-	ar <=> header;
-
-	if (!header.is_valid())
+	std::optional<AssetMetadata> metadata = assetmanager::get_metadata_from_file(path);
+	if(!metadata.has_value())
 	{
-		ze::logger::error("Invalid asset {} (bad header)", path.string());
+		ze::logger::error("Invalid metadata {}", path.string());
 		return;
 	}
-
-	data.engine_ver = header.engine_ver;
-	data.asset_class = ze::reflection::Class::get_by_name(header.class_name);
-	if(!data.asset_class)
-	{
-		ze::logger::error("Invalid asset {} (bad class {})", path.string(), header.class_name);
-		return;
-	}
+	data.metadata = *metadata;
 
 	path_tree.add(path);
-	data_map.insert({ path , data });
 
+	/** Open the asset file */
+	{
+		filesystem::FileIStream asset_stream(data.path,
+			filesystem::FileReadFlagBits::End);
+		if (!asset_stream)
+		{
+			ze::logger::error("Failed to open asset {}", path.string());
+			return;
+		}
+
+		data.size = asset_stream.tellg();
+	}
+
+	data_map.insert({ path, data });
 	ze::logger::verbose("Registered asset {} ({})", path.string(),
-		header.class_name);
+		metadata->asset_class->get_name());
 
 	on_asset_registered.broadcast(data);
 }
@@ -80,7 +78,7 @@ bool is_registered(const std::filesystem::path& path)
 
 bool is_valid_asset(const std::filesystem::path& path)
 {
-	return path.extension().string() == ".zeasset";
+	return path.extension() != ".zemeta" && assetmanager::get_metadata_from_file(path).has_value();
 }
 
 void scan_internal(const std::filesystem::path& path)
@@ -89,11 +87,11 @@ void scan_internal(const std::filesystem::path& path)
 		[&](const filesystem::DirectoryEntry& entry)
 		{
 			if (filesystem::is_directory(path / entry.path) ||
-				!is_valid_asset(entry.path) || 
+				!is_valid_asset(path / entry.path) || 
 				is_registered(entry.path))
 				return;
 
-			register_asset(path/ entry.path);
+			register_asset(path / entry.path);
 		}, filesystem::IterateDirectoriesFlagBits::Recursive);
 
 	on_asset_scan_completed.broadcast();

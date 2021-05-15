@@ -3,6 +3,7 @@
 #include "Editor/Windows/Window.h"
 #include "Assets/AssetManager.h"
 #include "Editor/PropertiesEditor.h"
+#include "Gfx/Gfx.h"
 
 namespace ze { class Texture; }
 
@@ -22,8 +23,8 @@ protected:
 	void draw();
 private:
 	void on_mipmap_changed(void* in_enabled);
+	void build_views();
 private:
-	Asset* asset;
 	assetmanager::AssetRequestPtr asset_request;
 	Texture* texture;
 	PropertiesEditor properties_editor;
@@ -31,6 +32,7 @@ private:
 	int current_miplevel;
 	bool should_update_resource;
 	bool should_update_mipmaps;
+	std::vector<gfx::UniqueTextureView> views;
 };
 
 }

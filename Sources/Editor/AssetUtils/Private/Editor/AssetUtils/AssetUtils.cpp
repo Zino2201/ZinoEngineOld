@@ -10,6 +10,7 @@
 #include "Serialization/BinaryArchive.h"
 #include "AssetDatabase/AssetHeader.h"
 #include "Assets/Asset.h"
+#include "Assets/AssetMetadata.h"
 
 namespace ze::editor::assetutils
 {
@@ -48,35 +49,6 @@ void import_assets_dialog(const std::filesystem::path& in_path,
 	SetCurrentDirectory(cwd);
 #endif
 }
-
-void save_asset(ze::Asset& in_asset, const std::filesystem::path& in_path,
-	const std::string& in_name)
-{
-	std::string filename = in_name + ".zeasset";
-	ze::filesystem::FileOStream stream(in_path / filename,
-		ze::filesystem::FileWriteFlagBits::Binary |
-		ze::filesystem::FileWriteFlagBits::ReplaceExisting);
-	if (!stream)
-		return;
-
-	serialization::BinaryOutputArchive archive(stream);
-	archive <=> make_asset_header(in_asset.get_class()->get_name());
-	reflection::serialization::serialize(archive, in_asset);
-}
-
-void save_asset(ze::Asset& in_asset)
-{
-	ze::filesystem::FileOStream stream(in_asset.get_path(),
-		ze::filesystem::FileWriteFlagBits::Binary |
-		ze::filesystem::FileWriteFlagBits::ReplaceExisting);
-	if (!stream)
-		return;
-
-	serialization::BinaryOutputArchive archive(stream);
-	archive <=> make_asset_header(in_asset.get_class()->get_name());
-	reflection::serialization::serialize(archive, in_asset);
-}
-
 OnAssetImported& get_on_asset_imported() { return on_asset_imported; }
 
 }

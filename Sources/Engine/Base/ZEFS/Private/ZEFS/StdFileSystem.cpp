@@ -1,5 +1,8 @@
 #include "ZEFS/StdFileSystem.h"
 #include <fstream>
+#if ZE_PLATFORM(WINDOWS)
+#include <Windows.h>
+#endif
 
 namespace ze::filesystem
 {
@@ -96,6 +99,32 @@ std::filesystem::path StdFileSystem::get_correct_path(const std::filesystem::pat
 		correct_path = root / path;
 
 	return correct_path;
+}
+
+FileAttributeFlags StdFileSystem::get_file_attributes(const std::filesystem::path& path) const
+{
+	std::filesystem::path correct_path = get_correct_path(path);
+	FileAttributeFlags ze_flags;
+
+#if ZE_PLATFORM(WINDOWS)
+	DWORD win_flags = GetFileAttributesA(correct_path.string().c_str());
+	if(win_flags & FILE_ATTRIBUTE_HIDDEN)
+		ze_flags |= FileAttributeFlagBits::Hidden;
+#endif
+
+	return ze_flags;
+}
+
+bool StdFileSystem::set_file_attributes(const std::filesystem::path& path, const FileAttributeFlags& in_flags)
+{
+	std::filesystem::path correct_path = get_correct_path(path);
+
+#if ZE_PLATFORM(WINDOWS)
+	DWORD win_flags = 0;
+	if (in_flags& FileAttributeFlagBits::Hidden)
+		win_flags |= FILE_ATTRIBUTE_HIDDEN;
+	return SetFileAttributesA(correct_path.string().c_str(), win_flags);
+#endif
 }
 
 }

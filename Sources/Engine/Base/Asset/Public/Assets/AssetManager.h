@@ -2,10 +2,12 @@
 
 #include "EngineCore.h"
 #include "Delegates/Delegate.h"
+#include "Asset.h"
 #include <filesystem>
 #include <future>
+#include <optional>
 
-namespace ze { class Asset; }
+namespace ze { class Asset; struct AssetMetadata; struct PlatformInfo; }
 
 /**
  * Asset manager namespace
@@ -13,7 +15,6 @@ namespace ze { class Asset; }
  * Automatically cache assets when loaded
  * Assets are unloaded when no shared_ptr points to them
  */
-
 namespace ze::assetmanager
 {
 
@@ -80,5 +81,28 @@ ASSET_API AssetRequestPtr load_asset_async(const std::filesystem::path& in_path,
 	std::function<AssetRequestHandle::OnCompletedFuncSignature>&& on_completed = nullptr);
 ASSET_API void free_asset(const std::filesystem::path& in_path);
 ASSET_API void unload_all();
+
+/** Save information for assets */
+struct AssetSaveInfo
+{
+	Asset* asset;
+	const PlatformInfo& platform;
+	std::filesystem::path path;
+
+	AssetSaveInfo(Asset* in_asset,
+		const PlatformInfo& in_platform) : asset(in_asset), platform(in_platform), path(asset->get_path()) {}
+};
+
+/*
+ * Save an asset to disk, perform cooking and also save the metadata
+ * (Editor only!)
+ */
+void save_asset(const AssetSaveInfo& in_info);
+
+/**
+ * Try get the metadata of the specified file if this is an asset
+ * This function works with cooked asset (single asset file) and uncooked assets (asset file and .zemeta file)
+ */
+std::optional<AssetMetadata> get_metadata_from_file(std::filesystem::path in_path);
 
 }

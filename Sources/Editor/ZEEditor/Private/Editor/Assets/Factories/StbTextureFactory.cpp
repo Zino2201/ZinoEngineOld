@@ -10,8 +10,9 @@ namespace ze::editor
 
 StbTextureFactory::StbTextureFactory()
 {
-	supported_formats = { "png", "jpg" };
+	supported_formats = { "png", "jpg", "bmp", "tga", "jpeg" };
 	asset_class = reflection::Class::get<Texture>();
+	asset_file_extension = "zetexture";
 }
 
 OwnerPtr<Asset> StbTextureFactory::instantiate()

@@ -4,6 +4,9 @@
 #include "ImGui/ImGui.h"
 #include "backends/imgui_impl_sdl.h"
 #include <SDL.h>
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+#define UUID_SYSTEM_GENERATOR
 #include "Assets/Asset.h"
 #include "AssetDatabase/AssetDatabase.h"
 #include <istream>
@@ -28,6 +31,15 @@
 #include <imgui_internal.h>
 #include "Editor/PropertyEditor.h"
 #include "Editor/PropertyEditors/PrimitivesPropertyEditors.h"
+#include "Assets/AssetMetadata.h"
+#include "Serialization/Json.h"
+#include "Assets/Asset.h"
+#include "Assets/AssetCooker.h"
+#include "Gfx/Gfx.h"
+#include "PlatformMgr.h"
+#include "Shader/ShaderCompiler.h"
+#include "Maths/Matrix/Transformations.h"
+#include "Engine/InputSystem.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);
 
@@ -161,6 +173,103 @@ EditorApp::EditorApp() : EngineApp(),
 
 	/** Property editors */
 	register_property_editor(reflection::Type::get<bool>(), new BoolPropertyEditor);
+
+	/** Cookers */
+	AssetCooker::initialize();
+
+#if 0
+	/** models */
+	{
+		tinyobj::attrib_t attrib;
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> materials;
+		std::string warn, err;
+
+		ze::filesystem::FileIStream stream("Assets/landscapetonkh.obj", ze::filesystem::FileReadFlagBits::Binary);
+		tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, &stream);
+
+		robin_hood::unordered_map<ModelVertexCon, uint32_t> unique_vertices;
+
+		for (const auto& shape : shapes)
+		{
+			for (const auto& index : shape.mesh.indices)
+			{
+				ModelVertexCon vertex;
+
+				vertex.position.x = attrib.vertices[3 * index.vertex_index + 0];
+				vertex.position.y = attrib.vertices[3 * index.vertex_index + 1];
+				vertex.position.z = attrib.vertices[3 * index.vertex_index + 2];
+
+				if (!attrib.texcoords.empty())
+				{
+					vertex.uv.x = attrib.texcoords[2 * index.texcoord_index + 0];
+					vertex.uv.y = attrib.texcoords[2 * index.texcoord_index + 1];
+				}
+
+				if (!attrib.normals.empty())
+				{
+					vertex.normal.x = attrib.normals[3 * index.normal_index + 0];
+					vertex.normal.y = attrib.normals[3 * index.normal_index + 1];
+					vertex.normal.z = attrib.normals[3 * index.normal_index + 2];
+				}
+
+				if (unique_vertices.count(vertex) == 0)
+				{
+					unique_vertices[vertex] = static_cast<uint32_t>(landscape_vertices.size());
+					landscape_vertices.push_back(vertex);
+				}
+
+				landscape_indices.push_back(unique_vertices[vertex]);
+			}
+		}
+
+	}
+
+	landscape_vbuffer = gfx::Device::get().create_buffer(gfx::BufferInfo::make_vertex_buffer(sizeof(ModelVertexCon) * landscape_vertices.size()),
+		std::span((uint8_t*) landscape_vertices.data(), sizeof(ModelVertexCon) * landscape_vertices.size())).second;
+	
+	landscape_ibuffer = gfx::Device::get().create_buffer(gfx::BufferInfo::make_index_buffer(sizeof(uint32_t) * landscape_indices.size()),
+		std::span((uint8_t*) landscape_indices.data(), sizeof(uint32_t) * landscape_indices.size())).second;
+
+	landscape_playout = gfx::Device::get().create_pipeline_layout(gfx::PipelineLayoutCreateInfo(
+		{ 
+			gfx::DescriptorSetLayoutCreateInfo(
+			{
+				gfx::DescriptorSetLayoutBinding(0, gfx::DescriptorType::UniformBuffer, 1, gfx::ShaderStageFlagBits::Vertex),
+			})
+		})).second;
+
+	std::string vertex_src = filesystem::read_file_to_string("Shaders/TonkhVS.hlsl");
+	std::string fragment_src = filesystem::read_file_to_string("Shaders/TonkhFS.hlsl");
+
+	using namespace ze::gfx;
+	shaders::ShaderCompilerOutput vertex_output = shaders::compile_shader(gfx::shaders::ShaderStage::Vertex,
+		"TonkhVS", 
+		vertex_src,
+		"Main",
+		shaders::ShaderCompilerTarget::VulkanSpirV,
+		false);
+
+	shaders::ShaderCompilerOutput frag_output = shaders::compile_shader(gfx::shaders::ShaderStage::Fragment,
+		"TonkhFS",
+		fragment_src,
+		"Main",
+		shaders::ShaderCompilerTarget::VulkanSpirV,
+		false);
+
+	shader_vert = gfx::Device::get().create_shader(gfx::ShaderCreateInfo(vertex_output.bytecode)).second;
+	shader_frag = gfx::Device::get().create_shader(gfx::ShaderCreateInfo(frag_output.bytecode)).second;
+
+	depth_texture = gfx::Device::get().create_texture(gfx::TextureInfo::make_2d_texture(window->get_width(),
+		window->get_height(),
+		gfx::Format::D32SfloatS8Uint,
+		1,
+		TextureUsageFlagBits::DepthStencilAttachment)).second;
+
+	depth_view = gfx::Device::get().create_texture_view(gfx::TextureViewInfo::make_2d_view(*depth_texture,
+		gfx::Format::D32SfloatS8Uint,
+		gfx::TextureSubresourceRange(gfx::TextureAspectFlagBits::Depth, 0, 1, 0, 1))).second;
+#endif
 }
 
 EditorApp::~EditorApp()
@@ -203,6 +312,31 @@ void EditorApp::process_event(const SDL_Event& in_event, const float in_delta_ti
 		}
 	}
 
+	maths::Vector3f fwd;
+	fwd.x = cos(maths::radians(cam_yaw)) * cos(maths::radians(cam_pitch));
+	fwd.y = sin(maths::radians(cam_yaw)) * cos(maths::radians(cam_pitch));
+	fwd.z = sin(maths::radians(cam_pitch));
+
+	if (in_event.type == SDL_MOUSEMOTION)
+	{
+		cam_yaw += ze::input::get_mouse_delta().x * 0.25f;
+		cam_pitch -= ze::input::get_mouse_delta().y * 0.25f;
+
+		if (cam_pitch > 89.0f)
+			cam_pitch = 89.0f;
+
+		if (cam_pitch < -89.0f)
+			cam_pitch = -89.0f;
+
+		maths::Vector3f fwd;
+		fwd.x = cos(maths::radians(cam_yaw)) * cos(maths::radians(cam_pitch));
+		fwd.y = sin(maths::radians(cam_yaw)) * cos(maths::radians(cam_pitch));
+		fwd.z = sin(maths::radians(cam_pitch));
+		cam_fwd = maths::normalize(fwd);
+
+		//SDL_WarpMouseInWindow(nullptr, io.DisplaySize.x / 2, io.DisplaySize.y / 2);
+	}
+
 	ImGui_ImplSDL2_ProcessEvent(&in_event);
 }
 
@@ -224,9 +358,8 @@ void EditorApp::post_tick(const float in_delta_time)
 	
 	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(window->get_handle()));
 	ImGui::NewFrame();
-	using namespace gfx;
 
-	Device::get().new_frame();
+	gfx::Device::get().new_frame();
 
 	/** Process new windows to add */
 	for(auto& window : main_windows_queue)
@@ -266,8 +399,125 @@ void EditorApp::post_tick(const float in_delta_time)
 	/** Main viewport */
 	ui::imgui::imgui_render_window_callback(ImGui::GetMainViewport());
 	ui::imgui::draw_viewports();
+#if 0
+	float camera_speed = 0.025f;
 
-	Device::get().end_frame();
+	if (input::is_key_held(SDL_SCANCODE_W))
+	{
+		cam_pos += cam_fwd * camera_speed * static_cast<float>(EngineApp::get_delta_time());
+	}
+
+	if (input::is_key_held(SDL_SCANCODE_S))
+	{
+		cam_pos -= cam_fwd * camera_speed * static_cast<float>(EngineApp::get_delta_time());
+	}
+
+	if (input::is_key_held(SDL_SCANCODE_A))
+	{
+		cam_pos += maths::normalize(maths::cross(cam_fwd, maths::Vector3f::get_up())) *
+			camera_speed * static_cast<float>(EngineApp::get_delta_time());
+	}
+
+	if (input::is_key_held(SDL_SCANCODE_D))
+	{
+		cam_pos -= maths::normalize(maths::cross(cam_fwd, maths::Vector3f::get_up())) *
+			camera_speed * static_cast<float>(EngineApp::get_delta_time());
+	}
+
+	using namespace gfx;
+	using namespace ui::imgui;
+	auto list = gfx::Device::get().allocate_cmd_list(CommandListType::Gfx);
+	RenderPassInfo info;
+	info.width = ImGui::GetMainViewport()->Size.x;
+	info.height = ImGui::GetMainViewport()->Size.y;
+	info.layers = 1;
+	info.attachments = {
+		gfx::AttachmentDescription(
+			gfx::Format::B8G8R8A8Unorm,
+			gfx::SampleCountFlagBits::Count1,
+			gfx::AttachmentLoadOp::Clear,
+			gfx::AttachmentStoreOp::Store,
+			gfx::AttachmentLoadOp::DontCare,
+			gfx::AttachmentStoreOp::DontCare,
+			gfx::TextureLayout::Undefined,
+			gfx::TextureLayout::Present),
+		
+		gfx::AttachmentDescription(
+			gfx::Format::D32SfloatS8Uint,
+			gfx::SampleCountFlagBits::Count1,
+			gfx::AttachmentLoadOp::Clear,
+			gfx::AttachmentStoreOp::Store,
+			gfx::AttachmentLoadOp::DontCare,
+			gfx::AttachmentStoreOp::DontCare,
+			gfx::TextureLayout::Undefined,
+			gfx::TextureLayout::DepthStencilAttachment),
+	};
+	info.subpasses = {
+		gfx::SubpassDescription({}, 
+			{
+				gfx::AttachmentReference(0, gfx::TextureLayout::ColorAttachment) },
+			{},
+			{
+				gfx::AttachmentReference(1, TextureLayout::DepthStencilAttachment)
+			})
+	};
+	
+	ViewportData* data = reinterpret_cast<ViewportData*>(ImGui::GetMainViewport()->RendererUserData);
+	info.color_attachments[0] = gfx::Device::get().get_swapchain_backbuffer_texture_view(*data->window.swapchain);
+	info.depth_attachments[0] = *depth_view;
+
+	std::array<float, 4> float32 = { 0, 0, 0, 1};
+	ClearValue cv(float32);
+	ClearValue depth(ClearDepthStencilValue(1.0f, 0));
+	list->begin_render_pass(info, maths::Rect2D(0, 0, ImGui::GetMainViewport()->Size.x, ImGui::GetMainViewport()->Size.y), { cv, depth });
+	list->bind_pipeline_layout(*landscape_playout);
+	list->bind_vertex_buffer(*landscape_vbuffer, 0);
+	list->bind_index_buffer(*landscape_ibuffer);
+	list->bind_ubo(0, 0, ubo_wvp.get());
+
+	maths::Matrix4f world;
+	maths::Matrix4f view = maths::look_at(cam_pos,
+		cam_pos + cam_fwd,
+		maths::Vector3f::get_up());
+	maths::Matrix4f proj = maths::infinite_perspective(maths::radians(90.f), 1.77777f, 0.1f);;
+
+	TEEST teest;
+	teest.wvp = proj * view * world;
+	teest.world = world;
+	teest.cam_pos = cam_pos;
+	ubo_wvp.update(teest);
+
+	GfxPipelineRenderPassState rp_state;
+	rp_state.depth_stencil = gfx::PipelineDepthStencilStateCreateInfo(true,
+		true,
+		CompareOp::Less);
+
+	GfxPipelineInstanceState i_state;
+	i_state.vertex_input = PipelineVertexInputStateCreateInfo(
+		{
+			VertexInputBindingDescription(0, sizeof(ModelVertexCon), VertexInputRate::Vertex),
+		},
+		{
+			VertexInputAttributeDescription(0, 0, Format::R32G32B32Sfloat, offsetof(ModelVertexCon, position)),
+			VertexInputAttributeDescription(1, 0, Format::R32G32B32Sfloat, offsetof(ModelVertexCon, normal)),
+			VertexInputAttributeDescription(2, 0, Format::R32G32Sfloat, offsetof(ModelVertexCon, uv)),
+		});
+	
+	i_state.shaders = {
+		gfx::GfxPipelineShaderStageInfo(gfx::ShaderStageFlagBits::Vertex,
+			*shader_vert, "Main"),
+		gfx::GfxPipelineShaderStageInfo(gfx::ShaderStageFlagBits::Fragment,
+			*shader_frag, "Main"),
+	};
+	list->set_pipeline_render_pass_state(rp_state);
+	list->set_pipeline_instance_state(i_state);
+	list->set_viewport(gfx::Viewport(0, 0, ImGui::GetMainViewport()->Size.x, ImGui::GetMainViewport()->Size.y));
+	list->set_scissor(maths::Rect2D(0, 0, ImGui::GetMainViewport()->Size.x, ImGui::GetMainViewport()->Size.y));
+	list->draw_indexed(landscape_indices.size(), 1, 0, 0, 0);
+	list->end_render_pass();
+	gfx::Device::get().submit(list);
+#endif
+	gfx::Device::get().end_frame();
 
 	ui::imgui::imgui_swap_buffers_callback(ImGui::GetMainViewport());
 	ui::imgui::swap_viewports_buffers();
@@ -294,21 +544,42 @@ void EditorApp::on_asset_imported(const std::filesystem::path& in_path,
 	}
 
 	/** Serialize the asset and then unload it */
-	Asset* asset = factory->create_from_stream(stream);
+	OwnerPtr<Asset> asset = factory->create_from_stream(stream);
 	const ze::reflection::Class* asset_class = asset->get_class();
-	std::string name = in_path.stem().string();
-	while(std::filesystem::exists(in_target_path / (name + ".zeasset")))
-		name += "(1)";
+	std::filesystem::path path = "Assets/";
 
-	assetutils::save_asset(*asset, in_target_path, name);
+	/** Compute path */
+	{
+		std::string name = in_path.stem().string();
+		while (std::filesystem::exists(in_target_path / (name + "." + factory->get_asset_file_extension())))
+			name += "(1)";
+		name += "." + factory->get_asset_file_extension();
+		path.concat(name);
+		asset->set_path(path);
+	}
+
+	/** Set asset metadata file */
+	{
+		AssetMetadata metadata;
+		metadata.uuid = uuids::uuid_system_generator{}();
+		metadata.engine_version = get_version();
+		metadata.asset_class = asset_class;
+		asset->set_metadata(metadata);
+	}
+
+	logger::info("Imported {} as {} ({})", in_path.string(), 
+		asset->get_path().stem().string(),
+		asset->get_class()->get_name());
+
+	assetmanager::save_asset(assetmanager::AssetSaveInfo(asset, get_current_platform()));
 	delete asset;
 
 	/** Notify the database */
 	assetdatabase::scan(in_target_path);
 
-	if(AssetActions* actions = get_actions_for(asset_class))
+	if (AssetActions* actions = get_actions_for(asset_class))
 	{
-		auto request = assetmanager::load_asset_sync(in_target_path / (name + ".zeasset"));
+		auto request = assetmanager::load_asset_sync(path);
 		actions->open_editor(request.first, request.second);
 	}
 }

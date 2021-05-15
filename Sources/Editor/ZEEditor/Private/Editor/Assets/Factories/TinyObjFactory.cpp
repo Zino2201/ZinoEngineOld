@@ -3,8 +3,10 @@
 #include <istream>
 #include "Engine/Assets/Model.h"
 #include "Serialization/BinaryArchive.h"
+#if 0
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
+#endif
 #include "Editor/NotificationSystem.h"
 
 namespace ze::editor
@@ -17,6 +19,8 @@ TinyObjFactory::TinyObjFactory()
 
 OwnerPtr<Asset> TinyObjFactory::create_from_stream(std::istream& in_stream)
 {
+	OwnerPtr<Model> model = new Model(1);
+#if 0
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -29,7 +33,6 @@ OwnerPtr<Asset> TinyObjFactory::create_from_stream(std::istream& in_stream)
 		return nullptr;
 	}
 
-	OwnerPtr<Model> model = new Model(1);
 	
 	robin_hood::unordered_map<ModelVertex, uint32_t> unique_vertices;
 
@@ -66,7 +69,7 @@ OwnerPtr<Asset> TinyObjFactory::create_from_stream(std::istream& in_stream)
 			lod.indices.push_back(unique_vertices[vertex]);
 		}
 	}
-
+#endif
 	return model;
 }
 

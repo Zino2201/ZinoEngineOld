@@ -13,7 +13,11 @@ ZE_FORCEINLINE void serialize(Archive& archive, uuids::uuid& uuid)
 	{
 		std::string uuid_str;
 		archive <=> uuid_str;
-		uuid.from_string(uuid_str);
+		auto conv_uuid = uuid.from_string(uuid_str);
+		if(conv_uuid)
+		{
+			uuid = *conv_uuid;
+		}
 	}
 	else
 	{

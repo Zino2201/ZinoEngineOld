@@ -69,6 +69,17 @@ bool execute(const std::filesystem::path& path, Lambda&& lambda)
 	return false;
 }
 
+template<typename Ret, typename Lambda>
+Ret execute(const std::filesystem::path& path, Lambda&& lambda)
+{
+	std::vector<FileSystem*> r_filesystems = get_filesystems_matching_alias(path);
+
+	for (const auto& fs : r_filesystems)
+	{
+		return lambda(fs);
+	}
+}
+
 template<typename Ret, bool write = false, typename Lambda>
 Ret execute_ptr(const std::filesystem::path& path, Lambda&& lambda)
 {
@@ -148,6 +159,24 @@ bool iterate_directories(const std::filesystem::path& path,
 		{
 			return fs->iterate_directories(path, iterator, flags);
 		});
+}
+
+FileAttributeFlags get_file_attributes(const std::filesystem::path& path)
+{
+	return execute<FileAttributeFlags>(path,
+		[path](FileSystem* fs) -> FileAttributeFlags
+	{
+		return fs->get_file_attributes(path);
+	});
+}
+
+bool set_file_attributes(const std::filesystem::path& path, const FileAttributeFlags& in_flags)
+{
+	return execute(path,
+		[path, in_flags](FileSystem* fs) -> bool
+	{
+		return fs->set_file_attributes(path, in_flags);
+	});
 }
 
 void set_write_fs(FileSystem& fs)

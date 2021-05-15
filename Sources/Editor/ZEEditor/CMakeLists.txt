@@ -15,6 +15,7 @@ ze_create_module(ZEEditor
     Public/Editor/Assets/AssetActions.h
     Public/Editor/Assets/AssetFactory.h
     Public/Editor/Assets/TextureActions.h
+    Public/Editor/Assets/TextureCooker.h
     Public/Editor/Windows/Assets/Texture/TextureEditor.h
     Private/Editor/Assets/Factories/AssetFactory.cpp
     Private/Editor/Assets/Actions/TextureActions.cpp
@@ -22,6 +23,7 @@ ze_create_module(ZEEditor
     Private/Editor/Assets/Actions/ModelActions.cpp
     Private/Editor/Assets/Factories/StbTextureFactory.cpp
     Private/Editor/Assets/Factories/TinyObjFactory.cpp
+    Private/Editor/Assets/TextureCooker.cpp
     Private/Editor/PropertyEditors/PrimitivesPropertyEditors.h
     Private/Editor/PropertyEditors/PrimitivesPropertyEditors.cpp
     Private/Editor/Windows/MapEditor.cpp

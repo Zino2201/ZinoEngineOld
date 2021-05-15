@@ -16,6 +16,8 @@ class AssetActions
 	ZE_REFL_BODY()
 
 public:
+	virtual ~AssetActions() = default;
+
 	/**
 	 * Open the specified asset editor of the class
 	 */

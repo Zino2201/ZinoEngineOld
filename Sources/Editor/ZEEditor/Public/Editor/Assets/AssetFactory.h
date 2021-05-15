@@ -33,6 +33,7 @@ public:
 	const std::vector<std::string>& get_supported_formats() const { return supported_formats;  }
 	const ze::reflection::Class* get_supported_class() const { return asset_class;  }
 	const bool can_instantiated() const { return can_be_instantiated;  }
+	const std::string& get_asset_file_extension() const { return asset_file_extension; }
 protected:
 	/** The class that the factory represents */
 	const ze::reflection::Class* asset_class;
@@ -42,6 +43,9 @@ protected:
 
 	/** Can be instantiated from right clicking the asset explorer ? */
 	bool can_be_instantiated;
+
+	/** Asset file extension to use, defaults to zeasset */
+	std::string asset_file_extension;
 };
 
 void initialize_asset_factory_mgr();

@@ -26,6 +26,8 @@ public:
 	bool is_directory(const std::filesystem::path& path) override;
 
 	bool is_read_only() const override { return false; }
+	FileAttributeFlags get_file_attributes(const std::filesystem::path& path) const override;
+	bool set_file_attributes(const std::filesystem::path& path, const FileAttributeFlags& in_flags) override;
 private:
 	std::filesystem::path get_correct_path(const std::filesystem::path& path) const;
 private:

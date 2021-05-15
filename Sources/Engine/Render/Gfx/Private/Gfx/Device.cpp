@@ -304,6 +304,8 @@ void Device::submit_queue(const CommandListType& in_type)
 std::pair<Result, DeviceResourceHandle> Device::create_buffer(const BufferInfo& in_info, 
 	const std::span<uint8_t>& in_initial_data)
 {
+	ZE_CHECKF(in_info.create_info.size != 0, "Size is 0!");
+
 	BufferInfo info = in_info;
 	info.create_info.usage |= BufferUsageFlagBits::TransferSrc | BufferUsageFlagBits::TransferDst;
 	auto [result, handle] = Backend::get().buffer_create(info.create_info);

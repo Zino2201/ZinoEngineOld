@@ -3,6 +3,7 @@ find_package(SDL2 CONFIG REQUIRED)
 ze_create_module(Engine 
     Private/Engine/Assets/Texture.cpp
     Private/Engine/Assets/Model.cpp
+    Private/Engine/Assets/TexturePlatformData.cpp
     Private/Engine/UI/Console.cpp
     Private/Engine/Engine.cpp Private/Engine/EngineGame.cpp Private/Engine/InputSystem.cpp
     Private/Engine/TickSystem.cpp Private/Engine/Viewport.cpp

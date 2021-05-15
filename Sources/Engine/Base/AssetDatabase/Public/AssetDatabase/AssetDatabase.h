@@ -2,6 +2,7 @@
 
 #include "MinimalMacros.h"
 #include "Delegates/MulticastDelegate.h"
+#include "Assets/AssetMetadata.h"
 #include <filesystem>
 #include <unordered_set>
 #include <optional>
@@ -17,28 +18,28 @@ namespace ze::reflection { class Class; }
 namespace ze::assetdatabase
 {
 
+const std::string metafile_extension = ".zemeta";
+
 /**
  * Primitive informations about an asset
  * This data is available in every configuration (with Editor/no Editor)
- *	as this data is gathered from the zasset header and/or file metadata
+ *	as this data is gathered from the meta file
  */
 struct AssetPrimitiveData
 {
 	/** Asset name */
 	std::string name;
-	
-	/** Asset class */
-	const ze::reflection::Class* asset_class;
 
 	/** Size of the asset (in bytes) */
 	uint64_t size;
 
-	/** ZE version this asset was saved */
-	ZEVersion engine_ver;
+	/** Metadata */
+	AssetMetadata metadata;
 
 	std::filesystem::path path;
+	std::filesystem::path meta_path;
 
-	AssetPrimitiveData() : asset_class(nullptr), size(0) {}
+	AssetPrimitiveData() : size(0) {}
 };
 
 /**

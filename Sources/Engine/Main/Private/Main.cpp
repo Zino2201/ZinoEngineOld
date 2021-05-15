@@ -35,7 +35,14 @@
 #include <sstream>
 #include <filesystem>
 #include "Serialization/Types/Map.h"
+#include "Serialization/Types/Vector.h"
+#include "Serialization/Types/Uuid.h"
+#include "Serialization/Json.h"
 #include "Reflection/Serialization.h"
+#include "Assets/Asset.h"
+#include "Assets/AssetMetadata.h"
+#include "ZEFS/FileStream.h"
+#include "EngineVer.h"
 
 namespace FS = ze::filesystem;
 
@@ -148,6 +155,12 @@ void PreInit()
 #ifdef ZE_DEBUG
 		ze::logger::warn("Using a debug build ! Except very bad performances");
 #endif
+
+		LoadRequiredModule("Platform");
+#if ZE_PLATFORM(WINDOWS)
+		LoadRequiredModule("PlatformWindows");
+#endif
+
 
 		/** Check if required directories/files are presents */
 		const std::array<const char*, 2> RequiredObjects = 

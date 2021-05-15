@@ -63,7 +63,11 @@ ZEFS_API bool iterate_directories(const std::filesystem::path& path,
 /** Set the current write file system */
 ZEFS_API void set_write_fs(FileSystem& fs);
 
+FileAttributeFlags get_file_attributes(const std::filesystem::path& path);
+bool set_file_attributes(const std::filesystem::path& path, const FileAttributeFlags& in_flags);
+
 /** 
+
  * Add a file system 
  * @param InName Name of the FS. Must be unique !
  * @param Alias

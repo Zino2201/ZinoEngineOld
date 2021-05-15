@@ -34,6 +34,15 @@ enum class FileWriteFlagBits
 };
 ENABLE_FLAG_ENUMS(FileWriteFlagBits, FileWriteFlags);
 
+/*
+ * Attributes of a file
+ */
+enum class FileAttributeFlagBits
+{
+	Hidden = 1 << 0
+};
+ENABLE_FLAG_ENUMS(FileAttributeFlagBits, FileAttributeFlags)
+
 /** Iteration related types */
 
 enum class IterateDirectoriesFlagBits
@@ -69,6 +78,8 @@ public:
 	virtual bool exists(const std::filesystem::path& path) = 0;
 	virtual bool is_directory(const std::filesystem::path& path) = 0;
 	virtual bool is_read_only() const = 0;
+	virtual FileAttributeFlags get_file_attributes(const std::filesystem::path& path) const = 0;
+	virtual bool set_file_attributes(const std::filesystem::path& path, const FileAttributeFlags& in_flags) = 0;
 };
 
 }

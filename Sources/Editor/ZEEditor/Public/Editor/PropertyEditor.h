@@ -13,6 +13,8 @@ namespace ze::editor
 class PropertyEditor
 {
 public:
+	virtual ~PropertyEditor() = default;
+
 	/**
 	 * Draw the property editor
 	 * \param in_label Label to use
