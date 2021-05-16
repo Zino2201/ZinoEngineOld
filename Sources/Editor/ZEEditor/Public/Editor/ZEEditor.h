@@ -52,6 +52,16 @@ namespace ze::editor
 
 class Window;
 
+struct EditorTask
+{
+	std::string text;
+	uint32_t work_amount;
+	uint32_t completed_work;
+
+	EditorTask(const std::string& in_text, const uint32_t& in_work_amount) :
+		text(in_text), work_amount(in_work_amount), completed_work(0) {}
+};
+
 class ZEEDITOR_API EditorApp final : public EngineApp
 {
 public:
@@ -62,6 +72,26 @@ public:
 	void operator=(const EditorApp&) = delete;
 
 	static EditorApp& get();
+
+	void draw();
+	void draw_task();
+	void push_task(const EditorTask& in_task) 
+	{
+		tasks.push_back(in_task);
+	}
+
+	void pop_task() 
+	{ 
+		tasks.pop_back(); 
+		if(tasks.size() == 0) 
+		{ 
+			ImGui::SetCurrentContext(main_context); 
+			gfx::Device::get().cancel_frame();
+			gfx::Device::get().wait_gpu_idle();
+		} 
+	}
+
+	EditorTask& get_top_task() { return tasks.back(); }
 
 	void process_event(const SDL_Event& in_event, const float in_delta_time) override;
 	void post_tick(const float in_delta_time) override;
@@ -80,10 +110,13 @@ private:
 	};
 
 	ImFont* font;
+	ImGuiContext* main_context;
+	ImGuiContext* tasks_window_context;
 	std::unique_ptr<NativeWindow> window;
 	std::vector<std::unique_ptr<Window>> main_windows;
 	std::vector<std::unique_ptr<Window>> main_windows_queue;
 	ui::imgui::ViewportData main_viewport_data;
+	std::vector<EditorTask> tasks;
 	gfx::UniqueBuffer landscape_vbuffer;
 	gfx::UniqueBuffer landscape_ibuffer;
 	gfx::UniqueShader shader_vert;
@@ -97,6 +130,9 @@ private:
 	maths::Vector3f cam_pos;
 	maths::Vector3f cam_fwd;
 	float cam_pitch = 0.f, cam_yaw = 0.f;
+	std::vector<Window*> expired_childs;
+	ImFontAtlas font_atlas;
+	bool cancel_next_submission;
 };
 
 }

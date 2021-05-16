@@ -3,6 +3,7 @@ find_package(SDL2 CONFIG REQUIRED)
 ze_create_module(ZEEditor 
     Public/Editor/ZEEditor.h
     Public/Editor/IconManager.h
+    Public/Editor/LargeTask.h
     Public/Editor/PropertyEditor.h
     Public/Editor/PropertiesEditor.h
     Public/Editor/Windows/MapEditor.h
@@ -38,6 +39,7 @@ ze_create_module(ZEEditor
     Private/Editor/PropertiesEditor.cpp
     Private/Editor/IconManager.cpp
     Private/Editor/PropertyEditor.cpp
+    Private/Editor/LargeTask.cpp
 	Private/Editor/ZEEditor.cpp)
 
 ze_add_public_modules(ZEEditor ZEUI)

@@ -65,41 +65,53 @@ std::vector<std::vector<uint8_t>> texc_compress(const uint32_t in_width,
 {
 	ZE_CHECK(in_mip_levels > 0);
 
-	std::vector<TexcColorRGBA32Unorm> src_data;
-	src_data.reserve(in_width * in_height * in_depth * 4);
+	std::vector<uint8_t> src_data;
+	if(in_src_pixel_format == TexcPixelFormat::RGBA32Sfloat)
+		src_data.resize(in_width * in_height * in_depth * 4);
 
 	if(in_src_pixel_format == TexcPixelFormat::RGBA32Unorm)
 	{
+		uint8_t* cur_src_data = src_data.data();
+
 		/** Flip B & R channels */
 		for(size_t i = 0; i < in_uncompressed_data.size(); i += sizeof(TexcColorRGBA32Unorm))
 		{
-			const TexcColorRGBA32Unorm* color = 
+			const TexcColorRGBA32Unorm* src_color = 
 				reinterpret_cast<const TexcColorRGBA32Unorm*>(in_uncompressed_data.data() + i);	
 			
-			src_data.push_back({ 
-				color->b,
-				color->g,
-				color->r,
-				color->a
-				});
+			TexcColorRGBA32Unorm dst_color;
+			dst_color.b = src_color->b;
+			dst_color.g = src_color->g;
+			dst_color.r = src_color->r;
+			dst_color.a = src_color->a;
+			
+			memcpy(cur_src_data, &dst_color, sizeof(dst_color));
+			cur_src_data += sizeof(dst_color);
 		}
 	}
 	else if(in_src_pixel_format == TexcPixelFormat::RGB32Unorm)
 	{
-		/** Flip B & R channels and add a alpha channel */
-		for(size_t i = 0; i < in_uncompressed_data.size(); i += sizeof(TexcColorRGB32Unorm))
-		{
-			const TexcColorRGB32Unorm* src_color = 
-				reinterpret_cast<const TexcColorRGB32Unorm*>(
-					in_uncompressed_data.data() + i);	
+		uint8_t* cur_src_data = src_data.data();
 
-			src_data.push_back({ 
-				src_color->b,
-				src_color->g,
-				src_color->r,
-				255
-				});
+		/** Flip B & R channels */
+		for (size_t i = 0; i < in_uncompressed_data.size(); i += sizeof(TexcColorRGBA32Unorm))
+		{
+			const TexcColorRGBA32Unorm* src_color =
+				reinterpret_cast<const TexcColorRGBA32Unorm*>(in_uncompressed_data.data() + i);
+
+			TexcColorRGBA32Unorm dst_color;
+			dst_color.b = src_color->b;
+			dst_color.g = src_color->g;
+			dst_color.r = src_color->r;
+			dst_color.a = 255;
+
+			memcpy(cur_src_data, &dst_color, sizeof(dst_color));
+			cur_src_data += sizeof(dst_color);
 		}
+	}
+	else if (in_src_pixel_format == TexcPixelFormat::RGBA32Sfloat)
+	{
+		src_data = in_uncompressed_data;
 	}
 
 	nvtt::Format nvtt_format = nvtt::Format::Format_RGBA;
@@ -107,6 +119,8 @@ std::vector<std::vector<uint8_t>> texc_compress(const uint32_t in_width,
 	{
 	case gfx::Format::R8G8B8A8Unorm:
 	case gfx::Format::R8G8B8A8Srgb:
+	case gfx::Format::R16G16B16A16Sfloat:
+	case gfx::Format::R32G32B32A32Sfloat:
 		nvtt_format = nvtt::Format_RGBA;
 		break;
 	case gfx::Format::Bc1RgbUnormBlock:
@@ -134,7 +148,6 @@ std::vector<std::vector<uint8_t>> texc_compress(const uint32_t in_width,
 		nvtt_format = nvtt::Format_BC7;
 		break;
 	default:
-		ZE_CHECK(false);
 		ze::logger::error("Unsupported format given to texc_compress");
 		return {};
 	}
@@ -145,14 +158,28 @@ std::vector<std::vector<uint8_t>> texc_compress(const uint32_t in_width,
 	nvtt::OutputOptions output_options;	
 	nvtt::CompressionOptions compression_options;
 	compression_options.setFormat(nvtt_format);
-	compression_options.setPixelType(nvtt::PixelType::PixelType_UnsignedNorm);
+	compression_options.setPixelType(in_src_pixel_format == TexcPixelFormat::RGBA32Sfloat 
+		? nvtt::PixelType::PixelType_Float : nvtt::PixelType::PixelType_UnsignedNorm);
 	compression_options.setQuality(nvtt::Quality::Quality_Fastest);
 	compression_options.setColorWeights(1, 1, 1);
+
+	switch(in_target_format)
+	{
+	case gfx::Format::R16G16B16A16Sfloat:
+		compression_options.setPixelFormat(16, 16, 16, 16); 
+		break;
+	case gfx::Format::R32G32B32A32Sfloat:
+		compression_options.setPixelFormat(32, 32, 32, 32); 
+		break;
+	default:
+		compression_options.setPixelFormat(8, 8, 8, 8); 
+		break;
+	}
 
 	nvtt::InputOptions input_opts;
 	input_opts.setTextureLayout(nvtt::TextureType_2D, in_width, in_height);
 	input_opts.setMipmapGeneration(false, -1);
-	input_opts.setFormat(nvtt::InputFormat_BGRA_8UB);
+	input_opts.setFormat(in_src_pixel_format == TexcPixelFormat::RGBA32Sfloat ? nvtt::InputFormat_RGBA_32F : nvtt::InputFormat_BGRA_8UB);
 	input_opts.setMipmapData(src_data.data(), in_width, in_height, 1, 0, 0);
 	input_opts.setMipmapGeneration(in_mip_levels > 1, in_mip_levels);
 
@@ -168,7 +195,7 @@ std::vector<std::vector<uint8_t>> texc_compress(const uint32_t in_width,
 	compressor.process(input_opts, compression_options, output_opts);
 
 	/** Flip B & R channels if required */
-	if(nvtt_format == nvtt::Format_RGBA)
+	if(nvtt_format == nvtt::Format_RGBA && in_src_pixel_format != TexcPixelFormat::RGBA32Sfloat)
 	{
 		for(size_t mip = 0; mip < in_mip_levels; ++mip)
 		{

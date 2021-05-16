@@ -40,6 +40,7 @@
 #include "Shader/ShaderCompiler.h"
 #include "Maths/Matrix/Transformations.h"
 #include "Engine/InputSystem.h"
+#include "imgui_internal.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);
 
@@ -55,14 +56,21 @@ EditorApp& EditorApp::get()
 
 EditorApp::EditorApp() : EngineApp(),
 	window(std::make_unique<NativeWindow>("ZinoEngine Editor", 1280, 720,
-		0, 0, NativeWindowFlagBits::Centered | NativeWindowFlagBits::Resizable | NativeWindowFlagBits::Maximized))
+		0, 0, NativeWindowFlagBits::Centered | NativeWindowFlagBits::Resizable | NativeWindowFlagBits::Maximized)),
+	cancel_next_submission(false)
 {
 	app = this;
 
 	assetdatabase::scan("Assets", assetdatabase::AssetScanMode::Sync);
 
+
+	/** Main context */
+	main_context = ImGui::CreateContext(&font_atlas);
+
+	/** Create seperate imgui context for task window */
+	tasks_window_context = ImGui::CreateContext(&font_atlas);
+	
 	/** Initialize ImGui */
-	ImGui::SetCurrentContext(ImGui::CreateContext());
 
 	ImGuiIO& io = ImGui::GetIO();
 	ImGui::StyleColorsDark();
@@ -72,7 +80,6 @@ EditorApp::EditorApp() : EngineApp(),
 	io.WantCaptureKeyboard = true;
 	io.WantCaptureMouse = true;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
-
 	/** Default ZE editor style */
 	{
 		ImGuiStyle& style = ImGui::GetStyle();
@@ -147,16 +154,25 @@ EditorApp::EditorApp() : EngineApp(),
 	}
 
 	font = io.Fonts->AddFontFromFileTTF("Assets/Fonts/Roboto-Medium.ttf", 18.f);
-	ze::ui::imgui::initialize();
+	ze::ui::imgui::initialize(&font_atlas);
 	ImGui_ImplSDL2_InitForVulkan(reinterpret_cast<SDL_Window*>(window->get_handle()));
 
 	/** Create gfx resources */
-	ImGui::GetMainViewport()->RendererUserData = &main_viewport_data;
-	main_viewport_data.window.swapchain = gfx::Device::get().create_swapchain(gfx::SwapChainCreateInfo(window->get_handle(),
-		window->get_width(), window->get_height())).second;
-	main_viewport_data.window.width = window->get_width();
-	main_viewport_data.window.height = window->get_height();
-	main_viewport_data.owned_by_renderer = false;
+	ImGui::SetCurrentContext(main_context);
+	{
+		ImGui::GetMainViewport()->RendererUserData = &main_viewport_data;
+		main_viewport_data.window.swapchain = gfx::Device::get().create_swapchain(gfx::SwapChainCreateInfo(window->get_handle(),
+			window->get_width(), window->get_height())).second;
+		main_viewport_data.window.width = window->get_width();
+		main_viewport_data.window.height = window->get_height();
+		main_viewport_data.window.has_rendered_one_frame.resize(gfx::Device::get().get_swapchain_texture_count(*main_viewport_data.window.swapchain));
+		main_viewport_data.owned_by_renderer = false;
+	}
+
+	ImGui::SetCurrentContext(tasks_window_context);
+	{
+		ImGui::GetMainViewport()->RendererUserData = &main_viewport_data;
+	}
 
 	/** Load default icons */
 	load_icon_file("icon-asset-file", "Assets/Icons/icons8-file-64.png");
@@ -308,6 +324,10 @@ void EditorApp::process_event(const SDL_Event& in_event, const float in_delta_ti
 			window->set_height(y);
 			data->window.width = x;
 			data->window.height = y;
+			for (auto frame : data->window.has_rendered_one_frame)
+			{
+				frame = false;
+			}
 			break;
 		}
 	}
@@ -333,8 +353,6 @@ void EditorApp::process_event(const SDL_Event& in_event, const float in_delta_ti
 		fwd.y = sin(maths::radians(cam_yaw)) * cos(maths::radians(cam_pitch));
 		fwd.z = sin(maths::radians(cam_pitch));
 		cam_fwd = maths::normalize(fwd);
-
-		//SDL_WarpMouseInWindow(nullptr, io.DisplaySize.x / 2, io.DisplaySize.y / 2);
 	}
 
 	ImGui_ImplSDL2_ProcessEvent(&in_event);
@@ -342,7 +360,6 @@ void EditorApp::process_event(const SDL_Event& in_event, const float in_delta_ti
 
 void EditorApp::post_tick(const float in_delta_time)
 {
-	static std::vector<Window*> expired_childs;
 	for(const auto& expired_child : expired_childs)
 	{
 		for(size_t i = 0; i < main_windows.size(); ++i)
@@ -356,13 +373,20 @@ void EditorApp::post_tick(const float in_delta_time)
 	}
 	expired_childs.clear();
 	
+	draw();
+}
+
+void EditorApp::draw()
+{
+	ImGui::SetCurrentContext(main_context);
+
 	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(window->get_handle()));
 	ImGui::NewFrame();
 
 	gfx::Device::get().new_frame();
 
 	/** Process new windows to add */
-	for(auto& window : main_windows_queue)
+	for (auto& window : main_windows_queue)
 		main_windows.push_back(std::move(window));
 	main_windows_queue.clear();
 
@@ -375,7 +399,7 @@ void EditorApp::post_tick(const float in_delta_time)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-	if(ImGui::Begin("ZEEditor_MainWindow_BG", nullptr, ImGuiWindowFlags_NoDocking
+	if (ImGui::Begin("ZEEditor_MainWindow_BG", nullptr, ImGuiWindowFlags_NoDocking
 		| ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove
 		| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoResize))
 	{
@@ -384,10 +408,10 @@ void EditorApp::post_tick(const float in_delta_time)
 	ImGui::PopStyleVar(3);
 	ImGui::End();
 
-	for(const auto& window : main_windows)
+	for (const auto& window : main_windows)
 	{
 		bool expired = window->draw_window();
-		if(!expired)
+		if (!expired)
 			expired_childs.emplace_back(window.get());
 	}
 
@@ -441,7 +465,7 @@ void EditorApp::post_tick(const float in_delta_time)
 			gfx::AttachmentStoreOp::DontCare,
 			gfx::TextureLayout::Undefined,
 			gfx::TextureLayout::Present),
-		
+
 		gfx::AttachmentDescription(
 			gfx::Format::D32SfloatS8Uint,
 			gfx::SampleCountFlagBits::Count1,
@@ -453,7 +477,7 @@ void EditorApp::post_tick(const float in_delta_time)
 			gfx::TextureLayout::DepthStencilAttachment),
 	};
 	info.subpasses = {
-		gfx::SubpassDescription({}, 
+		gfx::SubpassDescription({},
 			{
 				gfx::AttachmentReference(0, gfx::TextureLayout::ColorAttachment) },
 			{},
@@ -461,12 +485,12 @@ void EditorApp::post_tick(const float in_delta_time)
 				gfx::AttachmentReference(1, TextureLayout::DepthStencilAttachment)
 			})
 	};
-	
+
 	ViewportData* data = reinterpret_cast<ViewportData*>(ImGui::GetMainViewport()->RendererUserData);
 	info.color_attachments[0] = gfx::Device::get().get_swapchain_backbuffer_texture_view(*data->window.swapchain);
 	info.depth_attachments[0] = *depth_view;
 
-	std::array<float, 4> float32 = { 0, 0, 0, 1};
+	std::array<float, 4> float32 = { 0, 0, 0, 1 };
 	ClearValue cv(float32);
 	ClearValue depth(ClearDepthStencilValue(1.0f, 0));
 	list->begin_render_pass(info, maths::Rect2D(0, 0, ImGui::GetMainViewport()->Size.x, ImGui::GetMainViewport()->Size.y), { cv, depth });
@@ -502,7 +526,7 @@ void EditorApp::post_tick(const float in_delta_time)
 			VertexInputAttributeDescription(1, 0, Format::R32G32B32Sfloat, offsetof(ModelVertexCon, normal)),
 			VertexInputAttributeDescription(2, 0, Format::R32G32Sfloat, offsetof(ModelVertexCon, uv)),
 		});
-	
+
 	i_state.shaders = {
 		gfx::GfxPipelineShaderStageInfo(gfx::ShaderStageFlagBits::Vertex,
 			*shader_vert, "Main"),
@@ -517,6 +541,48 @@ void EditorApp::post_tick(const float in_delta_time)
 	list->end_render_pass();
 	gfx::Device::get().submit(list);
 #endif
+	gfx::Device::get().end_frame();
+
+	ui::imgui::imgui_swap_buffers_callback(ImGui::GetMainViewport());
+	ui::imgui::swap_viewports_buffers();
+}
+
+void EditorApp::draw_task()
+{
+	ImGui::SetCurrentContext(tasks_window_context);
+	ImGui_ImplSDL2_NewFrame(reinterpret_cast<SDL_Window*>(window->get_handle()));
+	ImGui::NewFrame();
+
+	gfx::Device::get().new_frame();
+
+	/** Task progress bar */
+	// explicit viewport for task progress
+	if (tasks.size() != 0)
+	{
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, 
+			ImGui::GetIO().DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		if (ImGui::Begin("ZEEditor_TaskWindow", nullptr, ImGuiWindowFlags_NoSavedSettings |
+			ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus))
+		{
+			for (size_t i = 0; i < std::min<size_t>(tasks.size(), 3); ++i)
+			{
+				ImGui::Text(tasks[i].text.c_str());
+				ImGui::ProgressBar(static_cast<float>(tasks[i].completed_work) / tasks[i].work_amount);
+			}
+		}
+
+		ImGui::End();
+	}
+
+	ImGui::Render();
+
+	/** Update viewport buffers */
+	ImGui::UpdatePlatformWindows();
+
+	/** Main viewport */
+	ui::imgui::imgui_render_window_callback(ImGui::GetMainViewport());
+	ui::imgui::draw_viewports();
+
 	gfx::Device::get().end_frame();
 
 	ui::imgui::imgui_swap_buffers_callback(ImGui::GetMainViewport());

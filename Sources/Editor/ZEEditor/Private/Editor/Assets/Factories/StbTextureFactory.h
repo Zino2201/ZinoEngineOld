@@ -19,6 +19,9 @@ public:
 
 	OwnerPtr<Asset> instantiate() override;
 	OwnerPtr<Asset> create_from_stream(std::istream& in_stream) override;
+private:
+	OwnerPtr<Asset> load_ldr(const std::vector<uint8_t>& stream);
+	OwnerPtr<Asset> load_hdr(const std::vector<uint8_t>& stream);
 };
 
 }

@@ -96,6 +96,13 @@ std::vector<ResourceHandle> VulkanBackend::swapchain_get_backbuffer_texture_view
 	return swapchain->get_images_views();
 }
 
+uint32_t VulkanBackend::swapchain_get_textures_count(const ResourceHandle& in_swapchain)
+{
+	SwapChain* swapchain = SwapChain::get(in_swapchain);
+	ZE_CHECKF(swapchain, "Invalid swapchain given to swapchain_get_textures_count")
+	return swapchain->get_images_views().size();
+}
+
 void VulkanBackend::swapchain_present(const ResourceHandle& in_swapchain,
 	const std::vector<ResourceHandle>& in_wait_semaphores)
 {

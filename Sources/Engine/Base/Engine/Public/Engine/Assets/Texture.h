@@ -42,7 +42,11 @@ enum class TextureFormat
 
 	/** Non-linear formats (sRGB) */
 	sRGB,
-	sRGBA
+	sRGBA,
+
+	/** HDR format */
+	Hdr16,
+	Hdr32,
 };
 
 ZENUM()
@@ -51,7 +55,7 @@ enum class TextureCompressionMode
 	/** No compression */
 	None,
 
-	/** Default compression (BC1/BC3) */
+	/** Default compression (BC1/BC3/BC6H) */
 	Default,
 
 	/** High quality (BC7 slow) */
@@ -62,9 +66,6 @@ enum class TextureCompressionMode
 
 	/** BC5 */
 	NormalMap,
-
-	/** BC6H */
-	HDR,
 };
 
 /**
@@ -107,6 +108,39 @@ struct TextureMipmap
 		return data;
 	}
 };
+
+#if ZE_WITH_EDITOR
+enum class TextureSourceDataFormat
+{
+	R8G8B8Unorm,
+	R8G8B8A8Unorm,
+	R32G32B32A32Sfloat,
+};
+
+/**
+ * Contains texture source data
+ */
+class TextureSourceData
+{
+public:
+	TextureSourceData() {}
+	TextureSourceData(const TextureSourceDataFormat& in_format,
+		const std::vector<uint8_t>& in_data) : format(in_format), data(in_data) {}
+
+	template<typename ArchiveType>
+	void serialize(AssetArchive<ArchiveType>& in_archive)
+	{
+		in_archive <=> format;
+		in_archive <=> data;
+	}
+
+	const TextureSourceDataFormat& get_format() const { return format; }
+	const std::vector<uint8_t>& get_data() const { return data; }
+private:
+	TextureSourceDataFormat format;
+	std::vector<uint8_t> data;
+};
+#endif
 
 /**
  * Platform-specific data
@@ -174,11 +208,12 @@ public:
 		const uint32_t in_height,
 		const uint32_t in_depth,
 		const bool in_use_mipmaps,
+		const TextureSourceDataFormat& in_source_data_fmt,
 		const std::vector<uint8_t>& in_data,
 		const bool in_create_gpu_resources) 
 		: type(in_type), filter(in_filter), compression_mode(in_compression_mode), format(in_format), 
 		width(in_width), height(in_height), depth(in_depth), use_mipmaps(in_use_mipmaps), keep_in_ram(false),
-		uncompressed_data(in_data),
+		source_data(in_source_data_fmt, in_data),
 		ready(false)
 	{ 
 
@@ -199,12 +234,12 @@ public:
 		in_archive <=> keep_in_ram;
 
 		if(in_archive.is_editor)
-			in_archive <=> uncompressed_data;
+			in_archive <=> source_data;
 
 		if(in_archive.is_loading)
 			update_resource();
 	}
-
+	 
 	/**
 	 * Recreate the underlying texture resource
 	 * This will recook the asset if in editor
@@ -221,16 +256,17 @@ public:
 	ZE_FORCEINLINE const gfx::DeviceResourceHandle& get_texture() const { return *texture; }
 	ZE_FORCEINLINE const gfx::DeviceResourceHandle& get_texture_view() const { return *texture_view; }
 	ZE_FORCEINLINE bool is_ready() const { return ready; }
-	ZE_FORCEINLINE const auto get_uncompressed_data() const { return uncompressed_data; 
-}
+#if ZE_WITH_EDITOR
+	ZE_FORCEINLINE const auto& get_source_data() const { return source_data; }
+#endif
 private:
 	ZPROPERTY(Serializable)
 	TextureType type;
 
 	ZPROPERTY(Editable, Visible, Serializable, Category = "Base")
 	TextureFilter filter;
-		
-	ZPROPERTY(Editable, Visible, Serializable, Category = "Base")
+
+	ZPROPERTY(Editable, Visible, Serializable, Category = "Compression")
 	TextureCompressionMode compression_mode;
 
 	ZPROPERTY(Editable, Visible, Serializable, Category = "Base")
@@ -251,10 +287,10 @@ private:
 	ZPROPERTY(Editable, Visible, Category = "Misc")
 	bool keep_in_ram;
 
+#if ZE_WITH_EDITOR
+	TextureSourceData source_data;
+#endif
 	TexturePlatformData platform_data;
-
-	/** Raw texture data, not compressed. Used for generating compressed mipmaps */
-	std::vector<uint8_t> uncompressed_data;
 
 	/** Is texture ready yet ? */
 	std::atomic_bool ready;

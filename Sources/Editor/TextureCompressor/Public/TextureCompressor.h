@@ -11,6 +11,7 @@ enum class TexcPixelFormat
 {
 	RGB32Unorm,
 	RGBA32Unorm,
+	RGBA32Sfloat,
 };
 	
 /**

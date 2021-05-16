@@ -12,6 +12,9 @@ struct WindowData
 	uint32_t width;
 	uint32_t height;
 	gfx::UniqueSwapchain swapchain;
+	std::vector<bool> has_rendered_one_frame;
+
+	WindowData() {}
 };
 
 struct GlobalData
@@ -48,7 +51,7 @@ struct ViewportData
 	}
 };
 
-bool initialize();
+bool initialize(ImFontAtlas* in_atlas);
 void update_viewport_buffers(ImDrawData* draw_data, ViewportDrawData& vp_draw_data);
 void draw_viewport(ImDrawData* draw_data, 
 	const ViewportData& in_viewport,

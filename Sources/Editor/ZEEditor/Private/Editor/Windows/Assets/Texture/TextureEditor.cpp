@@ -64,7 +64,7 @@ void TextureEditor::draw()
 
 	const ImVec2 texture_size(ImGui::GetContentRegionAvail());
 	ImVec2 texture_quad_size(texture->get_width() * zoom, texture->get_height() * zoom);
-	if(texture->get_texture_view())
+	if(views[current_miplevel])
 	{
 		ImRect bb(ImGui::GetCursorScreenPos(), ImGui::GetCursorScreenPos() + texture_size);
 		ImGui::GetWindowDrawList()->AddRectFilled(bb.Min, bb.Max,
@@ -82,7 +82,7 @@ void TextureEditor::draw()
 	/** "HUD" display onto the image displaying informations */
 	ImGui::BeginGroup();
 	ImGui::Text("Type: %s", std::to_string(texture->get_type()).c_str());
-	ImGui::Text("GPU Format: %s", std::to_string(texture->get_platform_data().get_format()).c_str());
+	ImGui::Text("GPU Format: %s", to_string_pretty(texture->get_platform_data().get_format()).c_str());
 	ImGui::Text("Res: %dx%dx1 (Mip %d/%d)",
 		texture->get_platform_data().get_mip(current_miplevel).width,
 		texture->get_platform_data().get_mip(current_miplevel).height,
@@ -112,7 +112,7 @@ void TextureEditor::draw()
 
 		ImGui::TextUnformatted("Parameters");
 		if(properties_editor.draw())
-		{
+		{ // fo enlever
 			should_update_resource = true;
 		}
 	}

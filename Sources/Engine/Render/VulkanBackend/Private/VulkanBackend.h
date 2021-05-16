@@ -64,6 +64,7 @@ public:
 	ResourceHandle swapchain_get_backbuffer(const ResourceHandle& in_swapchain) override;
 	ResourceHandle swapchain_get_backbuffer_texture(const ResourceHandle& in_swapchain) override;
 	uint32_t swapchain_get_backbuffer_index(const ResourceHandle& in_swapchain) override;
+	uint32_t swapchain_get_textures_count(const ResourceHandle& in_swapchain) override;
 	std::vector<ResourceHandle> swapchain_get_backbuffer_textures(const ResourceHandle& in_swapchain) override;
 	std::vector<ResourceHandle> swapchain_get_backbuffer_texture_views(const ResourceHandle& in_swapchain) override;
 	void swapchain_present(const ResourceHandle& in_swapchain,

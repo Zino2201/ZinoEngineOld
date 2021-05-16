@@ -17,7 +17,6 @@ class PropertiesEditor
 	{
 		std::vector<const ze::reflection::Property*> properties;
 	};
-
 public:
 	PropertiesEditor(const ze::reflection::Class* in_class, void* in_object);
 

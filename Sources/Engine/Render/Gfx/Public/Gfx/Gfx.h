@@ -642,6 +642,8 @@ public:
 
 	DeviceResourceHandle get_current_texture() const;
 	DeviceResourceHandle get_current_texture_view() const;
+	uint32_t get_swapchain_texture_count() const { return textures.size(); }
+	uint32_t get_current_idx() const { return Backend::get().swapchain_get_backbuffer_index(handle); }
 
 	ZE_FORCEINLINE const SwapChainCreateInfo& get_info() const { return info; }
 	ZE_FORCEINLINE const ResourceHandle& get_handle() const { return handle; }
@@ -739,6 +741,7 @@ class Device
 		ResourceHandle compute_fence;
 		ResourceHandle transfer_fence;
 		bool gfx_submitted;
+		bool frame_cancelled;
 
 		std::mutex frame_lock;
 
@@ -753,14 +756,13 @@ class Device
 
 		/** Recycled resources */
 		std::vector<DeviceResourceHandle> expired_semaphores;
-		//std::vector<DeviceResourceHandle> recycled_semaphores;
 
 		std::vector<DeviceResourceHandle> gfx_signal_semaphores;
 
 		/** Fences to wait at frame start */
 		std::vector<ResourceHandle> wait_fences;
 
-		Frame() : gfx_command_pool(CommandListType::Gfx), gfx_submitted(false)
+		Frame() : gfx_command_pool(CommandListType::Gfx), gfx_submitted(false), frame_cancelled(false)
 		{
 			gfx_lists.reserve(5);
 			expired_buffers.reserve(5);
@@ -795,6 +797,7 @@ class Device
 			compute_lists.clear();
 			transfer_lists.clear();
 			gfx_signal_semaphores.clear();
+			frame_cancelled = false;
 		}
 
 		void free_resources();
@@ -837,6 +840,9 @@ public:
 	/** Destroy the device */
 	void destroy();
 
+	/** Cancel the current frame, this will drop all command list submissions */
+	void cancel_frame();
+
 	/** Create functions */
 	std::pair<Result, DeviceResourceHandle> create_buffer(const BufferInfo& in_info, 
 		const std::span<uint8_t>& in_initial_data = {});
@@ -877,6 +883,8 @@ public:
 		const uint32_t in_height);
 	DeviceResourceHandle get_swapchain_backbuffer_texture(const DeviceResourceHandle& in_swapchain);
 	DeviceResourceHandle get_swapchain_backbuffer_texture_view(const DeviceResourceHandle& in_swapchain);
+	uint32_t get_swapchain_texture_count(const DeviceResourceHandle& in_swapchain);
+	uint32_t get_swapchain_current_idx(const DeviceResourceHandle& in_swapchain);
 
 	/**
 	 * Present the specified swapchain

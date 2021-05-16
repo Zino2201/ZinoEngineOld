@@ -32,6 +32,9 @@ enum class Format
 
 	/** BGR 8-bit (unsigned short) */
     B8G8R8A8Unorm,
+
+	/** RGBA 16-bit (signed float) */
+	R16G16B16A16Sfloat,
 	
 	/** RG 32-bit (signed float) */
 	R32G32Sfloat,
@@ -123,6 +126,8 @@ ZE_FORCEINLINE std::string to_string(const ze::gfx::Format& in_format)
 		return "R8G8B8A8Unorm";
 	case ze::gfx::Format::R8G8B8A8Srgb:
 		return "R8G8B8A8Srgb";
+	case ze::gfx::Format::R16G16B16A16Sfloat:
+		return "R16G16B16A16Sfloat";
 	case ze::gfx::Format::R32Uint:
 		return "R32Uint";
 	case ze::gfx::Format::R64Uint:
@@ -159,6 +164,71 @@ ZE_FORCEINLINE std::string to_string(const ze::gfx::Format& in_format)
 		return "Bc6HUfloatBlock";
 	case ze::gfx::Format::Bc6HSfloatBlock:
 		return "Bc6HSfloatBlock";
+	}
+}
+}
+
+namespace ze
+{
+ZE_FORCEINLINE std::string to_string_pretty(const ze::gfx::Format& in_format)
+{
+	switch (in_format)
+	{
+	default:
+	case ze::gfx::Format::Undefined:
+		return "Undefined";
+	case ze::gfx::Format::D24UnormS8Uint:
+		return "Depth 24-bit (unorm) Stencil 8-bit (uint)";
+	case ze::gfx::Format::D32Sfloat:
+		return "Depth 32-bit (float)";
+	case ze::gfx::Format::D32SfloatS8Uint:
+		return "Depth 32-bit (float) Stencil 8-bit (uint)";
+	case ze::gfx::Format::B8G8R8A8Unorm:
+		return "BGRA 8-bit (unorm)";
+	case ze::gfx::Format::R8G8B8Unorm:
+		return "RGB 8-bit (unorm)";
+	case ze::gfx::Format::R8G8B8A8Unorm:
+		return "RGBA 8-bit (unorm)";
+	case ze::gfx::Format::R8G8B8A8Srgb:
+		return "RGBA 8-bit (sRGB)";
+	case ze::gfx::Format::R16G16B16A16Sfloat:
+		return "RGBA 16-bit (float)";
+	case ze::gfx::Format::R32Uint:
+		return "R 32-bit (uint)";
+	case ze::gfx::Format::R64Uint:
+		return "R 64-bit (uint)";
+	case ze::gfx::Format::R32G32Sfloat:
+		return "RG 32-bit (float)";
+	case ze::gfx::Format::R32G32B32Sfloat:
+		return "RGB 32-bit (float)";
+	case ze::gfx::Format::R32G32B32A32Sfloat:
+		return "RGBA 32-bit (float)";
+	case ze::gfx::Format::R32G32B32A32Uint:
+		return "RGBA 32-bit (uint)";
+	case ze::gfx::Format::Bc1RgbUnormBlock:
+		return "BC1 RGB";
+	case ze::gfx::Format::Bc1RgbaUnormBlock:
+		return "BC1 RGBA";
+	case ze::gfx::Format::Bc1RgbSrgbBlock:
+		return "BC1 RGB (sRGB)";
+	case ze::gfx::Format::Bc1RgbaSrgbBlock:
+		return "BC1 RGBA (sRGB)";
+	case ze::gfx::Format::Bc3UnormBlock:
+		return "BC3";
+	case ze::gfx::Format::Bc3SrgbBlock:
+		return "BC3 (sRGB)";
+	case ze::gfx::Format::Bc7UnormBlock:
+		return "BC7";
+	case ze::gfx::Format::Bc7SrgbBlock:
+		return "BC7 (sRGB)";
+	case ze::gfx::Format::Bc5UnormBlock:
+		return "BC5 (unorm)";
+	case ze::gfx::Format::Bc5SnormBlock:
+		return "BC5 (snorm)";
+	case ze::gfx::Format::Bc6HUfloatBlock:
+		return "BC6H (ufloat)";
+	case ze::gfx::Format::Bc6HSfloatBlock:
+		return "BC6H (sfloat)";
 	}
 }
 

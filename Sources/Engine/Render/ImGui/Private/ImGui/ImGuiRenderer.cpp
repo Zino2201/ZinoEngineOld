@@ -159,6 +159,7 @@ void imgui_create_window_callback(ImGuiViewport* viewport)
 		viewport->PlatformHandle, viewport->Size.x, viewport->Size.y)).second;
 	data->window.width = viewport->Size.x;
 	data->window.height = viewport->Size.y;
+	data->window.has_rendered_one_frame.resize(gfx::Device::get().get_swapchain_texture_count(*data->window.swapchain));
 }
 
 void imgui_destroy_window(ImGuiViewport* viewport)
@@ -179,6 +180,11 @@ void imgui_set_window_size(ImGuiViewport* viewport, ImVec2 size)
 		size.x, size.y);
 	data->window.width = size.x;
 	data->window.height = size.y;
+	for(auto frame : data->window.has_rendered_one_frame)
+	{
+		frame = false;
+	}
+
 	gfx::Device::get().wait_gpu_idle();
 }
 
@@ -199,11 +205,11 @@ void imgui_render_window_callback(ImGuiViewport* viewport, void* list_ptr)
 			gfx::AttachmentDescription(
 				gfx::Format::B8G8R8A8Unorm,
 				gfx::SampleCountFlagBits::Count1,
-				gfx::AttachmentLoadOp::Clear,
+				gfx::AttachmentLoadOp::Load,
 				gfx::AttachmentStoreOp::Store,
 				gfx::AttachmentLoadOp::DontCare,
 				gfx::AttachmentStoreOp::DontCare,
-				gfx::TextureLayout::Undefined,
+				gfx::TextureLayout::Present,
 				gfx::TextureLayout::Present),
 		};
 		render_pass.subpasses = {
@@ -213,6 +219,19 @@ void imgui_render_window_callback(ImGuiViewport* viewport, void* list_ptr)
 		render_pass.width = data->window.width;
 		render_pass.height = data->window.height;
 		render_pass.layers = 1;
+
+		if(!data->window.has_rendered_one_frame[Device::get().get_swapchain_current_idx(*data->window.swapchain)])
+		{
+			list->texture_barrier(Device::get().get_swapchain_backbuffer_texture(*data->window.swapchain),
+				PipelineStageFlagBits::TopOfPipe,
+				AccessFlags(),
+				TextureLayout::Undefined,
+				PipelineStageFlagBits::TopOfPipe,
+				AccessFlags(),
+				TextureLayout::Present);
+			data->window.has_rendered_one_frame[Device::get().get_swapchain_current_idx(*data->window.swapchain)] = true;
+		}
+
 		list->begin_render_pass(render_pass,
 			maths::Rect2D(maths::Vector2f(),
 				maths::Vector2f(data->window.width, data->window.height)),
@@ -241,8 +260,10 @@ void imgui_swap_buffers_callback(ImGuiViewport* viewport, void* unused)
 	}
 }
 
-bool initialize()
+bool initialize(ImFontAtlas* in_atlas)
 {
+	ZE_CHECK(in_atlas);
+
 	{
 		/** Compile shaders */
 		gfx::shaders::ShaderCompilerOutput vs_ = gfx::shaders::compile_shader(
@@ -286,7 +307,7 @@ bool initialize()
 	uint8_t* data = nullptr;
 	uint32_t width = 0;
 	uint32_t height = 0;
-	io.Fonts->GetTexDataAsRGBA32(&data, reinterpret_cast<int*>(&width), 
+	in_atlas->GetTexDataAsRGBA32(&data, reinterpret_cast<int*>(&width), 
 		reinterpret_cast<int*>(&height));
 	auto [result, handle] = gfx::Device::get().create_texture(
 		gfx::TextureInfo::make_2d_texture(

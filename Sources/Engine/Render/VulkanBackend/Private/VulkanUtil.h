@@ -33,12 +33,12 @@ ZE_FORCEINLINE vk::Format convert_format(Format in_format)
 		return vk::Format::eR32Uint;
 	case Format::R64Uint:
 		return vk::Format::eR64Uint;
+	case Format::R16G16B16A16Sfloat:
+		return vk::Format::eR16G16B16A16Sfloat;
 	case Format::R32G32Sfloat:
 		return vk::Format::eR32G32Sfloat;
 	case Format::R32G32B32Sfloat:
 		return vk::Format::eR32G32B32Sfloat;
-	case Format::R32G32B32A32Sfloat:
-		return vk::Format::eR32G32B32A32Sfloat;
 	case Format::R32G32B32A32Uint:
 		return vk::Format::eR32G32B32A32Uint;
 	case Format::Bc1RgbUnormBlock:
@@ -95,6 +95,8 @@ ZE_FORCEINLINE Format to_format(vk::Format in_format)
 		return Format::R32Uint;
 	case vk::Format::eR64Uint:
 		return Format::R64Uint;
+	case vk::Format::eR16G16B16A16Sfloat:
+		return Format::R16G16B16A16Sfloat;
 	case vk::Format::eR32G32Sfloat:
 		return Format::R32G32Sfloat;
 	case vk::Format::eR32G32B32Sfloat:
@@ -338,7 +340,7 @@ ZE_FORCEINLINE vk::AttachmentLoadOp convert_load_op(const AttachmentLoadOp& in_l
 	case AttachmentLoadOp::Clear:
 		return vk::AttachmentLoadOp::eClear;
 	case AttachmentLoadOp::Load:
-		return vk::AttachmentLoadOp::eClear;
+		return vk::AttachmentLoadOp::eLoad;
 	case AttachmentLoadOp::DontCare:
 		return vk::AttachmentLoadOp::eDontCare;
 	}

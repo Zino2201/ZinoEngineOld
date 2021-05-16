@@ -1366,6 +1366,7 @@ public:
 	virtual uint32_t swapchain_get_backbuffer_index(const ResourceHandle& in_swapchain) = 0;
 	virtual std::vector<ResourceHandle> swapchain_get_backbuffer_textures(const ResourceHandle& in_swapchain) = 0;
 	virtual std::vector<ResourceHandle> swapchain_get_backbuffer_texture_views(const ResourceHandle& in_swapchain) = 0;
+	virtual uint32_t swapchain_get_textures_count(const ResourceHandle& in_swapchain) = 0;
 
 	/**
 	 * Present a swapchain

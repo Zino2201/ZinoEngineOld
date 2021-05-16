@@ -202,15 +202,24 @@ void Device::new_frame()
 
 void Device::end_frame()
 {
-	/** Submit to queues if required */
-	if(!get_current_frame().gfx_lists.empty())
+	if(!get_current_frame().frame_cancelled)
 	{
-		submit_queue(CommandListType::Gfx);
-		get_current_frame().wait_fences.emplace_back(get_current_frame().gfx_fence);
+		/** Submit to queues if required */
+		if(!get_current_frame().gfx_lists.empty())
+		{
+			submit_queue(CommandListType::Gfx);
+			get_current_frame().wait_fences.emplace_back(get_current_frame().gfx_fence);
+		}
+
 	}
 
-	/** At this point all command lists must have been submitted */
+	/** At this point all command lists must have been submitted/dropped */
 	get_current_frame().command_lists.clear();
+}
+
+void Device::cancel_frame()
+{
+	get_current_frame().frame_cancelled = true;
 }
 
 void Device::submit(CommandList* list, const std::vector<DeviceResourceHandle>& in_signal_semaphores)
@@ -511,6 +520,18 @@ DeviceResourceHandle Device::get_swapchain_backbuffer_texture_view(const DeviceR
 {
 	Swapchain* swapchain = get_swapchain(in_swapchain);
 	return swapchain->get_current_texture_view();
+}
+
+uint32_t Device::get_swapchain_texture_count(const DeviceResourceHandle& in_swapchain)
+{
+	Swapchain* swapchain = get_swapchain(in_swapchain);
+	return swapchain->get_swapchain_texture_count();
+}
+
+uint32_t Device::get_swapchain_current_idx(const DeviceResourceHandle& in_swapchain)
+{
+	Swapchain* swapchain = get_swapchain(in_swapchain);
+	return swapchain->get_current_idx();
 }
 
 void Device::present(const DeviceResourceHandle& in_swapchain, const std::vector<DeviceResourceHandle>& in_wait_semaphores)
