@@ -103,7 +103,7 @@ void Texture::update_resource()
 #if !ZE_WITH_EDITOR
 	/** Free data from the CPU as we don't need it anymore */
 	if(!keep_in_ram)
-		platform_data.mipmaps.clear();
+		platform_data.clear_mipmaps_data();
 #endif
 
 	ready = true;

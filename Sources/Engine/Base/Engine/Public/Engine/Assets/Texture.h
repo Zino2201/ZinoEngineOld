@@ -103,6 +103,11 @@ struct TextureMipmap
 			in_archive <=> data;
 	}
 
+	void clear_data()
+	{
+		data.clear();
+	}
+
 	const auto& get_data() const
 	{
 		return data;
@@ -163,6 +168,14 @@ public:
 		in_archive <=> mipmaps;
 	}
 
+	void clear_mipmaps_data()
+	{
+		for(auto& mipmap : mipmaps)
+		{
+			mipmap.clear_data();
+		}
+	}
+
 	const TextureMipmap& get_mip(const uint32_t in_idx) const { return mipmaps[in_idx]; }
 	uint32_t get_mip_count() const { return mipmaps.size(); }
 	const auto& get_mipmaps() const { return mipmaps; }
@@ -200,6 +213,7 @@ public:
 
 	Texture() {}
 	
+#if ZE_WITH_EDITOR
 	Texture(const TextureType in_type,
 		const TextureFilter in_filter,
 		const TextureCompressionMode in_compression_mode,
@@ -218,7 +232,8 @@ public:
 	{ 
 
 	}
-	
+#endif
+
 	template<typename ArchiveType>
 	void serialize(AssetArchive<ArchiveType>& in_archive, const uint32_t& in_version)
 	{
@@ -233,8 +248,10 @@ public:
 		in_archive <=> use_mipmaps;
 		in_archive <=> keep_in_ram;
 
+#if ZE_WITH_EDITOR
 		if(in_archive.is_editor)
 			in_archive <=> source_data;
+#endif
 
 		if(in_archive.is_loading)
 			update_resource();

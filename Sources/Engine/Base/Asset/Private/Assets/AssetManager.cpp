@@ -274,7 +274,7 @@ void save_asset(const AssetSaveInfo& in_info)
 		archive <=> serialization::make_named_data("metadata", metadata);
 	}
 #else
-	logger::error("Error! Trying to save {} in non-editor mode", asset->path.string());
+	logger::error("Error! Trying to save {} in non-editor mode", in_info.path.string());
 #endif
 }
 
