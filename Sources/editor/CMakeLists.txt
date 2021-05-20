@@ -1,0 +1,6 @@
+add_subdirectory(assetdatacache)
+add_subdirectory(assetutils)
+add_subdirectory(editor)
+add_subdirectory(shadercompiler)
+add_subdirectory(texturecompressor)
+add_subdirectory(vulkanshadercompiler)
