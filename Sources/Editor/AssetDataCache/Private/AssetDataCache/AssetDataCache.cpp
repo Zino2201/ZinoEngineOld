@@ -1,9 +1,9 @@
-#include "AssetDataCache/AssetDataCache.h"
-#include "ZEFS/Paths.h"
+#include "assetdatacache/AssetDatacache.h"
+#include "zefs/Paths.h"
 #include <filesystem>
-#include "ZEFS/FileStream.h"
-#include "ZEFS/ZEFS.h"
-#include "Threading/JobSystem/Async.h"
+#include "zefs/FileStream.h"
+#include "zefs/ZEFS.h"
+#include "threading/jobsystem/Async.h"
 
 namespace ze::assetdatacache
 {

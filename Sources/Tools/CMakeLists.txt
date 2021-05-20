@@ -1,1 +1,1 @@
-add_subdirectory(ZERT)
+add_subdirectory(zert)

@@ -1,16 +1,33 @@
-find_package(SDL2 CONFIG REQUIRED)
+add_executable(main
+    private/Main.cpp)
 
-ze_create_exec_module(ZinoEngine Private/Main.cpp)
-
-ze_add_private_modules(ZinoEngine 
-	Core ZEFS ShaderCore ShaderCompiler VulkanShaderCompiler Engine GfxCore VulkanBackend JsonSerialization)
-
-target_link_libraries(ZinoEngine PRIVATE SDL2::SDL2)
+set_target_properties(main PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${ZE_BINS_DIR}"
+    LIBRARY_OUTPUT_DIRECTORY "${ZE_BINS_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY "${ZE_BINS_DIR}"
+    VS_DEBUGGER_WORKING_DIRECTORY "${ZE_ROOT_DIR}")
 
 if(ZE_WITH_EDITOR)
-	ze_add_private_modules(ZinoEngine ZEEditor)
+    set_target_properties(main PROPERTIES OUTPUT_NAME "ZEEditor")
+else()
+    set_target_properties(main PROPERTIES OUTPUT_NAME "ZEGame")
+endif()
+
+target_link_libraries(main
+    PRIVATE
+        core zefs engine gfx vulkangfx platformwindows PRIVATE SDL2)
+
+if(ZE_WITH_EDITOR)
+    target_link_libraries(main PRIVATE editor)
+    target_compile_definitions(main PRIVATE "ZE_WITH_EDITOR=1")
+else()
+    target_compile_definitions(main PRIVATE "ZE_WITH_EDITOR=0")
 endif()
 
 if(ZE_MONOLITHIC)
-	target_link_libraries(ZinoEngine PRIVATE AllModules)
+    target_link_libraries(main PRIVATE AllModules)
 endif()
+
+# Config specific defs
+target_compile_definitions(main PRIVATE ZE_CONFIGURATION_NAME="${ZE_CONFIG_NAME}")
+target_compile_definitions(main PRIVATE "$<$<CONFIG:Debug>:ZE_DEBUG>$<$<CONFIG:RelWithDebInfo>:ZE_RELWITHDEBINFO>$<$<CONFIG:Release>:ZE_RELEASE>")

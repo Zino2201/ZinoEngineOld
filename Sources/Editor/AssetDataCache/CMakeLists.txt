@@ -1,11 +1,9 @@
-ze_create_module(AssetDataCache 
-    Public/AssetDataCache/AssetDataCache.h
-    Private/AssetDataCache/AssetDataCache.cpp)
-
-ze_add_private_modules(AssetDataCache Core ZEFS)
-	
-target_include_directories(AssetDataCache
-    PUBLIC 
-        ${CMAKE_CURRENT_SOURCE_DIR}/Public
+add_library(assetdatacache
+        private/assetdatacache/AssetDatacache.cpp
+        public/assetdatacache/AssetDatacache.h)
+target_link_libraries(assetdatacache PRIVATE core zefs)
+target_include_directories(assetdatacache
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/public
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/Private)
+        ${CMAKE_CURRENT_SOURCE_DIR}/private)

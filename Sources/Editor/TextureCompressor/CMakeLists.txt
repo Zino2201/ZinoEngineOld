@@ -1,9 +1,10 @@
-ze_create_module(TextureCompressor 
-    Private/TextureCompressor.cpp)
+add_library(texturecompressor
+    private/TextureCompressor.cpp
+    public/TextureCompressor.h)
 
-ze_add_private_modules(TextureCompressor Core GfxCore)
+target_link_libraries(texturecompressor PUBLIC core gfxbackend)
 
-target_include_directories(TextureCompressor
+target_include_directories(texturecompressor
     PUBLIC 
         ${CMAKE_CURRENT_SOURCE_DIR}/Public
     PRIVATE
@@ -12,12 +13,12 @@ target_include_directories(TextureCompressor
 
 if(WIN32)
     if(ZE_MONOLITHIC)
-        target_link_directories(TextureCompressor PUBLIC
+        target_link_directories(texturecompressor PUBLIC
             ${ZE_LIBS_DIR}/nvidia-texture-tools/project/vc2017/${ZE_CONFIG_NAME_DBGREL}.x64/lib)
     else()
-        target_link_directories(TextureCompressor PRIVATE
+        target_link_directories(texturecompressor PRIVATE
             ${ZE_LIBS_DIR}/nvidia-texture-tools/project/vc2017/${ZE_CONFIG_NAME_DBGREL}.x64/lib)
     endif()
 endif()
 
-target_link_libraries(TextureCompressor PRIVATE nvtt)
+target_link_libraries(texturecompressor PRIVATE nvtt gfxbackend)

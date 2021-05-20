@@ -1,5 +1,5 @@
 #include "EngineCore.h"
-#include "Gfx/GfxCore.h"
+#include "gfx/Backend.h"
 
 namespace ze
 {

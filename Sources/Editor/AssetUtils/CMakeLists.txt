@@ -1,10 +1,15 @@
-ze_create_module(AssetUtils Private/Editor/AssetUtils/AssetUtils.cpp)
+add_library(assetutils
+    private/editor/assetutils/assetutils.cpp
+    public/editor/assetutils/assetutils.h)
 
-ze_add_private_modules(AssetUtils Core Asset AssetDatabase Reflection)
+target_link_libraries(assetutils
+    PRIVATE
+        core
+        asset)
 
-target_include_directories(AssetUtils
+target_include_directories(assetutils
     PUBLIC 
-        ${CMAKE_CURRENT_SOURCE_DIR}/Public
+        ${CMAKE_CURRENT_SOURCE_DIR}/public
         ${ZE_LIBS_DIR}/stb_image
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/Private)
+        ${CMAKE_CURRENT_SOURCE_DIR}/private)

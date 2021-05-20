@@ -1,16 +1,9 @@
-#include "Editor/AssetUtils/AssetUtils.h"
+#include "editor/assetutils/AssetUtils.h"
 #if ZE_PLATFORM(WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <commdlg.h>
 #endif
-#include "Reflection/Serialization.h"
-#include "ZEFS/FileStream.h"
-#include "ZEFS/Paths.h"
-#include "Serialization/BinaryArchive.h"
-#include "AssetDatabase/AssetHeader.h"
-#include "Assets/Asset.h"
-#include "Assets/AssetMetadata.h"
 
 namespace ze::editor::assetutils
 {
@@ -49,6 +42,7 @@ void import_assets_dialog(const std::filesystem::path& in_path,
 	SetCurrentDirectory(cwd);
 #endif
 }
+
 OnAssetImported& get_on_asset_imported() { return on_asset_imported; }
 
 }

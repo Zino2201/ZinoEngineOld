@@ -2,7 +2,7 @@
 
 #include "EngineCore.h"
 #include <filesystem>
-#include "Delegates/Delegate.h"
+#include "delegates/Delegate.h"
 
 namespace ze { class Asset; struct AssetMetadata; }
 

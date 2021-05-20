@@ -1,6 +1,6 @@
 #include "TextureCompressor.h"
 #include "nvtt.h"
-#include "Threading/JobSystem/Async.h"
+#include "threading/jobsystem/Async.h"
 
 namespace ze
 {
@@ -66,9 +66,7 @@ std::vector<std::vector<uint8_t>> texc_compress(const uint32_t in_width,
 	ZE_CHECK(in_mip_levels > 0);
 
 	std::vector<uint8_t> src_data;
-	if(in_src_pixel_format == TexcPixelFormat::RGBA32Sfloat)
-		src_data.resize(in_width * in_height * in_depth * 4);
-
+	src_data.resize(in_width * in_height * in_depth * 4);
 	if(in_src_pixel_format == TexcPixelFormat::RGBA32Unorm)
 	{
 		uint8_t* cur_src_data = src_data.data();
@@ -80,9 +78,9 @@ std::vector<std::vector<uint8_t>> texc_compress(const uint32_t in_width,
 				reinterpret_cast<const TexcColorRGBA32Unorm*>(in_uncompressed_data.data() + i);	
 			
 			TexcColorRGBA32Unorm dst_color;
-			dst_color.b = src_color->b;
+			dst_color.r = src_color->b;
 			dst_color.g = src_color->g;
-			dst_color.r = src_color->r;
+			dst_color.b = src_color->r;
 			dst_color.a = src_color->a;
 			
 			memcpy(cur_src_data, &dst_color, sizeof(dst_color));
@@ -100,9 +98,9 @@ std::vector<std::vector<uint8_t>> texc_compress(const uint32_t in_width,
 				reinterpret_cast<const TexcColorRGBA32Unorm*>(in_uncompressed_data.data() + i);
 
 			TexcColorRGBA32Unorm dst_color;
-			dst_color.b = src_color->b;
+			dst_color.r = src_color->b;
 			dst_color.g = src_color->g;
-			dst_color.r = src_color->r;
+			dst_color.b = src_color->r;
 			dst_color.a = 255;
 
 			memcpy(cur_src_data, &dst_color, sizeof(dst_color));
