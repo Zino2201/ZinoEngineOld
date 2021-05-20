@@ -1,5 +1,5 @@
 #include "gfx/Gfx.h"
-#include "Module/Module.h"
+#include "module/Module.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, Gfx)
 

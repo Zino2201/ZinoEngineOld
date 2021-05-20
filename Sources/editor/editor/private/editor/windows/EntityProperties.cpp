@@ -1,4 +1,4 @@
-#include "editor/Windows/EntityProperties.h"
+#include "editor/windows/EntityProperties.h"
 #include "imgui/ImGui.h"
 
 namespace ze::editor

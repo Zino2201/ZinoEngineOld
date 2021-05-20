@@ -1,19 +1,18 @@
 #include "assetdatabase/AssetDatabase.h"
 #include "EngineCore.h"
 #include <robin_hood.h>
-#include "Module/ModuleManager.h"
-#include "Threading/JobSystem/Async.h"
-#include "AssetDatabase/AssetHeader.h"
+#include "module/ModuleManager.h"
+#include "threading/jobsystem/Async.h"
 #include <istream>
 #include <ios>
-#include "Serialization/BinaryArchive.h"
-#include "Reflection/Class.h"
-#include "Module/Module.h"
-#include "ZEFS/FileStream.h"
-#include "ZEFS/ZEFS.h"
+#include "serialization/BinaryArchive.h"
+#include "reflection/Class.h"
+#include "module/Module.h"
+#include "zefs/FileStream.h"
+#include "zefs/ZEFS.h"
 #include "PathTree.h"
-#include "Assets/AssetMetadata.h"
-#include "Assets/AssetManager.h"
+#include "assets/AssetMetadata.h"
+#include "assets/AssetManager.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, AssetDatabase);
 

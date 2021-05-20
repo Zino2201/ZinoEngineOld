@@ -1,5 +1,3 @@
-add_subdirectory(thirdparty)
-
 function(ze_add_library TARGET)
     if(ZE_MONOLITHIC)
         _add_library(${TARGET} STATIC ${ARGN})

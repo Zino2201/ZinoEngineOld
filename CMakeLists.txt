@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 3.13)
 cmake_policy(SET CMP0091 NEW)
 
-project(ZinoEngine)
-
-# ZinoEngine only supports x64 platforms 
+# ZinoEngine only supports x64 platforms
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 	message(FATAL_ERROR "32-bits is not supported")
 endif()
+
+# Put all libs in a seperate project in order to not pollute the main ZinoEngine project
+project(ZinoEngine3rdParty)
 
 # Include the right .cmake file based on the target compiler
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -14,6 +15,10 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 else()
 	message(FATAL_ERROR "Compiler not supported")
 endif()
+
+add_subdirectory(Sources/thirdparty)
+
+project(ZinoEngine)
 
 # Options
 option(ZE_MONOLITHIC "Build all modules as static libraries" OFF)

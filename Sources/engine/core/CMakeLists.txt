@@ -22,7 +22,6 @@ add_library(core
 target_include_directories(core
     PUBLIC 
         ${CMAKE_CURRENT_SOURCE_DIR}/public
-        ${ZE_LIBS_DIR}/fmt/include
         ${ZE_LIBS_DIR}/boost
         ${ZE_LIBS_DIR}/intrusive
         ${ZE_LIBS_DIR}/robin-hood-hashing/src/include
@@ -30,5 +29,6 @@ target_include_directories(core
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
+target_link_libraries(core PUBLIC fmt::fmt-header-only)
 target_compile_features(core PUBLIC cxx_std_20)
 target_compile_definitions(core PUBLIC "-DFMT_EXCEPTIONS=0")

@@ -8,8 +8,6 @@
 #include <thread>
 #include "flags/Flags.h"
 #include "Severity.h"
-
-#define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
 /**

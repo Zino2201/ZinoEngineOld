@@ -1,5 +1,4 @@
 find_package(Vulkan REQUIRED)
-find_package(SDL2 CONFIG REQUIRED)
 
 add_library(vulkangfx
     public/Gfx/Vulkan/Backend.h
@@ -33,6 +32,7 @@ add_library(vulkangfx
     private/Commands.cpp
     private/DescriptorSet.cpp
     private/Sampler.cpp)
+
 target_link_libraries(vulkangfx
     PRIVATE
         core

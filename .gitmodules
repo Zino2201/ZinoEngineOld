@@ -1,28 +1,19 @@
-[submodule "Sources/Libs/ShaderConductor"]
-	path = Sources/Libs/ShaderConductor
-	url = https://github.com/Zino2201/ShaderConductor.git
-[submodule "Sources/Libs/tinyobjloader"]
-	path = Sources/Libs/tinyobjloader
+[submodule "Sources/thirdparty/tinyobjloader"]
+	path = Sources/thirdparty/tinyobjloader
 	url = https://github.com/tinyobjloader/tinyobjloader.git
-[submodule "Sources/Libs/imgui"]
-	path = Sources/Libs/imgui
+[submodule "Sources/thirdparty/imgui"]
+	path = Sources/thirdparty/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
-[submodule "Sources/Libs/robin-hood-hashing"]
-	path = Sources/Libs/robin-hood-hashing
+[submodule "Sources/thirdparty/robin-hood-hashing"]
+	path = Sources/thirdparty/robin-hood-hashing
 	url = https://github.com/martinus/robin-hood-hashing.git
-[submodule "Sources/Libs/nvidia-texture-tools"]
-	path = Sources/Libs/nvidia-texture-tools
+[submodule "Sources/thirdparty/nvidia-texture-tools"]
+	path = Sources/thirdparty/nvidia-texture-tools
 	url = https://github.com/castano/nvidia-texture-tools.git
-[submodule "Sources/Libs/msdfgen"]
-	path = Sources/Libs/msdfgen
-	url = https://github.com/Chlumsky/msdfgen.git
-[submodule "Sources/Libs/msdf-atlas-gen"]
-	path = Sources/Libs/msdf-atlas-gen
-	url = https://github.com/Chlumsky/msdf-atlas-gen.git
-[submodule "Sources/Libs/stduuid"]
-	path = Sources/Libs/stduuid
+[submodule "Sources/thirdparty/stduuid"]
+	path = Sources/thirdparty/stduuid
 	url = https://github.com/mariusbancila/stduuid.git
-[submodule "Sources/Libs/rapidjson"]
-	path = Sources/Libs/rapidjson
+[submodule "Sources/thirdparty/rapidjson"]
+	path = Sources/thirdparty/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
