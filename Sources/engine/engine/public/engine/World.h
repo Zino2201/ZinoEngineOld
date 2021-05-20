@@ -3,7 +3,7 @@
 #include "ecs/EntityManager.h"
 #include "ecs/ComponentManager.h"
 #include "ecs/SystemManager.h"
-#include "Engine/TickSystem.h"
+#include "engine/TickSystem.h"
 #include "World.gen.h"
 
 namespace ze

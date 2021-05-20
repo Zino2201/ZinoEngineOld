@@ -232,7 +232,6 @@ struct AnyPolicyLarge : public AnyPolicyBase<T, AnyPolicyLarge<T>>
 
 	ZE_FORCEINLINE static void destroy(T& value)
 	{
-		volatile T test = value;
 		delete &value;
 	}
 

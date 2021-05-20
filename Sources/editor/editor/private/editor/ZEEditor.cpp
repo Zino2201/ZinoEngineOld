@@ -10,7 +10,7 @@
 #include "assets/Asset.h"
 #include "assetdatabase/AssetDatabase.h"
 #include <istream>
-#include "Editor/assets/AssetFactory.h"
+#include "editor/assets/AssetFactory.h"
 #include "assets/AssetManager.h"
 #include "editor/assetutils/AssetUtils.h"
 #include "zefs/FileStream.h"
@@ -38,7 +38,7 @@
 #include "gfx/Gfx.h"
 #include "PlatformMgr.h"
 #include "maths/matrix/Transformations.h"
-#include "Engine/InputSystem.h"
+#include "engine/InputSystem.h"
 #include "imgui_internal.h"
 
 ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);

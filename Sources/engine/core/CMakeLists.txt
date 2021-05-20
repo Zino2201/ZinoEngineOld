@@ -31,4 +31,4 @@ target_include_directories(core
 )
 target_link_libraries(core PUBLIC fmt::fmt-header-only)
 target_compile_features(core PUBLIC cxx_std_20)
-target_compile_definitions(core PUBLIC "-DFMT_EXCEPTIONS=0")
+target_compile_definitions(core PUBLIC -DFMT_EXCEPTIONS=0 -DBOOST_EXCEPTION_DISABLE=1)
