@@ -143,6 +143,9 @@ function(add_library)
     endif()
 endfunction()
 
-add_subdirectory(editor)
+if(ZE_WITH_EDITOR)
+    add_subdirectory(editor)
+endif()
+
 add_subdirectory(engine)
 add_subdirectory(tools)
