@@ -3,7 +3,7 @@
 #include <map>
 #include "module/Module.h"
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEFS);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, zefs);
 
 namespace ze::filesystem
 {

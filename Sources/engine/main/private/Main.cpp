@@ -37,6 +37,7 @@
 #include "EngineVer.h"
 #include "zefs/StdFileSystem.h"
 #include "zefs/Paths.h"
+#include "gfx/effect/EffectDatabase.h"
 
 namespace FS = ze::filesystem;
 
@@ -117,10 +118,10 @@ void PreInit()
     /** INITIALIZE BASE MODULES */
     {
         /** Ensure the EngineCore module is loaded */
-        LoadRequiredModule("Core");
+        LoadRequiredModule("core");
         ze::threading::set_thread_name("Main Thread");
 
-        LoadRequiredModule("ZEFS");
+        LoadRequiredModule("zefs");
 
         /** Mount std file system to current working dir */
         FS::FileSystem& Root = FS::add_filesystem<FS::StdFileSystem>("Root", "/", 0,
@@ -150,18 +151,17 @@ void PreInit()
         ze::logger::warn("Using a debug build ! Except very bad performances");
 #endif
 
-        LoadRequiredModule("Platform");
+        LoadRequiredModule("platform");
 #if ZE_PLATFORM(WINDOWS)
-        LoadRequiredModule("PlatformWindows");
+        LoadRequiredModule("platformwindows");
 #endif
-
 
         /** Check if required directories/files are presents */
         const std::array<const char*, 2> RequiredObjects =
-                {
+        {
                         "Shaders",
                         "Assets"
-                };
+        };
 
         for(const auto& Obj : RequiredObjects)
         {
@@ -169,7 +169,7 @@ void PreInit()
                 ze::logger::fatal("Can't find directory/file \"{}\" ! Check your installation", Obj);
         }
 
-        LoadRequiredModule("Reflection");
+        LoadRequiredModule("reflection");
 
         /** JOB SYSTEM */
         ze::logger::info("Initializing job system");
@@ -178,24 +178,22 @@ void PreInit()
         SDL_InitSubSystem(SDL_INIT_VIDEO);
 
         /** Load core modules */
-        LoadRequiredModule("Engine");
+        LoadRequiredModule("engine");
 
         /** Load render modules */
-        LoadRequiredModule("ShaderCore");
-        LoadRequiredModule("GfxCore");
-        LoadRequiredModule("GfxBackend");
-        LoadRequiredModule("Gfx");
-        LoadRequiredModule("ShaderCompiler");
-        LoadRequiredModule("EffectSystem");
-        LoadRequiredModule("ImGui");
-        LoadRequiredModule("ZEUI");
+        LoadRequiredModule("shadercore");
+        LoadRequiredModule("gfxbackend");
+        LoadRequiredModule("gfx");
+        LoadRequiredModule("shadercompiler");
+        LoadRequiredModule("effect");
+        LoadRequiredModule("imgui");
     }
 
     /** INITIALIZE RENDER SYSTEM **/
     {
         ze::logger::info("Initializing render system");
-        LoadRequiredModule("VulkanBackend");
-        LoadRequiredModule("VulkanShaderCompiler");
+        LoadRequiredModule("vulkangfx");
+        LoadRequiredModule("vulkanshadercompiler");
         OwnerPtr<ze::gfx::Backend> backend = ze::gfx::vulkan::create_vulkan_backend();
         auto [result, msg] = backend->initialize();
         if(!result)
@@ -214,8 +212,7 @@ int Init()
 
     /** INITIALIZE ENGINE CLASS */
 #if ZE_WITH_EDITOR
-    LoadRequiredModule("SDFFontGen");
-	LoadRequiredModule("ZEEditor");
+	LoadRequiredModule("editor");
 	engine_app = std::make_unique<ze::editor::EditorApp>();
 #else
     engine_app = std::make_unique<ze::GameApp>();
@@ -230,14 +227,15 @@ void Exit()
     ze::logger::info("Exiting engine");
 
     /** Unload renderer to free all renderer data */
-    ze::module::unload_module("Renderer");
+    ze::module::unload_module("renderer");
 
     /** Delete engine */
     engine_app.reset();
 
-    ze::module::unload_module("EffectSystem");
+    ze::module::unload_module("effect");
 
     ze::gfx::Device::get().destroy();
+
     /** Delete render system */
     RenderBackend.reset();
 

@@ -6,20 +6,6 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 	message(FATAL_ERROR "32-bits is not supported")
 endif()
 
-# Put all libs in a seperate project in order to not pollute the main ZinoEngine project
-project(ZinoEngine3rdParty)
-
-# Include the right .cmake file based on the target compiler
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-	include(CMake/Clang.cmake)
-else()
-	message(FATAL_ERROR "Compiler not supported")
-endif()
-
-add_subdirectory(Sources/thirdparty)
-
-project(ZinoEngine)
-
 # Options
 option(ZE_MONOLITHIC "Build all modules as static libraries" OFF)
 option(ZE_WITH_EDITOR "Build with the editor" OFF)
@@ -45,16 +31,26 @@ set(ZE_CONFIG_NAME_DBGREL "$<$<CONFIG:Debug>:Debug>$<$<CONFIG:RelWithDebInfo>:Re
 
 set(ZE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(ZE_BINS_DIR ${ZE_ROOT_DIR}/Binaries/${ZE_CONFIG_NAME})
-if(ZE_WITH_EDITOR)
-	set(ZE_BINS_PREFIX "ZEd-")
-else()
-	set(ZE_BINS_PREFIX "ZE-")
-endif()
+set(ZE_BINS_PREFIX "ZE-")
 set(ZE_BUILD_DIR ${CMAKE_BINARY_DIR})
 set(ZE_REFL_DIR ${ZE_BUILD_DIR}/reflection)
 set(ZE_LIBS_DIR ${ZE_ROOT_DIR}/Sources/thirdparty)
 
 set(ZE_ZRT_SKIP "#zert skip")
+
+# Put all libs in a seperate project in order to not pollute the main ZinoEngine project
+project(ZinoEngine3rdParty)
+
+# Include the right .cmake file based on the target compiler
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	include(CMake/Clang.cmake)
+else()
+	message(FATAL_ERROR "Compiler not supported")
+endif()
+
+add_subdirectory(Sources/thirdparty)
+
+project(ZinoEngine)
 
 # Used for monolithic builds
 add_library(AllModules INTERFACE)

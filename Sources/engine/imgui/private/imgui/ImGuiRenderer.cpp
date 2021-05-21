@@ -2,12 +2,13 @@
 #include "imgui/ImGui.h"
 #include "gfx/Gfx.h"
 #include "module/ModuleManager.h"
+#include "gfx/effect/EffectDatabase.h"
 
 namespace ze::ui::imgui
 {
 
 /** variables */
-gfx::UniquePipelineLayout pipeline_layout;
+gfx::DeviceResourceHandle pipeline_layout;
 gfx::UniqueTexture font;
 gfx::UniqueTextureView font_view;
 gfx::UniqueShader vs;
@@ -86,7 +87,7 @@ void draw_viewport(ImDrawData* draw_data,
 	gfx::CommandList* list)
 {
 	/** Update UBO */
-	list->bind_pipeline_layout(*pipeline_layout);
+	list->bind_pipeline_layout(pipeline_layout);
 	list->set_pipeline_render_pass_state(render_pass_state);
 	list->set_pipeline_instance_state(instance_state);
 
@@ -274,6 +275,17 @@ bool initialize(ImFontAtlas* in_atlas)
 	io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;
 	io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 
+	/** Shaders */
+	gfx::Effect* base_effect = gfx::effect_get_by_name("ImGui");
+	while(!base_effect->is_available({}))
+	{
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(200ms);
+	}
+	auto* permutation = base_effect->get_permutation({});
+	ZE_CHECK(permutation);
+	pipeline_layout = *permutation->pipeline_layout;
+
 	/**
 	 * Create font texture
 	 */
@@ -311,30 +323,6 @@ bool initialize(ImFontAtlas* in_atlas)
 				0,
 				1))).second;
 
-	auto [layout_result, pipeline_layout_handle] = gfx::Device::get().create_pipeline_layout(
-		gfx::PipelineLayoutCreateInfo(
-			{
-				gfx::DescriptorSetLayoutCreateInfo(
-					{
-						gfx::DescriptorSetLayoutBinding(
-							0,
-							gfx::DescriptorType::UniformBuffer,
-							1,
-							gfx::ShaderStageFlagBits::Vertex),
-						gfx::DescriptorSetLayoutBinding(
-							1,
-							gfx::DescriptorType::Sampler,
-							1,
-							gfx::ShaderStageFlagBits::Fragment),
-						gfx::DescriptorSetLayoutBinding(
-							2,
-							gfx::DescriptorType::SampledTexture,
-							1,
-							gfx::ShaderStageFlagBits::Fragment)
-					})
-			}));
-	pipeline_layout = pipeline_layout_handle;
-
 	render_pass_state.color_blend = gfx::PipelineColorBlendStateCreationInfo(
 		false, gfx::LogicOp::NoOp,
 		{
@@ -350,12 +338,12 @@ bool initialize(ImFontAtlas* in_atlas)
 	instance_state.shaders = {
 		gfx::GfxPipelineShaderStageInfo(
 			gfx::ShaderStageFlagBits::Vertex,
-			*vs,
-			"Main"),
+			permutation->shader_map[gfx::ShaderStageFlagBits::Vertex],
+			"vertex"),
 		gfx::GfxPipelineShaderStageInfo(
 			gfx::ShaderStageFlagBits::Fragment,
-			*fs,
-			"Main"),
+			permutation->shader_map[gfx::ShaderStageFlagBits::Fragment],
+			"fragment"),
 	};
 	instance_state.vertex_input = gfx::PipelineVertexInputStateCreateInfo(
 		{
@@ -377,7 +365,6 @@ bool initialize(ImFontAtlas* in_atlas)
 
 void destroy()	
 {
-	pipeline_layout.reset();
 	font.reset();
 	font_view.reset();
 	vs.reset();

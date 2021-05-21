@@ -30,4 +30,4 @@ private:
 
 }
 
-ZE_DEFINE_MODULE(ze::PlatformWindowsModule, PlatformWindows);
+ZE_DEFINE_MODULE(ze::PlatformWindowsModule, platformwindows);

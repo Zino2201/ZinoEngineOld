@@ -1,7 +1,7 @@
 #include "gfx/Gfx.h"
 #include "module/Module.h"
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, Gfx)
+ZE_DEFINE_MODULE(ze::module::DefaultModule, gfx)
 
 namespace ze::gfx
 {

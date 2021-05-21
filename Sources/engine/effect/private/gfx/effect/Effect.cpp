@@ -319,12 +319,14 @@ EffectPermutationId Effect::get_permutation_id(const std::vector<std::pair<std::
 	return id;
 }
 
-bool Effect::is_available(EffectPermutationId id) const
+bool Effect::is_available(EffectPermutationId id)
 {
 #if ZE_WITH_EDITOR
-	return permutations.contains(id) && !pending_compilation.contains(id);
+	auto* permutation = get_permutation(id);
+	std::lock_guard<std::mutex> lock(permutation_lock);
+	return permutation != nullptr && !pending_compilation.contains(id);
 #else
-	return permutations.contains(id);
+	return get_permutation(id) != nullptr;
 #endif
 }
 

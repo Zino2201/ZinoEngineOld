@@ -15,7 +15,7 @@ SamplerState Sampler : register(t1, space0);
 [[vk::binding(2)]]
 Texture2D Texture : register(t0, space0);
 
-float4 Main(VSOutput Input) : SV_TARGET
+float4 fragment(VSOutput Input) : SV_TARGET
 {
     return Input.Color * Texture.Sample(Sampler, Input.TexCoord);
 }

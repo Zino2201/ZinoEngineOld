@@ -15,4 +15,4 @@ public:
 
 }
 
-ZE_DEFINE_MODULE(ze::gfx::EffectSystemModule, EffectSystem);
+ZE_DEFINE_MODULE(ze::gfx::EffectSystemModule, effect);

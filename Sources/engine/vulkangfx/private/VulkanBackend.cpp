@@ -11,7 +11,7 @@
 #include "RenderPass.h"
 #include "PipelineLayout.h"
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, VulkanGfx);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, vulkangfx);
 
 namespace ze::gfx::vulkan
 {

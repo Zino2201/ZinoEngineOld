@@ -1,7 +1,7 @@
 #include "gfx/Backend.h"
 #include "module/Module.h"
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, GfxBackend)
+ZE_DEFINE_MODULE(ze::module::DefaultModule, gfxbackend)
 
 namespace ze::gfx
 {

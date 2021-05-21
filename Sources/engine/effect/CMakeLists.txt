@@ -14,7 +14,7 @@ target_link_libraries(effect
         zefs)
 
 if(ZE_WITH_EDITOR)
-    target_link_libraries(effect PRIVATE shadercompiler assetdatacache)
+    target_link_libraries(effect PUBLIC shadercompiler assetdatacache)
 endif()
 
 target_include_directories(effect

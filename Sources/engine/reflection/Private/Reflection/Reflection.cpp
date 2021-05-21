@@ -5,7 +5,7 @@
 #include "reflection/Serialization.h"
 #include "reflection/VectorRefl.h"
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, Reflection);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, reflection);
 
 namespace ze::reflection
 {

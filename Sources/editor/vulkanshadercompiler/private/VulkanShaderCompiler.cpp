@@ -208,4 +208,4 @@ private:
 	ShaderCompiler* sc;
 };
 
-ZE_DEFINE_MODULE(VulkanShaderCompilerModule, VulkanShaderCompiler);
+ZE_DEFINE_MODULE(VulkanShaderCompilerModule, vulkanshadercompiler);

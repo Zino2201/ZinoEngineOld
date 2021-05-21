@@ -1,7 +1,7 @@
 #include "PlatformMgr.h"
 #include "module/Module.h"
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, Platform);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, platform);
 
 namespace ze
 {

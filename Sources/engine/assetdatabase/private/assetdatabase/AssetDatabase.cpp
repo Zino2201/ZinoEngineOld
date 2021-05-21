@@ -14,7 +14,7 @@
 #include "assets/AssetMetadata.h"
 #include "assets/AssetManager.h"
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, AssetDatabase);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, assetdatabase);
 
 namespace ze::assetdatabase
 {

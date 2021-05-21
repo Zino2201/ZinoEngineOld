@@ -87,7 +87,7 @@ public:
 	Permutation* get_permutation(EffectPermutationId id);
 	EffectPermutationId get_permutation_id(const std::vector<std::pair<std::string, uint32_t>>& in_enabled_options) const;
 	std::vector<std::pair<std::string, std::string>> get_options_from_id(EffectPermutationId id) const;
-	bool is_available(EffectPermutationId id) const;
+	bool is_available(EffectPermutationId id);
 	std::string get_stage_prefix(ShaderStageFlagBits stage) const;
 	ZE_FORCEINLINE const PipelineRasterizationStateCreateInfo& get_rasterizer_state() const { return rasterizer_state; }
 private:

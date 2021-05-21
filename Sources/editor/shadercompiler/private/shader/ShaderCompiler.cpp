@@ -3,7 +3,7 @@
 #include "threading/jobsystem/Async.h"
 #include "MessageBox.h"
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, ShaderCompiler)
+ZE_DEFINE_MODULE(ze::module::DefaultModule, shadercompiler)
 
 namespace ze::gfx::shaders
 {

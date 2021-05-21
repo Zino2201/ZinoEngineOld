@@ -29,7 +29,7 @@ static ConVarRef<int32_t> CVarSimFPS("sim_fixed_dt", 20,
 
 bool bRun = true;
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, Engine)
+ZE_DEFINE_MODULE(ze::module::DefaultModule, engine)
 
 /**
  * Try to load a required module
@@ -47,8 +47,8 @@ ze::module::Module* LoadRequiredModule(const std::string_view& InName)
 EngineApp::EngineApp() : should_run(false), focused(true), frame_count(0), err_code(0)
 {
 	/** Load asset related modules */
-	LoadRequiredModule("Asset");
-	LoadRequiredModule("AssetDatabase");
+	LoadRequiredModule("asset");
+	LoadRequiredModule("assetdatabase");
 	previous = std::chrono::high_resolution_clock::now();
 }
 

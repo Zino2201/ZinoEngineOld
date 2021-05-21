@@ -41,7 +41,7 @@
 #include "engine/InputSystem.h"
 #include "imgui_internal.h"
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, ZEEditor);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, editor);
 
 namespace ze::editor
 {

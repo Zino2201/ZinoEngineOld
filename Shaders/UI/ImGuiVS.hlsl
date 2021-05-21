@@ -23,7 +23,7 @@ cbuffer GlobalData : register(b0, space0)
     float2 Translate;
 };
 
-VSOutput Main(VSInput Input)
+VSOutput vertex(VSInput Input)
 {
     VSOutput Output;
     Output.Position = float4(Input.Position * Scale + Translate, 0.0f, 1.0f);

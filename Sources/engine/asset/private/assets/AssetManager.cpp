@@ -16,7 +16,7 @@
 #include "assets/AssetCooker.h"
 #include "Platform.h"
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, Asset);
+ZE_DEFINE_MODULE(ze::module::DefaultModule, asset);
 
 namespace std
 {
