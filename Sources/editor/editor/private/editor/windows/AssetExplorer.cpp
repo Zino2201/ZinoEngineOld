@@ -1,6 +1,8 @@
+#define UUID_SYSTEM_GENERATOR
 #include "editor/windows/AssetExplorer.h"
 #include "imgui/ImGui.h"
 #include <imgui_internal.h>
+#include <editor/assets/AssetFactory.h>
 #include "gfx/Gfx.h"
 #include "reflection/Class.h"
 #include "editor/IconManager.h"
@@ -9,6 +11,7 @@
 #include "zefs/Paths.h"
 #include "editor/ZEEditor.h"
 #include "assets/Asset.h"
+#include "PlatformMgr.h"
 
 namespace ze::editor
 {
@@ -89,8 +92,42 @@ void AssetExplorer::draw_asset_list()
 		ImGui::Separator();
 		if(ImGui::BeginMenu("Create new asset"))
 		{
-			if(ImGui::MenuItem("AAAA"))
+			for(const auto& factory : get_factories())
 			{
+				if (factory->can_instantiated() &&
+					ImGui::MenuItem(factory->get_supported_class()->get_name().c_str()))
+				{
+					OwnerPtr<Asset> asset = factory->instantiate();
+
+					/** Serialize the asset and then unload it */
+					const ze::reflection::Class* asset_class = asset->get_class();
+					std::filesystem::path path = std::filesystem::path(
+						ze::filesystem::get_current_working_dir()) / current_path;
+
+					/** Compute path */
+					{
+						std::string name = "NewAsset";
+						while (std::filesystem::exists(path / name))
+							name += "(1)";
+						name += "." + factory->get_asset_file_extension();
+						asset->set_path(path / name);
+					}
+
+					/** Set asset metadata file */
+					{
+						AssetMetadata metadata;
+						metadata.uuid = uuids::uuid_system_generator{}();
+						metadata.engine_version = get_version();
+						metadata.asset_class = asset_class;
+						asset->set_metadata(metadata);
+					}
+
+					assetmanager::save_asset(assetmanager::AssetSaveInfo(asset, get_current_platform()));
+					delete asset;
+
+					/** Notify the database */
+					assetdatabase::scan(current_path);
+				}
 			}
 			ImGui::EndMenu();
 		}

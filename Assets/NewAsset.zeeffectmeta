@@ -1,0 +1,13 @@
+{
+    "metadata": {
+        "uuid": "cf354189-77e7-4fb4-a2eb-504982840996",
+        "class": "ze::Effect",
+        "engine_version": {
+            "major": 0,
+            "minor": 1,
+            "patch": 0
+        },
+        "asset_format": 0,
+        "has_seperate_cooked_data": false
+    }
+}

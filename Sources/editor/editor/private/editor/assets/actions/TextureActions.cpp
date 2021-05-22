@@ -1,7 +1,5 @@
 #include "editor/assets/TextureActions.h"
 #include "editor/ZEEditor.h"
-#include "reflection/Cast.h"
-#include "editor/ZEEditor.h"
 #include "editor/windows/assets/texture/TextureEditor.h"
 
 namespace ze::editor

@@ -46,7 +46,7 @@
 #define ZPROPERTY(...)
 #define ZFUNCTION(...)
 
-#if __INTELLISENSE__
+#if __INTELLISENSE__ || __JETBRAINS_IDE__
 #define ZE_REFL_BODY()
 #else
 /** Macro used for ZRT to generate a body */

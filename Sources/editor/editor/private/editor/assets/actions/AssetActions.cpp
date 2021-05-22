@@ -12,7 +12,7 @@ DelegateHandle asset_actions_module_loaded_delegate;
 
 void scan_for_asset_actions()
 {
-	for (const auto& Class : 
+	for (const auto& Class :
 		ze::reflection::Class::get_derived_classes_from(ze::reflection::Class::get<AssetActions>()))
 	{
 		if (added_actions.find(Class) != added_actions.end())

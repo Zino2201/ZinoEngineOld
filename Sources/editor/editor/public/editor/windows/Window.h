@@ -54,7 +54,9 @@ public:
 
 	ZE_FORCEINLINE const std::string& get_title() const { return title; }
 protected:
+	virtual void pre_draw();
 	virtual void draw() = 0;
+	virtual void post_draw();
 protected:
 	std::string title;
 	WindowFlags flags;

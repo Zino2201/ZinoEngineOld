@@ -38,7 +38,7 @@ add_library(editor
 	private/editor/IconManager.cpp
 	private/editor/PropertyEditor.cpp
 	private/editor/LargeTask.cpp
-	private/editor/ZEEditor.cpp)
+	private/editor/ZEEditor.cpp private/editor/assets/factories/EffectFactory.h private/editor/assets/factories/EffectFactory.cpp private/editor/windows/assets/EffectEditor.cpp public/editor/windows/assets/EffectEditor.h private/editor/assets/actions/EffectActions.h private/editor/assets/actions/EffectActions.cpp)
 
 target_link_libraries(editor
 	PUBLIC

@@ -35,15 +35,18 @@ void Window::destroy_child(Window* in_child)
 	}
 }
 
+void Window::pre_draw()
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+}
+
+void Window::post_draw()
+{
+	ImGui::PopStyleVar();
+}
+
 bool Window::draw_window()
 {
-	/**
-	 * Destroy expired childs
-	 */
-	/*for(const auto& child : expired_childs)
-		destroy_child(child);
-	expired_childs.clear();*/
-
 	ImGui::PushID(title.c_str());
 	ImGui::SetNextWindowClass(&window_class);
 	if(flags & WindowFlagBits::DockToMainDockSpaceOnce)
@@ -51,19 +54,18 @@ bool Window::draw_window()
 		ImGui::SetNextWindowDockID(ImGuiID(2201), ImGuiCond_Once);
 	}
 
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+	pre_draw();
 	bool keep_open = true;
 	if(ImGui::Begin(title.c_str(), &keep_open, imgui_flags))
 	{
-		ImGui::PopStyleVar();
-		
 		if(flags & WindowFlagBits::HasExplicitDockSpace)
 		{
 			std::string dockspace("EDS_" + title);
 			ImGui::DockSpace(ImGui::GetID(dockspace.c_str()), ImVec2(0, 0), ImGuiDockNodeFlags_None, &window_class);
 		}
 		draw();
-		ImGui::End();	
+		ImGui::End();
+		post_draw();
 
 		/**
 		 * Draw childs
@@ -77,7 +79,7 @@ bool Window::draw_window()
 	}
 	else
 	{
-		ImGui::PopStyleVar();
+		post_draw();
 		ImGui::End();
 	}
 	ImGui::PopID();

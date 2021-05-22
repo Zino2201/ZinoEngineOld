@@ -18,9 +18,11 @@ using OnAssetImported = ze::DelegateNoRet<const std::filesystem::path&, const st
 /**
  * Import assets with a dialog
  */
-ASSETUTILS_API void import_assets_dialog(const std::filesystem::path& in_path,
+void import_assets_dialog(const std::filesystem::path& in_path,
 	const std::filesystem::path& in_target);
 
-ASSETUTILS_API OnAssetImported& get_on_asset_imported();
+void save_asset(const std::filesystem::path& in_file_path);
+
+OnAssetImported& get_on_asset_imported();
 
 }

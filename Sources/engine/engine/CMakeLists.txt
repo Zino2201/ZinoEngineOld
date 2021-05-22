@@ -13,7 +13,7 @@ add_library(engine
     private/engine/ECS/EntityManager.cpp
     private/engine/ECS/SystemManager.cpp
     private/engine/Components/SinusMovementSystem.cpp
-    private/engine/World.cpp)
+    private/engine/World.cpp public/engine/assets/Effect.h)
 
 target_link_libraries(engine PUBLIC core reflection zefs shadercore imgui asset assetdatabase gfxbackend)
 

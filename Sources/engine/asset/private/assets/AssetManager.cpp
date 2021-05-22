@@ -233,8 +233,11 @@ void save_asset(const AssetSaveInfo& in_info)
 	AssetCookingContext cooker_ctx(in_info.asset, in_info.platform, metadata);
 	logger::info("Saving asset {}...", in_info.asset->get_path().string(), in_info.platform.name);
 
-	logger::info("Cooking asset {} for platform {}", in_info.asset->get_path().string(), in_info.platform.name);
-	cooker->cook(cooker_ctx);
+	if(cooker)
+	{
+		logger::info("Cooking asset {} for platform {}", in_info.asset->get_path().string(), in_info.platform.name);
+		cooker->cook(cooker_ctx);
+	}
 
 	/** Serialize the asset */
 	{

@@ -1,0 +1,13 @@
+{
+    "metadata": {
+        "uuid": "511e4b92-c940-49fb-8971-6f992588fb9e",
+        "class": "ze::Texture",
+        "engine_version": {
+            "major": 0,
+            "minor": 1,
+            "patch": 0
+        },
+        "asset_format": 0,
+        "has_seperate_cooked_data": false
+    }
+}
