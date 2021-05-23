@@ -45,6 +45,8 @@ struct AssetMetadata
     /** Does this asset have seperate cooked data (e.g for streaming) */
     bool has_seperate_cooked_data;
 
+    robin_hood::unordered_map<std::string, std::string> editor_data;
+
     AssetMetadata() : asset_class(nullptr), asset_format(0), has_seperate_cooked_data(false) {}
 
     template<typename ArchiveType>
@@ -65,6 +67,10 @@ struct AssetMetadata
         archive <=> serialization::make_named_data("engine_version", engine_version);
         archive <=> serialization::make_named_data("asset_format", asset_format);
         archive <=> serialization::make_named_data("has_seperate_cooked_data", has_seperate_cooked_data);
+#if ZE_WITH_EDITOR
+        if(editor_data.size() > 0)
+        	archive <=> serialization::make_named_data("editor_data", editor_data);
+#endif
     }
 };
 ZE_SERL_TYPE_VERSION(AssetMetadata, AssetMetadata::Ver0);

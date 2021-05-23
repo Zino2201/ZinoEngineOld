@@ -86,6 +86,7 @@ void AssetExplorer::draw_asset_list()
 {
 	ImGui::BeginChild("Asset List", ImGui::GetContentRegionAvail());
 
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5, 5));
 	if(ImGui::BeginPopupContextWindow())
 	{
 		ImGui::TextUnformatted("Asset actions");
@@ -140,6 +141,7 @@ void AssetExplorer::draw_asset_list()
 
 		ImGui::EndPopup();
 	}
+	ImGui::PopStyleVar();
 
 	ImGui::Columns(std::max<int>(1, ImGui::GetContentRegionAvail().x / entry_size.x), nullptr, false);
 	
@@ -173,7 +175,7 @@ void AssetExplorer::draw_asset_entry(const std::string& in_name,
 		if(is_asset && ImGui::IsItemHovered())
 		{
 			const assetdatabase::AssetPrimitiveData& asset_data = std::get<0>(in_data);
-
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5, 5));
 			ImGui::BeginTooltip();
 			ImGui::Text("Type: %s", asset_data.metadata.asset_class->get_name().c_str());
 			ImGui::Text("Disk size: %f KiB", asset_data.size / 1048576.f);
@@ -183,6 +185,7 @@ void AssetExplorer::draw_asset_entry(const std::string& in_name,
 				asset_data.metadata.engine_version.minor,
 				asset_data.metadata.engine_version.patch);
 			ImGui::EndTooltip();
+			ImGui::PopStyleVar();
 		}
 		
 		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))

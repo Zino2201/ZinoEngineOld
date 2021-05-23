@@ -47,7 +47,7 @@
 #define ZFUNCTION(...)
 
 #if __INTELLISENSE__ || __JETBRAINS_IDE__
-#define ZE_REFL_BODY()
+#define ZE_REFL_BODY() public: const ze::reflection::Class* get_class() const { return nullptr; } private:
 #else
 /** Macro used for ZRT to generate a body */
 #define ZE_REFL_BODY() ZE_CONCAT(ZE_CONCAT(ZE_CONCAT(ZE_Refl_Body_, ZE_CURRENT_FILE_UNIQUE_ID), _), __LINE__)

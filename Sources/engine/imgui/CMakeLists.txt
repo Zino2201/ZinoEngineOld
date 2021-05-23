@@ -6,7 +6,8 @@ add_library(imgui
     ${ZE_LIBS_DIR}/imgui/imgui_draw.cpp
     ${ZE_LIBS_DIR}/imgui/imgui_widgets.cpp
     ${ZE_LIBS_DIR}/imgui/imgui_tables.cpp
-    ${ZE_LIBS_DIR}/imgui/backends/imgui_impl_sdl.cpp)
+    ${ZE_LIBS_DIR}/imgui/backends/imgui_impl_sdl.cpp
+    ${ZE_LIBS_DIR}/imgui/misc/cpp/imgui_stdlib.cpp)
 
 target_link_libraries(imgui
     PUBLIC

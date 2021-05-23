@@ -18,7 +18,6 @@ void TextureCooker::cook(AssetCookingContext& in_context)
 	if(in_context.platform.is_editor())
 	{
 		in_context.metadata.asset_format = Texture::TextureEditor;
-
 		cook_for_editor(in_context);		
 	}
 	else

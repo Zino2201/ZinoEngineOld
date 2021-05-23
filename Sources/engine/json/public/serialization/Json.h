@@ -89,9 +89,14 @@ public:
 
 		const char* get_name() const
 		{
-			if(type == Member && (begin + index) != end)
+			auto current_name = begin[index].name.GetString();
+
+ 			if(type == Member && (begin + index) != end)
+			{
+				current_name = begin[index].name.GetString();
 				return begin[index].name.GetString();
-			
+			}
+
 			return nullptr;
 		}
 	private:
@@ -102,7 +107,7 @@ public:
 		Type type;
 	};
 
-	JsonInputArchive(std::istream& in_stream) : InputArchive(*this), stream(in_stream)
+	JsonInputArchive(std::istream& in_stream) : InputArchive(*this), stream(in_stream), current_member_count(0)
 	{
 		document.ParseStream(stream);
 		it_stack.emplace_back(document.MemberBegin(), document.MemberEnd());
@@ -134,13 +139,19 @@ public:
 		jump_to();
 
 		if(it_stack.back().get_value().IsArray())
+		{
 			it_stack.emplace_back(it_stack.back().get_value().Begin(), it_stack.back().get_value().End());
+		}
 		else
+		{
+			current_member_count = it_stack.back().get_value().MemberCount();
 			it_stack.emplace_back(it_stack.back().get_value().MemberBegin(), it_stack.back().get_value().MemberEnd());
+		}
 	}
 	
 	void end_object()
 	{
+		current_member_count = 0;
 		it_stack.pop_back();
 		++it_stack.back();
 	}
@@ -149,6 +160,9 @@ public:
 	{
 		next_name = in_next_name;
 	}
+
+	[[nodiscard]] const size_t get_current_member_count() const { return current_member_count; }
+	[[nodiscard]] std::string get_current_name() const { return it_stack.back().get_name(); }
 private:
 	void jump_to()
 	{
@@ -167,6 +181,8 @@ private:
 	std::string next_name;
 	rapidjson::IStreamWrapper stream;
 	rapidjson::Document document;
+	size_t current_member_count;
+	std::string current_name;
 };
 
 class JsonOutputArchive : public JsonArchive,
@@ -436,7 +452,6 @@ inline void post_serialize(JsonOutputArchive& archive, const NamedData<T>& data)
 template<typename T1, typename T2>
 inline void serialize(JsonInputArchive& archive, std::pair<T1, T2>& data)
 {
-	archive.set_next_name(data.first);
 	archive <=> data.second;
 }
 
@@ -458,6 +473,27 @@ inline void post_serialize(JsonInputArchive& archive, const std::pair<T1, T2>& d
 
 template<typename T1, typename T2>
 inline void post_serialize(JsonOutputArchive& archive, const std::pair<T1, T2>& data) {}
+
+/** Hashmaps */
+template<typename T1, typename T2>
+inline void serialize(JsonInputArchive& archive, robin_hood::unordered_map<T1, T2>& data)
+{
+
+	for(int i = 0; i < archive.get_current_member_count(); ++i)
+	{
+		std::pair<T1, T2> pair;
+		auto name = archive.get_current_name();
+		archive <=> pair;
+		data[name] = pair.second;
+	}
+}
+
+template<typename T1, typename T2>
+inline void serialize(JsonOutputArchive& archive, const robin_hood::unordered_map<T1, T2>& data)
+{
+	for(const auto& [key, val] : data)
+		archive <=> std::make_pair(key, val);
+}
 
 /** Don't turn uuids into objects */
 inline void pre_serialize(JsonInputArchive& archive, const uuids::uuid& data) {}

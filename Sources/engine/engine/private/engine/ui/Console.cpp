@@ -87,7 +87,7 @@ void CConsoleWidget::Draw()
 	ImGui::Separator();
 
 	/** Console */
-	if(ImGui::BeginChild("ScrollingRegion", 
+	if(ImGui::BeginChild("ScrollingRegion",
 		ImVec2(0, -FooterHeight), true, ImGuiWindowFlags_HorizontalScrollbar))
 	{
 		const auto& Messages = Sink->get_messages();

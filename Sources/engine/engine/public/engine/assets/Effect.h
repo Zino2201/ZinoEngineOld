@@ -28,10 +28,21 @@ class Effect : public Asset
 {
 	ZE_REFL_BODY()
 
+	friend class EffectCooker;
+
 public:
+	enum EffectAssetFormat
+	{
+		FormatSource,
+		FormatCompiled
+	};
+
+	std::string& get_source() { return source; }
 private:
-	ZPROPERTY(Editable, Visible)
+	ZPROPERTY(Editable, Visible, Category = "Base")
 	EffectType type;
+
+	std::string source;
 };
 
 }

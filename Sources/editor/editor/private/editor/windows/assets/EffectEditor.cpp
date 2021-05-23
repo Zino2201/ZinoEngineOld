@@ -1,5 +1,6 @@
 #include "editor/windows/assets/EffectEditor.h"
 #include "engine/assets/Effect.h"
+#include "misc/cpp/imgui_stdlib.h"
 
 namespace ze::editor
 {
@@ -25,10 +26,17 @@ void EffectEditor::post_draw()
 
 void EffectEditor::draw()
 {
-	ImGui::Dummy(ImVec2(100, 0)); ImGui::SameLine();
-	prop_ed.draw();
-	static std::array<char, 2048> buffer = {};
-	ImGui::InputTextMultiline("##effect_hlsl", buffer.data(), buffer.size(), ImVec2(-1, -1));
+	if(ImGui::BeginTable("##effect_tbl", 2, ImGuiTableFlags_SizingStretchProp))
+	{
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		static std::array<char, 2048> buffer = {};
+		ImGui::InputTextMultiline("##effect_hlsl", &effect->get_source(), ImVec2(-1, -1));
+		ImGui::TableNextColumn();
+		ImGui::Dummy(ImVec2(500, 1));
+		prop_ed.draw();
+		ImGui::EndTable();
+	}
 }
 
 }
