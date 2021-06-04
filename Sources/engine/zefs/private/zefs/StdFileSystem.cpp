@@ -26,8 +26,9 @@ OwnerPtr<std::streambuf> StdFileSystem::read(const std::filesystem::path& path, 
 	file->open(correct_path, rflags);
 	if (!file->is_open())
 	{
-		ze::logger::error("Failed to open file {}",
-			path.string());
+		ze::logger::error("Failed to open file {}: {}",
+			path.string(),
+			strerror(errno));
 		delete file;
 		file = nullptr;
 	}
@@ -45,11 +46,26 @@ OwnerPtr<std::streambuf> StdFileSystem::write(const std::filesystem::path& path,
 	if (flags & FileWriteFlagBits::Binary)
 		wflags |= std::ios::binary;
 
-	file->open(correct_path, wflags);
+	/** On hidden files for some reason it fails.. */
+	FileAttributeFlags attribs = get_file_attributes(path);
+	if(attribs & FileAttributeFlagBits::Hidden)
+	{
+		attribs &= ~FileAttributeFlags(FileAttributeFlagBits::Hidden);
+		set_file_attributes(path, attribs);
+		file->open(correct_path, wflags);
+		attribs |= FileAttributeFlagBits::Hidden;
+		set_file_attributes(path, attribs);
+	}
+	else
+	{
+		file->open(correct_path, wflags);	
+	}
+	
 	if (!file->is_open())
 	{
-		ze::logger::error("Failed to open file {}",
-			path.string());
+		ze::logger::error("Failed to open file {}: {}",
+			path.string(),
+			strerror(errno));
 		delete file;
 		file = nullptr;
 	}

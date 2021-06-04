@@ -96,7 +96,7 @@ void AssetExplorer::draw_asset_list()
 			for(const auto& factory : get_factories())
 			{
 				if (factory->can_instantiated() &&
-					ImGui::MenuItem(factory->get_supported_class()->get_name().c_str()))
+					ImGui::MenuItem(factory->get_name().c_str()))
 				{
 					OwnerPtr<Asset> asset = factory->instantiate();
 

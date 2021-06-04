@@ -15,6 +15,8 @@ add_library(editor
 	public/editor/assets/AssetFactory.h
 	public/editor/assets/TextureActions.h
 	public/editor/assets/TextureCooker.h
+	public/editor/windows/assets/AssetEditor.h
+	public/editor/windows/assets/EffectEditor.h
 	public/editor/windows/assets/texture/TextureEditor.h
 	private/editor/assets/factories/AssetFactory.cpp
 	private/editor/assets/actions/TextureActions.cpp
@@ -33,12 +35,21 @@ add_library(editor
 	private/editor/windows/EntityProperties.cpp
 	private/editor/windows/Tools.cpp
 	private/editor/windows/Console.cpp
+	private/editor/windows/assets/AssetEditor.cpp
 	private/editor/windows/assets/texture/TextureEditor.cpp
 	private/editor/PropertiesEditor.cpp
 	private/editor/IconManager.cpp
 	private/editor/PropertyEditor.cpp
 	private/editor/LargeTask.cpp
-	private/editor/ZEEditor.cpp private/editor/assets/factories/EffectFactory.h private/editor/assets/factories/EffectFactory.cpp private/editor/windows/assets/EffectEditor.cpp public/editor/windows/assets/EffectEditor.h private/editor/assets/actions/EffectActions.h private/editor/assets/actions/EffectActions.cpp private/editor/assets/EffectCooker.cpp private/editor/assets/EffectCooker.h)
+	private/editor/ZEEditor.cpp 
+	private/editor/assets/factories/EffectFactory.h 
+	private/editor/assets/factories/EffectFactory.cpp 
+	private/editor/windows/assets/EffectEditor.cpp 
+	public/editor/windows/assets/EffectEditor.h 
+	private/editor/assets/actions/EffectActions.h 
+	private/editor/assets/actions/EffectActions.cpp 
+	private/editor/assets/EffectCooker.cpp 
+	private/editor/assets/EffectCooker.h)
 
 target_link_libraries(editor
 	PUBLIC

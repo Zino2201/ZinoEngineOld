@@ -6,6 +6,7 @@ namespace ze::editor
 
 EffectFactory::EffectFactory()
 {
+	name = "Effect (shader)";
 	asset_class = reflection::Class::get<Effect>();
 	asset_file_extension = "zeeffect";
 	can_be_instantiated = true;

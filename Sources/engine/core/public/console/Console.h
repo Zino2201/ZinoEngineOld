@@ -9,7 +9,7 @@ namespace ze
 /**
  * Main console singleton
  */
-class CORE_API CConsole : public CNonCopyable
+class CORE_API CConsole : public NonCopyable
 {
 public:
 	CConsole();

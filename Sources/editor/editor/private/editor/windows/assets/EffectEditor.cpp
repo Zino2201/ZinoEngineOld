@@ -5,11 +5,12 @@
 namespace ze::editor
 {
 
-EffectEditor::EffectEditor(Asset* in_asset, const assetmanager::AssetRequestPtr& in_request_handle)
-	: Window(in_asset->get_path().stem().string(),
-		WindowFlagBits::Transient | WindowFlagBits::DockToMainDockSpaceOnce,
+EffectEditor::EffectEditor(Effect* in_effect, const assetmanager::AssetRequestPtr& in_request_handle)
+	: AssetEditor(in_effect, in_request_handle,
+		in_effect->get_path().stem().string(),
+		WindowFlagBits::Transient | WindowFlagBits::DockToMainDockSpaceOnce | WindowFlagBits::Document,
 		ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse),
-		effect(static_cast<Effect*>(in_asset)), asset_request(in_request_handle), prop_ed(in_asset->get_class(), in_asset)
+		prop_ed(asset->get_class(), asset)
 {
 
 }
@@ -31,7 +32,10 @@ void EffectEditor::draw()
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
 		static std::array<char, 2048> buffer = {};
-		ImGui::InputTextMultiline("##effect_hlsl", &effect->get_source(), ImVec2(-1, -1));
+		if(ImGui::InputTextMultiline("##effect_hlsl", &asset->get_source(), ImVec2(-1, -1)))
+		{
+			mark_as_unsaved();
+		}
 		ImGui::TableNextColumn();
 		ImGui::Dummy(ImVec2(500, 1));
 		prop_ed.draw();

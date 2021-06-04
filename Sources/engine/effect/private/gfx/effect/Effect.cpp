@@ -210,7 +210,7 @@ Effect::Permutation* Effect::get_permutation(EffectPermutationId id)
 #if ZE_WITH_EDITOR
 void Effect::build_pipeline_layout(EffectPermutationId id)
 {
-	robin_hood::unordered_map<uint32_t, std::vector<gfx::DescriptorSetLayoutBinding>> sets;
+	std::unordered_map<uint32_t, std::vector<gfx::DescriptorSetLayoutBinding>> sets;
 	for(const auto& [stage, shader] : permutations[id].shader_map)
 	{
 		std::string key = name + "_" + get_stage_prefix(stage) + "_Refl";
@@ -242,10 +242,24 @@ void Effect::build_pipeline_layout(EffectPermutationId id)
 				break;
 			}
 
-			sets[parameter.set].emplace_back(parameter.binding,
-				desc_type,
-				parameter.count,
-				stage);
+			/** Check if the parameter is already added in another shader stage */
+			bool found_param = false;
+			for(auto& param : sets[parameter.set])
+			{
+				if(param.binding == parameter.binding &&
+					param.descriptor_type == desc_type)
+				{
+					param.stage_flags |= stage;
+					found_param = true;
+					break;
+				}
+			}
+
+			if(!found_param)
+				sets[parameter.set].emplace_back(parameter.binding,
+					desc_type,
+					parameter.count,
+					stage);
 		}
 	}
 					

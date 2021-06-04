@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include "imgui/ImGui.h"
+#include "NonMoveable.h"
 
 namespace ze::editor
 {
@@ -15,7 +16,10 @@ enum class WindowFlagBits
 	Transient = 1 << 1,
 
 	/** Automaticly dock to the main dockspace once */
-	DockToMainDockSpaceOnce = 1 << 2
+	DockToMainDockSpaceOnce = 1 << 2,
+
+	/** Should be treated as a document that can be saved ? */
+	Document = 1 << 3
 };
 ENABLE_FLAG_ENUMS(WindowFlagBits, WindowFlags);
 
@@ -24,7 +28,8 @@ ENABLE_FLAG_ENUMS(WindowFlagBits, WindowFlags);
  * It can contains childs windows that will only be renderer if theirs parents is renderer
  * This is useful for creating modular editors with multiple tabs
  */
-class Window
+class Window : public NonCopyable,
+	public NonMoveable
 {
 public:
 	Window(const std::string& in_title, const WindowFlags& in_flags = WindowFlags(),
@@ -52,6 +57,15 @@ public:
 	 */
 	void destroy_child(Window* in_child);
 
+	void mark_as_saved();
+	
+	/**
+	 * Mark the window as "unsaved"
+	 */
+	void mark_as_unsaved();
+
+	virtual void save() {}
+
 	ZE_FORCEINLINE const std::string& get_title() const { return title; }
 protected:
 	virtual void pre_draw();
@@ -67,6 +81,7 @@ protected:
 	ImGuiID next_dock_id;
 	Window* parent;
 	std::vector<Window*> expired_childs;
+	bool need_save;
 };
 
 }

@@ -15,10 +15,10 @@ endif()
 
 target_link_libraries(main
     PRIVATE
-        core zefs engine gfx vulkangfx platformwindows vulkanshadercompiler SDL2)
+        core zefs engine gfx vulkangfx platformwindows SDL2)
 
 if(ZE_WITH_EDITOR)
-    target_link_libraries(main PRIVATE editor)
+    target_link_libraries(main PRIVATE editor vulkanshadercompiler)
     target_compile_definitions(main PRIVATE "ZE_WITH_EDITOR=1")
 else()
     target_compile_definitions(main PRIVATE "ZE_WITH_EDITOR=0")

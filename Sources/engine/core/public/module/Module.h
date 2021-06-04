@@ -2,6 +2,7 @@
 
 #include <string>
 #include "NonCopyable.h"
+#include "NonMoveable.h"
 #include <robin_hood.h>
 #include <functional>
 #include "ModuleManager.h"
@@ -17,9 +18,11 @@ using PFN_InstantiateModuleFunc = Module*(*)();
 /**
  * Module interface
  */
-class CORE_API Module : public CNonCopyable
+class Module : public NonCopyable,
+	public NonMoveable
 {
 public:
+	Module() = default;
     virtual ~Module() = default;
 
     const std::string& get_name() const { return name; }
@@ -40,7 +43,11 @@ private:
 /**
  * Default module implementation
  */
-class CORE_API DefaultModule : public Module {};
+class DefaultModule : public Module
+{
+public:
+	DefaultModule() = default;
+};
 
 constexpr const char* instantiate_module_func_name = "instantiate_module";
 

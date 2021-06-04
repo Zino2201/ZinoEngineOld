@@ -42,6 +42,8 @@ private:
 	ZPROPERTY(Editable, Visible, Category = "Base")
 	EffectType type;
 
+	// rasterizer state
+
 	std::string source;
 };
 

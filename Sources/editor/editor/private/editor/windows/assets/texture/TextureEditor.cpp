@@ -7,20 +7,20 @@
 namespace ze::editor
 {
 
-TextureEditor::TextureEditor(Asset* in_asset, 
+TextureEditor::TextureEditor(Texture* in_texture, 
 	const assetmanager::AssetRequestPtr& in_request_handle)
-	: Window(in_asset->get_path().stem().string(),
-		WindowFlagBits::Transient | WindowFlagBits::DockToMainDockSpaceOnce,
+	: AssetEditor(in_texture, in_request_handle,
+		in_texture->get_path().stem().string(),
+		WindowFlagBits::DockToMainDockSpaceOnce,
 		ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse),
-		asset_request(in_request_handle),
-		texture(static_cast<Texture*>(in_asset)),
-	properties_editor(reflection::Class::get<Texture>(), in_asset), 
+	properties_editor(reflection::Class::get<Texture>(), in_texture), 
 	zoom(1.f), 
 	current_miplevel(0), 
 	should_update_resource(false), 
 	should_update_mipmaps(false)
 {
-	properties_editor.bind_to_value_changed("use_mipmaps", std::bind(&TextureEditor::on_mipmap_changed, this, std::placeholders::_1));
+	properties_editor.bind_to_value_changed("use_mipmaps", 
+		std::bind(&TextureEditor::on_mipmap_changed, this, std::placeholders::_1));
 
 	build_views();
 }
@@ -30,11 +30,11 @@ TextureEditor::~TextureEditor() {}
 void TextureEditor::build_views()
 {
 	views.clear();
-	views.reserve(texture->get_platform_data().get_mip_count());
-	for(size_t mip = 0; mip < texture->get_platform_data().get_mip_count(); ++mip)
+	views.reserve(asset->get_platform_data().get_mip_count());
+	for(size_t mip = 0; mip < asset->get_platform_data().get_mip_count(); ++mip)
 	{
 		views.emplace_back(gfx::Device::get().create_texture_view(gfx::TextureViewInfo::make_2d_view(
-			texture->get_texture(), texture->get_platform_data().get_format(),
+			asset->get_texture(), asset->get_platform_data().get_format(),
 			gfx::TextureSubresourceRange(gfx::TextureAspectFlagBits::Color, mip, 1, 0, 1))).second);
 	}
 }
@@ -46,8 +46,8 @@ void TextureEditor::draw()
 	/** Used for deferred resource updating */
 	if(should_update_mipmaps)
 	{
-		AssetCooker::cook_asset(texture);
-		texture->update_resource();
+		AssetCooker::cook_asset(asset);
+		asset->update_resource();
 		should_update_mipmaps = false;
 		should_update_resource = false;
 		current_miplevel = 0;
@@ -56,14 +56,14 @@ void TextureEditor::draw()
 
 	if(should_update_resource)
 	{
-		AssetCooker::cook_asset(texture);
-		texture->update_resource();
+		AssetCooker::cook_asset(asset);
+		asset->update_resource();
 		should_update_resource = false;
 		build_views();
 	}
 
 	const ImVec2 texture_size(ImGui::GetContentRegionAvail());
-	ImVec2 texture_quad_size(texture->get_width() * zoom, texture->get_height() * zoom);
+	ImVec2 texture_quad_size(asset->get_width() * zoom, asset->get_height() * zoom);
 	if(views[current_miplevel])
 	{
 		ImRect bb(ImGui::GetCursorScreenPos(), ImGui::GetCursorScreenPos() + texture_size);
@@ -81,17 +81,16 @@ void TextureEditor::draw()
 
 	/** "HUD" display onto the image displaying informations */
 	ImGui::BeginGroup();
-	ImGui::Text("Type: %s", std::to_string(texture->get_type()).c_str());
-	ImGui::Text("GPU Format: %s", to_string_pretty(texture->get_platform_data().get_format()).c_str());
+	ImGui::Text("Type: %s", std::to_string(asset->get_type()).c_str());
+	ImGui::Text("GPU Format: %s", to_string_pretty(asset->get_platform_data().get_format()).c_str());
 	ImGui::Text("Res: %dx%dx1 (Mip %d/%d)",
-		texture->get_platform_data().get_mip(current_miplevel).width,
-		texture->get_platform_data().get_mip(current_miplevel).height,
+		asset->get_platform_data().get_mip(current_miplevel).width,
+		asset->get_platform_data().get_mip(current_miplevel).height,
 		current_miplevel,
-		texture->get_platform_data().get_mip_count() - 1);
+		asset->get_platform_data().get_mip_count() - 1);
 	ImGui::Text("VRAM Size (Mip %d): %f KiB",
 		current_miplevel,
-		texture->get_platform_data().get_mip(current_miplevel).data.size() / 1048576.f);
-
+		asset->get_platform_data().get_mip(current_miplevel).data.size() / 1048576.f);
 	{
 		std::string zoom_txt = fmt::format("Zoom: {}%", static_cast<int>(zoom * 100));
 		ImGui::TextUnformatted(zoom_txt.c_str());
@@ -107,14 +106,15 @@ void TextureEditor::draw()
 	{
 		ImGui::TextUnformatted("Current selected miplevel");
 		ImGui::SameLine();
-		ImGui::SliderInt("", &current_miplevel, 0, texture->get_platform_data().get_mip_count() - 1, "%d", 
+		ImGui::SliderInt("", &current_miplevel, 0, asset->get_platform_data().get_mip_count() - 1, "%d", 
 			ImGuiSliderFlags_AlwaysClamp);
 		ImGui::Separator();
 
 		ImGui::TextUnformatted("Parameters");
 		if(properties_editor.draw())
-		{ // fo enlever
+		{
 			should_update_resource = true;
+			mark_as_unsaved();
 		}
 	}
 	ImGui::EndChild();

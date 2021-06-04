@@ -1,7 +1,6 @@
 #pragma once
 
-#include "editor/windows/Window.h"
-#include "assets/AssetManager.h"
+#include "AssetEditor.h"
 #include "gfx/Gfx.h"
 #include "editor/PropertiesEditor.h"
 
@@ -10,18 +9,16 @@ namespace ze { class Effect; }
 namespace ze::editor
 {
 
-class EffectEditor : public Window
+class EffectEditor : public AssetEditor<Effect>
 {
 public:
-	EffectEditor(Asset* in_asset,
+	EffectEditor(Effect* in_effect,
 		const assetmanager::AssetRequestPtr& in_request_handle);
 protected:
 	void pre_draw() override;
 	void draw() override;
 	void post_draw() override;
 private:
-	assetmanager::AssetRequestPtr asset_request;
-	Effect* effect;
 	PropertiesEditor prop_ed;
 };
 

@@ -13,7 +13,7 @@ void EffectCooker::cook(AssetCookingContext& in_context)
 {
 	if(in_context.platform.is_editor())
 	{
-	
+
 	}
 }
 

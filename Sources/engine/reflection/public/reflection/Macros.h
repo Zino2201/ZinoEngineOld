@@ -46,7 +46,7 @@
 #define ZPROPERTY(...)
 #define ZFUNCTION(...)
 
-#if __INTELLISENSE__ || __JETBRAINS_IDE__
+#if __INTELLISENSE__ || __JETBRAINS_IDE__ || __RESHARPER__
 #define ZE_REFL_BODY() public: const ze::reflection::Class* get_class() const { return nullptr; } private:
 #else
 /** Macro used for ZRT to generate a body */

@@ -30,11 +30,14 @@ public:
 	 */
 	virtual OwnerPtr<Asset> create_from_stream(std::istream& in_stream) { return nullptr; }
 
+	const std::string& get_name() const { return name; }
 	const std::vector<std::string>& get_supported_formats() const { return supported_formats;  }
 	const ze::reflection::Class* get_supported_class() const { return asset_class;  }
 	const bool can_instantiated() const { return can_be_instantiated;  }
 	const std::string& get_asset_file_extension() const { return asset_file_extension; }
 protected:
+	std::string name;
+	
 	/** The class that the factory represents */
 	const ze::reflection::Class* asset_class;
 
