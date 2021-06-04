@@ -128,7 +128,7 @@ jobs:
         mkdir RelWithDebInfo
         copy "Binaries\RelWithDebInfo-Editor\*.dll" "RelWithDebInfo\*.dll"
         copy "Binaries\RelWithDebInfo-Editor\*.pdb" "RelWithDebInfo\*.pdb"
-        copy "Binaries\RelWithDebInfo-Editor\ZinoEngine.exe" "RelWithDebInfo\ZinoEngine.exe"
+        copy "Binaries\RelWithDebInfo-Editor\ZinoEngine.exe" "RelWithDebInfo\ZEEditor.exe"
         copy "imgui.ini" "RelWithDebInfo\imgui.ini"
         xcopy "Assets\*" "RelWithDebInfo\Assets\" /E /H
         xcopy "Shaders\*" "RelWithDebInfo\Shaders\" /E /H
