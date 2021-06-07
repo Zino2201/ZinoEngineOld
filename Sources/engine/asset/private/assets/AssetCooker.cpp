@@ -29,7 +29,7 @@ AssetCooker* AssetCooker::get_cooker_for(const reflection::Class* asset_class)
 AssetCookingContext AssetCooker::cook_asset(Asset* asset)
 {
 	AssetMetadata meta = asset->get_metadata();
-	AssetCookingContext ctx(asset, get_current_platform(), meta);
+	AssetCookingContext ctx(asset, get_running_platform(), meta);
 
 	if (AssetCooker* cooker = get_cooker_for(asset->get_class()))
 	{

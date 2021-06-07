@@ -11,9 +11,10 @@ class Device;
 class VulkanBackend final : public Backend
 {
 public:
+	VulkanBackend(const BackendInfo* in_backend_info) : Backend(in_backend_info) {}
 	~VulkanBackend();
 
-	std::pair<bool, std::string> initialize() override;
+	std::pair<bool, std::string> initialize();
 	void device_wait_idle() override;
 	void new_frame() override;
 	BackendFeatureFlags get_features() const override

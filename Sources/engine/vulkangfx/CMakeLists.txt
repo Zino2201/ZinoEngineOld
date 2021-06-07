@@ -1,7 +1,6 @@
 find_package(Vulkan REQUIRED)
 
 add_library(vulkangfx
-    public/Gfx/Vulkan/Backend.h
     private/Command.h
     private/DescriptorSet.h
     private/Device.h
@@ -31,6 +30,7 @@ add_library(vulkangfx
     private/PipelineLayout.cpp
     private/Commands.cpp
     private/DescriptorSet.cpp
+    private/VulkanGfxModule.cpp
     private/Sampler.cpp)
 
 target_link_libraries(vulkangfx

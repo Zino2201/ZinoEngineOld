@@ -6,10 +6,12 @@
 #include <array>
 #include <span>
 #include <variant>
+#include "ShaderFormat.h"
+#include "BackendInfo.h"
 
 namespace ze::gfx
 {
-
+	
 enum class Format
 {
     Undefined,
@@ -869,7 +871,7 @@ enum class ShaderStageFlagBits
 {
 	Vertex = 1 << 0,
 	TesselationControl = 1 << 1,
-	TesselationEvaluation= 1 << 2,
+	TesselationEvaluation = 1 << 2,
 	Geometry = 1 << 3,
 	Fragment = 1 << 4,
 	Compute = 1 << 5,
@@ -1457,25 +1459,23 @@ enum class Result
 class Backend
 {
 public:
-	Backend();
+	Backend(const BackendInfo* in_backend_info);
 	virtual ~Backend();
 
 	static Backend& get();
-
-	/** 
-	 * Initialize the backend
-	 * \return A pair containing a boolean indicating if initializaton was successful and a error message
-	 */
-	virtual std::pair<bool, std::string> initialize() = 0;
 	
 	/**
-	 * Inform the backend that a new frame has starteds
+	 * Get shader format for the specified shader model
+	 */
+	ShaderFormat get_shader_format(const BackendShaderModel in_shader_model) const;
+	
+	/**
+	 * Inform the backend that a new frame has started
 	 */
 	virtual void new_frame() = 0;
 
 	/** 
 	 * Wait for device 
-	 * (not recommended)
 	 */
 	virtual void device_wait_idle() = 0;
 
@@ -1835,6 +1835,8 @@ public:
 	 * \return Gfx queue
 	 */
 	virtual ResourceHandle get_gfx_queue() const = 0;
+private:
+	const BackendInfo* backend_info;
 };
 }
 

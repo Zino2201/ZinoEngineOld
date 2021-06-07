@@ -5,9 +5,7 @@
 #include <SDL.h>
 #include "engine/Engine.h"
 #include <chrono>
-#include "gfx/vulkan/Backend.h"
 #include "gfx/Gfx.h"
-
 #if ZE_WITH_EDITOR
 #include "editor/ZEEditor.h"
 #else
@@ -23,21 +21,16 @@
 #include <Windows.h>
 #include <cstdlib>
 #endif
-#include <sstream>
 #include <filesystem>
 #include "console/Console.h"
-#include "serialization/types/Map.h"
-#include "serialization/types/Vector.h"
-#include "serialization/types/Uuid.h"
 #include "serialization/Json.h"
 #include "reflection/Serialization.h"
 #include "assets/Asset.h"
-#include "assets/AssetMetadata.h"
-#include "zefs/FileStream.h"
-#include "EngineVer.h"
 #include "zefs/StdFileSystem.h"
 #include "zefs/Paths.h"
 #include "gfx/effect/EffectDatabase.h"
+#include "PlatformMgr.h"
+#include "gfx/BackendManager.h"
 
 namespace FS = ze::filesystem;
 
@@ -47,12 +40,7 @@ int Init();
 void Exit();
 
 /** Global variables */
-
-/** Render system ptr */
-static std::unique_ptr<ze::gfx::Backend> RenderBackend;
-static std::unique_ptr<ze::gfx::Device> Device;
-
-/** Current app */
+std::unique_ptr<ze::gfx::Device> gfx_device;
 
 /** Engine ptr */
 static std::unique_ptr<ze::EngineApp> engine_app;
@@ -152,15 +140,16 @@ void PreInit()
 #endif
 
         LoadRequiredModule("platform");
-#if ZE_PLATFORM(WINDOWS)
-        LoadRequiredModule("platformwindows");
-#endif
+
+    	/** Find installed platforms */
+    	ze::find_platforms();
 
         /** Check if required directories/files are presents */
-        const std::array<const char*, 2> RequiredObjects =
+        const std::array<const char*, 3> RequiredObjects =
         {
-                        "Shaders",
-                        "Assets"
+			"Assets",
+			"Config",
+			"Shaders"
         };
 
         for(const auto& Obj : RequiredObjects)
@@ -192,15 +181,20 @@ void PreInit()
     /** INITIALIZE RENDER SYSTEM **/
     {
         ze::logger::info("Initializing render system");
-        LoadRequiredModule("vulkangfx");
-        LoadRequiredModule("vulkanshadercompiler");
-        OwnerPtr<ze::gfx::Backend> backend = ze::gfx::vulkan::create_vulkan_backend();
-        auto [result, msg] = backend->initialize();
-        if(!result)
-            ze::logger::fatal("Failed to initialize backend:\n{}.\n\nCheck logs for additional informations.", msg);
+        ze::gfx::find_backends();
 
-        RenderBackend = std::unique_ptr<ze::gfx::Backend>(backend);
-        Device = std::make_unique<ze::gfx::Device>();
+    	/** For now only uses Vulkan */
+        bool success = false;
+    	for(const auto& backend : ze::gfx::get_backends())
+    	{
+    		if(backend.name == "Vulkan")
+                success = create_backend(&backend, ze::gfx::BackendShaderModel::ShaderModel6_0);
+    	}
+
+    	if(!success)
+            ze::logger::fatal("Failed to load a graphics backend!");
+
+    	gfx_device = std::make_unique<ze::gfx::Device>();
     }
 }
 
@@ -237,7 +231,8 @@ void Exit()
     ze::gfx::Device::get().destroy();
 
     /** Delete render system */
-    RenderBackend.reset();
+    gfx_device.reset();
+	ze::gfx::destroy_running_backend();
 
     ze::jobsystem::stop();
 

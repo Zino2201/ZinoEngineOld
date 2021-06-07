@@ -4,7 +4,7 @@ add_library(platform
     public/Device.h
     public/Platform.h)
 
-target_link_libraries(platform PRIVATE core)
+target_link_libraries(platform PRIVATE core zefs tomlplusplus::tomlplusplus)
 
 target_include_directories(platform
     PUBLIC 

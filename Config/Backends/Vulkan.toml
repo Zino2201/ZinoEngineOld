@@ -1,0 +1,5 @@
+[Backend.Vulkan]
+Name="Vulkan"
+Module="vulkangfx"
+ShaderLanguage="SPIR-V"
+ShaderModels=["ShaderModel6_0", "ShaderModel6_5"]

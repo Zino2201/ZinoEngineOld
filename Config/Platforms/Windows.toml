@@ -1,0 +1,17 @@
+# Platform definition for Windows
+
+[Platform.WindowsEditor]
+Name="WindowsEditor"
+OS="Windows"
+Type="Editor"
+
+[Platform.Windows]
+Name="Windows"
+OS="Windows"
+Type="Game"
+
+[Gfx.Vulkan]
+ShaderModels=["ShaderModel6_0", "ShaderModel6_5"]
+
+[Gfx.D3D12]
+ShaderModels=["ShaderModel6_0", "ShaderModel6_5"]

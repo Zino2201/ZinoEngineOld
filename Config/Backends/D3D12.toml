@@ -1,0 +1,5 @@
+[Backend.D3D12]
+Name="D3D12"
+Module="d3d12backend"
+ShaderLanguage="DXIL"
+ShaderModels=["ShaderModel6_0", "ShaderModel6_5"]

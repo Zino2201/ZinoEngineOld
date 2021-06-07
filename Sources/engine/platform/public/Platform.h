@@ -10,6 +10,7 @@ class Device;
 /** Operating System running the platform */
 enum class PlatformOS
 {
+	Unknown,
 	Windows,
 	MacOS,
 	Linux,
@@ -24,41 +25,32 @@ enum class PlatformEnvironnement
 	Game
 };
 
-enum class PlatformShaderModel
-{
-	SM5,
-	SM6,
-};
-
-enum class PlatformBackend
-{
-	Vulkan,
-};
-
-enum class PlatformGfxFeaturesFlagBits
-{
-	Raytracing = 1 << 0,
-	SparseResources = 1 << 1,
-	MeshShader = 1 << 2,
-};
-ENABLE_FLAG_ENUMS(PlatformGfxFeaturesFlagBits, PlatformGfxFeaturesFlags);
-
 struct PlatformInfo
 {
+#if ZE_PLATFORM(WINDOWS)
+	static constexpr PlatformOS running_os = PlatformOS::Windows;
+#elif ZE_PLATFORM(OSX)
+	static constexpr PlatformOS running_os = PlatformOS::MacOS;
+#elif ZE_PLATFORM(LINUX)
+	static constexpr PlatformOS running_os = PlatformOS::Linux;
+#elif ZE_PLATFORM(ANDROID)
+	static constexpr PlatformOS running_os = PlatformOS::Android;
+#else
+	static constexpr PlatformOS running_os = PlatformOS::Unknown;
+#endif
+	
 	/** Base informations */
+	std::string name;
 	PlatformOS os;
 	PlatformEnvironnement env;
-	std::string name;
 	bool is_little_endian;
-	//std::vector<std::unique_ptr<Device>> devices;
 
-	/** Rendering things */
-	std::vector<PlatformShaderModel> shader_models;
-	std::vector<PlatformBackend> backends;
-
-	/** Supported gfx features (may not be supported by the backend!) */
-	PlatformGfxFeaturesFlags gfx_features;
-
+	PlatformInfo(const std::string& in_name, 
+		const PlatformOS in_os = PlatformOS::Unknown,
+		const PlatformEnvironnement in_env = PlatformEnvironnement::Game,
+		const bool in_is_little_endian = (std::endian::native == std::endian::little))
+		: name(in_name), os(in_os), env(in_env), is_little_endian(in_is_little_endian) {}
+	
 	bool is_editor() const { return env == PlatformEnvironnement::Editor; }
 };
 

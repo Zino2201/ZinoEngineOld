@@ -131,6 +131,7 @@ jobs:
         copy "Binaries\RelWithDebInfo-Editor\ZEEditor.exe" "RelWithDebInfo\ZEEditor.exe"
         copy "imgui.ini" "RelWithDebInfo\imgui.ini"
         xcopy "Assets\*" "RelWithDebInfo\Assets\" /E /H
+        xcopy "Config\*" "RelWithDebInfo\Config\" /E /H
         xcopy "Shaders\*" "RelWithDebInfo\Shaders\" /E /H
       shell: cmd
       

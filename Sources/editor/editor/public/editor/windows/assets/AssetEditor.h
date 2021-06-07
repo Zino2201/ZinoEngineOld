@@ -22,7 +22,7 @@ public:
 
 	void save() override
 	{
-		assetmanager::save_asset(assetmanager::AssetSaveInfo(asset, get_current_platform()));
+		assetmanager::save_asset(assetmanager::AssetSaveInfo(asset, get_running_platform()));
 	}
 	
 	AssetClass* get_asset() const { return asset; }

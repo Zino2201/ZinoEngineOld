@@ -14,10 +14,16 @@ namespace ze::gfx::shaders
 /**
  * Shaders
  */
+
+/** MUST BE THE SAME AS ze::gfx::ShaderStageFlagBits ! */
 enum class ShaderStage
 {
     Vertex = 1 << 0,
-    Fragment = 1 << 1,
+	TesselationControl = 1 << 1,
+	TesselationEvaluation = 1 << 2,
+	Geometry = 1 << 3,
+	Fragment = 1 << 4,
+	Compute = 1 << 5,
 };
 
 enum class ShaderParameterType

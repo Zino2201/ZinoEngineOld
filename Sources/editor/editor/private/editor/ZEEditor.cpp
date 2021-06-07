@@ -636,7 +636,7 @@ void EditorApp::on_asset_imported(const std::filesystem::path& in_path,
 		asset->get_path().stem().string(),
 		asset->get_class()->get_name());
 
-	assetmanager::save_asset(assetmanager::AssetSaveInfo(asset, get_current_platform()));
+	assetmanager::save_asset(assetmanager::AssetSaveInfo(asset, get_running_platform()));
 	delete asset;
 
 	/** Notify the database */

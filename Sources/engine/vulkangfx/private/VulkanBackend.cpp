@@ -1,6 +1,5 @@
 #define VMA_IMPLEMENTATION
 #include "VulkanBackend.h"
-#include "gfx/vulkan/Backend.h"
 #include <SDL.h>
 #include <SDL_vulkan.h>
 #include "module/Module.h"
@@ -11,17 +10,10 @@
 #include "RenderPass.h"
 #include "PipelineLayout.h"
 
-ZE_DEFINE_MODULE(ze::module::DefaultModule, vulkangfx);
-
 namespace ze::gfx::vulkan
 {
 
 VulkanBackend* backend = nullptr;
-
-OwnerPtr<Backend> create_vulkan_backend()
-{
-	return new VulkanBackend;
-}
 
 /**
  * Validation layers callback
