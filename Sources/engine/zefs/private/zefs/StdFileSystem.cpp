@@ -40,7 +40,7 @@ OwnerPtr<std::streambuf> StdFileSystem::write(const std::filesystem::path& path,
 {
 	std::filesystem::path correct_path = get_correct_path(path);
 
-	OwnerPtr<std::filebuf> file= new std::filebuf;
+	OwnerPtr<std::filebuf> file = new std::filebuf;
 
 	uint32_t wflags = std::ios::out;
 	if (flags & FileWriteFlagBits::Binary)
@@ -48,7 +48,7 @@ OwnerPtr<std::streambuf> StdFileSystem::write(const std::filesystem::path& path,
 
 	/** On hidden files for some reason it fails.. */
 	FileAttributeFlags attribs = get_file_attributes(path);
-	if(attribs & FileAttributeFlagBits::Hidden)
+	if(exists(path) && (attribs & FileAttributeFlagBits::Hidden))
 	{
 		attribs &= ~FileAttributeFlags(FileAttributeFlagBits::Hidden);
 		set_file_attributes(path, attribs);
