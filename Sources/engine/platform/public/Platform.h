@@ -5,8 +5,6 @@
 namespace ze
 {
 
-class Device;
-
 /** Operating System running the platform */
 enum class PlatformOS
 {
@@ -63,6 +61,8 @@ inline std::string to_string(const ze::PlatformOS& os)
 {
 	switch (os)
 	{
+	case ze::PlatformOS::Unknown:
+		return "Unknown";
 	case ze::PlatformOS::Windows:
 		return "Windows";
 	case ze::PlatformOS::MacOS:

@@ -1463,11 +1463,12 @@ public:
 	virtual ~Backend();
 
 	static Backend& get();
+
 	
 	/**
 	 * Get shader format for the specified shader model
 	 */
-	ShaderFormat get_shader_format(const BackendShaderModel in_shader_model) const;
+	ShaderFormat get_shader_format(const ShaderModel in_shader_model) const;
 	
 	/**
 	 * Inform the backend that a new frame has started
@@ -1856,6 +1857,25 @@ namespace std
 			return "Out of video memory";
 		case ze::gfx::Result::ErrorOutOfHostMemory:
 			return "Out of memory";
+		}
+	}
+
+	inline std::string to_string(const ze::gfx::ShaderStageFlagBits& in_shader_stage)
+	{
+		switch (in_shader_stage)
+		{
+		case ze::gfx::ShaderStageFlagBits::Vertex:
+			return "Vertex";
+		case ze::gfx::ShaderStageFlagBits::Fragment:
+			return "Fragment";
+		case ze::gfx::ShaderStageFlagBits::Compute:
+			return "Compute";
+		case ze::gfx::ShaderStageFlagBits::Geometry:
+			return "Geometry";
+		case ze::gfx::ShaderStageFlagBits::TesselationControl:
+			return "TesselationControl";
+		case ze::gfx::ShaderStageFlagBits::TesselationEvaluation:
+			return "TesselationEvaluation";
 		}
 	}
 

@@ -8,23 +8,12 @@
 #include "serialization/types/String.h"
 #include <robin_hood.h>
 
-namespace ze::gfx::shaders
+namespace ze::gfx
 {
 
 /**
  * Shaders
  */
-
-/** MUST BE THE SAME AS ze::gfx::ShaderStageFlagBits ! */
-enum class ShaderStage
-{
-    Vertex = 1 << 0,
-	TesselationControl = 1 << 1,
-	TesselationEvaluation = 1 << 2,
-	Geometry = 1 << 3,
-	Fragment = 1 << 4,
-	Compute = 1 << 5,
-};
 
 enum class ShaderParameterType
 {
@@ -45,7 +34,7 @@ struct ShaderParameterMember
 /**
  * A shader parameter
  */
-struct SHADERCORE_API ShaderParameter
+struct ShaderParameter
 {
 	template<typename ArchiveType>
     void serialize(ArchiveType& archive)
@@ -56,7 +45,6 @@ struct SHADERCORE_API ShaderParameter
         archive <=> binding;
         archive <=> size;
         archive <=> count;
-        //archive <=> members;
     }
 
     std::string name;

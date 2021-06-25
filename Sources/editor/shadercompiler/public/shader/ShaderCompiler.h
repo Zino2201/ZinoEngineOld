@@ -3,20 +3,11 @@
 #include "EngineCore.h"
 #include "shader/ShaderCore.h"
 #include <future>
-#include <string_view>
-#include "NonCopyable.h"
-#include <robin_hood.h>
+#include "gfx/ShaderFormat.h"
+#include "gfx/Gfx.h"
 
-namespace ze::gfx::shaders
+namespace ze::gfx
 {
-
-/**
- * Target formats
- */
-enum class ShaderCompilerTargetFormat
-{
-    SpirV,
-};
 
 /**
  * Reflection data output
@@ -45,56 +36,55 @@ struct ShaderCompilerOutput
     ShaderCompilerOutput() : success(false) {}
 };
 
-enum class ShaderCompilerTarget
-{
-    VulkanSpirV
-};
 
 class ShaderCompiler;
 
-SHADERCOMPILER_API ShaderCompiler* register_shader_compiler(ShaderCompilerTarget target, OwnerPtr<ShaderCompiler> compiler);
-SHADERCOMPILER_API void unregister_shader_compiler(ShaderCompiler* compiler);
+void register_shader_compiler(OwnerPtr<ShaderCompiler> compiler);
+void unregister_shader_compilers();
 
 /*
  * Compile a shader
  * \return Future shader compiler output
  */
-SHADERCOMPILER_API ShaderCompilerOutput compile_shader(const ShaderStage& stage,
+// remove
+ShaderCompilerOutput compile_shader(const ShaderStageFlagBits stage,
     const std::string& shader_name, 
     const std::string_view& shader_source,
     const std::string_view& entry_point,
-    const ShaderCompilerTarget& target,
-    const bool& should_optimize);
+    const ShaderFormat format,
+    const bool should_optimize);
 
-SHADERCOMPILER_API std::future<ShaderCompilerOutput> compile_shader_async(const ShaderStage& stage,
+std::future<ShaderCompilerOutput> compile_shader_async(const ShaderStageFlagBits stage,
     const std::string& shader_name,
     const std::string_view& shader_source,
     const std::string_view& entry_point,
-    const ShaderCompilerTarget& target,
-    const bool& should_optimize);
-
+    const ShaderFormat format,
+    const bool should_optimize);
 
 /**
  * Shader compiler interface
  * Should be implemented for each target
  */
-class SHADERCOMPILER_API ShaderCompiler
+class ShaderCompiler
 {
 public:
-    ShaderCompiler(const ShaderCompilerTarget& InTarget);
+    ShaderCompiler(const std::string& in_name, const ShaderLanguage in_shader_language)
+		: name(in_name), shader_language(in_shader_language) {}
     virtual ~ShaderCompiler() = default;
 
 	virtual ShaderCompilerOutput compile_shader(
-		const ShaderStage& stage,
+		const ShaderStageFlagBits stage,
 		const std::string_view& shader_name,
 		const std::string_view& shader_source,
 		const std::string_view& entry_point,
-		const ShaderCompilerTarget& target_format,
-		const bool& optimize) = 0;
+		const ShaderFormat format,
+		const bool optimize) = 0;
 
-    ZE_FORCEINLINE ShaderCompilerTarget get_target() { return target; }
+    ZE_FORCEINLINE const std::string& get_name() const { return name; }
+    ZE_FORCEINLINE ShaderLanguage get_shader_language() const { return shader_language; }
 protected:
-    ShaderCompilerTarget target;
+	std::string name;
+    ShaderLanguage shader_language;
 };
 
 }

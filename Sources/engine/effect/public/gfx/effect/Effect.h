@@ -5,7 +5,7 @@
 #include <robin_hood.h>
 #include <bitset>
 #if ZE_WITH_EDITOR
-#include "shader/ShaderCompiler.h"
+#include "gfx/effect/EffectCompiler.h"
 #endif
 
 namespace ze::gfx
@@ -43,10 +43,22 @@ struct EffectOption
 	}
 };
 
+enum class EffectPermutationStatus
+{
+	/** Permutation is not present or have not been built */
+	Unavailable,
+
+	/** Permutation have a compile error and can't be used. It can be recompiled if possible */
+	CompileError,
+
+	/** Permutation is available !*/
+	Available
+};
+	
 using EffectShaderSources = robin_hood::unordered_map<ShaderStageFlagBits, std::string>;
 using EffectShaderMap = robin_hood::unordered_map<ShaderStageFlagBits, DeviceResourceHandle>;
 using EffectPermutationId = std::bitset<32>;
-
+	
 /*
  * A effect: a group of shaders and metadatas describing the state of the final graphics pipeline for a single pass
  * This works similary like D3D Effect API/Unity ShaderLab language
@@ -62,8 +74,11 @@ public:
 	 */
 	struct Permutation
 	{
+		EffectPermutationStatus status;
 		EffectShaderMap shader_map;
 		UniquePipelineLayout pipeline_layout;
+
+		Permutation() : status(EffectPermutationStatus::Unavailable) {}
 	};
 
 	Effect(const std::string& in_name,
@@ -76,26 +91,23 @@ public:
 
 #if ZE_WITH_EDITOR
 	/**
-	 * Compile the specified stage of the specified permutation
+	 * Compile the effect (async)
 	 */
-	shaders::ShaderCompilerOutput compile_permutation_stage(EffectPermutationId id, ShaderStageFlagBits stage);
+	std::future<EffectCompilerResult> compile(const EffectPermutationId id, const ShaderFormat& in_format);
 #endif
+	
 	/**
 	 * Get the shader map of the specific permutation
 	 * If the permutation is not build, it will be built
+	 * \param id Id of the permutation
 	 */
-	Permutation* get_permutation(EffectPermutationId id);
+	Permutation* get_permutation(const EffectPermutationId id);
 	EffectPermutationId get_permutation_id(const std::vector<std::pair<std::string, uint32_t>>& in_enabled_options) const;
 	std::vector<std::pair<std::string, std::string>> get_options_from_id(EffectPermutationId id) const;
-	bool is_available(EffectPermutationId id);
-	std::string get_stage_prefix(ShaderStageFlagBits stage) const;
+	bool is_available(const EffectPermutationId id);
 	ZE_FORCEINLINE const PipelineRasterizationStateCreateInfo& get_rasterizer_state() const { return rasterizer_state; }
 private:
 	void destroy_permutation(EffectPermutationId id);
-
-#if ZE_WITH_EDITOR
-	void build_pipeline_layout(EffectPermutationId id);
-#endif
 private:
 	std::string name;
 	EffectShaderSources sources;

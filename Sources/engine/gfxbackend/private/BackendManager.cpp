@@ -1,5 +1,4 @@
 #include "gfx/BackendManager.h"
-
 #include "gfx/Backend.h"
 #include "zefs/FileStream.h"
 #include "zefs/ZEFS.h"
@@ -12,33 +11,34 @@ namespace ze::gfx
 
 std::vector<BackendInfo> backends;
 Backend* running_backend = nullptr;
+ShaderModel current_shader_model = ShaderModel::ShaderModel6_0;
 
-BackendShaderLanguage get_shader_language_from_string(const std::string& in_str)
+ShaderLanguage get_shader_language_from_string(const std::string& in_str)
 {
 	if(in_str == "SPIR-V")
-		return BackendShaderLanguage::SPIRV;
+		return ShaderLanguage::SPIRV;
 
 	if(in_str == "DXIL")
-		return BackendShaderLanguage::DXIL;
+		return ShaderLanguage::DXIL;
 		
 
-	ZE_CHECKF(true, "Invalid shader language {}", in_str);
+	ZE_ASSERTF(true, "Invalid shader language {}", in_str);
 	
-	return BackendShaderLanguage::SPIRV;
+	return ShaderLanguage::SPIRV;
 }
 
-BackendShaderModel get_shader_model_from_string(const std::string& in_str)
+ShaderModel get_shader_model_from_string(const std::string& in_str)
 {
 	if(in_str == "ShaderModel6_0")
-		return BackendShaderModel::ShaderModel6_0;
+		return ShaderModel::ShaderModel6_0;
 
 	if(in_str == "ShaderModel6_5")
-		return BackendShaderModel::ShaderModel6_5;
+		return ShaderModel::ShaderModel6_5;
 		
 
-	ZE_CHECKF(true, "Invalid shader model {}", in_str);
+	ZE_ASSERTF(true, "Invalid shader model {}", in_str);
 	
-	return BackendShaderModel::ShaderModel6_0;
+	return ShaderModel::ShaderModel6_0;
 }
 	
 void parse_backend_file(const std::filesystem::path& in_file)
@@ -82,7 +82,7 @@ void parse_backend_file(const std::filesystem::path& in_file)
 			continue;
 		}
 		
-		std::vector<BackendShaderModel> supported_shader_models;
+		std::vector<ShaderModel> supported_shader_models;
 		const auto shader_models = backend_table["ShaderModels"].as_array();
 		if(!shader_models)
 		{
@@ -120,7 +120,7 @@ const std::vector<BackendInfo>& get_backends()
 	return backends;
 }
 
-bool create_backend(const BackendInfo* in_backend, const BackendShaderModel in_requested_shader_model)
+bool create_backend(const BackendInfo* in_backend, const ShaderModel in_requested_shader_model)
 {
 	/** Try load the backend's module */
 	if (module::Module* module = module::load_module(in_backend->module_name))
@@ -135,6 +135,7 @@ bool create_backend(const BackendInfo* in_backend, const BackendShaderModel in_r
 		}
 
 		running_backend = backend;
+		current_shader_model = in_requested_shader_model;
 		
 		logger::info("Using graphics backend {}", in_backend->name);
 
@@ -155,6 +156,11 @@ void destroy_running_backend()
 {
 	if(running_backend)
 		delete running_backend;
+}
+
+ShaderModel get_current_shader_model()
+{
+	return current_shader_model;
 }
 	
 }

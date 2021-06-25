@@ -8,7 +8,7 @@ namespace ze::gfx::vulkan
 class VulkanGfxModule final : public gfx::BackendModule
 {
 public:
-	Backend* create_backend(const BackendInfo* in_backend, const BackendShaderModel in_requested_shader_model) override
+	Backend* create_backend(const BackendInfo* in_backend, const ShaderModel in_requested_shader_model) override
 	{
 		VulkanBackend* backend = new VulkanBackend(in_backend);
 		auto ret = backend->initialize();

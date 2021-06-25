@@ -151,6 +151,8 @@ Module* load_module(const std::string_view& name)
 	module->handle = nullptr;
 #endif /** ZE_MONOLITHIC */
 
+	module->initialize();
+	
 	modules.emplace_back(module);
 	
 	ze::logger::verbose("Loaded module {}", name);

@@ -52,6 +52,8 @@ add_subdirectory(Sources/thirdparty)
 
 project(ZinoEngine)
 
+list(APPEND CMAKE_MODULE_PATH ${ZE_ROOT_DIR}/Sources/thirdparty)
+
 # Used for monolithic builds
 add_library(AllModules INTERFACE)
 

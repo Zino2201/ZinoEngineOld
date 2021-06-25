@@ -14,7 +14,7 @@ class Backend;
 class BackendModule : public module::Module
 {
 public:
-	virtual Backend* create_backend(const BackendInfo* in_backend, const BackendShaderModel in_requested_shader_model) { return nullptr; }
+	virtual Backend* create_backend(const BackendInfo* in_backend, const ShaderModel in_requested_shader_model) { return nullptr; }
 };
 	
 }

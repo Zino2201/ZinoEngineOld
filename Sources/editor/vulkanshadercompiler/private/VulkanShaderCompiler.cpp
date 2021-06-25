@@ -1,6 +1,6 @@
 #include "module/Module.h"
 #define SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS 1
-#include "shader/ShaderCompiler.h"
+#include "shader/ShaderCompilerModule.h"
 #include <spirv_glsl.hpp>
 #include "ShaderConductor/ShaderConductor.hpp"
 #include <array>
@@ -8,7 +8,7 @@
 #include "zefs/Paths.h"
 #include "zefs/ZEFS.h"
 
-using namespace ze::gfx::shaders;
+using namespace ze::gfx;
 
 static constexpr std::array<const char*, 1> include_dirs =
 {
@@ -21,22 +21,22 @@ static constexpr std::array<const char*, 1> include_dirs =
 class VulkanShaderCompiler : public ShaderCompiler
 {
 public:
-	VulkanShaderCompiler(const ShaderCompilerTarget& in_target) : ShaderCompiler(in_target) {}
+	VulkanShaderCompiler() : ShaderCompiler("SPIR-V (Vulkan)", ShaderLanguage::SPIRV) {}
 
 	ShaderCompilerOutput compile_shader(
-		const ShaderStage& stage,
+		const ShaderStageFlagBits stage,
 		const std::string_view& shader_name,
 		const std::string_view& shader_source,
 		const std::string_view& entry_point,
-		const ShaderCompilerTarget& target,
-		const bool& optimize) override
+		const ShaderFormat target,
+		const bool optimize) override
 	{
 		ShaderCompilerOutput output;
 
 		ShaderConductor::ShaderStage scstage = ShaderConductor::ShaderStage::VertexShader;
 		switch(stage)
 		{
-		case ShaderStage::Fragment:
+		case ShaderStageFlagBits::Fragment:
 			scstage = ShaderConductor::ShaderStage::PixelShader;
 			break;
 		default:
@@ -113,6 +113,10 @@ public:
 			ze::logger::error("Failed to compile shader {}: {}",
 				shader_name.data(), output.err_msg.c_str());
 			return output;
+		}
+		else
+		{
+			ze::logger::info("Compiled shader {}", shader_name);
 		}
 
 		uint32_t* spv = reinterpret_cast<uint32_t*>(const_cast<void*>(result.target->Data()));
@@ -192,20 +196,13 @@ public:
 	}
 };
 
-class VULKANSHADERCOMPILER_API VulkanShaderCompilerModule : public ze::module::Module
+class VulkanShaderCompilerModule final : public ze::gfx::ShaderCompilerModule
 {
 public:
-	VulkanShaderCompilerModule()
+	OwnerPtr<ShaderCompiler> create_shader_compiler() const override
 	{
-		sc = register_shader_compiler(ShaderCompilerTarget::VulkanSpirV, new VulkanShaderCompiler(ShaderCompilerTarget::VulkanSpirV));
+		return new VulkanShaderCompiler;
 	}
-
-	~VulkanShaderCompilerModule()
-	{
-		unregister_shader_compiler(sc);
-	}
-private:
-	ShaderCompiler* sc;
 };
 
 ZE_DEFINE_MODULE(VulkanShaderCompilerModule, vulkanshadercompiler);

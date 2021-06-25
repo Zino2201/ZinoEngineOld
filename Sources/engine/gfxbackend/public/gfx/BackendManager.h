@@ -23,12 +23,17 @@ const std::vector<BackendInfo>& get_backends();
  *  - Does not support the requested shader model
  *  - The user's hardware does not support the backend
  */
-bool create_backend(const BackendInfo* in_backend, const BackendShaderModel in_requested_shader_model);
+bool create_backend(const BackendInfo* in_backend, const ShaderModel in_requested_shader_model);
 Backend* get_running_backend();
 
 /**
  * Destroy the running backend (if it exists)
  */
 void destroy_running_backend();
+
+/**
+ * Get the current shader model we use
+ */
+ShaderModel get_current_shader_model();
 	
 }

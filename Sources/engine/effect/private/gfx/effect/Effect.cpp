@@ -1,11 +1,8 @@
 #include "gfx/effect/Effect.h"
 #if ZE_WITH_EDITOR
-#include "assetdatacache/AssetDatacache.h"
-#include "shader/ShaderCompiler.h"
-#include "threading/jobsystem/Async.h"
-#include "serialization/BinaryArchive.h"
+#include "gfx/BackendManager.h"
 #include "zefs/FileStream.h"
-#include <istream>
+#include "threading/jobsystem/Async.h"
 #endif
 #include <bit>
 
@@ -21,9 +18,7 @@ Effect::Effect(const std::string& in_name,
 	const std::vector<EffectOption>& in_options) : name(in_name),
 	sources(in_sources), options(in_options), permutation_count(1)
 {	
-#if ZE_FEATURE(DEVELOPMENT)
 	int32_t required_bits = 0;
-#endif
 	size_t idx = 0;
 	size_t id_idx = 0;
 
@@ -39,13 +34,10 @@ Effect::Effect(const std::string& in_name,
 		option.id_index = id_idx;
 		id_idx += option.bit_width;
 		name_to_option_idx.insert({ option.name, idx++ });
-#if ZE_FEATURE(DEVELOPMENT)
 		required_bits += option.bit_width;
-#endif
 	}
-#if ZE_FEATURE(DEVELOPMENT)
+	
 	ZE_CHECKF(required_bits < max_permutation_bits, "Effect has too many options !");
-#endif
 }
 
 Effect::~Effect()
@@ -55,70 +47,52 @@ Effect::~Effect()
 }
 
 #if ZE_WITH_EDITOR
-
-shaders::ShaderCompilerOutput Effect::compile_permutation_stage(EffectPermutationId id, ShaderStageFlagBits stage)
+std::future<EffectCompilerResult> Effect::compile(const EffectPermutationId id, const ShaderFormat& in_format)
 {
-	using namespace shaders;
-
-	ShaderStage cl_stage = ShaderStage::Vertex;
-	std::string cl_name = name + "_";
-	std::string entrypoint = "vertex";
-	switch(stage)
-	{
-	case ShaderStageFlagBits::Vertex:
-		cl_name += "VS";
-		break;
-	case ShaderStageFlagBits::Fragment:
-		cl_stage = ShaderStage::Fragment;
-		cl_name += "FS";
-		entrypoint = "fragment";
-		break;
-	}
-
-	auto output = compile_shader(
-		cl_stage,
-		cl_name,
-		sources[stage],
-		entrypoint,
-		ShaderCompilerTarget::VulkanSpirV,
-		true);
-
-	if(!output.success) 
-	{
-		ze::logger::error("Failed to compile effect {} permutation {} shader {}: {}", 
-			name,
-			id.to_string(),
-			cl_name,
-			output.err_msg);
-		permutations[id].shader_map[stage] = {};
-		return {};
-	}
-
 	{
 		std::lock_guard<std::mutex> lock(permutation_lock);
-		permutations[id].shader_map[stage] = Device::get().create_shader(ShaderCreateInfo(output.bytecode)).second;
+
+		if(pending_compilation.contains(id))
+			return {};
+
+		pending_compilation.insert(id);
 	}
+	
+	return jobsystem::async<EffectCompilerResult>(
+		[&, id](const jobsystem::Job&)
+		{
+			EffectCompilerResult result;
+			result = compile_effect(in_format,
+				name + "_" + std::to_string(id.to_ullong()),
+				sources,
+				get_options_from_id(id));
 
-	{
-		std::string key = name + "_" + get_stage_prefix(stage);
-		assetdatacache::cache("Effect permutation stage compilation", key, 
-			std::vector<uint8_t>(
-				reinterpret_cast<uint8_t*>(output.bytecode.data()), 
-				reinterpret_cast<uint8_t*>(output.bytecode.data() + (output.bytecode.size() * sizeof(uint32_t)))));
-	}
+			/** Apply changes to class */
+			{
+				std::lock_guard<std::mutex> lock(permutation_lock);
+				pending_compilation.erase(id);
 
-	{
-		std::string key = name + "_" + get_stage_prefix(stage) + "_Refl";
-
-		filesystem::FileOStream stream(assetdatacache::get_cache_dir() / key,
-			filesystem::FileWriteFlagBits::Binary | filesystem::FileWriteFlagBits::ReplaceExisting);
-		serialization::BinaryOutputArchive ar(stream);
-		ar <=> output.reflection_data;
-	}
-
-	return output;
+				if(result.succeed)
+				{
+					for(const auto& stage : result.stages)
+					{
+						auto bytecode_copy = stage.bytecode;
+						permutations[id].shader_map[stage.stage] = Device::get().create_shader(
+							ShaderCreateInfo(bytecode_copy)).second;	
+					}
+					
+					permutations[id].pipeline_layout = std::move(result.pipeline_layout);
+					permutations[id].status = EffectPermutationStatus::Available;
+				}
+				else
+				{
+					permutations[id].status = EffectPermutationStatus::CompileError;
+				}
+			}
+			
+			return result;
+		});
 }
-
 #endif
 
 void Effect::destroy_permutation(EffectPermutationId id)
@@ -130,75 +104,27 @@ void Effect::destroy_permutation(EffectPermutationId id)
 	}
 }
 
-Effect::Permutation* Effect::get_permutation(EffectPermutationId id)
+Effect::Permutation* Effect::get_permutation(const EffectPermutationId id)
 {
+#if ZE_WITH_EDITOR
+	{
+		std::lock_guard<std::mutex> lock(permutation_lock);
+		auto it = permutations.find(id);
+
+		if(it != permutations.end())
+			return &it->second;
+
+		if(pending_compilation.contains(id))
+			return {};
+	}
+	
+	/** If the effect doesn't exist compile it */
+	compile(id, Backend::get().get_shader_format(get_current_shader_model()));
+#else
 	auto it = permutations.find(id);
 	if(it != permutations.end())
 		return &it->second;
-
-#if ZE_WITH_EDITOR
-	if(pending_compilation.contains(id))
-		return nullptr;
-
-	/** Before doing anything, checks if the permutation exists in the cache */
-	std::vector<ShaderStageFlagBits> stage_to_compile;
-	std::vector<shaders::ShaderCompilerReflectionDataOutput> reflection_datas;
-	reflection_datas.reserve(sources.size());
-	for(const auto& [stage, source] : sources)
-	{
-		std::string key = name + "_" + get_stage_prefix(stage);
-
-		if(assetdatacache::has_key(key))
-		{
-			std::vector<uint8_t> bytecode = assetdatacache::get_sync(key);
-			std::lock_guard<std::mutex> lock(permutation_lock);
-			permutations[id].shader_map[stage] = Device::get().create_shader(gfx::ShaderCreateInfo(
-				std::span<uint32_t>(
-					reinterpret_cast<uint32_t*>(bytecode.data()), 
-					reinterpret_cast<uint32_t*>(bytecode.data() + (bytecode.size() / sizeof(uint32_t)))))).second;
-		}
-		else
-		{
-			stage_to_compile.emplace_back(stage);
-		}
-	}
-
-	using namespace jobsystem;
-
-	if(!stage_to_compile.empty())
-	{
-		const auto& main_job = create_job(JobType::Normal,
-			[this, id, stage_to_compile](const Job& in_job) 
-			{
-				const auto& root_job = create_job(JobType::Normal, [](const Job& in_job){});
-
-				for(const auto& stage : stage_to_compile)
-				{
-					const auto& child = create_child_job(JobType::Normal, root_job,
-						[this, id, stage](const Job& in_job)
-						{
-							compile_permutation_stage(id, stage);
-						});
-
-					schedule(child);
-				}
-
-				schedule(root_job);
-				wait(root_job);
-
-				build_pipeline_layout(id);
-
-				pending_compilation.erase(id);
-			});
-
-		pending_compilation.insert(id);
-		schedule(main_job);
-	}
-	else
-	{
-		build_pipeline_layout(id);
-	}
-#else
+	
 	ze::logger::error("No effect {} permutation {} found !",
 		name,
 		id.to_string());
@@ -206,76 +132,6 @@ Effect::Permutation* Effect::get_permutation(EffectPermutationId id)
 
 	return nullptr;
 }
-
-#if ZE_WITH_EDITOR
-void Effect::build_pipeline_layout(EffectPermutationId id)
-{
-	std::unordered_map<uint32_t, std::vector<gfx::DescriptorSetLayoutBinding>> sets;
-	for(const auto& [stage, shader] : permutations[id].shader_map)
-	{
-		std::string key = name + "_" + get_stage_prefix(stage) + "_Refl";
-
-		filesystem::FileIStream stream(assetdatacache::get_cache_dir() / key,
-			filesystem::FileReadFlagBits::Binary);
-		serialization::BinaryInputArchive ar(stream);
-		shaders::ShaderCompilerReflectionDataOutput reflection_data;
-		ar <=> reflection_data;
-
-		for(const auto& parameter : reflection_data.parameter_map.get_parameters())
-		{
-			DescriptorType desc_type = DescriptorType::UniformBuffer;
-			switch(parameter.type) 
-			{
-			case shaders::ShaderParameterType::UniformBuffer:
-				break;
-			case shaders::ShaderParameterType::CombinedImageSampler:
-				ZE_CHECK(false);
-				break;
-			case shaders::ShaderParameterType::Texture:
-				desc_type = DescriptorType::SampledTexture;
-				break;
-			case shaders::ShaderParameterType::StorageBuffer:
-				desc_type = DescriptorType::StorageBuffer;
-				break;
-			case shaders::ShaderParameterType::Sampler:
-				desc_type = DescriptorType::Sampler;
-				break;
-			}
-
-			/** Check if the parameter is already added in another shader stage */
-			bool found_param = false;
-			for(auto& param : sets[parameter.set])
-			{
-				if(param.binding == parameter.binding &&
-					param.descriptor_type == desc_type)
-				{
-					param.stage_flags |= stage;
-					found_param = true;
-					break;
-				}
-			}
-
-			if(!found_param)
-				sets[parameter.set].emplace_back(parameter.binding,
-					desc_type,
-					parameter.count,
-					stage);
-		}
-	}
-					
-	std::vector<gfx::DescriptorSetLayoutCreateInfo> set_create_infos; 
-	set_create_infos.reserve(sets.size());
-	for(const auto& [set, bindings] : sets)
-	{
-		set_create_infos.emplace_back(bindings);
-	}
-
-	auto [result, handle] = gfx::Device::get().create_pipeline_layout(
-		gfx::PipelineLayoutCreateInfo(set_create_infos));
-	ZE_CHECK(result == Result::Success);
-	permutations[id].pipeline_layout = handle;
-}
-#endif
 
 std::vector<std::pair<std::string, std::string>> Effect::get_options_from_id(EffectPermutationId id) const
 {
@@ -333,28 +189,9 @@ EffectPermutationId Effect::get_permutation_id(const std::vector<std::pair<std::
 	return id;
 }
 
-bool Effect::is_available(EffectPermutationId id)
+bool Effect::is_available(const EffectPermutationId id)
 {
-#if ZE_WITH_EDITOR
-	auto* permutation = get_permutation(id);
-	std::lock_guard<std::mutex> lock(permutation_lock);
-	return permutation != nullptr && !pending_compilation.contains(id);
-#else
-	return get_permutation(id) != nullptr;
-#endif
-}
-
-std::string Effect::get_stage_prefix(ShaderStageFlagBits stage) const
-{
-	switch(stage)
-	{
-	case ShaderStageFlagBits::Vertex:
-		return "VS";
-	case ShaderStageFlagBits::Fragment:
-		return "FS";
-	default:
-		return "";
-	}
+	return permutations[id].status == EffectPermutationStatus::Available;
 }
 
 }

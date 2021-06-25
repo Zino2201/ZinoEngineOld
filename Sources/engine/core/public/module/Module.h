@@ -25,6 +25,9 @@ public:
 	Module() = default;
     virtual ~Module() = default;
 
+	/** Called after ctor. Useful for calling virtual functions since it can't be called inside the ctor. */
+    virtual void initialize() {}
+	
     const std::string& get_name() const { return name; }
     void set_name(const char* in_name) { name = in_name; }
     void* get_handle() const { return handle; }

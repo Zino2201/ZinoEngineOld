@@ -45,7 +45,6 @@ struct CORE_API alignas(job_alignement) Job
 	static constexpr uint8_t max_childs = 255;
 
 	JobType type;
-	const char* nmae;
 	const Job* parent;
 	/** Unfinished job count, 0 = finished, 1 = not finished, > 1 = childs running */
 	mutable std::atomic_uint8_t unfinished_jobs;

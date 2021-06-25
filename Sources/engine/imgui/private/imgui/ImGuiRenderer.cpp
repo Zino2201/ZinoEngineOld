@@ -277,8 +277,8 @@ bool initialize(ImFontAtlas* in_atlas)
 
 	/** Shaders */
 	gfx::Effect* base_effect = gfx::effect_get_by_name("ImGui");
-	while(!base_effect->is_available({})) {}
 	auto* permutation = base_effect->get_permutation({});
+	while(!base_effect->is_available({})) {}
 	ZE_CHECK(permutation);
 	pipeline_layout = *permutation->pipeline_layout;
 
